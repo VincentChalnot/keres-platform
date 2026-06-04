@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+    {% block head %}
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Keres - {% block title %}The Art of Abstract Play{% endblock %}</title>
+        <link rel="icon" type="image/png" href="{{ asset('/favicon-96x96.png') }}" sizes="96x96"/>
+        <link rel="icon" type="image/svg+xml" href="{{ asset('/rook.svg') }}"/>
+        <link rel="shortcut icon" href="{{ asset('/favicon.ico') }}"/>
+        <link rel="apple-touch-icon" sizes="180x180" href="{{ asset('/apple-touch-icon.png') }}"/>
+        <meta name="apple-mobile-web-app-title" content="Keres"/>
+        <link rel="manifest" href="{{ asset('/site.webmanifest') }}"/>
+        {{ vite_entry_link_tags('app') }}
+        {% block javascripts %}
+            {{ vite_entry_script_tags('app') }}
+        {% endblock %}
+    {% endblock %}
+</head>
+<body>
+{% block topnav %}
+    <nav class="navbar site-navbar" role="navigation" aria-label="Main navigation">
+        <div class="container">
+            <div class="navbar-brand">
+                <a class="navbar-item site-navbar__logo" href="{{ path('index') }}" aria-label="Keres home">
+                    <img src="{{ asset('rook.svg') }}" alt="" width="32" height="32" aria-hidden="true">
+                    <span class="site-navbar__logo-text">Keres</span>
+                </a>
+            </div>
+            <div class="navbar-menu">
+                <div class="navbar-start">
+                    {% block nav_extra %}{% endblock %}
+                    <a href="{{ path('rules') }}" class="navbar-item">Rules</a>
+                </div>
+                <div class="navbar-end">
+                    <div class="navbar-item">
+                        <a href="{{ path('new_game') }}" class="button is-primary is-rounded is-small">Play</a>
+                    </div>
+                    <div class="navbar-item">
+                        {% if app.user %}
+                            {% if app.user.avatarUrl %}
+                                <img src="{{ app.user.avatarUrl }}" alt="Avatar" class="site-navbar__avatar">
+                            {% else %}
+                                <span class="icon mr-2">
+                                    <i class="fa-solid fa-circle-user" aria-hidden="true"></i>
+                                </span>
+                            {% endif %}
+                            <span class="site-navbar__username">{{ app.user.displayName ?? app.user.email }}</span>
+                            <a href="{{ path('logout') }}" class="button is-small is-rounded is-outlined is-light">
+                                <span class="icon">
+                                    <i class="fa-solid fa-right-from-bracket" aria-hidden="true"></i>
+                                </span>
+                                <span>Logout</span>
+                            </a>
+                        {% else %}
+                            <a href="{{ path('login') }}" class="button is-small is-rounded is-outlined is-light">
+                                <span class="icon">
+                                    <i class="fa-solid fa-right-to-bracket" aria-hidden="true"></i>
+                                </span>
+                                <span>Login</span>
+                            </a>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </nav>
+{% endblock %}
+{% block body %}{% endblock %}
+{% block footer %}
+<footer class="footer">
+    <div class="content has-text-centered">
+        <p>&copy; Keres 2025-2026</p>
+        <nav>
+            <a href="{{ path('legal_notice') }}">Mentions légales</a>
+            <a href="{{ path('terms') }}">Conditions générales de vente</a>
+            <a href="{{ path('contact') }}">Contact</a>
+        </nav>
+    </div>
+</footer>
+{% endblock %}
+{% block end_javascripts %}{% endblock %}
+</body>
+</html>

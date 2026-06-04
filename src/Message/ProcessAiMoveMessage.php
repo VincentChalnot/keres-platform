@@ -1,0 +1,13 @@
+<?php
+declare(strict_types=1);
+
+namespace App\Message;
+
+readonly class ProcessAiMoveMessage
+{
+    public function __construct(
+        public string $gameUuid,
+        public int $moveCounter,
+    ) {
+    }
+}

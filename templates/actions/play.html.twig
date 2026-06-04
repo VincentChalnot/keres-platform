@@ -1,0 +1,76 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Play Game - Keres{% endblock %}
+
+{% block head %}
+    {{ parent() }}
+    <meta name="mercure-url" content="{{ mercure(url('play', {uuid: game.uuid})) }}">
+{% endblock %}
+
+{% block body %}
+    <div class="game-container">
+        <div class="material-top-row">
+            <div class="material-bar" id="material-top"></div>
+            <div id="status">Loading...</div>
+        </div>
+        <div id="board-container"
+             data-moves="{{ moves }}"
+             data-game-uuid="{{ game.uuid }}"
+             data-opponent-type="{{ game.opponentType.value }}"
+             data-player-white="{{ game.white ? 'true' : 'false' }}"></div>
+        <div class="material-bar" id="material-bottom"></div>
+        <div class="buttons mt-3">
+            {% if game.opponentType == enum('App\\Model\\OpponentType').AI %}
+                <button class="button is-rounded is-outlined is-light" id="switch-sides-btn">Switch Sides</button>
+            {% endif %}
+            <button class="button is-rounded is-outlined is-light" id="toggle-threats-btn">Hide Threats</button>
+            <button class="button is-rounded is-outlined is-light" id="toggle-coords-btn">Hide Coords</button>
+            <button class="button is-rounded is-light" id="undo-btn">Undo</button>
+            {% if not game.gameOver %}
+                <form method="post" action="{{ path('resign_game', {uuid: game.uuid}) }}" style="display:inline" onsubmit="return confirm('Are you sure you want to resign? The game will be lost.')">
+                    <button type="submit" class="button is-rounded is-danger">Resign</button>
+                </form>
+            {% endif %}
+        </div>
+        <div class="move-history">
+            <label class="label">Move History</label>
+            <div class="buttons">
+                <button class="button is-rounded is-small is-outlined is-light" id="prev-move-btn" title="Previous Move">◄ Prev</button>
+                <button class="button is-rounded is-small is-outlined is-light" id="next-move-btn" title="Next Move">Next ►</button>
+            </div>
+            <div id="move-history-display" class="move-history-box">
+                <table class="table is-fullwidth move-history-table">
+                    <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>White</th>
+                        <th>Black</th>
+                    </tr>
+                    </thead>
+                    <tbody id="move-history-body">
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal" id="unstack-modal">
+        <div class="modal-background"></div>
+        <div class="modal-card">
+            <header class="modal-card-head">
+                <p class="modal-card-title">Choose your move</p>
+            </header>
+            <section class="modal-card-body">
+                <p>You are moving a stacked piece. Do you want to move the full stack or only the top piece?</p>
+            </section>
+            <footer class="modal-card-foot">
+                <button class="button is-primary" id="move-stack">Move Full Stack</button>
+                <button class="button" id="move-unstack">Move Top Piece</button>
+            </footer>
+        </div>
+    </div>
+{% endblock %}
+
+{% block end_javascripts %}
+    {{ vite_entry_script_tags('play') }}
+{% endblock %}
