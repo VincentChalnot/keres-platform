@@ -17,6 +17,17 @@ function keresSpritesPlugin() {
         const boardSvgPath = resolve(rootDir, 'assets/template.svg');
         let boardSvgContent = readFileSync(boardSvgPath, 'utf-8');
 
+        // Single source of truth for the icon layer transform: the data-icon-transform attribute on
+        // template.svg's root, injected wherever {{icon-transform}} appears. Must run before the
+        // <defs> offsets below are computed, as it changes the content length.
+        const iconTransform = boardSvgContent.match(/\sdata-icon-transform="([^"]*)"/);
+        if (!iconTransform) {
+            throw new Error('assets/template.svg root must have a data-icon-transform attribute');
+        }
+        boardSvgContent = boardSvgContent
+            .replace(iconTransform[0], '')
+            .replaceAll('{{icon-transform}}', iconTransform[1]);
+
         // Find <defs> section
         const defsOpenTag = '<defs>';
         const defsCloseTag = '</defs>';
@@ -122,8 +133,8 @@ function keresSpritesPlugin() {
         },
 
         handleHotUpdate({file, server}) {
-            // Regenerate when an SVG changes in dev
-            if (file.includes('assets/pieces')) {
+            // Regenerate when a sprite source changes in dev (piece SVGs or the template)
+            if (file.includes('assets/pieces') || file.endsWith('assets/template.svg')) {
                 generateSprite();
                 // In dev, also write to disk so public/build/pieces-sprite.svg is always up-to-date
                 if (isDev) {

@@ -9,7 +9,7 @@ const SQUARE_WIDTH = 100; // px
 const SQUARE_HEIGHT = 80; // px
 const BOARD_WIDTH = BOARD_SIZE * SQUARE_WIDTH; // 900px
 const BOARD_HEIGHT = BOARD_SIZE * SQUARE_HEIGHT; // 720px
-const STACKED_OFFSET = 23;
+const STACKED_OFFSET = 20;
 
 // Coordinate label dimensions (left margin for row labels, bottom margin for column labels)
 const COORD_WIDTH = 25; // px left margin for row numbers (1-9)
