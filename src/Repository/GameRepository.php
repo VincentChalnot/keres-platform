@@ -42,4 +42,61 @@ class GameRepository extends ServiceEntityRepository
             ->getQuery()
             ->getResult();
     }
+
+    /**
+     * @return Game[]
+     */
+    public function findRecentInProgressByOwner(User $owner, int $limit = 5): array
+    {
+        return $this->createQueryBuilder('g')
+            ->andWhere('g.deletedAt IS NULL')
+            ->andWhere('g.owner = :owner')
+            ->andWhere('g.gameOverAt IS NULL')
+            ->setParameter('owner', $owner)
+            ->orderBy('g.createdAt', 'DESC')
+            ->setMaxResults($limit)
+            ->getQuery()
+            ->getResult();
+    }
+
+    public function countInProgressByOwner(User $owner): int
+    {
+        return (int) $this->createQueryBuilder('g')
+            ->select('COUNT(g.id)')
+            ->andWhere('g.deletedAt IS NULL')
+            ->andWhere('g.owner = :owner')
+            ->andWhere('g.gameOverAt IS NULL')
+            ->setParameter('owner', $owner)
+            ->getQuery()
+            ->getSingleScalarResult();
+    }
+
+    /**
+     * @return array{wins: int, losses: int, draws: int}
+     */
+    public function getFinishedGameStatsForOwner(User $owner): array
+    {
+        $rows = $this->createQueryBuilder('g')
+            ->select('g.isWhite AS isWhite', 'g.whiteWins AS whiteWins', 'g.draw AS draw')
+            ->andWhere('g.deletedAt IS NULL')
+            ->andWhere('g.owner = :owner')
+            ->andWhere('g.gameOverAt IS NOT NULL')
+            ->setParameter('owner', $owner)
+            ->getQuery()
+            ->getArrayResult();
+
+        $stats = ['wins' => 0, 'losses' => 0, 'draws' => 0];
+
+        foreach ($rows as $row) {
+            if ($row['draw']) {
+                ++$stats['draws'];
+            } elseif ($row['whiteWins'] === $row['isWhite']) {
+                ++$stats['wins'];
+            } else {
+                ++$stats['losses'];
+            }
+        }
+
+        return $stats;
+    }
 }

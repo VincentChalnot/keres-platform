@@ -1,0 +1,148 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Preferences{% endblock %}
+
+{% block body %}
+<main class="section">
+    <div class="container">
+        <div class="columns is-centered">
+            <div class="column is-7">
+                <h1 class="title">Your preferences</h1>
+                <p class="subtitle">Manage your profile and how the platform behaves for you.</p>
+
+                {% if identifierRequired %}
+                    <div class="notification is-warning">
+                        <strong>Choose an identifier</strong> to continue using Keres. This is how other players will see you.
+                    </div>
+                {% endif %}
+
+                {% if saved %}
+                    <div class="notification is-success">
+                        <strong>Preferences saved.</strong>
+                    </div>
+                {% endif %}
+
+                {{ form_start(form, {attr: {novalidate: 'novalidate', class: 'box'}}) }}
+
+                    <div class="field">
+                        {{ form_label(form.email, null, {label_attr: {class: 'label'}}) }}
+                        <div class="control">
+                            {{ form_widget(form.email, {attr: {class: 'input'}}) }}
+                        </div>
+                    </div>
+
+                    <div class="field">
+                        {{ form_label(form.identifier, null, {label_attr: {class: 'label'}}) }}
+                        <div class="control">
+                            {{ form_widget(form.identifier, {attr: {class: 'input'}}) }}
+                        </div>
+                        {{ form_help(form.identifier) }}
+                        {{ form_errors(form.identifier) }}
+                    </div>
+
+                    <div class="columns">
+                        <div class="column">
+                            <div class="field">
+                                {{ form_label(form.firstName, null, {label_attr: {class: 'label'}}) }}
+                                <div class="control">
+                                    {{ form_widget(form.firstName, {attr: {class: 'input'}}) }}
+                                </div>
+                                {{ form_errors(form.firstName) }}
+                            </div>
+                        </div>
+                        <div class="column">
+                            <div class="field">
+                                {{ form_label(form.lastName, null, {label_attr: {class: 'label'}}) }}
+                                <div class="control">
+                                    {{ form_widget(form.lastName, {attr: {class: 'input'}}) }}
+                                </div>
+                                {{ form_errors(form.lastName) }}
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="columns">
+                        <div class="column">
+                            <div class="field">
+                                {{ form_label(form.locale, null, {label_attr: {class: 'label'}}) }}
+                                <div class="control">
+                                    <div class="select is-fullwidth">
+                                        {{ form_widget(form.locale) }}
+                                    </div>
+                                </div>
+                                {{ form_errors(form.locale) }}
+                            </div>
+                        </div>
+                        <div class="column">
+                            <div class="field">
+                                {{ form_label(form.country, null, {label_attr: {class: 'label'}}) }}
+                                <div class="control">
+                                    <div class="select is-fullwidth">
+                                        {{ form_widget(form.country) }}
+                                    </div>
+                                </div>
+                                {{ form_errors(form.country) }}
+                            </div>
+                        </div>
+                    </div>
+
+                    <hr>
+                    <h2 class="title is-5">Notifications &amp; privacy</h2>
+
+                    <div class="field">
+                        <div class="control">
+                            <label class="checkbox">
+                                {{ form_widget(form.newsletterOptIn) }}
+                                {{ form_label(form.newsletterOptIn, null, {label_attr: {class: ''}}) }}
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="field">
+                        <div class="control">
+                            <label class="checkbox">
+                                {{ form_widget(form.showBoardCoordinates) }}
+                                {{ form_label(form.showBoardCoordinates, null, {label_attr: {class: ''}}) }}
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="field">
+                        <div class="control">
+                            <label class="checkbox">
+                                {{ form_widget(form.showOpponentThreatsOnHover) }}
+                                {{ form_label(form.showOpponentThreatsOnHover, null, {label_attr: {class: ''}}) }}
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="field">
+                        <div class="control">
+                            <label class="checkbox">
+                                {{ form_widget(form.allowContactByEmail) }}
+                                {{ form_label(form.allowContactByEmail, null, {label_attr: {class: ''}}) }}
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="field">
+                        <div class="control">
+                            <label class="checkbox">
+                                {{ form_widget(form.searchableByOtherUsers) }}
+                                {{ form_label(form.searchableByOtherUsers, null, {label_attr: {class: ''}}) }}
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="field mt-5">
+                        <div class="control">
+                            {{ form_widget(form.submit, {attr: {class: 'button is-primary is-rounded'}}) }}
+                        </div>
+                    </div>
+
+                {{ form_end(form) }}
+            </div>
+        </div>
+    </div>
+</main>
+{% endblock %}

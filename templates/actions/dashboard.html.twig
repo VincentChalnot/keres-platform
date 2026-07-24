@@ -1,0 +1,20 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Dashboard{% endblock %}
+
+{% block body %}
+<main class="section">
+    <div class="container">
+        <h1 class="title">Welcome back{{ app.user.displayName ? ', ' ~ app.user.displayName : '' }}</h1>
+
+        <div class="columns is-multiline dashboard-widgets">
+            <div class="column is-half">
+                {% include 'actions/dashboard/_recent_games.html.twig' %}
+            </div>
+            <div class="column is-half">
+                {% include 'actions/dashboard/_stats.html.twig' %}
+            </div>
+        </div>
+    </div>
+</main>
+{% endblock %}

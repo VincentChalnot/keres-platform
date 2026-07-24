@@ -6,3 +6,7 @@ sidus_template:
             template: 'actions/play.html.twig'
         feedback:
             template: 'actions/feedback.html.twig'
+        dashboard:
+            template: 'actions/dashboard.html.twig'
+        preferences:
+            template: 'actions/preferences.html.twig'
