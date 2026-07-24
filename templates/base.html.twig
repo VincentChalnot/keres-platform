@@ -30,7 +30,11 @@
             </div>
             <div class="navbar-menu">
                 <div class="navbar-start">
-                    {% block nav_extra %}{% endblock %}
+                    {% block nav_extra %}
+                        {% if app.user %}
+                            <a href="{{ path('dashboard') }}" class="navbar-item">Dashboard</a>
+                        {% endif %}
+                    {% endblock %}
                     <a href="{{ static_site_url }}/rules" class="navbar-item">Rules</a>
                 </div>
                 <div class="navbar-end">
@@ -39,6 +43,9 @@
                     </div>
                     <div class="navbar-item">
                         {% if app.user %}
+                            <a href="{{ path('preferences') }}" class="icon mr-2" aria-label="Preferences" title="Preferences">
+                                <i class="fa-solid fa-gear" aria-hidden="true"></i>
+                            </a>
                             {% if app.user.avatarUrl %}
                                 <img src="{{ app.user.avatarUrl }}" alt="Avatar" class="site-navbar__avatar">
                             {% else %}

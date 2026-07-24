@@ -18,3 +18,7 @@ sidus_template:
             template: 'security/lost_password.html.twig'
         reset_password:
             template: 'security/reset_password.html.twig'
+        dashboard:
+            template: 'actions/dashboard.html.twig'
+        preferences:
+            template: 'actions/preferences.html.twig'

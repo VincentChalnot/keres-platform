@@ -1,0 +1,21 @@
+<div class="box dashboard-widget">
+    <h3 class="title is-5">Games in progress</h3>
+    {% for game in recentGames %}
+        {# @var game \App\Entity\Game #}
+        <div class="dashboard-widget__row mb-3">
+            <a href="{{ path('play', {uuid: game.uuid}) }}" class="button is-rounded is-primary is-small is-pulled-right">Resume</a>
+            <p><strong>{{ game.white ? 'White' : 'Black' }}</strong> &middot; Next: {{ game.whiteTurn ? 'White' : 'Black' }}</p>
+            {% if game.lastMoveAt %}
+                <p class="has-text-grey">Last move: {{ game.lastMoveAt|date('Y-m-d H:i') }}</p>
+            {% else %}
+                <p class="has-text-grey">Started: {{ game.createdAt|date('Y-m-d H:i') }}</p>
+            {% endif %}
+        </div>
+    {% else %}
+        <p class="has-text-grey">No games in progress.</p>
+    {% endfor %}
+    {% if inProgressCount > recentGames|length %}
+        <p><a href="{{ path('new_game') }}">View all {{ inProgressCount }} games in progress &rarr;</a></p>
+    {% endif %}
+    <a href="{{ path('new_game') }}" class="button is-primary is-rounded is-fullwidth mt-3">New game</a>
+</div>

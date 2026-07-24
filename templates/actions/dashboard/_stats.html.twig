@@ -1,0 +1,28 @@
+<div class="box dashboard-widget">
+    <h3 class="title is-5">Your stats</h3>
+    <div class="level is-mobile">
+        <div class="level-item has-text-centered">
+            <div>
+                <p class="heading">Wins</p>
+                <p class="title">{{ stats.wins }}</p>
+            </div>
+        </div>
+        <div class="level-item has-text-centered">
+            <div>
+                <p class="heading">Losses</p>
+                <p class="title">{{ stats.losses }}</p>
+            </div>
+        </div>
+        <div class="level-item has-text-centered">
+            <div>
+                <p class="heading">Draws</p>
+                <p class="title">{{ stats.draws }}</p>
+            </div>
+        </div>
+    </div>
+    {% if winRate is not null %}
+        <p class="has-text-centered">Win rate: <strong>{{ winRate }}%</strong> over {{ totalFinished }} finished game{{ totalFinished > 1 ? 's' : '' }}</p>
+    {% else %}
+        <p class="has-text-centered has-text-grey">No finished games yet.</p>
+    {% endif %}
+</div>

@@ -29,7 +29,7 @@ class LoginAction extends AbstractController
     public function login(): Response
     {
         if ($this->getUser()) {
-            return $this->redirectToRoute('new_game');
+            return $this->redirectToRoute('dashboard');
         }
 
         return $this->render('security/login.html.twig', [
