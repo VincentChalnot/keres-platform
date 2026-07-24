@@ -5,7 +5,7 @@
 # It is intentionally separate from the main Dockerfile so it only needs to be rebuilt
 # when the FrankenPHP version or Caddy module list changes, not on every code push.
 #
-# The resulting image is pushed to ghcr.io/vincentchalnot/keres/php-base and used as
+# The resulting image is pushed to ghcr.io/vincentchalnot/keres-platform/php-base and used as
 # the FROM in the main Dockerfile.
 #
 # To trigger a rebuild: push a change to this file, or run the build-base workflow manually.

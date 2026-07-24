@@ -1,12 +1,13 @@
 #syntax=docker/dockerfile:1
 
 # The slow xcaddy build (FrankenPHP recompile with custom Caddy modules) lives in
-# Dockerfile.base and is published as ghcr.io/vincentchalnot/keres/php-base.
-# It is only rebuilt when Dockerfile.base changes (see .github/workflows/build-base.yaml).
+# Dockerfile.base and is published as ghcr.io/vincentchalnot/keres-platform/php-base.
+# It is only rebuilt when Dockerfile.base changes (see the build-base job in
+# .github/workflows/ci.yaml).
 # This keeps the main CI build fast (~2 min instead of ~8 min).
 
 # Base FrankenPHP image (pre-built with Infomaniak DNS module — see Dockerfile.base)
-FROM ghcr.io/vincentchalnot/keres/php-base AS frankenphp_base
+FROM ghcr.io/vincentchalnot/keres-platform/php-base AS frankenphp_base
 
 # Dev FrankenPHP image
 FROM frankenphp_base AS frankenphp_dev

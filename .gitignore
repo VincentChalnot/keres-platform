@@ -22,3 +22,7 @@
 
 # Stray output from manual `bin/console config:dump-reference` debugging.
 /config/reference.php
+
+# Local environment overrides (may contain secrets) — never commit.
+/.env
+/deploy/.env
