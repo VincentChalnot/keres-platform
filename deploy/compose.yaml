@@ -1,0 +1,206 @@
+# Production Compose file for the Keres platform.
+#
+# SET `SERVER_NAME` to the bare domain (e.g. `playkeres.com`) — the app is
+# served on the `app.` subdomain, the static site (keres-website, a separate
+# repo/deployment — see "What's NOT here" in README.md) is served from the
+# bare domain (and `www.` alias) by Cloudflare Pages, and Traefik routes
+# `app.${SERVER_NAME}` to the php service defined here.
+#
+# The `backend` image (ghcr.io/vincentchalnot/keres/backend) is published
+# from a separate repo (github.com/VincentChalnot/keres) with its own
+# release cadence — pin it independently via BACKEND_IMAGE_TAG, distinct
+# from IMAGES_TAG which pins the php/php-worker images built from this repo.
+#
+# Place this file on the production server alongside a `.env` file containing
+# secrets. DO NOT commit the `.env` to the repository.
+#
+# Symfony no longer loads .env files inside the app image (symfony/dotenv was
+# removed) — every value below is a real container env var, sourced from
+# this file via env_file plus the computed values derived below.
+#
+# Required .env variables (all must be set — no defaults are provided):
+#   SERVER_NAME              e.g. playkeres.com
+#   APP_SECRET               Symfony app secret (random 32+ char string)
+#   POSTGRES_USER            Database user
+#   POSTGRES_PASSWORD        Database password
+#   POSTGRES_DB              Database name
+#   MERCURE_JWT_SECRET       Mercure JWT secret (random 32+ char string)
+#
+# Optional .env variables:
+#   POSTGRES_VERSION         Defaults to 16
+#   POSTGRES_CHARSET         Defaults to utf8
+#   IMAGES_TAG               php/php-worker image tag to deploy (defaults to latest)
+#   BACKEND_IMAGE_TAG        backend (Rust engine) image tag to deploy (defaults to latest)
+#   TRUSTED_PROXIES          Comma-separated CIDR/IPs trusted to set
+#                            X-Forwarded-* headers. Defaults to 172.16.0.0/12,::/0
+#                            (covers default docker subnets). Tighten to the
+#                            proxy network's actual CIDR if desired.
+#   CERT_RESOLVER            Name of the ACME resolver configured on the
+#                            external Traefik instance. Defaults to
+#                            "infomaniak".
+#   TRAEFIK_NETWORK          Name of the external docker network the shared
+#                            Traefik instance listens on. Defaults to "proxy".
+#   TRAEFIK_ENTRYPOINT       TLS entrypoint name on the external Traefik
+#                            instance. Defaults to "websecure".
+#   TRAEFIK_HTTP_ENTRYPOINT  Plain-HTTP entrypoint used only to redirect to
+#                            TRAEFIK_ENTRYPOINT. Defaults to "web".
+#   BACKEND_API_URL          Rust engine URL. Defaults to http://backend:3000.
+#   AI_BACKEND_API_URL       AI endpoints URL. Defaults to http://backend:3000.
+#   MESSENGER_TRANSPORT_DSN  Async transport DSN. Defaults to the Doctrine
+#                            transport (doctrine://default?auto_setup=0).
+#   MAILER_DSN               Defaults to null://null (no-op — set a real DSN
+#                            to actually send mail in production).
+#   CORS_ALLOW_ORIGIN        Regex matched against the Origin header for
+#                            CORS. Defaults to ^https://playkeres\.com$.
+#   OIDC_{GOOGLE,FACEBOOK,DISCORD}_CLIENT_{ID,SECRET}
+#                            Blank by default — that provider's login stays
+#                            unavailable until configured.
+
+name: keres
+
+x-app-env: &app-env
+  APP_ENV: prod
+  SERVER_NAME: app.${SERVER_NAME}
+  DEFAULT_URI: https://app.${SERVER_NAME}
+  STATIC_SITE_URL: https://${SERVER_NAME}
+  SESSION_COOKIE_DOMAIN: ${SERVER_NAME}
+  # No compose-level fallback — required. Explicit here (not just via
+  # env_file) so a missing value in .env becomes an empty string that
+  # overrides the Dockerfile's build-time-only placeholder, instead of that
+  # placeholder silently surviving into the running container.
+  APP_SECRET: ${APP_SECRET}
+  MERCURE_JWT_SECRET: ${MERCURE_JWT_SECRET}
+  DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@database:5432/${POSTGRES_DB}?serverVersion=${POSTGRES_VERSION:-16}&charset=${POSTGRES_CHARSET:-utf8}
+  MERCURE_PUBLISHER_JWT_KEY: ${MERCURE_JWT_SECRET:-!ChangeThisMercureHubJWTSecretKey!}
+  MERCURE_SUBSCRIBER_JWT_KEY: ${MERCURE_JWT_SECRET:-!ChangeThisMercureHubJWTSecretKey!}
+  # Internal publish target for PHP's Hub client — must be the docker-network
+  # address of the php service (Mercure hub is embedded in its Caddy), NOT
+  # the public Traefik-fronted hostname (unreachable from inside containers).
+  MERCURE_URL: http://php/.well-known/mercure
+  MERCURE_PUBLIC_URL: https://app.${SERVER_NAME}/.well-known/mercure
+  BACKEND_API_URL: ${BACKEND_API_URL:-http://backend:3000}
+  AI_BACKEND_API_URL: ${AI_BACKEND_API_URL:-http://backend:3000}
+  MESSENGER_TRANSPORT_DSN: ${MESSENGER_TRANSPORT_DSN:-doctrine://default?auto_setup=0}
+  # No-op by default — set a real DSN in .env to actually send mail.
+  MAILER_DSN: ${MAILER_DSN:-null://null}
+  CORS_ALLOW_ORIGIN: '${CORS_ALLOW_ORIGIN:-^https://playkeres\.com$}'
+  # Blank unless set in .env — that provider's login stays unavailable.
+  OIDC_GOOGLE_CLIENT_ID: ${OIDC_GOOGLE_CLIENT_ID:-}
+  OIDC_GOOGLE_CLIENT_SECRET: ${OIDC_GOOGLE_CLIENT_SECRET:-}
+  OIDC_FACEBOOK_CLIENT_ID: ${OIDC_FACEBOOK_CLIENT_ID:-}
+  OIDC_FACEBOOK_CLIENT_SECRET: ${OIDC_FACEBOOK_CLIENT_SECRET:-}
+  OIDC_DISCORD_CLIENT_ID: ${OIDC_DISCORD_CLIENT_ID:-}
+  OIDC_DISCORD_CLIENT_SECRET: ${OIDC_DISCORD_CLIENT_SECRET:-}
+
+x-php-env: &php-env
+  <<: *app-env
+  # Port-only (no hostname): Traefik already gatekeeps by Host externally,
+  # and internal service-to-service calls (e.g. Mercure publish from
+  # php-worker via http://php/.well-known/mercure) arrive with Host: php,
+  # which a hostname-scoped Caddy site block would silently NOP instead
+  # of routing to the app.
+  CADDY_SITE_ADDRESS: ":80"
+  # Trust the docker proxy network so Symfony walks X-Forwarded-For and
+  # Request::getClientIp() returns the real client instead of Traefik's IP.
+  # 172.16.0.0/12 covers default docker subnets; tighten to the proxy
+  # network's CIDR if desired (docker network inspect proxy).
+  TRUSTED_PROXIES: "${TRUSTED_PROXIES:-172.16.0.0/12,::/0}"
+
+services:
+  php:
+    image: ghcr.io/vincentchalnot/keres-platform/php:${IMAGES_TAG:-latest}
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      <<: *php-env
+    security_opt:
+      - label=disable
+    volumes:
+      - caddy_data:/data
+      - caddy_config:/config
+    # Expose only to Traefik via the shared proxy network; no host ports needed.
+    # Traefik terminates TLS (Infomaniak DNS-01 ACME) and forwards cleartext
+    # HTTP to Caddy on :80.  X-Forwarded-For is injected by Traefik; Symfony
+    # trusts the proxy network via TRUSTED_PROXIES to recover the real client IP.
+    networks:
+      - default
+      - proxy
+    depends_on:
+      database:
+        condition: service_healthy
+    labels:
+      # Enable Traefik for this service
+      traefik.enable: "true"
+      traefik.docker.network: "${TRAEFIK_NETWORK:-proxy}"
+
+      # ── HTTP → HTTPS redirect (app subdomain) ────────────────────────────
+      traefik.http.routers.keres-http.rule: "Host(`app.${SERVER_NAME}`)"
+      traefik.http.routers.keres-http.entrypoints: "${TRAEFIK_HTTP_ENTRYPOINT:-web}"
+      traefik.http.routers.keres-http.middlewares: "keres-redirect-https"
+      traefik.http.middlewares.keres-redirect-https.redirectscheme.scheme: "https"
+      traefik.http.middlewares.keres-redirect-https.redirectscheme.permanent: "true"
+
+      # ── HTTPS — Traefik terminates TLS, forwards cleartext HTTP to Caddy:80
+      # Traefik owns ACME (Infomaniak DNS-01, configured in traefik.yml) and
+      # injects X-Forwarded-For automatically on HTTP routers.
+      traefik.http.routers.keres-https.rule: "Host(`app.${SERVER_NAME}`)"
+      traefik.http.routers.keres-https.entrypoints: "${TRAEFIK_ENTRYPOINT:-websecure}"
+      traefik.http.routers.keres-https.tls: "true"
+      traefik.http.routers.keres-https.tls.certresolver: "${CERT_RESOLVER:-infomaniak}"
+      traefik.http.routers.keres-https.service: "keres-https-svc"
+      traefik.http.services.keres-https-svc.loadbalancer.server.port: "80"
+
+  php-worker:
+    image: ghcr.io/vincentchalnot/keres-platform/php-worker:${IMAGES_TAG:-latest}
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      <<: *app-env
+    security_opt:
+      - label=disable
+    healthcheck:
+      test: ["CMD", "supervisorctl", "status", "all"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    depends_on:
+      php:
+        condition: service_healthy
+
+  backend:
+    image: ghcr.io/vincentchalnot/keres/backend:${BACKEND_IMAGE_TAG:-latest}
+    restart: unless-stopped
+    environment:
+      - RUST_LOG=info
+
+  database:
+    image: postgres:${POSTGRES_VERSION:-16}-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_USER: ${POSTGRES_USER}
+    healthcheck:
+      test: ["CMD", "pg_isready", "-d", "${POSTGRES_DB}", "-U", "${POSTGRES_USER}"]
+      timeout: 5s
+      retries: 5
+      start_period: 60s
+    # Named volume: data is preserved across container restarts but backed up
+    # via the external db-backup.sh script (see crontab setup in README).
+    volumes:
+      - database_data:/var/lib/postgresql/data:rw
+
+volumes:
+  # Caddy runtime state (Mercure subscriptions, etc.).  Caddy no longer stores
+  # ACME certs — Traefik owns TLS now — but still uses /data for ephemeral state.
+  caddy_data:
+  caddy_config:
+  # PostgreSQL data — backed up externally via db-backup.sh.
+  database_data:
+
+networks:
+  default:
+  proxy:
+    external: true
+    name: "${TRAEFIK_NETWORK:-proxy}"

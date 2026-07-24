@@ -1,51 +1,100 @@
-# Symfony Docker
+# Keres Platform
 
-A [Docker](https://www.docker.com/)-based installer and runtime for the [Symfony](https://symfony.com) web framework,
-with [FrankenPHP](https://frankenphp.dev) and [Caddy](https://caddyserver.com/) inside!
+![Symfony](https://img.shields.io/badge/Symfony-000000?style=flat&logo=symfony&logoColor=white)
+![TypeScript](https://img.shields.io/badge/TypeScript-3178C6?style=flat&logo=typescript&logoColor=white)
+![Docker](https://img.shields.io/badge/Docker-2496ED?style=flat&logo=docker&logoColor=white)
+![Live](https://img.shields.io/badge/status-live-brightgreen)
 
-![CI](https://github.com/dunglas/symfony-docker/workflows/CI/badge.svg)
+The web platform for **[Keres](https://playkeres.com)**, an original
+abstract strategy game: user accounts, game sessions, and an SVG board
+renderer, talking to the [Rust game engine](https://github.com/VincentChalnot/keres)
+over a binary HTTP API. This platform is **game-agnostic by design** — it
+never interprets game rules, it only stores and forwards what the engine
+produces.
 
-## Getting Started
+🎮 **[Play now at playkeres.com](https://playkeres.com)**
 
-1. If not already done, [install Docker Compose](https://docs.docker.com/compose/install/) (v2.10+)
-2. Run `docker compose build --pull --no-cache` to build fresh images
-3. Run `docker compose up --wait` to set up and start a fresh Symfony project
-4. Open `https://localhost` in your favorite web browser and [accept the auto-generated TLS certificate](https://stackoverflow.com/a/15076602/1352334)
-5. Run `docker compose down --remove-orphans` to stop the Docker containers.
+!["Board illustration"](public/images/board-art-03.webp "Board illustration")
 
-## Features
+---
 
-- Production, development and CI ready
-- Just 1 service by default
-- Blazing-fast performance thanks to [the worker mode of FrankenPHP](https://frankenphp.dev/docs/worker/)
-- [Installation of extra Docker Compose services](docs/extra-services.md) with Symfony Flex
-- Automatic HTTPS (in dev and prod)
-- HTTP/3 and [Early Hints](https://symfony.com/blog/new-in-symfony-6-3-early-hints) support
-- Real-time messaging thanks to a built-in [Mercure hub](https://symfony.com/doc/current/mercure.html)
-- [Vulcain](https://vulcain.rocks) support
-- Native [XDebug](docs/xdebug.md) integration
-- Super-readable configuration
+## Part of the Keres project
 
-**Enjoy!**
+Keres is split across three repositories:
 
-## Docs
+| Repo                                                                       | What                                    | License    |
+|-----------------------------------------------------------------------------|------------------------------------------|------------|
+| [keres](https://github.com/VincentChalnot/keres)                             | Rust game engine + Negamax AI            | GPLv3      |
+| **keres-platform** (this repo)                                                | Symfony backend + TypeScript/SVG client  | Proprietary |
+| [keres-website](https://github.com/VincentChalnot/keres-website)             | Hugo marketing site (playkeres.com)      | Proprietary |
 
-1. [Options available](docs/options.md)
-2. [Using Symfony Docker with an existing project](docs/existing-project.md)
-3. [Support for extra services](docs/extra-services.md)
-4. [Deploying in production](docs/production.md)
-5. [Debugging with Xdebug](docs/xdebug.md)
-6. [TLS Certificates](docs/tls.md)
-7. [Using MySQL instead of PostgreSQL](docs/mysql.md)
-8. [Using Alpine Linux instead of Debian](docs/alpine.md)
-9. [Using a Makefile](docs/makefile.md)
-10. [Updating the template](docs/updating.md)
-11. [Troubleshooting](docs/troubleshooting.md)
+## What makes this technically interesting
+
+### The game engine is fully decoupled
+
+Symfony never interprets game state — it stores and forwards raw
+binary-serialized move sequences produced by the Rust engine. This means the
+platform is game-agnostic by design: swapping in a different combinatorial
+game would only require a new engine build speaking the same wire protocol,
+not a rewrite of the platform. See `AGENTS.md` and the engine's
+[`docs/PROTOCOL.md`](https://github.com/VincentChalnot/keres/blob/main/docs/PROTOCOL.md)
+for the exact byte layout.
+
+### Real-time via Mercure
+
+Multiplayer updates are pushed server-side via [Mercure](https://mercure.rocks/),
+embedded in FrankenPHP's Caddy. AI moves are computed asynchronously
+(Symfony Messenger) and pushed to the client over SSE — no polling.
+
+### SVG rendering pipeline
+
+The board and pieces are rendered entirely in SVG, generated from
+TypeScript (`assets/typescript/`). Rendering is optimized to update the DOM
+minimally on each move. A Three.js renderer with custom glTF assets is in
+development for a more immersive perspective view (`assets/typescript/src/views/ThreeJSBoardView.ts`,
+currently inactive).
+
+## Stack
+
+| Layer       | Technology                      | Notes                                    |
+|-------------|----------------------------------|--------------------------------------------|
+| Backend     | Symfony 7.4 / PHP 8.4            | FrankenPHP + Caddy application server      |
+| Database    | PostgreSQL                        | Doctrine ORM, migrations in `migrations/`  |
+| Frontend    | TypeScript + SVG                  | Vite build, no framework                    |
+| 3D renderer | Three.js + glTF                    | In development, inactive by default         |
+| Real-time   | Mercure                            | Server-sent events                          |
+| Async jobs  | Symfony Messenger                  | AI move computation                          |
+| Engine      | External (Rust, separate repo)      | Binary HTTP API, see `BACKEND_API_URL`       |
+
+## Development
+
+Everything runs in Docker — never run PHP or npm on the host.
+
+```bash
+# Prereqs: external Traefik on a `proxy` network, *.local.playkeres.com → 127.0.0.1
+cp .env.example .env
+docker network create proxy 2>/dev/null || true
+docker compose up --build -d
+# https://app.local.playkeres.com       → Symfony / FrankenPHP
+# https://vite.app.local.playkeres.com  → Vite HMR (WSS)
+# https://mail.local.playkeres.com      → Mailpit UI
+```
+
+The `backend` service pulls the published engine image
+(`ghcr.io/vincentchalnot/keres/backend`) rather than building the engine from
+source — this repo does not vendor the engine. See `.env.example` for how to
+point at a different engine build, and `AGENTS.md` for the full dev workflow
+(PHP/TypeScript commands, code style, dev login bypass for browser testing).
+
+To reproduce the production topology locally (static site + app on the same
+domain), also run [keres-website](https://github.com/VincentChalnot/keres-website)'s
+`compose.yaml` with the same `SERVER_NAME`.
+
+Production deployment artifacts live in `deploy/`. See `deploy/README.md`
+for ops details.
 
 ## License
 
-Symfony Docker is available under the MIT License.
+Proprietary — see [`LICENSE`](LICENSE). All rights reserved.
 
-## Credits
-
-Created by [Kévin Dunglas](https://dunglas.dev), co-maintained by [Maxime Helias](https://twitter.com/maxhelias) and sponsored by [Les-Tilleuls.coop](https://les-tilleuls.coop).
+*Solo project by [Vincent Chalnot](https://github.com/VincentChalnot).*

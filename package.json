@@ -4,7 +4,7 @@
     "scripts": {
         "dev": "vite",
         "build": "vite build",
-        "type-check": "tsc --noEmit"
+        "type-check": "tsc --noEmit -p assets/typescript/tsconfig.json"
     },
     "dependencies": {
         "@fortawesome/fontawesome-free": "^7.2.0",

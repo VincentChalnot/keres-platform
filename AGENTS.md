@@ -1,30 +1,25 @@
 # AGENTS.md — Keres Platform (Symfony + TypeScript)
 
-> **TEMPORARY SCOPE EXPANSION (2026-07-21):** The current task implements the
-> split-domain architecture (static site on Hugo, app on Symfony), which
-> requires writes outside `platform/` (root, `deploy/`, `website/`, `.github/`).
-> For the duration of this task only, the agent operates at the **workspace
-> root**. Restore the previous scope once the task lands.
-
 ## Scope
 
-This agent operates at the **workspace root** for the current split-architecture
-task. Normal platform-only restrictions are relaxed until the task merges.
+This repository is the whole scope for this agent. It used to be the
+`platform/` folder of a monorepo shared with the Rust engine and the Hugo
+marketing site; those now live in separate repositories
+([keres](https://github.com/VincentChalnot/keres),
+[keres-website](https://github.com/VincentChalnot/keres-website)). Nothing
+here should assume those repos are checked out alongside this one:
 
-| Path                      | Access         | Notes                                                                 |
-|---------------------------|----------------|-----------------------------------------------------------------------|
-| `./` (workspace root)     | Read + Write   | `/compose.yaml`, `/.env.example`, `/db-backup.sh`                     |
-| `platform/`               | Read + Write   | This workspace (always in scope)                                      |
-| `deploy/`                 | Read + Write   | New prod-only deployment artifacts                                    |
-| `website/`                | Read + Write   | Hugo static site                                                      |
-| `engine/`                 | **Off-limits** | Rust game engine, game rules, AI logic — never touch                  |
-| `docs/`                   | Read-only      | General game rules and architecture — useful context for the renderer |
+| Dependency          | How this repo reaches it                                                        |
+|----------------------|-----------------------------------------------------------------------------------|
+| Rust engine           | `BACKEND_API_URL`/`AI_BACKEND_API_URL` env vars — the published `ghcr.io/vincentchalnot/keres/backend` image in dev/prod, never a source checkout |
+| Marketing site         | `STATIC_SITE_URL` env var — only used to build absolute links back to it, no other coupling |
+| Game rules doc          | [`docs/PROTOCOL.md`](https://github.com/VincentChalnot/keres/blob/main/docs/PROTOCOL.md) in the engine repo, and https://playkeres.com/rules for the player-facing rules |
 
 ## Project Overview
 
-`platform/` is a **gameplay-agnostic** web platform for abstract board games.
-It does **not** implement game rules. All game logic lives in the Rust engine
-(`../engine/`), communicated via a binary HTTP API.
+This is a **gameplay-agnostic** web platform for abstract board games.
+It does **not** implement game rules. All game logic lives in the Rust
+engine, communicated via a binary HTTP API (`BACKEND_API_URL`).
 
 Platform responsibilities:
 
@@ -33,15 +28,16 @@ Platform responsibilities:
 - Rendering the board state as SVG (TypeScript)
 - Building analytics data structures (`BoardPosition` tree) for future ML use
 
-When in doubt about game rules or piece behaviour, consult `../docs/` — but
-**never let that knowledge leak into PHP business logic**. The platform must
-remain playable with any abstract game whose engine respects the binary API
+When in doubt about game rules or piece behaviour, consult the engine
+repo's `docs/PROTOCOL.md` or https://playkeres.com/rules — but **never let
+that knowledge leak into PHP business logic**. The platform must remain
+playable with any abstract game whose engine respects the binary API
 contract. Only the TypeScript renderer is allowed to hold game-specific
 knowledge (piece names, SVG representations, movement descriptions).
 
 ## Stack
 
-- **PHP 8.3+** / **Symfony 7.3** — FrankenPHP as application server
+- **PHP 8.4** / **Symfony 7.4** — FrankenPHP as application server
 - **Doctrine ORM 3** — PostgreSQL, migrations in `migrations/`
 - **Symfony Messenger** — async jobs via `async` transport
 - **Symfony Mercure** — server-sent events pushed to the frontend
@@ -147,7 +143,7 @@ Two endpoints, both `POST`, binary in/out, base URL injected via `$backendApiUrl
 ### Start the environment
 
 ```bash
-docker compose -f compose.yaml -f compose.override.yaml up --build -d --remove-orphans --force-recreate
+docker compose up --build -d --remove-orphans --force-recreate
 ```
 
 ### PHP commands (inside the PHP container)
