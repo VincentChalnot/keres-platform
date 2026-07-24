@@ -1,0 +1,85 @@
+{# Bulma-flavoured replacement for Sidus\AdminBundle's bundled edit/create/read action template. #}
+{# @var action \Sidus\AdminBundle\Model\Action #}
+{% extends action.baseTemplate %}
+
+{% block container %}
+    <div class="columns">
+        <div class="{{ form_container_class|default('column is-5') }}">
+            {{ block('title') }}
+            {{ form_start(form) }}
+            {{ block('message') }}
+            {{ form_widget(form) }}
+            {{ block('form_actions') }}
+            {{ form_end(form) }}
+        </div>
+    </div>
+{% endblock %}
+
+{% block title %}
+    <h2 class="title is-4">
+        {{ tryTrans(
+            [
+                'sidus.admin.'~admin.code~'.action.'~action.code~'.title',
+                'sidus.admin.action.'~action.code~'.title'
+            ], {
+                '%entity%': data is defined ? data|tostring
+            },
+            admin.code|humanize~' - '~action.code|humanize
+        ) }}
+    </h2>
+{% endblock %}
+
+{% block message %}
+    {% set message = tryTrans(
+        [
+            'sidus.admin.'~admin.code~'.action.'~action.code~'.message',
+            'sidus.admin.action.'~action.code~'.message',
+        ], {
+            '%entity%': data is defined ? data|tostring
+        }
+    ) %}
+    {% if message %}
+        <div class="{{ message_class|default('notification is-info') }}">{{ message }}</div>
+    {% endif %}
+{% endblock %}
+
+{% block form_actions %}
+    <div class="field is-grouped">
+        {{ block('back_button') }}
+        {{ block('submit_button') }}
+    </div>
+{% endblock %}
+
+{% block back_button %}
+    {% if listPath|default(false) %}
+        <div class="control">
+            <a href="{{ listPath }}" class="{{ back_class|default('button is-light') }}">
+                {{ tryTrans(
+                    [
+                        'sidus.admin.'~admin.code~'.action.'~action.code~'.button.back',
+                        'sidus.admin.action.'~action.code~'.button.back',
+                        'sidus.admin.button.back',
+                    ],
+                    {},
+                    'Back'
+                ) }}
+            </a>
+        </div>
+    {% endif %}
+{% endblock %}
+
+{% block submit_button %}
+    <div class="control">
+        <button type="submit" class="{{ submit_class|default('button is-primary') }}">
+            {{ tryTrans(
+                [
+                    'sidus.admin.'~admin.code~'.action.'~action.code~'.button.submit',
+                    'sidus.admin.action.'~action.code~'.button.submit',
+                    'sidus.admin.button.submit',
+                ],
+                {},
+                'Submit'
+            ) }}
+        </button>
+    </div>
+{% endblock %}

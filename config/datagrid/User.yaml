@@ -1,0 +1,33 @@
+sidus_data_grid:
+    configurations:
+        User:
+            columns:
+                email:
+                    property_path: 'user.email'
+                    template: 'admin/datagrid/user_email.html.twig'
+                displayName:
+                    property_path: 'user.displayName'
+                createdAt:
+                    property_path: 'user.createdAt'
+                gamesCount:
+                    label: 'Games'
+                winCount:
+                    label: 'Wins'
+                loseCount:
+                    label: 'Losses'
+                drawCount:
+                    label: 'Draws'
+                lastMoveAt:
+                    label: 'Last move'
+            query_handler:
+                provider: doctrine
+                options:
+                    entity: App\Entity\User
+                sortable: [email, createdAt]
+                default_sort:
+                    createdAt: DESC
+                filters:
+                    email:
+                        type: text
+                    createdAt:
+                        type: date_range

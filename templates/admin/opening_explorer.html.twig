@@ -1,0 +1,41 @@
+{% extends 'admin/base.html.twig' %}
+
+{% block admin_title %}Opening Explorer{% endblock %}
+
+{% block container %}
+    <h2 class="title is-4">Opening Explorer</h2>
+    <p class="subtitle is-6">Most-played openings, up to 4 plies from the shared starting position.</p>
+
+    {% if rootPositionId is null %}
+        <div class="notification is-warning">
+            No games have been played yet — nothing to explore.
+        </div>
+    {% else %}
+        <div class="columns">
+            <div class="column is-7">
+                <div class="box">
+                    <h3 class="title is-6">Opening tree</h3>
+                    <div
+                        id="opening-tree"
+                        data-root-position-id="{{ rootPositionId }}"
+                        data-root-position-data="{{ rootPositionData }}"
+                    >
+                        <p class="has-text-grey">Loading…</p>
+                    </div>
+                </div>
+            </div>
+            <div class="column is-5">
+                <div class="box">
+                    <h3 class="title is-6">Debug board</h3>
+                    <div id="opening-debug-board"></div>
+                    <div id="opening-stats" class="mt-4"></div>
+                </div>
+            </div>
+        </div>
+    {% endif %}
+{% endblock %}
+
+{% block javascripts %}
+    {{ parent() }}
+    {{ vite_entry_script_tags('admin') }}
+{% endblock %}

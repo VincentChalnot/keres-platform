@@ -1,0 +1,18 @@
+sidus_admin:
+    configurations:
+        Feedback:
+            entity: App\Entity\Feedback
+            controller_pattern:
+                - 'Sidus\AdminBundle\Action\{{Action}}Action'
+            template_pattern:
+                - 'admin/actions/{{action}}.{{format}}.twig'
+                - '@SidusAdmin/Action/{{action}}.{{format}}.twig'
+            form_type: App\Form\FeedbackReviewType
+            prefix: /admin/feedback
+            actions:
+                list:
+                    path: /
+                edit:
+                    path: /edit/{id}
+            options:
+                icon: comment-dots

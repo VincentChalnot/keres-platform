@@ -1,0 +1,2 @@
+sidus_admin:
+    base_template: 'admin/base.html.twig'

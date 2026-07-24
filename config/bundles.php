@@ -11,4 +11,7 @@ return [
     Symfony\Bundle\MercureBundle\MercureBundle::class => ['all' => true],
     Symfony\Bundle\SecurityBundle\SecurityBundle::class => ['all' => true],
     Drenso\OidcBundle\DrensoOidcBundle::class => ['all' => true],
+    Sidus\FilterBundle\SidusFilterBundle::class => ['all' => true],
+    Sidus\DataGridBundle\SidusDataGridBundle::class => ['all' => true],
+    Sidus\AdminBundle\SidusAdminBundle::class => ['all' => true],
 ];

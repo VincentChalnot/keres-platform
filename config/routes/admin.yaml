@@ -1,0 +1,3 @@
+sidus_admin:
+    resource: .
+    type: sidus_admin

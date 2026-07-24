@@ -1,0 +1,10 @@
+{# Bulma-flavoured replacement for Sidus\DataGridBundle's bundled pager page-link template. #}
+{# @var pager \Pagerfanta\Pagerfanta #}
+{% apply spaceless %}
+    <li>
+        <a class="pagination-link{{ pager.currentPage == page ? ' is-current' }}"
+           aria-label="{{ pager.currentPage == page ? 'Page ' ~ page : 'Goto page ' ~ page }}"
+           {% if pager.currentPage == page %}aria-current="page"{% endif %}
+           href="{{ page_path(page) }}">{{ page }}</a>
+    </li>
+{% endapply %}

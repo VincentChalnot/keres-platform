@@ -1,0 +1,94 @@
+{% extends 'admin/base.html.twig' %}
+
+{% block admin_title %}Dashboard{% endblock %}
+
+{% block container %}
+    <h2 class="title is-4">Dashboard</h2>
+
+    <div class="columns is-multiline mb-5">
+        <div class="column is-3">
+            <div class="box has-text-centered">
+                <p class="heading">Total players</p>
+                <p class="title">{{ totalPlayers }}</p>
+            </div>
+        </div>
+        <div class="column is-3">
+            <div class="box has-text-centered">
+                <p class="heading">Connected (last 5 min)</p>
+                <p class="title">{{ connectedPlayers }}</p>
+            </div>
+        </div>
+        <div class="column is-3">
+            <div class="box has-text-centered">
+                <p class="heading">Finished games</p>
+                <p class="title">{{ outcomes.win + outcomes.lose + outcomes.draw }}</p>
+            </div>
+        </div>
+        <div class="column is-3">
+            <div class="box has-text-centered">
+                <p class="heading">Stale games (24h+)</p>
+                <p class="title{{ staleGames|length > 0 ? ' has-text-warning' }}">{{ staleGames|length }}</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="columns mb-5">
+        <div class="column is-6">
+            <div class="box">
+                <h3 class="title is-6">Game outcome distribution</h3>
+                <canvas id="admin-outcome-chart" height="200"></canvas>
+            </div>
+        </div>
+        <div class="column is-6">
+            <div class="box">
+                <h3 class="title is-6">Move-count distribution</h3>
+                <canvas id="admin-move-count-chart" height="200"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <h3 class="title is-5">Stale games</h3>
+    <div class="table-container">
+        <table class="table is-fullwidth is-hoverable">
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>Owner</th>
+                    <th>Opponent</th>
+                    <th>Moves</th>
+                    <th>Created</th>
+                    <th>Last activity</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for game in staleGames %}
+                    <tr>
+                        <td>{{ game.id }}</td>
+                        <td>{{ game.owner ? game.owner.email : '—' }}</td>
+                        <td>{{ game.opponentType.name|capitalize }}</td>
+                        <td>{{ game.gameMoves|length }}</td>
+                        <td>{{ game.createdAt|date('Y-m-d H:i') }}</td>
+                        <td>{{ (game.lastMoveAt ?? game.createdAt)|date('Y-m-d H:i') }}</td>
+                    </tr>
+                {% else %}
+                    <tr>
+                        <td colspan="6">
+                            <div class="notification is-light has-text-centered has-text-grey m-4">
+                                No stale games
+                            </div>
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <script type="application/json" id="admin-stats">
+        {{ {outcomes: outcomes, moveCountDistribution: moveCountDistribution}|json_encode|raw }}
+    </script>
+{% endblock %}
+
+{% block javascripts %}
+    {{ parent() }}
+    {{ vite_entry_script_tags('admin') }}
+{% endblock %}

@@ -1,5 +1,8 @@
 twig:
     file_name_pattern: '*.twig'
+    form_themes:
+        - 'form/bulma_layout.html.twig'
+        - '@SidusDataGrid/Form/bootstrap4.html.twig'
     globals:
         static_site_url: '%env(STATIC_SITE_URL)%'
 

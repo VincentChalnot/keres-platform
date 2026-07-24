@@ -1,0 +1,46 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Admin — {% block admin_title %}Panel{% endblock %}{% endblock %}
+
+{% block body %}
+    <section class="section">
+        <div class="container is-fluid">
+            <div class="columns">
+                <div class="column is-2">
+                    <aside class="menu">
+                        <p class="menu-label">Admin</p>
+                        <ul class="menu-list">
+                            <li>
+                                <a href="{{ path('admin_dashboard') }}">
+                                    <span class="icon"><i class="fa-solid fa-gauge" aria-hidden="true"></i></span>
+                                    <span>Dashboard</span>
+                                </a>
+                            </li>
+                            <li>
+                                <a href="{{ admin_path('Feedback', 'list') }}">
+                                    <span class="icon"><i class="fa-solid fa-comment-dots" aria-hidden="true"></i></span>
+                                    <span>Feedback</span>
+                                </a>
+                            </li>
+                            <li>
+                                <a href="{{ admin_path('User', 'list') }}">
+                                    <span class="icon"><i class="fa-solid fa-users" aria-hidden="true"></i></span>
+                                    <span>Users</span>
+                                </a>
+                            </li>
+                            <li>
+                                <a href="{{ path('admin_opening_explorer') }}">
+                                    <span class="icon"><i class="fa-solid fa-chess-board" aria-hidden="true"></i></span>
+                                    <span>Opening explorer</span>
+                                </a>
+                            </li>
+                        </ul>
+                    </aside>
+                </div>
+                <div class="column">
+                    {% block container %}{% endblock %}
+                </div>
+            </div>
+        </div>
+    </section>
+{% endblock %}

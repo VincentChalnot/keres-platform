@@ -6,3 +6,15 @@ sidus_template:
             template: 'actions/play.html.twig'
         feedback:
             template: 'actions/feedback.html.twig'
+        admin_dashboard:
+            template: 'admin/dashboard.html.twig'
+        admin_opening_explorer:
+            template: 'admin/opening_explorer.html.twig'
+        'sidus_admin.User.read':
+            template: 'admin/actions/user_read.html.twig'
+        register:
+            template: 'security/register.html.twig'
+        lost_password:
+            template: 'security/lost_password.html.twig'
+        reset_password:
+            template: 'security/reset_password.html.twig'

@@ -1,0 +1,40 @@
+sidus_data_grid:
+    configurations:
+        Feedback:
+            columns:
+                id:
+                    label: '#'
+                category:
+                    property_path: 'category.value'
+                    template: 'admin/datagrid/feedback_category.html.twig'
+                message:
+                    template: 'admin/datagrid/clickable.html.twig'
+                user:
+                    property_path: 'user.email'
+                createdAt: ~
+                reviewed:
+                    template: 'admin/datagrid/reviewed_badge.html.twig'
+                actions:
+                    template: 'admin/datagrid/feedback_actions.html.twig'
+            query_handler:
+                provider: doctrine
+                options:
+                    entity: App\Entity\Feedback
+                sortable: [id, category, createdAt, reviewed]
+                default_sort:
+                    reviewed: ASC
+                    createdAt: DESC
+                filters:
+                    category:
+                        type: choice
+                        form_options:
+                            choices:
+                                Bug: bug
+                                Suggestion: suggestion
+                                Gameplay: gameplay
+                                Other: other
+                    reviewed:
+                        type: choice
+                        form_options: { choices: { Reviewed: 1, Unreviewed: 0 } }
+                    createdAt:
+                        type: date_range

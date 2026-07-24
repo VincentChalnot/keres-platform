@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "229ae492984baae60792db2ebada2033",
+    "content-hash": "96564ee1469006d514e4050ce1055f64",
     "packages": [
         {
             "name": "doctrine/collections",
@@ -1421,6 +1421,107 @@
             "time": "2026-01-12T15:59:08+00:00"
         },
         {
+            "name": "pagerfanta/pagerfanta",
+            "version": "v4.8.0",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/BabDev/Pagerfanta.git",
+                "reference": "72881e6839330b2961c574b3b4b20d409d6a0955"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/BabDev/Pagerfanta/zipball/72881e6839330b2961c574b3b4b20d409d6a0955",
+                "reference": "72881e6839330b2961c574b3b4b20d409d6a0955",
+                "shasum": ""
+            },
+            "require": {
+                "ext-json": "*",
+                "php": "^8.1",
+                "symfony/deprecation-contracts": "^2.1 || ^3.0"
+            },
+            "conflict": {
+                "doctrine/collections": "<1.8",
+                "doctrine/dbal": "<3.5",
+                "doctrine/mongodb-odm": "<2.4",
+                "doctrine/orm": "<2.14",
+                "doctrine/phpcr-odm": "<1.7",
+                "ruflin/elastica": "<7.3",
+                "solarium/solarium": "<6.2",
+                "twig/twig": "<2.13"
+            },
+            "replace": {
+                "pagerfanta/core": "self.version",
+                "pagerfanta/doctrine-collections-adapter": "self.version",
+                "pagerfanta/doctrine-dbal-adapter": "self.version",
+                "pagerfanta/doctrine-mongodb-odm-adapter": "self.version",
+                "pagerfanta/doctrine-orm-adapter": "self.version",
+                "pagerfanta/doctrine-phpcr-odm-adapter": "self.version",
+                "pagerfanta/elastica-adapter": "self.version",
+                "pagerfanta/solarium-adapter": "self.version",
+                "pagerfanta/twig": "self.version"
+            },
+            "require-dev": {
+                "dg/bypass-finals": "^1.9",
+                "doctrine/collections": "^1.8 || ^2.0 || ^3.0",
+                "doctrine/dbal": "^3.5 || ^4.0",
+                "doctrine/mongodb-odm": "^2.4",
+                "doctrine/orm": "^2.14 || ^3.0",
+                "doctrine/phpcr-odm": "^1.7 || ^2.0",
+                "jackalope/jackalope-doctrine-dbal": "^1.9 || ^2.0",
+                "phpstan/extension-installer": "^1.4",
+                "phpstan/phpstan": "2.1.36",
+                "phpstan/phpstan-phpunit": "2.0.11",
+                "phpunit/phpunit": "10.5.60",
+                "rector/rector": "2.3.4",
+                "ruflin/elastica": "^7.3 || ^8.0",
+                "solarium/solarium": "^6.2",
+                "symfony/cache": "^5.4 || ^6.4 || ^7.3 || ^8.0",
+                "twig/twig": "^2.13 || ^3.0"
+            },
+            "suggest": {
+                "twig/twig": "To integrate Pagerfanta with Twig"
+            },
+            "type": "library",
+            "autoload": {
+                "psr-4": {
+                    "Pagerfanta\\": "lib/Core/",
+                    "Pagerfanta\\Twig\\": "lib/Twig/",
+                    "Pagerfanta\\Elastica\\": "lib/Adapter/Elastica/",
+                    "Pagerfanta\\Solarium\\": "lib/Adapter/Solarium/",
+                    "Pagerfanta\\Doctrine\\ORM\\": "lib/Adapter/Doctrine/ORM/",
+                    "Pagerfanta\\Doctrine\\DBAL\\": "lib/Adapter/Doctrine/DBAL/",
+                    "Pagerfanta\\Doctrine\\PHPCRODM\\": "lib/Adapter/Doctrine/PHPCRODM/",
+                    "Pagerfanta\\Doctrine\\MongoDBODM\\": "lib/Adapter/Doctrine/MongoDBODM/",
+                    "Pagerfanta\\Doctrine\\Collections\\": "lib/Adapter/Doctrine/Collections/"
+                },
+                "exclude-from-classmap": [
+                    "lib/**/Tests/"
+                ]
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "description": "Pagination for PHP",
+            "keywords": [
+                "page",
+                "pagination",
+                "paginator",
+                "paging"
+            ],
+            "support": {
+                "issues": "https://github.com/BabDev/Pagerfanta/issues",
+                "source": "https://github.com/BabDev/Pagerfanta/tree/v4.8.0"
+            },
+            "funding": [
+                {
+                    "url": "https://github.com/mbabker",
+                    "type": "github"
+                }
+            ],
+            "time": "2026-01-22T13:58:52+00:00"
+        },
+        {
             "name": "paragonie/constant_time_encoding",
             "version": "v3.1.3",
             "source": {
@@ -2067,6 +2168,184 @@
                 }
             ],
             "time": "2023-12-12T12:06:11+00:00"
+        },
+        {
+            "name": "sidus/admin-bundle",
+            "version": "v5.0.6",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/VincentChalnot/SidusAdminBundle.git",
+                "reference": "b44035d18557f2270532ce92716dca13e5fc83b6"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/VincentChalnot/SidusAdminBundle/zipball/b44035d18557f2270532ce92716dca13e5fc83b6",
+                "reference": "b44035d18557f2270532ce92716dca13e5fc83b6",
+                "shasum": ""
+            },
+            "require": {
+                "php": ">=8.1",
+                "sidus/datagrid-bundle": "~4.0",
+                "symfony/event-dispatcher": ">=6.3",
+                "symfony/form": ">=6.3",
+                "symfony/http-foundation": ">=6.3",
+                "symfony/http-kernel": ">=6.3",
+                "symfony/routing": ">=6.3",
+                "symfony/security-core": ">=6.3",
+                "symfony/translation-contracts": ">=3.0",
+                "symfony/yaml": ">=6.3",
+                "twig/twig": ">=3.0"
+            },
+            "type": "library",
+            "autoload": {
+                "psr-4": {
+                    "Sidus\\AdminBundle\\": ""
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Vincent Chalnot",
+                    "homepage": "https://github.com/VincentChalnot",
+                    "role": "Developer"
+                }
+            ],
+            "description": "Simple and extendable action-based admin management with built-in routing generation",
+            "homepage": "https://github.com/VincentChalnot/SidusAdminBundle",
+            "keywords": [
+                "action",
+                "admin"
+            ],
+            "support": {
+                "issues": "https://github.com/VincentChalnot/SidusAdminBundle/issues",
+                "source": "https://github.com/VincentChalnot/SidusAdminBundle/tree/v5.0.6"
+            },
+            "time": "2026-07-21T20:42:36+00:00"
+        },
+        {
+            "name": "sidus/datagrid-bundle",
+            "version": "v4.0.2",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/VincentChalnot/SidusDataGridBundle.git",
+                "reference": "18d9b463e9c6dbfa15a83cb19bb551b585ae8a99"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/VincentChalnot/SidusDataGridBundle/zipball/18d9b463e9c6dbfa15a83cb19bb551b585ae8a99",
+                "reference": "18d9b463e9c6dbfa15a83cb19bb551b585ae8a99",
+                "shasum": ""
+            },
+            "require": {
+                "php": ">=8.1",
+                "sidus/filter-bundle": ">=4.0",
+                "symfony/config": ">=6.3",
+                "symfony/dependency-injection": ">=6.3",
+                "symfony/form": ">=6.3",
+                "symfony/http-foundation": ">=6.3",
+                "symfony/options-resolver": ">=6.3",
+                "symfony/property-access": ">=6.3",
+                "symfony/routing": ">=6.3",
+                "symfony/translation": ">=6.3",
+                "twig/twig": ">=3.0"
+            },
+            "type": "library",
+            "autoload": {
+                "psr-4": {
+                    "Sidus\\DataGridBundle\\": ""
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Vincent Chalnot",
+                    "homepage": "https://github.com/VincentChalnot",
+                    "role": "Developer"
+                }
+            ],
+            "description": "Extension for sidus/filter-bundle to easily build a full datagrid based on yml configuration",
+            "homepage": "https://github.com/VincentChalnot/SidusDataGridBundle",
+            "keywords": [
+                "datagrid",
+                "sort"
+            ],
+            "support": {
+                "issues": "https://github.com/VincentChalnot/SidusDataGridBundle/issues",
+                "source": "https://github.com/VincentChalnot/SidusDataGridBundle/tree/v4.0.2"
+            },
+            "time": "2026-07-21T20:36:58+00:00"
+        },
+        {
+            "name": "sidus/filter-bundle",
+            "version": "v6.0.3",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/VincentChalnot/SidusFilterBundle.git",
+                "reference": "891b999b67e29117693113658110e49533dc68ef"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/VincentChalnot/SidusFilterBundle/zipball/891b999b67e29117693113658110e49533dc68ef",
+                "reference": "891b999b67e29117693113658110e49533dc68ef",
+                "shasum": ""
+            },
+            "require": {
+                "doctrine/dbal": ">=3.0",
+                "doctrine/orm": ">=2.14",
+                "pagerfanta/pagerfanta": ">=2.7",
+                "php": ">=8.1",
+                "symfony/dependency-injection": ">=6.3",
+                "symfony/form": ">=6.3",
+                "symfony/http-foundation": ">=6.3",
+                "symfony/options-resolver": ">=6.3",
+                "symfony/property-access": ">=6.3"
+            },
+            "suggest": {
+                "doctrine/doctrine-bundle": "Without Doctrine ORM, this bundle won't do anything out of the box"
+            },
+            "type": "library",
+            "autoload": {
+                "psr-4": {
+                    "Sidus\\FilterBundle\\": ""
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Vincent Chalnot",
+                    "email": "vincent@sidus.fr",
+                    "homepage": "https://sidus.fr",
+                    "role": "Developer"
+                },
+                {
+                    "name": "Madeline Veyrenc",
+                    "email": "mveyrenc@clever-age.com",
+                    "homepage": "https://github.com/mveyrenc",
+                    "role": "Developer"
+                }
+            ],
+            "description": "Simple yml-configuration-based filtering with Doctrine ORM abstraction",
+            "homepage": "https://github.com/VincentChalnot/SidusFilterBundle",
+            "keywords": [
+                "datagrid",
+                "doctrine",
+                "filter",
+                "sort"
+            ],
+            "support": {
+                "issues": "https://github.com/VincentChalnot/SidusFilterBundle/issues",
+                "source": "https://github.com/VincentChalnot/SidusFilterBundle/tree/v6.0.3"
+            },
+            "time": "2026-07-21T20:41:55+00:00"
         },
         {
             "name": "sidus/template-bundle",
@@ -6436,6 +6715,106 @@
                 }
             ],
             "time": "2026-05-23T15:23:29+00:00"
+        },
+        {
+            "name": "symfony/translation",
+            "version": "v7.4.14",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/symfony/translation.git",
+                "reference": "a1af4dacb24eb7ef4f1ca71b94da8ddbce572281"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/symfony/translation/zipball/a1af4dacb24eb7ef4f1ca71b94da8ddbce572281",
+                "reference": "a1af4dacb24eb7ef4f1ca71b94da8ddbce572281",
+                "shasum": ""
+            },
+            "require": {
+                "php": ">=8.2",
+                "symfony/deprecation-contracts": "^2.5|^3",
+                "symfony/polyfill-mbstring": "~1.0",
+                "symfony/translation-contracts": "^2.5.3|^3.3"
+            },
+            "conflict": {
+                "nikic/php-parser": "<5.0",
+                "symfony/config": "<6.4",
+                "symfony/console": "<6.4",
+                "symfony/dependency-injection": "<6.4",
+                "symfony/http-client-contracts": "<2.5",
+                "symfony/http-kernel": "<6.4",
+                "symfony/service-contracts": "<2.5",
+                "symfony/twig-bundle": "<6.4",
+                "symfony/yaml": "<6.4"
+            },
+            "provide": {
+                "symfony/translation-implementation": "2.3|3.0"
+            },
+            "require-dev": {
+                "nikic/php-parser": "^5.0",
+                "psr/log": "^1|^2|^3",
+                "symfony/config": "^6.4|^7.0|^8.0",
+                "symfony/console": "^6.4|^7.0|^8.0",
+                "symfony/dependency-injection": "^6.4|^7.0|^8.0",
+                "symfony/finder": "^6.4|^7.0|^8.0",
+                "symfony/http-client-contracts": "^2.5|^3.0",
+                "symfony/http-kernel": "^6.4|^7.0|^8.0",
+                "symfony/intl": "^6.4|^7.0|^8.0",
+                "symfony/polyfill-intl-icu": "^1.21",
+                "symfony/routing": "^6.4|^7.0|^8.0",
+                "symfony/service-contracts": "^2.5|^3",
+                "symfony/yaml": "^6.4|^7.0|^8.0"
+            },
+            "type": "library",
+            "autoload": {
+                "files": [
+                    "Resources/functions.php"
+                ],
+                "psr-4": {
+                    "Symfony\\Component\\Translation\\": ""
+                },
+                "exclude-from-classmap": [
+                    "/Tests/"
+                ]
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Fabien Potencier",
+                    "email": "fabien@symfony.com"
+                },
+                {
+                    "name": "Symfony Community",
+                    "homepage": "https://symfony.com/contributors"
+                }
+            ],
+            "description": "Provides tools to internationalize your application",
+            "homepage": "https://symfony.com",
+            "support": {
+                "source": "https://github.com/symfony/translation/tree/v7.4.14"
+            },
+            "funding": [
+                {
+                    "url": "https://symfony.com/sponsor",
+                    "type": "custom"
+                },
+                {
+                    "url": "https://github.com/fabpot",
+                    "type": "github"
+                },
+                {
+                    "url": "https://github.com/nicolas-grekas",
+                    "type": "github"
+                },
+                {
+                    "url": "https://tidelift.com/funding/github/packagist/symfony/symfony",
+                    "type": "tidelift"
+                }
+            ],
+            "time": "2026-06-06T09:33:19+00:00"
         },
         {
             "name": "symfony/translation-contracts",

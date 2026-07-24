@@ -1,0 +1,4 @@
+{% set value = column.renderValue(result) %}
+<a href="{{ entity_path(result, 'edit') }}" class="has-text-weight-semibold">
+    {{ value|length > 80 ? value|slice(0, 80) ~ '…' : value }}
+</a>

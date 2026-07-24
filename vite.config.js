@@ -47,7 +47,8 @@ export default defineConfig({
         rollupOptions: {
             input: {
                 app: "./assets/app.js",
-                play: "./assets/typescript/src/app.ts"
+                play: "./assets/typescript/src/app.ts",
+                admin: "./assets/typescript/src/admin.ts",
             },
         },
     },

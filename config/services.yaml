@@ -32,5 +32,27 @@ services:
         arguments:
             $contactLimiterFactory: '@limiter.contact_limiter'
 
+    # sidus/datagrid-bundle's DataGridRegistry and sidus/filter-bundle's
+    # QueryHandlerRegistry memoize built objects per-code and never rebuild
+    # them, which leaks stale state across requests under this platform's
+    # persistent FrankenPHP worker mode (see ResettableDataGridRegistry
+    # docblock). Decorate them (not a same-ID class override — the bundles'
+    # own Resources/config/services.yaml PSR-4-glob and unconditionally
+    # re-register the vanilla class under that same ID during their own
+    # extension load, which would silently clobber a same-ID override
+    # depending on load order) with worker-safe wrappers that reset via
+    # Symfony's kernel.reset mechanism.
+    App\Service\Admin\ResettableDataGridRegistry:
+        decorates: Sidus\DataGridBundle\Registry\DataGridRegistry
+        arguments: ['@.inner']
+        tags:
+            - { name: 'kernel.reset', method: 'reset' }
+
+    App\Service\Admin\ResettableQueryHandlerRegistry:
+        decorates: Sidus\FilterBundle\Registry\QueryHandlerRegistry
+        arguments: ['@.inner']
+        tags:
+            - { name: 'kernel.reset', method: 'reset' }
+
     # add more service definitions when explicit configuration is needed
     # please note that last definitions always *replace* previous ones

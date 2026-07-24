@@ -31,6 +31,9 @@ class Feedback
     #[ORM\JoinColumn(nullable: false)]
     private User $user;
 
+    #[ORM\Column(type: Types::BOOLEAN)]
+    private bool $reviewed = false;
+
     public function __construct(FeedbackCategory $category, string $message, User $user)
     {
         $this->id = Uuid::v4();
@@ -63,5 +66,15 @@ class Feedback
     public function getUser(): User
     {
         return $this->user;
+    }
+
+    public function isReviewed(): bool
+    {
+        return $this->reviewed;
+    }
+
+    public function setReviewed(bool $reviewed): void
+    {
+        $this->reviewed = $reviewed;
     }
 }

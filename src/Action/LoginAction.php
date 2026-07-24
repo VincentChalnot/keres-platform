@@ -13,6 +13,7 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\Attribute\AsController;
 use Symfony\Component\Routing\Attribute\Route;
+use Symfony\Component\Security\Http\Authentication\AuthenticationUtils;
 
 #[AsController]
 class LoginAction extends AbstractController
@@ -20,6 +21,7 @@ class LoginAction extends AbstractController
     public function __construct(
         private readonly OidcClientLocator $oidcClientLocator,
         private readonly OidcUserProvider $oidcUserProvider,
+        private readonly AuthenticationUtils $authenticationUtils,
     ) {
     }
 
@@ -30,10 +32,13 @@ class LoginAction extends AbstractController
             return $this->redirectToRoute('new_game');
         }
 
-        return $this->render('security/login.html.twig');
+        return $this->render('security/login.html.twig', [
+            'last_username' => $this->authenticationUtils->getLastUsername(),
+            'error' => $this->authenticationUtils->getLastAuthenticationError(),
+        ]);
     }
 
-    #[Route(path: '/login/{provider}', name: 'oidc_login', methods: ['GET'])]
+    #[Route(path: '/login/{provider}', name: 'oidc_login', methods: ['GET'], requirements: ['provider' => 'google|discord|facebook'])]
     public function oidcLogin(string $provider, Request $request): RedirectResponse
     {
         $validProviders = ['google', 'discord', 'facebook'];
@@ -61,6 +66,13 @@ class LoginAction extends AbstractController
     {
         // This route is handled by the Drenso OIDC authenticator
         throw new \LogicException('This should be handled by the OIDC authenticator.');
+    }
+
+    #[Route(path: '/login_check', name: 'login_check', methods: ['POST'])]
+    public function checkPassword(): never
+    {
+        // This route is handled by the form_login authenticator.
+        throw new \LogicException('This should be handled by the form_login authenticator.');
     }
 
     #[Route(path: '/logout', name: 'logout', methods: ['GET'])]

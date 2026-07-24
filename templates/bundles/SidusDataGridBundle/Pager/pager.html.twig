@@ -1,0 +1,36 @@
+{# Bulma-flavoured replacement for Sidus\DataGridBundle's bundled pager template. #}
+{% apply spaceless %}
+    {# @var pager \Pagerfanta\Pagerfanta #}
+    <nav class="pagination" role="navigation" aria-label="pagination">
+        {% if pager.hasPreviousPage() %}
+            <a class="pagination-previous" href="{{ page_path(pager.previousPage) }}">Previous</a>
+        {% else %}
+            <a class="pagination-previous" disabled>Previous</a>
+        {% endif %}
+
+        {% if pager.hasNextPage() %}
+            <a class="pagination-next" href="{{ page_path(pager.nextPage) }}">Next</a>
+        {% else %}
+            <a class="pagination-next" disabled>Next</a>
+        {% endif %}
+
+        {% if pager.nbPages > 1 %}
+            <ul class="pagination-list">
+                {% include '@SidusDataGrid/Pager/pager.page.html.twig' with {page: 1} %}
+
+                {% if pager.currentPage > 5 %}
+                    <li><span class="pagination-ellipsis">&hellip;</span></li>
+                {% endif %}
+                {% if pager.nbPages > 2 %}
+                    {% for page in range(max(2, pager.currentPage - 3), min(pager.currentPage + 3, pager.nbPages - 1)) %}
+                        {% include '@SidusDataGrid/Pager/pager.page.html.twig' %}
+                    {% endfor %}
+                {% endif %}
+                {% if pager.currentPage <= (pager.nbPages - 5) %}
+                    <li><span class="pagination-ellipsis">&hellip;</span></li>
+                {% endif %}
+                {% include '@SidusDataGrid/Pager/pager.page.html.twig' with {page: pager.nbPages} %}
+            </ul>
+        {% endif %}
+    </nav>
+{% endapply %}

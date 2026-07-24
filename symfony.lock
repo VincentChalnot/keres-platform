@@ -77,6 +77,15 @@
             "ref": "3a6673f248f8fc1dd364dadfef4c5b381d1efab6"
         }
     },
+    "sidus/admin-bundle": {
+        "version": "v5.0.6"
+    },
+    "sidus/datagrid-bundle": {
+        "version": "v4.0.2"
+    },
+    "sidus/filter-bundle": {
+        "version": "v6.0.3"
+    },
     "sidus/template-bundle": {
         "version": "1.0.0"
     },
@@ -209,6 +218,19 @@
         "files": [
             "config/packages/security.yaml",
             "config/routes/security.yaml"
+        ]
+    },
+    "symfony/translation": {
+        "version": "7.4",
+        "recipe": {
+            "repo": "github.com/symfony/recipes",
+            "branch": "main",
+            "version": "6.3",
+            "ref": "620a1b84865ceb2ba304c8f8bf2a185fbf32a843"
+        },
+        "files": [
+            "config/packages/translation.yaml",
+            "translations/.gitignore"
         ]
     },
     "symfony/twig-bundle": {

@@ -32,6 +32,38 @@
                             </a>#}
                         </div>
 
+                        <hr>
+                        <p class="subtitle">Login with email &amp; password</p>
+                        {% if error %}
+                            <div class="notification is-danger">{{ error.messageKey|trans(error.messageData, 'security') }}</div>
+                        {% endif %}
+                        <form method="post" action="{{ path('login_check') }}">
+                            <div class="field">
+                                <label class="label">Email</label>
+                                <div class="control">
+                                    <input type="email" name="_username" class="input" value="{{ last_username }}" required autocapitalize="off" autocorrect="off">
+                                </div>
+                            </div>
+                            <div class="field">
+                                <label class="label">Password</label>
+                                <div class="control">
+                                    <input type="password" name="_password" class="input" required>
+                                </div>
+                            </div>
+                            <input type="hidden" name="_csrf_token" value="{{ csrf_token('authenticate') }}">
+                            <div class="field is-grouped is-grouped-multiline is-justify-content-space-between">
+                                <div class="control">
+                                    <button type="submit" class="button is-primary is-rounded">Login</button>
+                                </div>
+                                <div class="control">
+                                    <a href="{{ path('lost_password') }}">Forgot your password?</a>
+                                </div>
+                            </div>
+                        </form>
+                        <p class="mt-3">
+                            No account yet? <a href="{{ path('register') }}">Create one</a>.
+                        </p>
+
                         {% if app.environment == 'dev' %}
                             <hr>
                             <p class="subtitle">Dev login (bypasses OIDC)</p>

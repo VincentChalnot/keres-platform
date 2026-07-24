@@ -1,0 +1,83 @@
+{# Bulma-flavoured replacement for Sidus\DataGridBundle's bundled "bootstrap4" form theme.
+   Kept under the original "bootstrap4.html.twig" filename on purpose: it's the template
+   logical name referenced by config/packages/twig.yaml and by SidusDataGridBundle's own
+   Configuration (default_datagrid_template/form theme chaining) — Symfony's bundle template
+   override mechanism (templates/bundles/<Bundle>/...) resolves this file instead of the
+   vendored one, with zero changes required in the bundle itself. #}
+{% use '@SidusFilter/Form/fields.html.twig' %}
+
+{% block sidus_combo_filter_widget %}
+    <div class="field has-addons">
+        <div class="control">{{ form_widget(form.input) }}</div>
+        <div class="control">{{ form_widget(form.option) }}</div>
+    </div>
+{% endblock %}
+
+{% block sidus_order_button_widget %}
+    {% apply spaceless %}
+        {% set attr = attr|merge({class: (attr.class|default('') ~ ' button is-ghost is-fullwidth has-text-weight-semibold is-justify-content-flex-start')|trim}) %}
+        <button {{ block('widget_container_attributes') }} name="{{ form.vars.full_name }}">
+            {{ arrow|raw }}&nbsp;{{ label|raw }}
+        </button>
+    {% endapply %}
+{% endblock %}
+
+{% block sidus_date_range_widget %}
+    {% apply spaceless %}
+        <div {{ block('widget_container_attributes') }}>
+            {% if form.parent is empty %}
+                {{ block('global_form_errors') }}
+            {% endif %}
+            <div class="field has-addons">
+                <div class="control">{{ form_widget(form.startDate) }}</div>
+                <div class="control">
+                    <a class="button is-static">{{ 'sidus.filter.date_range.to'|trans }}</a>
+                </div>
+                <div class="control">{{ form_widget(form.endDate) }}</div>
+            </div>
+            {{ form_errors(form.startDate) }}
+            {{ form_errors(form.endDate) }}
+            {{ form_rest(form) }}
+        </div>
+    {% endapply %}
+{% endblock %}
+
+{% block sidus_link_widget %}
+    {% apply spaceless %}
+        {% if label is empty %}
+            {%- if label_format is defined and label_format is not empty -%}
+                {% set label = label_format|replace({
+                    '%name%': name,
+                    '%id%': id,
+                }) %}
+            {%- else -%}
+                {% set label = name|humanize %}
+            {%- endif -%}
+        {% endif %}
+        {% if not uri %}
+            {% set uri = path(route, route_parameters) %}
+        {% endif %}
+        {# The form type defaults attr.class to bootstrap "btn btn-default btn-light";
+           translate the well-known bootstrap button classes it may carry to Bulma. #}
+        {% set classes = attr.class|default('btn-light') %}
+        {% set classes = classes|replace({
+            'btn-default': 'is-light',
+            'btn-light': 'is-light',
+            'btn-primary': 'is-primary',
+            'btn-danger': 'is-danger',
+            'btn-info': 'is-info',
+            'btn-success': 'is-success',
+            'btn-secondary': 'is-light',
+            'btn ': '',
+            'btn': '',
+        })|trim %}
+        {% set attr = attr|merge({class: ('button ' ~ classes)|trim}) %}
+        <a href="{{ uri }}" {{ block('button_attributes') }}>
+            {{ label|trans({}, translation_domain)|raw }}
+        </a>
+    {% endapply %}
+{% endblock %}
+
+{% block sidus_link_row %}
+    {{ block('sidus_link_widget') }}
+{% endblock %}

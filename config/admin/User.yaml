@@ -1,0 +1,21 @@
+sidus_admin:
+    configurations:
+        User:
+            entity: App\Entity\User
+            controller_pattern:
+                - 'Sidus\AdminBundle\Action\{{Action}}Action'
+            template_pattern:
+                - 'admin/actions/{{action}}.{{format}}.twig'
+                - '@SidusAdmin/Action/{{action}}.{{format}}.twig'
+            prefix: /admin/users
+            actions:
+                list:
+                    path: /
+                    defaults:
+                        _controller: App\Action\Admin\UserListAction
+                read:
+                    path: /read/{id}
+                    defaults:
+                        _controller: App\Action\Admin\UserReadAction
+            options:
+                icon: users

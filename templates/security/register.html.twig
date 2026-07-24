@@ -1,0 +1,26 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Create account{% endblock %}
+
+{% block body %}
+    <section class="section">
+        <div class="container">
+            <div class="columns is-centered">
+                <div class="column is-half">
+                    <div class="box">
+                        <h3 class="title">Create account</h3>
+                        <p class="subtitle">Sign up with email &amp; password</p>
+
+                        {{ form_start(form) }}
+                            {{ form_widget(form) }}
+                        {{ form_end(form) }}
+
+                        <p class="mt-3">
+                            Already have an account? <a href="{{ path('login') }}">Log in</a>.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+{% endblock %}

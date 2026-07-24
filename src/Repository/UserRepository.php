@@ -37,4 +37,15 @@ class UserRepository extends ServiceEntityRepository
             ->getQuery()
             ->getOneOrNullResult();
     }
+
+    public function findByValidResetTokenHash(string $tokenHash): ?User
+    {
+        return $this->createQueryBuilder('u')
+            ->andWhere('u.resetToken = :tokenHash')
+            ->andWhere('u.resetTokenExpiresAt > :now')
+            ->setParameter('tokenHash', $tokenHash)
+            ->setParameter('now', new \DateTimeImmutable())
+            ->getQuery()
+            ->getOneOrNullResult();
+    }
 }

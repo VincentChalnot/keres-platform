@@ -1,0 +1,89 @@
+{% extends 'admin/base.html.twig' %}
+
+{% block admin_title %}User — {{ user.email }}{% endblock %}
+
+{% block container %}
+    <h2 class="title is-4">{{ user.displayName ?? user.email }}</h2>
+    <p class="subtitle is-6">{{ user.email }} — joined {{ user.createdAt|date('Y-m-d H:i') }}</p>
+
+    <div class="columns is-multiline mb-4">
+        <div class="column is-2">
+            <div class="box has-text-centered">
+                <p class="heading">Games</p>
+                <p class="title">{{ stats.gamesCount }}</p>
+            </div>
+        </div>
+        <div class="column is-2">
+            <div class="box has-text-centered">
+                <p class="heading">Wins</p>
+                <p class="title has-text-success">{{ stats.winCount }}</p>
+            </div>
+        </div>
+        <div class="column is-2">
+            <div class="box has-text-centered">
+                <p class="heading">Losses</p>
+                <p class="title has-text-danger">{{ stats.loseCount }}</p>
+            </div>
+        </div>
+        <div class="column is-2">
+            <div class="box has-text-centered">
+                <p class="heading">Draws</p>
+                <p class="title">{{ stats.drawCount }}</p>
+            </div>
+        </div>
+        <div class="column is-4">
+            <div class="box has-text-centered">
+                <p class="heading">Last move</p>
+                <p class="title is-5">{{ stats.lastMoveAt ? stats.lastMoveAt|date('Y-m-d H:i') : '—' }}</p>
+            </div>
+        </div>
+    </div>
+
+    <h3 class="title is-5">Games</h3>
+    <div class="table-container">
+        <table class="table is-fullwidth is-hoverable">
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>Opponent</th>
+                    <th>Result</th>
+                    <th>Moves</th>
+                    <th>Created</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for game in games %}
+                    <tr>
+                        <td>{{ game.id }}</td>
+                        <td>{{ game.opponentType.name|capitalize }}</td>
+                        <td>
+                            {% if not game.gameOver %}
+                                <span class="tag is-info">In progress</span>
+                            {% elseif game.draw %}
+                                <span class="tag is-light">Draw</span>
+                            {% elseif game.whiteWins == game.white %}
+                                <span class="tag is-success">Win</span>
+                            {% else %}
+                                <span class="tag is-danger">Loss</span>
+                            {% endif %}
+                        </td>
+                        <td>{{ game.gameMoves|length }}</td>
+                        <td>{{ game.createdAt|date('Y-m-d H:i') }}</td>
+                    </tr>
+                {% else %}
+                    <tr>
+                        <td colspan="5">
+                            <div class="notification is-light has-text-centered has-text-grey m-4">
+                                No games yet
+                            </div>
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <a href="{{ admin_path('User', 'list') }}" class="button is-light mt-4">
+        &larr; Back to users
+    </a>
+{% endblock %}

@@ -1,0 +1,10 @@
+{% set category = column.renderValue(result) %}
+{% set categoryColors = {
+    bug: 'danger',
+    suggestion: 'info',
+    gameplay: 'primary',
+    other: 'light',
+} %}
+<span class="tag is-{{ categoryColors[category]|default('light') }}">
+    {{ category }}
+</span>
