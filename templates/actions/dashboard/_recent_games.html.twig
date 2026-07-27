@@ -4,7 +4,8 @@
         {# @var game \App\Entity\Game #}
         <div class="dashboard-widget__row mb-3">
             <a href="{{ path('play', {uuid: game.uuid}) }}" class="button is-rounded is-primary is-small is-pulled-right">Resume</a>
-            <p><strong>{{ game.white ? 'White' : 'Black' }}</strong> &middot; Next: {{ game.whiteTurn ? 'White' : 'Black' }}</p>
+            {% set myColors = game.getColorsForUser(app.user) %}
+            <p><strong>{{ myColors[0] is defined and myColors[0].name == 'WHITE' ? 'White' : 'Black' }}</strong> &middot; Next: {{ game.whiteTurn ? 'White' : 'Black' }}</p>
             {% if game.lastMoveAt %}
                 <p class="has-text-grey">Last move: {{ game.lastMoveAt|date('Y-m-d H:i') }}</p>
             {% else %}

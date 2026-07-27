@@ -15,8 +15,6 @@ use Symfony\Component\Form\Extension\Core\Type\TextType;
 use Symfony\Component\Form\FormBuilderInterface;
 use Symfony\Component\OptionsResolver\OptionsResolver;
 use Symfony\Component\Validator\Constraints\Length;
-use Symfony\Component\Validator\Constraints\NotBlank;
-use Symfony\Component\Validator\Constraints\Regex;
 
 class UserPreferencesType extends AbstractType
 {
@@ -29,18 +27,6 @@ class UserPreferencesType extends AbstractType
                 'disabled' => true,
                 'data' => $options['email'],
                 'required' => false,
-            ])
-            ->add('identifier', TextType::class, [
-                'label' => 'Identifier',
-                'help' => 'Your unique public identifier. Letters, numbers, underscores and hyphens only.',
-                'constraints' => [
-                    new NotBlank(message: 'Please choose an identifier.'),
-                    new Length(min: 3, max: 32, minMessage: 'Your identifier must be at least {{ limit }} characters.'),
-                    new Regex(
-                        pattern: '/^[a-zA-Z0-9_-]+$/',
-                        message: 'Your identifier may only contain letters, numbers, underscores and hyphens.',
-                    ),
-                ],
             ])
             ->add('firstName', TextType::class, [
                 'label' => 'First name',

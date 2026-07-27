@@ -7,7 +7,6 @@ namespace App\Entity;
 use App\Repository\UserPreferencesRepository;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
-use Symfony\Bridge\Doctrine\Validator\Constraints\UniqueEntity;
 use Symfony\Component\Uid\Uuid;
 
 /**
@@ -16,7 +15,6 @@ use Symfony\Component\Uid\Uuid;
  */
 #[ORM\Entity(repositoryClass: UserPreferencesRepository::class)]
 #[ORM\Table(name: 'user_preferences')]
-#[UniqueEntity(fields: ['identifier'], message: 'This identifier is already taken.')]
 class UserPreferences
 {
     #[ORM\Id]
@@ -26,9 +24,6 @@ class UserPreferences
     #[ORM\OneToOne(targetEntity: User::class)]
     #[ORM\JoinColumn(name: 'user_id', referencedColumnName: 'id', nullable: false, unique: true)]
     private User $user;
-
-    #[ORM\Column(type: Types::STRING, length: 32, unique: true, nullable: true)]
-    private ?string $identifier = null;
 
     #[ORM\Column(type: Types::STRING, length: 255, nullable: true)]
     private ?string $firstName = null;
@@ -79,21 +74,6 @@ class UserPreferences
     public function getUser(): User
     {
         return $this->user;
-    }
-
-    public function getIdentifier(): ?string
-    {
-        return $this->identifier;
-    }
-
-    public function setIdentifier(?string $identifier): void
-    {
-        $this->identifier = $identifier;
-    }
-
-    public function hasIdentifier(): bool
-    {
-        return null !== $this->identifier && '' !== $this->identifier;
     }
 
     public function getFirstName(): ?string

@@ -37,7 +37,7 @@ security:
         - { path: ^/play, roles: ROLE_USER }
         - { path: ^/feedback, roles: ROLE_USER }
         - { path: ^/preferences, roles: ROLE_USER }
-        - { path: ^/$, roles: ROLE_USER }
+        - { path: ^/dashboard, roles: ROLE_USER }
 
 when@test:
     security:

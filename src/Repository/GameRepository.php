@@ -89,57 +89,63 @@ class GameRepository extends ServiceEntityRepository
     /**
      * @return Game[]
      */
-    public function findRecentInProgressByOwner(User $owner, int $limit = 5): array
+    public function findRecentInProgressForUser(User $user, int $limit = 5): array
     {
         return $this->createQueryBuilder('g')
+            ->join('g.players', 'p')
+            ->andWhere('p.user = :user')
+            ->andWhere('p.hiddenAt IS NULL')
             ->andWhere('g.deletedAt IS NULL')
-            ->andWhere('g.owner = :owner')
             ->andWhere('g.gameOverAt IS NULL')
-            ->setParameter('owner', $owner)
+            ->setParameter('user', $user)
             ->orderBy('g.createdAt', 'DESC')
             ->setMaxResults($limit)
             ->getQuery()
             ->getResult();
     }
 
-    public function countInProgressByOwner(User $owner): int
+    public function countInProgressForUser(User $user): int
     {
         return (int) $this->createQueryBuilder('g')
-            ->select('COUNT(g.id)')
+            ->select('COUNT(DISTINCT g.id)')
+            ->join('g.players', 'p')
+            ->andWhere('p.user = :user')
+            ->andWhere('p.hiddenAt IS NULL')
             ->andWhere('g.deletedAt IS NULL')
-            ->andWhere('g.owner = :owner')
             ->andWhere('g.gameOverAt IS NULL')
-            ->setParameter('owner', $owner)
+            ->setParameter('user', $user)
             ->getQuery()
             ->getSingleScalarResult();
     }
 
     /**
+     * Win/lose/draw distribution for the user's finished games. Hot-seat
+     * games are excluded from the win/lose split (the user holds both
+     * `GamePlayer` rows, so a naive colour comparison would double-count
+     * every result as both a win and a loss - the same trap documented on
+     * `AdminStatsRepository::getUserStats()`) but still counted as draws
+     * consistently with that method.
+     *
      * @return array{wins: int, losses: int, draws: int}
      */
-    public function getFinishedGameStatsForOwner(User $owner): array
+    public function getFinishedGameStatsForUser(User $user): array
     {
-        $rows = $this->createQueryBuilder('g')
-            ->select('g.isWhite AS isWhite', 'g.whiteWins AS whiteWins', 'g.draw AS draw')
-            ->andWhere('g.deletedAt IS NULL')
-            ->andWhere('g.owner = :owner')
-            ->andWhere('g.gameOverAt IS NOT NULL')
-            ->setParameter('owner', $owner)
-            ->getQuery()
-            ->getArrayResult();
+        $row = $this->getEntityManager()->createQuery(
+            'SELECT
+                SUM(CASE WHEN g.draw = false AND g.opponentTypeValue <> 1
+                    AND ((p.colorValue = 0 AND g.whiteWins = true) OR (p.colorValue = 1 AND g.whiteWins = false)) THEN 1 ELSE 0 END) AS wins,
+                SUM(CASE WHEN g.draw = false AND g.opponentTypeValue <> 1
+                    AND ((p.colorValue = 0 AND g.whiteWins = false) OR (p.colorValue = 1 AND g.whiteWins = true)) THEN 1 ELSE 0 END) AS losses,
+                SUM(CASE WHEN g.draw = true THEN 1 ELSE 0 END) AS draws
+             FROM App\Entity\GamePlayer p
+             JOIN p.game g
+             WHERE p.user = :user AND p.hiddenAt IS NULL AND g.deletedAt IS NULL AND g.gameOverAt IS NOT NULL'
+        )->setParameter('user', $user)->getSingleResult();
 
-        $stats = ['wins' => 0, 'losses' => 0, 'draws' => 0];
-
-        foreach ($rows as $row) {
-            if ($row['draw']) {
-                ++$stats['draws'];
-            } elseif ($row['whiteWins'] === $row['isWhite']) {
-                ++$stats['wins'];
-            } else {
-                ++$stats['losses'];
-            }
-        }
-
-        return $stats;
+        return [
+            'wins' => (int) ($row['wins'] ?? 0),
+            'losses' => (int) ($row['losses'] ?? 0),
+            'draws' => (int) ($row['draws'] ?? 0),
+        ];
     }
 }

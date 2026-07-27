@@ -55,7 +55,6 @@ class PreferencesAction extends AbstractController
         return [
             'form' => $form->createView(),
             'saved' => $request->query->getBoolean('saved'),
-            'identifierRequired' => !$preferences->hasIdentifier(),
         ];
     }
 }

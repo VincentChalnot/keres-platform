@@ -27,13 +27,4 @@ class UserPreferencesRepository extends ServiceEntityRepository
             ->getQuery()
             ->getOneOrNullResult();
     }
-
-    public function findByIdentifier(string $identifier): ?UserPreferences
-    {
-        return $this->createQueryBuilder('p')
-            ->andWhere('p.identifier = :identifier')
-            ->setParameter('identifier', $identifier)
-            ->getQuery()
-            ->getOneOrNullResult();
-    }
 }

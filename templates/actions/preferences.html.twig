@@ -10,12 +10,6 @@
                 <h1 class="title">Your preferences</h1>
                 <p class="subtitle">Manage your profile and how the platform behaves for you.</p>
 
-                {% if identifierRequired %}
-                    <div class="notification is-warning">
-                        <strong>Choose an identifier</strong> to continue using Keres. This is how other players will see you.
-                    </div>
-                {% endif %}
-
                 {% if saved %}
                     <div class="notification is-success">
                         <strong>Preferences saved.</strong>
@@ -29,15 +23,6 @@
                         <div class="control">
                             {{ form_widget(form.email, {attr: {class: 'input'}}) }}
                         </div>
-                    </div>
-
-                    <div class="field">
-                        {{ form_label(form.identifier, null, {label_attr: {class: 'label'}}) }}
-                        <div class="control">
-                            {{ form_widget(form.identifier, {attr: {class: 'input'}}) }}
-                        </div>
-                        {{ form_help(form.identifier) }}
-                        {{ form_errors(form.identifier) }}
                     </div>
 
                     <div class="columns">

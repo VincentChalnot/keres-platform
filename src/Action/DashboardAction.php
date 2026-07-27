@@ -21,7 +21,7 @@ class DashboardAction extends AbstractController
 
     #[IsGranted('ROLE_USER')]
     #[Route(
-        path: '/',
+        path: '/dashboard',
         name: 'dashboard',
         methods: ['GET'],
     )]
@@ -33,12 +33,12 @@ class DashboardAction extends AbstractController
             throw $this->createAccessDeniedException('User is required to view the dashboard');
         }
 
-        $stats = $this->gameRepository->getFinishedGameStatsForOwner($user);
+        $stats = $this->gameRepository->getFinishedGameStatsForUser($user);
         $totalFinished = $stats['wins'] + $stats['losses'] + $stats['draws'];
 
         return [
-            'recentGames' => $this->gameRepository->findRecentInProgressByOwner($user, 5),
-            'inProgressCount' => $this->gameRepository->countInProgressByOwner($user),
+            'recentGames' => $this->gameRepository->findRecentInProgressForUser($user, 5),
+            'inProgressCount' => $this->gameRepository->countInProgressForUser($user),
             'stats' => $stats,
             'totalFinished' => $totalFinished,
             'winRate' => $totalFinished > 0 ? round(($stats['wins'] / $totalFinished) * 100) : null,
