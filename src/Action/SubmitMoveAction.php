@@ -10,8 +10,10 @@ use App\Model\BoardMovesData;
 use App\Model\MoveData;
 use App\Model\OpponentType;
 use App\Repository\GameRepository;
+use App\Security\Voter\GameVoter;
 use Doctrine\DBAL\Exception\RetryableException;
 use Doctrine\ORM\OptimisticLockException;
+use Symfony\Bundle\SecurityBundle\Security;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -28,6 +30,7 @@ readonly class SubmitMoveAction
         private GameRepository $gameRepository,
         private MessageBusInterface $messageBus,
         private GameEngine $gameEngine,
+        private Security $security,
     ) {
     }
 
@@ -44,6 +47,13 @@ readonly class SubmitMoveAction
             return new JsonResponse(
                 ['error' => 'Game not found'],
                 Response::HTTP_NOT_FOUND
+            );
+        }
+
+        if (!$this->security->isGranted(GameVoter::ACCESS, $game)) {
+            return new JsonResponse(
+                ['error' => 'Access denied'],
+                Response::HTTP_FORBIDDEN
             );
         }
 

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Action;
 
 use App\Repository\GameRepository;
+use App\Security\Voter\GameVoter;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Response;
@@ -33,6 +34,8 @@ class DeleteGameAction extends AbstractController
         if (!$game) {
             throw $this->createNotFoundException('Game not found');
         }
+
+        $this->denyAccessUnlessGranted(GameVoter::ACCESS, $game);
 
         $game->setDeletedAt(new \DateTimeImmutable());
         $this->entityManager->persist($game);

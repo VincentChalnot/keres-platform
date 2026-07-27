@@ -66,4 +66,14 @@
 	file_server {
 		hide *.php
 	}
+
+	# If the PHP app itself fails to respond (e.g. the FrankenPHP worker
+	# crashed / exhausted its restart budget), fall back to a static page
+	# instead of a bare connection error. This never engages for ordinary
+	# HTTP error statuses returned by Symfony (404, 500, ...) — those are
+	# normal responses already written by PHP, not routing-level errors.
+	handle_errors 5xx {
+		rewrite /maintenance.html
+		file_server
+	}
 }

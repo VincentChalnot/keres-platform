@@ -7,6 +7,7 @@ namespace App\Action;
 use App\Message\ProcessAiMoveMessage;
 use App\Model\OpponentType;
 use App\Repository\GameRepository;
+use App\Security\Voter\GameVoter;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpKernel\Attribute\AsController;
 use Symfony\Component\Messenger\MessageBusInterface;
@@ -33,6 +34,8 @@ class PlayAction extends AbstractController
         if (!$game) {
             throw $this->createNotFoundException('Game not found');
         }
+
+        $this->denyAccessUnlessGranted(GameVoter::ACCESS, $game);
 
         // AI auto-move trigger logic
         if (

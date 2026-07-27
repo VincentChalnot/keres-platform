@@ -1,0 +1,37 @@
+{% extends 'base.html.twig' %}
+
+{% set error_titles = {
+    403: 'Access Denied',
+    404: 'Page Not Found',
+    500: 'Something Went Wrong',
+    503: 'Service Unavailable',
+} %}
+
+{% set error_messages = {
+    403: "You don't have permission to view this page.",
+    404: "The page you're looking for doesn't exist, or may have been moved.",
+    500: 'An unexpected error occurred on our end. Please try again in a moment.',
+    503: "We're temporarily unable to handle your request. Please try again shortly.",
+}%}
+
+{% set error_title = error_titles[status_code] ?? ('Error ' ~ status_code) %}
+{% set error_message = error_messages[status_code] ?? status_text %}
+
+{% block title %}{{ error_title }} - Keres{% endblock %}
+
+{% block body %}
+    <section class="section error-page">
+        <div class="container has-text-centered error-page__content">
+            <p class="error-page__code">{{ status_code }}</p>
+            <h2>{{ error_title }}</h2>
+            <p class="error-page__message">{{ error_message }}</p>
+            <div class="buttons is-centered">
+                {% if app.user %}
+                    <a href="{{ path('new_game') }}" class="button is-primary is-rounded">Back to your games</a>
+                {% else %}
+                    <a href="{{ static_site_url }}/" class="button is-primary is-rounded">Back to home</a>
+                {% endif %}
+            </div>
+        </div>
+    </section>
+{% endblock %}

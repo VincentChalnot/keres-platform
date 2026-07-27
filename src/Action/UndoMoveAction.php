@@ -7,7 +7,9 @@ namespace App\Action;
 use App\Entity\GameMove;
 use App\Model\OpponentType;
 use App\Repository\GameRepository;
+use App\Security\Voter\GameVoter;
 use Doctrine\ORM\EntityManagerInterface;
+use Symfony\Bundle\SecurityBundle\Security;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\Attribute\AsController;
@@ -20,6 +22,7 @@ readonly class UndoMoveAction
     public function __construct(
         private GameRepository $gameRepository,
         private EntityManagerInterface $entityManager,
+        private Security $security,
     ) {
     }
 
@@ -37,6 +40,13 @@ readonly class UndoMoveAction
                 'success' => false,
                 'error' => 'Game not found',
             ], Response::HTTP_NOT_FOUND);
+        }
+
+        if (!$this->security->isGranted(GameVoter::ACCESS, $game)) {
+            return new JsonResponse([
+                'success' => false,
+                'error' => 'Access denied',
+            ], Response::HTTP_FORBIDDEN);
         }
 
         if ($game->getGameMoves()->isEmpty()) {

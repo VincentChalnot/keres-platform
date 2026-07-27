@@ -220,6 +220,31 @@ li { margin-bottom: 8px; }
     padding: 0 2em;
 }
 
+// ─── Error pages (403 / 404 / 500 …) ───────────────────────────────────────────
+
+.error-page {
+    min-height: 60vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.error-page__content {
+    max-width: 40ch;
+}
+
+.error-page__code {
+    font-family: 'Carolingia', serif;
+    font-size: 5rem;
+    line-height: 1;
+    color: $keres-primary;
+    margin-bottom: 0.2em;
+}
+
+.error-page__message {
+    color: $keres-secondary;
+}
+
 // ─── Sections ─────────────────────────────────────────────────────────────────
 // Bulma's .section handles padding; we add the layout on top.
 
