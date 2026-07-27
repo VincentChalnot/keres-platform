@@ -5,12 +5,15 @@ declare(strict_types=1);
 namespace App\Action;
 
 use App\Engine\GameEngine;
+use App\Entity\User;
 use App\Message\ProcessAiMoveMessage;
-use App\Model\BoardMovesData;
 use App\Model\MoveData;
 use App\Model\OpponentType;
+use App\Model\PieceColor;
 use App\Repository\GameRepository;
 use App\Security\Voter\GameVoter;
+use App\Service\Game\GameStatePayloadBuilder;
+use App\Service\Game\GameUpdatePublisher;
 use Doctrine\DBAL\Exception\RetryableException;
 use Doctrine\ORM\OptimisticLockException;
 use Symfony\Bundle\SecurityBundle\Security;
@@ -31,6 +34,8 @@ readonly class SubmitMoveAction
         private MessageBusInterface $messageBus,
         private GameEngine $gameEngine,
         private Security $security,
+        private GameStatePayloadBuilder $payloadBuilder,
+        private GameUpdatePublisher $publisher,
     ) {
     }
 
@@ -50,7 +55,7 @@ readonly class SubmitMoveAction
             );
         }
 
-        if (!$this->security->isGranted(GameVoter::ACCESS, $game)) {
+        if (!$this->security->isGranted(GameVoter::PARTICIPATE, $game)) {
             return new JsonResponse(
                 ['error' => 'Access denied'],
                 Response::HTTP_FORBIDDEN
@@ -64,9 +69,15 @@ readonly class SubmitMoveAction
             );
         }
 
-        // In AI mode, validate that it's the player's turn
-        if ((OpponentType::AI === $game->getOpponentType()) && $game->isWhiteTurn() !== $game->isWhite()) {
-            // Check if it's the player's turn
+        $user = $this->security->getUser();
+        $sideToMove = $game->isWhiteTurn() ? PieceColor::WHITE : PieceColor::BLACK;
+        $isPlayerTurn = in_array(
+            $sideToMove,
+            $game->getColorsForUser($user instanceof User ? $user : null),
+            true
+        );
+
+        if (!$isPlayerTurn) {
             return new JsonResponse(
                 ['error' => 'Not your turn'],
                 Response::HTTP_BAD_REQUEST
@@ -91,7 +102,11 @@ readonly class SubmitMoveAction
             );
         }
 
-        // For AI mode, return the response and dispatch async message to process AI move
+        $payload = $this->payloadBuilder->build($game, $boardMovesData);
+        $json = $this->payloadBuilder->encode($payload);
+
+        $this->publisher->publishGameState($game->getUuid()->toRfc4122(), $json);
+
         if (!$game->isGameOver() && OpponentType::AI === $game->getOpponentType()) {
             $this->messageBus->dispatch(
                 new ProcessAiMoveMessage(
@@ -101,22 +116,8 @@ readonly class SubmitMoveAction
             );
         }
 
-        return $this->getResponse($boardMovesData);
-    }
-
-    private function getResponse(BoardMovesData $boardMovesData): Response
-    {
-        $boardData = $boardMovesData->boardData;
-
         return new JsonResponse(
-            [
-                'success' => true,
-                'board' => base64_encode($boardData->data),
-                'moves' => base64_encode($boardMovesData->movesData->toBinary()),
-                'gameOver' => $boardData->gameOver,
-                'whiteWins' => $boardData->whiteWins,
-                'draw' => $boardData->draw,
-            ],
+            $payload,
             Response::HTTP_OK,
             [
                 AbstractSessionListener::NO_AUTO_CACHE_CONTROL_HEADER => true,

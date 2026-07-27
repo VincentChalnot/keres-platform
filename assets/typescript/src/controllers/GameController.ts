@@ -5,6 +5,10 @@ import {IBoardView, TileHighlight} from '../views/IBoardView';
 import {Move} from '../models/types';
 import {decodeMoveListFromBase64, posToAlgebraic, encodeBoardToBinary} from '../utils/boardUtils';
 
+export const OPPONENT_TYPE_AI = 0;
+export const OPPONENT_TYPE_HOTSEAT = 1;
+export const OPPONENT_TYPE_MULTIPLAYER = 2;
+
 /**
  * Main game controller - handles game logic and coordinates between model, view, and network
  */
@@ -13,11 +17,15 @@ export class GameController {
     private api: GameAPI;
     private view: IBoardView;
     private mercureClient: MercureClient | null = null;
+    private opponentType: number;
+    private playerWhite: boolean;
 
-    constructor(gameState: GameState, api: GameAPI, view: IBoardView) {
+    constructor(gameState: GameState, api: GameAPI, view: IBoardView, opponentType: number, playerWhite: boolean) {
         this.gameState = gameState;
         this.api = api;
         this.view = view;
+        this.opponentType = opponentType;
+        this.playerWhite = playerWhite;
 
         // Set up view event handlers
         this.view.onTileClick((pos, shiftKey) => this.handleTileClick(pos, shiftKey));
@@ -25,6 +33,21 @@ export class GameController {
         if (this.view.onDragMove) {
             this.view.onDragMove((from, to, shiftKey) => this.handleDragMove(from, to, shiftKey));
         }
+    }
+
+    /**
+     * Derived input-lock predicate (replaces unconditional setBoardLocked(false)).
+     * Locks when the acting user cannot legally submit a move right now.
+     */
+    private computeInputLocked(): boolean {
+        const board = this.gameState.getBoard();
+        if (!board) return true;
+        if (board.isGameOver()) return true;
+        if (this.gameState.getCurrentMoveIndex() < this.gameState.getMoveList().length - 1) return true;
+        if (this.opponentType === OPPONENT_TYPE_HOTSEAT) return false;
+        const sideToMove = board.whiteToMove ? 'white' : 'black';
+        const myColor = this.playerWhite ? 'white' : 'black';
+        return sideToMove !== myColor;
     }
 
     /**
@@ -69,8 +92,8 @@ export class GameController {
             this.gameState.addMove(notation);
         }
 
-        // Unlock board if it was locked waiting for AI
-        this.gameState.setBoardLocked(false);
+        // Unlock board based on derived lock predicate
+        this.gameState.setBoardLocked(this.computeInputLocked());
 
         // Update view
         await this.updatePotentialMoves();
@@ -154,8 +177,8 @@ export class GameController {
                 this.gameState.addMove(notation);
             }
 
-            // Unlock board after successful move
-            this.gameState.setBoardLocked(false);
+            // Unlock board based on derived lock predicate
+            this.gameState.setBoardLocked(this.computeInputLocked());
 
             await this.updatePotentialMoves();
             await this.renderBoard();

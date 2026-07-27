@@ -5,6 +5,7 @@ twig:
         - '@SidusDataGrid/Form/bootstrap4.html.twig'
     globals:
         static_site_url: '%env(STATIC_SITE_URL)%'
+        mercure_cookie_ttl: '%mercure.default_cookie_lifetime%'
 
 when@test:
     twig:

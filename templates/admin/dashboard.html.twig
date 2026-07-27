@@ -64,7 +64,7 @@
                 {% for game in staleGames %}
                     <tr>
                         <td>{{ game.id }}</td>
-                        <td>{{ game.owner ? game.owner.email : '—' }}</td>
+                        <td>{{ game.createdBy.email }}</td>
                         <td>{{ game.opponentType.name|capitalize }}</td>
                         <td>{{ game.gameMoves|length }}</td>
                         <td>{{ game.createdAt|date('Y-m-d H:i') }}</td>

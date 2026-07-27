@@ -1,4 +1,5 @@
 mercure:
+    default_cookie_lifetime: 43200
     hubs:
         default:
             url: '%env(MERCURE_URL)%'
@@ -6,3 +7,4 @@ mercure:
             jwt:
                 secret: '%env(MERCURE_JWT_SECRET)%'
                 publish: '*'
+                subscribe: []

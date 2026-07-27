@@ -4,8 +4,10 @@ declare(strict_types=1);
 
 namespace App\Action;
 
+use App\Entity\User;
 use App\Message\ProcessAiMoveMessage;
 use App\Model\OpponentType;
+use App\Model\PieceColor;
 use App\Repository\GameRepository;
 use App\Security\Voter\GameVoter;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -19,7 +21,7 @@ class PlayAction extends AbstractController
 {
     public function __construct(
         private readonly GameRepository $gameRepository,
-        private readonly MessageBusInterface $messageBus, // Inject message bus
+        private readonly MessageBusInterface $messageBus,
     ) {
     }
 
@@ -29,19 +31,23 @@ class PlayAction extends AbstractController
     )]
     public function __(string $uuid): array
     {
-        $game = $this->gameRepository->findByUuid(Uuid::fromString($uuid));
+        $game = $this->gameRepository->findForPlay(Uuid::fromString($uuid));
 
         if (!$game) {
             throw $this->createNotFoundException('Game not found');
         }
 
-        $this->denyAccessUnlessGranted(GameVoter::ACCESS, $game);
+        $this->denyAccessUnlessGranted(GameVoter::VIEW, $game);
+
+        $user = $this->getUser();
+        $colors = $game->getColorsForUser($user instanceof User ? $user : null);
+        $playerColor = $colors[0] ?? PieceColor::WHITE;
 
         // AI auto-move trigger logic
         if (
             OpponentType::AI === $game->getOpponentType()
             && !$game->isGameOver()
-            && $game->isWhiteTurn() !== $game->isWhite() // It's AI's turn
+            && $game->isWhiteTurn() !== (PieceColor::WHITE === $playerColor)
         ) {
             $this->messageBus->dispatch(
                 new ProcessAiMoveMessage(
@@ -51,13 +57,13 @@ class PlayAction extends AbstractController
             );
         }
 
-        // Encode moves to base64
         $movesData = $game->getMovesData();
         $movesBase64 = base64_encode($movesData->toBinary());
 
         return [
             'game' => $game,
             'moves' => $movesBase64,
+            'playerWhite' => PieceColor::WHITE === $playerColor,
         ];
     }
 }

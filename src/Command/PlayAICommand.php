@@ -6,7 +6,8 @@ namespace App\Command;
 
 use App\Engine\GameEngine;
 use App\Repository\GameRepository;
-use App\Service\GameUpdatePublisher;
+use App\Service\Game\GameStatePayloadBuilder;
+use App\Service\Game\GameUpdatePublisher;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputArgument;
@@ -21,6 +22,7 @@ class PlayAICommand extends Command
         private readonly GameRepository $gameRepository,
         private readonly GameEngine $gameEngine,
         private readonly GameUpdatePublisher $gameUpdatePublisher,
+        private readonly GameStatePayloadBuilder $payloadBuilder,
         ?string $name = null,
     ) {
         parent::__construct($name);
@@ -45,7 +47,9 @@ class PlayAICommand extends Command
 
         $boardMovesData = $this->gameEngine->aiMove($game);
 
-        $this->gameUpdatePublisher->publishGameUpdate($game->getUuid()->toRfc4122(), $boardMovesData);
+        $payload = $this->payloadBuilder->build($game, $boardMovesData);
+        $json = $this->payloadBuilder->encode($payload);
+        $this->gameUpdatePublisher->publishGameState($game->getUuid()->toRfc4122(), $json);
 
         return 0;
     }

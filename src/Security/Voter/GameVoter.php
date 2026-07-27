@@ -6,33 +6,32 @@ namespace App\Security\Voter;
 
 use App\Entity\Game;
 use App\Entity\User;
+use App\Model\OpponentType;
 use Symfony\Component\Security\Core\Authentication\Token\TokenInterface;
 use Symfony\Component\Security\Core\Authorization\Voter\Voter;
 
-/**
- * Restricts access to a Game to its owner.
- *
- * A Game currently has a single owner: HOTSEAT games are played by that
- * owner against themselves on one device, AI games against the engine.
- * There is no second human player to grant access to.
- */
-class GameVoter extends Voter
+final class GameVoter extends Voter
 {
-    public const string ACCESS = 'GAME_ACCESS';
+    public const string VIEW = 'GAME_VIEW';
+    public const string PARTICIPATE = 'GAME_PARTICIPATE';
+    public const string MANAGE = 'GAME_MANAGE';
 
     protected function supports(string $attribute, mixed $subject): bool
     {
-        return self::ACCESS === $attribute && $subject instanceof Game;
+        return $subject instanceof Game
+            && \in_array($attribute, [self::VIEW, self::PARTICIPATE, self::MANAGE], true);
     }
 
     protected function voteOnAttribute(string $attribute, mixed $subject, TokenInterface $token): bool
     {
-        if (!$subject instanceof Game) {
-            return false;
-        }
-
         $user = $token->getUser();
+        $member = $user instanceof User && $subject->isParticipant($user);
 
-        return $user instanceof User && $user === $subject->getOwner();
+        return match ($attribute) {
+            self::VIEW => null === $subject->getDeletedAt()
+                && (OpponentType::MULTIPLAYER === $subject->getOpponentType() || $member),
+            self::PARTICIPATE => null === $subject->getDeletedAt() && $member,
+            self::MANAGE => $member,
+        };
     }
 }

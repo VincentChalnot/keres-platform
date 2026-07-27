@@ -61,7 +61,7 @@
                                 <span class="tag is-info">In progress</span>
                             {% elseif game.draw %}
                                 <span class="tag is-light">Draw</span>
-                            {% elseif game.whiteWins == game.white %}
+                            {% elseif game.whiteWins == (game.creatorColor.name == 'WHITE') %}
                                 <span class="tag is-success">Win</span>
                             {% else %}
                                 <span class="tag is-danger">Loss</span>

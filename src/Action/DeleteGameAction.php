@@ -35,7 +35,7 @@ class DeleteGameAction extends AbstractController
             throw $this->createNotFoundException('Game not found');
         }
 
-        $this->denyAccessUnlessGranted(GameVoter::ACCESS, $game);
+        $this->denyAccessUnlessGranted(GameVoter::MANAGE, $game);
 
         $game->setDeletedAt(new \DateTimeImmutable());
         $this->entityManager->persist($game);

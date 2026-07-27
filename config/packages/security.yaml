@@ -33,6 +33,7 @@ security:
 
     access_control:
         - { path: ^/admin, roles: ROLE_ADMIN }
+        - { path: '^/play/[^/]+$', roles: PUBLIC_ACCESS, methods: [GET] }
         - { path: ^/play, roles: ROLE_USER }
         - { path: ^/feedback, roles: ROLE_USER }
 

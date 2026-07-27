@@ -8,6 +8,7 @@ import {computeMaterialDiff, renderMaterialHTML} from './models/materialDiff';
 
 const OPPONENT_TYPE_AI = 0;
 const OPPONENT_TYPE_HOTSEAT = 1;
+const OPPONENT_TYPE_MULTIPLAYER = 2;
 
 /**
  * Automation surface for driving a game without reverse-engineering
@@ -99,14 +100,12 @@ class KeresGame {
         await this.view.initialize(this.boardContainer as any);
 
         // Initialize controller
-        this.controller = new GameController(this.gameState, this.api, this.view);
+        this.controller = new GameController(this.gameState, this.api, this.view, this.gameMode, this.playerWhite);
 
-        // Initialize Mercure for AI mode
-        if (this.gameMode === OPPONENT_TYPE_AI) {
-            const gameUuid = this.boardContainer.getAttribute('data-game-uuid');
-            if (gameUuid) {
-                this.controller.initializeMercure(gameUuid);
-            }
+        // Initialize Mercure for all game types
+        const gameUuid = this.boardContainer.getAttribute('data-game-uuid');
+        if (gameUuid) {
+            this.controller.initializeMercure(gameUuid);
         }
 
         // Read moves from data-moves attribute
@@ -319,11 +318,12 @@ class KeresGame {
 
         // Check if board is locked
         if (this.controller.isBoardLocked()) {
-            // In AI mode, show "Waiting for AI..." message
-            if (this.gameMode === OPPONENT_TYPE_AI) {
+            if (this.controller.canNavigateToNext()) {
+                this.statusDiv.innerText = `Viewing history - Navigate to latest move to continue playing`;
+            } else if (this.gameMode === OPPONENT_TYPE_AI) {
                 this.statusDiv.innerText = 'Waiting for AI...';
             } else {
-                this.statusDiv.innerText = `Viewing history - Navigate to latest move to continue playing`;
+                this.statusDiv.innerText = 'Waiting for opponent...';
             }
             if (this.askEngineBtn) this.askEngineBtn.disabled = true;
             return;

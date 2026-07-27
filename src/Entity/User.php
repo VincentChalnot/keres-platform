@@ -25,6 +25,19 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\Column(type: Types::STRING, length: 255, unique: true)]
     private string $email;
 
+    #[ORM\Column(type: Types::STRING, length: 32)]
+    private string $username;
+
+    #[ORM\Column(type: Types::DATETIMETZ_IMMUTABLE, nullable: true)]
+    private ?\DateTimeImmutable $usernameChangedAt = null;
+
+    #[ORM\Column(type: Types::DATETIMETZ_IMMUTABLE, nullable: true)]
+    private ?\DateTimeImmutable $lastSeenAt = null;
+
+    /** @var array<string, mixed> */
+    #[ORM\Column(type: Types::JSON, options: ['default' => '{}'])]
+    private array $notificationPreferences = [];
+
     #[ORM\Column(type: Types::STRING, length: 255, nullable: true)]
     private ?string $displayName = null;
 
@@ -77,6 +90,60 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     public function setEmail(string $email): void
     {
         $this->email = $email;
+    }
+
+    public function getUsername(): string
+    {
+        return $this->username;
+    }
+
+    public function setUsername(string $username): void
+    {
+        if (1 !== preg_match('/^[a-zA-Z0-9_-]{3,32}$/', $username)) {
+            throw new \InvalidArgumentException('Invalid username.');
+        }
+        $this->username = $username;
+    }
+
+    public function canChangeUsername(): bool
+    {
+        return null === $this->usernameChangedAt;
+    }
+
+    public function getUsernameChangedAt(): ?\DateTimeImmutable
+    {
+        return $this->usernameChangedAt;
+    }
+
+    public function setUsernameChangedAt(?\DateTimeImmutable $usernameChangedAt): void
+    {
+        $this->usernameChangedAt = $usernameChangedAt;
+    }
+
+    public function getLastSeenAt(): ?\DateTimeImmutable
+    {
+        return $this->lastSeenAt;
+    }
+
+    public function setLastSeenAt(?\DateTimeImmutable $lastSeenAt): void
+    {
+        $this->lastSeenAt = $lastSeenAt;
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    public function getNotificationPreferences(): array
+    {
+        return $this->notificationPreferences;
+    }
+
+    /**
+     * @param array<string, mixed> $notificationPreferences
+     */
+    public function setNotificationPreferences(array $notificationPreferences): void
+    {
+        $this->notificationPreferences = $notificationPreferences;
     }
 
     public function getDisplayName(): ?string

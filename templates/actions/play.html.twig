@@ -17,7 +17,7 @@
              data-moves="{{ moves }}"
              data-game-uuid="{{ game.uuid }}"
              data-opponent-type="{{ game.opponentType.value }}"
-             data-player-white="{{ game.white ? 'true' : 'false' }}"></div>
+             data-player-white="{{ playerWhite ? 'true' : 'false' }}"></div>
         <div class="material-bar" id="material-bottom"></div>
         <div class="buttons mt-3">
             {% if game.opponentType == enum('App\\Model\\OpponentType').AI %}

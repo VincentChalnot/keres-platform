@@ -7,6 +7,7 @@ namespace App\Action;
 use App\Entity\User;
 use App\Form\RegisterType;
 use App\Repository\UserRepository;
+use App\Service\UsernameGenerator;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\Form\FormError;
@@ -26,6 +27,7 @@ class RegisterAction extends AbstractController
         private readonly UserRepository $userRepository,
         private readonly EntityManagerInterface $entityManager,
         private readonly UserPasswordHasherInterface $passwordHasher,
+        private readonly UsernameGenerator $usernameGenerator,
     ) {
     }
 
@@ -46,6 +48,7 @@ class RegisterAction extends AbstractController
                 $form->get('email')->addError(new FormError('An account with this email already exists.'));
             } else {
                 $user = new User($email);
+                $user->setUsername($this->usernameGenerator->generate(null, $email));
                 $user->setPassword($this->passwordHasher->hashPassword($user, $form->get('password')->getData()));
                 $this->entityManager->persist($user);
                 $this->entityManager->flush();

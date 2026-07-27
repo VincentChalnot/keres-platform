@@ -7,9 +7,8 @@ namespace App\Engine;
 use App\Entity\Game;
 use App\Model\BoardMovesData;
 use App\Model\MoveData;
-use Doctrine\DBAL\TransactionIsolationLevel;
 use Doctrine\ORM\EntityManagerInterface;
-use Doctrine\ORM\OptimisticLockException;
+use Doctrine\ORM\LockMode;
 
 readonly class GameEngine
 {
@@ -33,59 +32,54 @@ readonly class GameEngine
 
     public function applyMove(Game $game, MoveData $moveData): BoardMovesData
     {
+        // Engine round trip: no transaction, no lock.
         $movesData = $game->getMovesData();
         $movesData->addMove($moveData);
+        $expectedVersion = $game->getVersion();
         $boardData = $this->engineApi->replayMoves($movesData);
         $boardMovesData = new BoardMovesData($boardData, $movesData);
 
-        $expectedVersion = $game->getVersion();
+        return $this->entityManager->wrapInTransaction(
+            function (EntityManagerInterface $em) use ($game, $boardMovesData, $expectedVersion, $boardData): BoardMovesData {
+                $em->getConnection()->executeStatement("SET LOCAL lock_timeout = '3s'");
 
-        $connection = $this->entityManager->getConnection();
-        $previousIsolation = $connection->getTransactionIsolation();
-        $connection->setTransactionIsolation(TransactionIsolationLevel::SERIALIZABLE);
+                $em->find(Game::class, $game->getId(), LockMode::PESSIMISTIC_WRITE);
 
-        try {
-            $connection->beginTransaction();
+                if (null !== $game->getGameOverAt()) {
+                    throw new \RuntimeException('Game is over.');
+                }
 
-            try {
+                if ($game->getVersion() !== $expectedVersion) {
+                    throw new \RuntimeException('A concurrent move was applied.');
+                }
+
                 $newMove = $this->boardTreeManager->getGameMove($game, $boardMovesData);
-                $this->entityManager->persist($newMove);
+                $em->persist($newMove);
 
-                // Update game state if game is over
                 if ($boardData->gameOver) {
                     $game->setGameOverAt(new \DateTimeImmutable());
                     $game->setWhiteWins($boardData->whiteWins);
                     $game->setDraw($boardData->draw);
                 }
 
-                $this->entityManager->flush();
+                $em->flush();
 
-                // For non-game-over moves, the Game entity is not dirty so Doctrine
-                // does not UPDATE it (and thus does not check/bump the version).
-                // Perform an atomic version check + bump via native SQL.
+                // Without clock fields (Phase 2), non-terminal moves do not dirty
+                // Game, so Doctrine emits no UPDATE and the version does not bump.
+                // Bump it directly and refresh so getVersion() returns the correct
+                // value. This transitional block is deleted when clocks write Game
+                // on every move.
                 if (!$boardData->gameOver) {
-                    $tableName = $this->entityManager->getClassMetadata(Game::class)->getTableName();
-                    $rowsAffected = $connection->executeStatement(
-                        'UPDATE '.$tableName.' SET version = version + 1 WHERE id = :id AND version = :version',
-                        ['id' => $game->getId(), 'version' => $expectedVersion]
+                    $em->getConnection()->executeStatement(
+                        'UPDATE game SET version = version + 1 WHERE id = :id',
+                        ['id' => $game->getId()]
                     );
-
-                    if (0 === $rowsAffected) {
-                        throw OptimisticLockException::lockFailed($game);
-                    }
+                    $em->refresh($game);
                 }
 
-                $connection->commit();
-            } catch (\Throwable $e) {
-                $connection->rollBack();
-
-                throw $e;
+                return $boardMovesData;
             }
-        } finally {
-            $connection->setTransactionIsolation($previousIsolation);
-        }
-
-        return $boardMovesData;
+        );
     }
 
     public function aiMove(Game $game): BoardMovesData

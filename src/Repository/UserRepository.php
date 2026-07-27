@@ -18,22 +18,22 @@ class UserRepository extends ServiceEntityRepository
         parent::__construct($registry, User::class);
     }
 
-    public function findByProviderAndProviderId(string $provider, string $providerId): ?User
-    {
-        return $this->createQueryBuilder('u')
-            ->andWhere('u.provider = :provider')
-            ->andWhere('u.providerId = :providerId')
-            ->setParameter('provider', $provider)
-            ->setParameter('providerId', $providerId)
-            ->getQuery()
-            ->getOneOrNullResult();
-    }
-
     public function findByEmail(string $email): ?User
     {
         return $this->createQueryBuilder('u')
             ->andWhere('u.email = :email')
             ->setParameter('email', $email)
+            ->getQuery()
+            ->getOneOrNullResult();
+    }
+
+    public function usernameExists(string $username): bool
+    {
+        return null !== $this->createQueryBuilder('u')
+            ->select('1')
+            ->andWhere('LOWER(u.username) = LOWER(:username)')
+            ->setParameter('username', $username)
+            ->setMaxResults(1)
             ->getQuery()
             ->getOneOrNullResult();
     }

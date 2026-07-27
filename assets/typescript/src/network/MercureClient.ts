@@ -2,13 +2,13 @@ import {Board, Move} from '../models/types';
 import {decodeBoardFromBinary} from '../utils/boardUtils';
 
 export interface GameUpdate {
-    success: boolean;
+    seq: number;
     board: Board;
     moves: number[];
     gameOver: boolean;
     whiteWins: boolean;
     draw: boolean;
-    timestamp: number;
+    serverTime: number;
 }
 
 /**
@@ -16,7 +16,7 @@ export interface GameUpdate {
  */
 export class MercureClient {
     private eventSource: EventSource | null = null;
-    private lastTimestamp: number = 0;
+    private lastSeq: number = 0;
     private mercureUrl: string;
 
     constructor() {
@@ -58,15 +58,14 @@ export class MercureClient {
         this.eventSource.onmessage = (event) => {
             try {
                 const data = JSON.parse(event.data);
-                console.log(data);
                 
-                // Check timestamp to ignore out-of-order updates
-                if (data.timestamp && data.timestamp <= this.lastTimestamp) {
-                    console.log('Ignoring out-of-order update', data.timestamp, 'last:', this.lastTimestamp);
+                // Check seq to ignore out-of-order or stale updates
+                if (data.seq !== undefined && data.seq <= this.lastSeq) {
+                    console.log('Ignoring stale update seq=' + data.seq + ' last=' + this.lastSeq);
                     return;
                 }
 
-                this.lastTimestamp = data.timestamp || Date.now() * 1000;
+                this.lastSeq = data.seq ?? this.lastSeq;
 
                 // Decode the board from base64
                 const boardBase64 = data.board;
@@ -93,13 +92,13 @@ export class MercureClient {
                 }
 
                 const update: GameUpdate = {
-                    success: data.success,
+                    seq: data.seq ?? 0,
                     board: board,
                     moves: moves,
                     gameOver: data.gameOver,
                     whiteWins: data.whiteWins,
                     draw: data.draw,
-                    timestamp: data.timestamp,
+                    serverTime: data.serverTime ?? 0,
                 };
 
                 onUpdate(update);

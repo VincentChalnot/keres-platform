@@ -7,7 +7,9 @@ namespace App\Action;
 use App\Entity\Game;
 use App\Entity\User;
 use App\Form\NewGameType;
+use App\Model\PieceColor;
 use App\Repository\GameRepository;
+use App\Service\GameFactory;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\RedirectResponse;
@@ -21,6 +23,7 @@ class NewGameAction extends AbstractController
     public function __construct(
         private readonly EntityManagerInterface $entityManager,
         private readonly GameRepository $gameRepository,
+        private readonly GameFactory $gameFactory,
     ) {
     }
 
@@ -43,14 +46,13 @@ class NewGameAction extends AbstractController
                 throw $this->createAccessDeniedException('User is required to create a game');
             }
 
-            $game = new Game($user, $data['opponentType']);
-            $game->setIsWhite(
-                match ($data['playerSide']) {
-                    'white' => true,
-                    'black' => false,
-                    'random' => (bool) random_int(0, 1),
-                }
-            );
+            $creatorColor = match ($data['playerSide']) {
+                'white' => PieceColor::WHITE,
+                'black' => PieceColor::BLACK,
+                'random' => 0 === random_int(0, 1) ? PieceColor::WHITE : PieceColor::BLACK,
+            };
+
+            $game = $this->gameFactory->createAiOrHotseatGame($user, $data['opponentType'], $creatorColor);
 
             $this->entityManager->persist($game);
             $this->entityManager->flush();
@@ -61,15 +63,17 @@ class NewGameAction extends AbstractController
         $user = $this->getUser();
 
         if ($user instanceof User) {
-            $allGames = $this->gameRepository->findAllActiveByOwner($user);
+            $inProgressGames = $this->gameRepository->findOngoingForUser($user);
+            $finishedGames = $this->gameRepository->findFinishedForUser($user);
         } else {
-            $allGames = [];
+            $inProgressGames = [];
+            $finishedGames = [];
         }
 
         return [
             'form' => $form->createView(),
-            'inProgressGames' => array_filter($allGames, static fn (Game $g) => !$g->isGameOver()),
-            'finishedGames' => array_filter($allGames, static fn (Game $g) => $g->isGameOver()),
+            'inProgressGames' => $inProgressGames,
+            'finishedGames' => $finishedGames,
         ];
     }
 }

@@ -33,16 +33,17 @@ class AdminStatsRepository
     public function getConnectedPlayersCount(\DateTimeImmutable $since): int
     {
         return (int) $this->entityManager->createQuery(
-            'SELECT COUNT(DISTINCT g.owner)
+            'SELECT COUNT(DISTINCT gp.user)
              FROM App\Entity\GameMove gm
              JOIN gm.game g
-             WHERE gm.createdAt > :since'
+             JOIN g.players gp
+             WHERE gm.createdAt > :since AND gp.user IS NOT NULL'
         )->setParameter('since', $since)->getSingleScalarResult();
     }
 
     /**
      * Win/lose/draw distribution across every finished game (AI + hotseat),
-     * resolved from the owner's perspective.
+     * resolved from the human player's perspective.
      *
      * @return array{win: int, lose: int, draw: int}
      */
@@ -50,11 +51,12 @@ class AdminStatsRepository
     {
         $row = $this->entityManager->createQuery(
             'SELECT
-                SUM(CASE WHEN g.draw = false AND ((g.isWhite = true AND g.whiteWins = true) OR (g.isWhite = false AND g.whiteWins = false)) THEN 1 ELSE 0 END) AS winCount,
-                SUM(CASE WHEN g.draw = false AND ((g.isWhite = true AND g.whiteWins = false) OR (g.isWhite = false AND g.whiteWins = true)) THEN 1 ELSE 0 END) AS loseCount,
+                SUM(CASE WHEN g.draw = false AND ((gp.colorValue = 0 AND g.whiteWins = true) OR (gp.colorValue = 1 AND g.whiteWins = false)) THEN 1 ELSE 0 END) AS winCount,
+                SUM(CASE WHEN g.draw = false AND ((gp.colorValue = 0 AND g.whiteWins = false) OR (gp.colorValue = 1 AND g.whiteWins = true)) THEN 1 ELSE 0 END) AS loseCount,
                 SUM(CASE WHEN g.draw = true THEN 1 ELSE 0 END) AS drawCount
-             FROM App\Entity\Game g
-             WHERE g.gameOverAt IS NOT NULL'
+             FROM App\Entity\GamePlayer gp
+             JOIN gp.game g
+             WHERE g.gameOverAt IS NOT NULL AND gp.user IS NOT NULL AND g.opponentTypeValue <> 1'
         )->getSingleResult();
 
         return [
@@ -134,19 +136,23 @@ class AdminStatsRepository
     {
         $row = $this->entityManager->createQuery(
             'SELECT
-                COUNT(g.id) AS gamesCount,
-                SUM(CASE WHEN g.gameOverAt IS NOT NULL AND g.draw = false AND ((g.isWhite = true AND g.whiteWins = true) OR (g.isWhite = false AND g.whiteWins = false)) THEN 1 ELSE 0 END) AS winCount,
-                SUM(CASE WHEN g.gameOverAt IS NOT NULL AND g.draw = false AND ((g.isWhite = true AND g.whiteWins = false) OR (g.isWhite = false AND g.whiteWins = true)) THEN 1 ELSE 0 END) AS loseCount,
+                COUNT(DISTINCT g.id) AS gamesCount,
+                SUM(CASE WHEN g.gameOverAt IS NOT NULL AND g.draw = false AND g.opponentTypeValue <> 1
+                    AND ((gp.colorValue = 0 AND g.whiteWins = true) OR (gp.colorValue = 1 AND g.whiteWins = false)) THEN 1 ELSE 0 END) AS winCount,
+                SUM(CASE WHEN g.gameOverAt IS NOT NULL AND g.draw = false AND g.opponentTypeValue <> 1
+                    AND ((gp.colorValue = 0 AND g.whiteWins = false) OR (gp.colorValue = 1 AND g.whiteWins = true)) THEN 1 ELSE 0 END) AS loseCount,
                 SUM(CASE WHEN g.draw = true THEN 1 ELSE 0 END) AS drawCount
-             FROM App\Entity\Game g
-             WHERE g.owner = :user AND g.deletedAt IS NULL'
+             FROM App\Entity\GamePlayer gp
+             JOIN gp.game g
+             WHERE gp.user = :user AND g.deletedAt IS NULL'
         )->setParameter('user', $user)->getSingleResult();
 
         $lastMoveAt = $this->entityManager->createQuery(
             'SELECT MAX(gm.createdAt)
              FROM App\Entity\GameMove gm
              JOIN gm.game g
-             WHERE g.owner = :user'
+             JOIN g.players gpp
+             WHERE gpp.user = :user'
         )->setParameter('user', $user)->getSingleScalarResult();
 
         return [
@@ -164,7 +170,9 @@ class AdminStatsRepository
     public function getUserGames(User $user): array
     {
         return $this->entityManager->getRepository(Game::class)->createQueryBuilder('g')
-            ->andWhere('g.owner = :user')
+            ->join('g.players', 'p')
+            ->andWhere('p.user = :user')
+            ->andWhere('p.hiddenAt IS NULL')
             ->andWhere('g.deletedAt IS NULL')
             ->setParameter('user', $user)
             ->orderBy('g.createdAt', 'DESC')
@@ -244,13 +252,14 @@ class AdminStatsRepository
         $sideToMoveIsWhite = 0 === $ply % 2;
 
         $rows = $this->entityManager->getConnection()->executeQuery(
-            'SELECT g.is_white, g.white_wins, g.draw, g.game_over_at
+            'SELECT gp.color_value, g.white_wins, g.draw, g.game_over_at
              FROM (
                  SELECT gm.game_id, gm.move_id, ROW_NUMBER() OVER (PARTITION BY gm.game_id ORDER BY gm.id) AS ply
                  FROM game_move gm
              ) ranked
              JOIN move mv ON mv.id = ranked.move_id
              JOIN game g ON g.id = ranked.game_id
+             JOIN game_player gp ON gp.game_id = g.id AND gp.user_id IS NOT NULL
              WHERE ranked.ply = :ply AND mv.to_board_position_id = :positionId',
             ['ply' => $ply, 'positionId' => $positionId]
         )->fetchAllAssociative();
@@ -267,10 +276,10 @@ class AdminStatsRepository
                 ++$stats['draw'];
                 continue;
             }
-            $ownerIsWhite = (bool) $row['is_white'];
+            $playerIsWhite = 0 === (int) $row['color_value'];
             $whiteWins = (bool) $row['white_wins'];
-            $ownerWon = $ownerIsWhite === $whiteWins;
-            $sideToMoveWon = $ownerIsWhite === $sideToMoveIsWhite ? $ownerWon : !$ownerWon;
+            $playerWon = $playerIsWhite === $whiteWins;
+            $sideToMoveWon = $playerIsWhite === $sideToMoveIsWhite ? $playerWon : !$playerWon;
 
             if ($sideToMoveWon) {
                 ++$stats['win'];

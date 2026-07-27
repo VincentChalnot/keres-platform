@@ -7,7 +7,8 @@ namespace App\MessageHandler;
 use App\Engine\GameEngine;
 use App\Message\ProcessAiMoveMessage;
 use App\Repository\GameRepository;
-use App\Service\GameUpdatePublisher;
+use App\Service\Game\GameStatePayloadBuilder;
+use App\Service\Game\GameUpdatePublisher;
 use Symfony\Component\Messenger\Attribute\AsMessageHandler;
 use Symfony\Component\Uid\Uuid;
 
@@ -18,6 +19,7 @@ readonly class ProcessAiMoveHandler
         private GameRepository $gameRepository,
         private GameEngine $gameEngine,
         private GameUpdatePublisher $gameUpdatePublisher,
+        private GameStatePayloadBuilder $payloadBuilder,
     ) {
     }
 
@@ -30,14 +32,16 @@ readonly class ProcessAiMoveHandler
         }
 
         if ($game->getGameMoves()->count() !== $message->moveCounter) {
-            // Move has already been played, just re-publish the update for the current state.
             $boardMovesData = $this->gameEngine->getBoardMovesData($game);
-            $this->gameUpdatePublisher->publishGameUpdate($message->gameUuid, $boardMovesData);
-
-            return;
+        } else {
+            $boardMovesData = $this->gameEngine->aiMove($game);
         }
 
-        $boardMovesData = $this->gameEngine->aiMove($game);
-        $this->gameUpdatePublisher->publishGameUpdate($message->gameUuid, $boardMovesData);
+        $payload = $this->payloadBuilder->build($game, $boardMovesData);
+        $json = $this->payloadBuilder->encode($payload);
+        $this->gameUpdatePublisher->publishGameState(
+            $game->getUuid()->toRfc4122(),
+            $json
+        );
     }
 }

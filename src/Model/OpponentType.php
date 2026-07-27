@@ -8,4 +8,5 @@ enum OpponentType: int
 {
     case AI = 0;
     case HOTSEAT = 1;
+    case MULTIPLAYER = 2;
 }

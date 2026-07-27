@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Action;
 
+use App\Model\PieceColor;
 use App\Repository\GameRepository;
 use App\Security\Voter\GameVoter;
 use Doctrine\ORM\EntityManagerInterface;
@@ -35,14 +36,14 @@ class ResignGameAction extends AbstractController
             throw $this->createNotFoundException('Game not found');
         }
 
-        $this->denyAccessUnlessGranted(GameVoter::ACCESS, $game);
+        $this->denyAccessUnlessGranted(GameVoter::PARTICIPATE, $game);
 
         if ($game->isGameOver()) {
             return $this->redirectToRoute('new_game');
         }
 
         $game->setGameOverAt(new \DateTimeImmutable());
-        $game->setWhiteWins(!$game->isWhite());
+        $game->setWhiteWins(PieceColor::BLACK === $game->getCreatorColor());
         $game->setDraw(false);
 
         $this->entityManager->persist($game);

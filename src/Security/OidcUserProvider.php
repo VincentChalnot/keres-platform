@@ -8,6 +8,7 @@ use App\Entity\User;
 use App\Entity\UserAuth;
 use App\Repository\UserAuthRepository;
 use App\Repository\UserRepository;
+use App\Service\UsernameGenerator;
 use Doctrine\ORM\EntityManagerInterface;
 use Drenso\OidcBundle\Model\OidcTokens;
 use Drenso\OidcBundle\Model\OidcUserData;
@@ -24,6 +25,7 @@ class OidcUserProvider implements OidcUserProviderInterface
         private readonly UserRepository $userRepository,
         private readonly UserAuthRepository $userAuthRepository,
         private readonly EntityManagerInterface $entityManager,
+        private readonly UsernameGenerator $usernameGenerator,
     ) {
     }
 
@@ -52,6 +54,7 @@ class OidcUserProvider implements OidcUserProviderInterface
                 $user = new User($email);
                 $user->setDisplayName($displayName);
                 $user->setAvatarUrl($avatarUrl);
+                $user->setUsername($this->usernameGenerator->generate($displayName, $email));
                 $this->entityManager->persist($user);
             } else {
                 $user->setDisplayName($displayName);

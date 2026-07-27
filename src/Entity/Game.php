@@ -6,6 +6,7 @@ namespace App\Entity;
 
 use App\Model\MovesData;
 use App\Model\OpponentType;
+use App\Model\PieceColor;
 use App\Repository\GameRepository;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
@@ -29,9 +30,6 @@ class Game
     #[ORM\Column(type: Types::INTEGER)]
     private int $opponentTypeValue;
 
-    #[ORM\Column(type: Types::BOOLEAN)]
-    private bool $isWhite;
-
     #[ORM\Column(type: Types::DATETIME_IMMUTABLE)]
     private \DateTimeImmutable $createdAt;
 
@@ -52,8 +50,18 @@ class Game
     private ?\DateTimeImmutable $deletedAt = null;
 
     #[ORM\ManyToOne(targetEntity: User::class)]
-    #[ORM\JoinColumn(nullable: true)]
-    private ?User $owner = null;
+    #[ORM\JoinColumn(name: 'created_by_id', nullable: false)]
+    private User $createdBy;
+
+    /**
+     * @var Collection<int, GamePlayer>
+     */
+    #[ORM\OneToMany(targetEntity: GamePlayer::class, mappedBy: 'game', cascade: [
+        'persist',
+        'remove',
+    ], orphanRemoval: true)]
+    #[ORM\OrderBy(['colorValue' => 'ASC'])]
+    private Collection $players;
 
     /**
      * @var Collection<int, GameMove>
@@ -65,22 +73,14 @@ class Game
     #[ORM\OrderBy(['id' => 'ASC'])]
     private Collection $gameMoves;
 
-    /**
-     * @param bool|null $isWhite If null, will be chosen randomly
-     */
-    public function __construct(User $owner, OpponentType $opponentType = OpponentType::AI, ?bool $isWhite = null)
+    public function __construct(User $createdBy, OpponentType $opponentType = OpponentType::AI)
     {
         $this->uuid = Uuid::v4();
         $this->createdAt = new \DateTimeImmutable();
         $this->gameMoves = new ArrayCollection();
+        $this->players = new ArrayCollection();
         $this->opponentTypeValue = $opponentType->value;
-        $this->owner = $owner;
-
-        if (null === $isWhite) {
-            $this->isWhite = (bool) random_int(0, 1);
-        } else {
-            $this->isWhite = $isWhite;
-        }
+        $this->createdBy = $createdBy;
     }
 
     public function getId(): ?int
@@ -93,16 +93,9 @@ class Game
         return $this->uuid;
     }
 
-    public function isWhite(): bool
+    public function getCreatedBy(): User
     {
-        return $this->isWhite;
-    }
-
-    public function setIsWhite(bool $isWhite): self
-    {
-        $this->isWhite = $isWhite;
-
-        return $this;
+        return $this->createdBy;
     }
 
     public function getOpponentType(): OpponentType
@@ -170,6 +163,75 @@ class Game
         return $this->version;
     }
 
+    /**
+     * @return Collection<int, GamePlayer>
+     */
+    public function getPlayers(): Collection
+    {
+        return $this->players;
+    }
+
+    public function addPlayer(GamePlayer $player): void
+    {
+        if ($this->players->count() >= 2) {
+            throw new \LogicException('A game has exactly two players.');
+        }
+        foreach ($this->players as $existing) {
+            if ($existing->getColor() === $player->getColor()) {
+                throw new \LogicException('Colour already taken.');
+            }
+        }
+        $this->players->add($player);
+    }
+
+    public function getPlayer(PieceColor $color): GamePlayer
+    {
+        foreach ($this->players as $player) {
+            if ($player->getColor() === $color) {
+                return $player;
+            }
+        }
+
+        throw new \LogicException('No player for colour '.$color->name);
+    }
+
+    /**
+     * Returns the colours the given user plays in this game.
+     * Hot-seat returns both colours; every other mode returns 0 or 1 entries.
+     *
+     * @return list<PieceColor>
+     */
+    public function getColorsForUser(?User $user): array
+    {
+        if (null === $user) {
+            return [];
+        }
+
+        $colors = [];
+        foreach ($this->players as $player) {
+            if ($player->isHumanUser($user)) {
+                $colors[] = $player->getColor();
+            }
+        }
+
+        return $colors;
+    }
+
+    public function isParticipant(?User $user): bool
+    {
+        return [] !== $this->getColorsForUser($user);
+    }
+
+    /**
+     * In AI/hot-seat mode, returns the human player's colour.
+     * Returns null for multiplayer games (call getColorsForUser instead).
+     */
+    public function getCreatorColor(): PieceColor
+    {
+        return $this->getColorsForUser($this->createdBy)[0]
+            ?? throw new \LogicException('Creator is not a player.');
+    }
+
     public function getDeletedAt(): ?\DateTimeImmutable
     {
         return $this->deletedAt;
@@ -185,18 +247,6 @@ class Game
     public function isDeleted(): bool
     {
         return null !== $this->deletedAt;
-    }
-
-    public function getOwner(): ?User
-    {
-        return $this->owner;
-    }
-
-    public function setOwner(?User $owner): self
-    {
-        $this->owner = $owner;
-
-        return $this;
     }
 
     public function isGameOver(): bool

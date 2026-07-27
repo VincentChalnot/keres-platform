@@ -42,7 +42,7 @@ readonly class UndoMoveAction
             ], Response::HTTP_NOT_FOUND);
         }
 
-        if (!$this->security->isGranted(GameVoter::ACCESS, $game)) {
+        if (!$this->security->isGranted(GameVoter::PARTICIPATE, $game)) {
             return new JsonResponse([
                 'success' => false,
                 'error' => 'Access denied',

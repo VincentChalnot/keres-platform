@@ -49,11 +49,11 @@ class UserListAction implements ActionInjectableInterface
             'NEW %s(%s, %s, %s, %s, %s, %s)',
             UserListRow::class,
             $alias,
-            "(SELECT COUNT(g.id) FROM App\\Entity\\Game g WHERE g.owner = {$alias} AND g.deletedAt IS NULL)",
-            "(SELECT COUNT(g2.id) FROM App\\Entity\\Game g2 WHERE g2.owner = {$alias} AND g2.gameOverAt IS NOT NULL AND g2.draw = false AND ((g2.isWhite = true AND g2.whiteWins = true) OR (g2.isWhite = false AND g2.whiteWins = false)))",
-            "(SELECT COUNT(g3.id) FROM App\\Entity\\Game g3 WHERE g3.owner = {$alias} AND g3.gameOverAt IS NOT NULL AND g3.draw = false AND ((g3.isWhite = true AND g3.whiteWins = false) OR (g3.isWhite = false AND g3.whiteWins = true)))",
-            "(SELECT COUNT(g4.id) FROM App\\Entity\\Game g4 WHERE g4.owner = {$alias} AND g4.draw = true)",
-            "(SELECT MAX(gm.createdAt) FROM App\\Entity\\GameMove gm JOIN gm.game gg WHERE gg.owner = {$alias})",
+            "(SELECT COUNT(DISTINCT gp.game) FROM App\\Entity\\GamePlayer gp JOIN gp.game g WHERE gp.user = {$alias} AND g.deletedAt IS NULL)",
+            "(SELECT COUNT(DISTINCT gp2.game) FROM App\\Entity\\GamePlayer gp2 JOIN gp2.game g2 WHERE gp2.user = {$alias} AND g2.gameOverAt IS NOT NULL AND g2.draw = false AND g2.opponentTypeValue <> 1 AND ((gp2.colorValue = 0 AND g2.whiteWins = true) OR (gp2.colorValue = 1 AND g2.whiteWins = false)))",
+            "(SELECT COUNT(DISTINCT gp3.game) FROM App\\Entity\\GamePlayer gp3 JOIN gp3.game g3 WHERE gp3.user = {$alias} AND g3.gameOverAt IS NOT NULL AND g3.draw = false AND g3.opponentTypeValue <> 1 AND ((gp3.colorValue = 0 AND g3.whiteWins = false) OR (gp3.colorValue = 1 AND g3.whiteWins = true)))",
+            "(SELECT COUNT(DISTINCT gp4.game) FROM App\\Entity\\GamePlayer gp4 JOIN gp4.game g4 WHERE gp4.user = {$alias} AND g4.draw = true)",
+            "(SELECT MAX(gm.createdAt) FROM App\\Entity\\GameMove gm JOIN gm.game gg JOIN gg.players gpp WHERE gpp.user = {$alias})",
         ));
 
         $dataGrid->handleRequest($request);

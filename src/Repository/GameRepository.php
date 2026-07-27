@@ -24,6 +24,29 @@ class GameRepository extends ServiceEntityRepository
     {
         return $this->createQueryBuilder('g')
             ->andWhere('g.uuid = :uuid')
+            ->andWhere('g.deletedAt IS NULL')
+            ->setParameter('uuid', $uuid, 'uuid')
+            ->getQuery()
+            ->getOneOrNullResult();
+    }
+
+    public function findAnyByUuid(Uuid $uuid): ?Game
+    {
+        return $this->createQueryBuilder('g')
+            ->andWhere('g.uuid = :uuid')
+            ->setParameter('uuid', $uuid, 'uuid')
+            ->getQuery()
+            ->getOneOrNullResult();
+    }
+
+    public function findForPlay(Uuid $uuid): ?Game
+    {
+        return $this->createQueryBuilder('g')
+            ->addSelect('p', 'pu')
+            ->leftJoin('g.players', 'p')
+            ->leftJoin('p.user', 'pu')
+            ->andWhere('g.uuid = :uuid')
+            ->andWhere('g.deletedAt IS NULL')
             ->setParameter('uuid', $uuid, 'uuid')
             ->getQuery()
             ->getOneOrNullResult();
@@ -32,12 +55,32 @@ class GameRepository extends ServiceEntityRepository
     /**
      * @return Game[]
      */
-    public function findAllActiveByOwner(User $owner): array
+    public function findOngoingForUser(User $user): array
     {
         return $this->createQueryBuilder('g')
+            ->join('g.players', 'p')
+            ->andWhere('p.user = :user')
+            ->andWhere('p.hiddenAt IS NULL')
             ->andWhere('g.deletedAt IS NULL')
-            ->andWhere('g.owner = :owner')
-            ->setParameter('owner', $owner)
+            ->andWhere('g.gameOverAt IS NULL')
+            ->setParameter('user', $user)
+            ->orderBy('g.createdAt', 'DESC')
+            ->getQuery()
+            ->getResult();
+    }
+
+    /**
+     * @return Game[]
+     */
+    public function findFinishedForUser(User $user): array
+    {
+        return $this->createQueryBuilder('g')
+            ->join('g.players', 'p')
+            ->andWhere('p.user = :user')
+            ->andWhere('p.hiddenAt IS NULL')
+            ->andWhere('g.deletedAt IS NULL')
+            ->andWhere('g.gameOverAt IS NOT NULL')
+            ->setParameter('user', $user)
             ->orderBy('g.createdAt', 'DESC')
             ->getQuery()
             ->getResult();
