@@ -857,7 +857,7 @@ final class GameVoter extends Voter
 
 `Game::hasPlayer(User $u)` is `$this->players->exists(fn (_, GamePlayer $p) => $u === $p->getUser())`. Hot-seat
 is a single user holding both rows, so membership is true for both colours --
-correct, because the unique constraint is `(game_id, color)` not
+correct, because the unique constraint is `(game_id, color_value)` not
 `(game_id, user_id)` (`00-overview.md` section 4.1).
 
 Every current `GameVoter::ACCESS` call site is rewritten:

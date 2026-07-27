@@ -686,7 +686,7 @@ With `RATED_MIN_PLIES = 2`, clause 4 reduces to `n >= 4`.
 | 1 | **Consent.** `Game.rated` is copied from the originating `Seek`/`Challenge` by `GameFactory` and immutable after. Someone who accepted a casual challenge must never find their rating moved. It also makes rated-ness unreachable by accident: `NewGameAction`, AI and hot-seat games are `rated = false` by construction |
 | 2 | `UNLIMITED` yields `speedCategory = null`, so there is no pool to write to. Independently: with no clock there is no abandonment pressure, so a losing player can simply never move, and a result that can be withheld indefinitely is an exploit |
 | 3a | `GamePlayer.user IS NULL` means the engine (invariant 2). Engine strength is not modelled and would need its own rating entity; out of scope |
-| 3b | Hot-seat is two `GamePlayer` rows pointing at the *same* user (`00-overview.md` §4.1 — the unique constraint is on `(game_id, color)` precisely to allow it). Without 3b a user could rate games against themselves |
+| 3b | Hot-seat is two `GamePlayer` rows pointing at the *same* user (`00-overview.md` §4.1 — the unique constraint is on `(game_id, color_value)` precisely to allow it). Without 3b a user could rate games against themselves |
 | 4 | A game where one side made 0 or 1 moves carries no information and is the abuse surface for "accept, read the opponent's rating, disconnect". Shared with the abort window and the draw-offer guard through one helper, `Game::hasReachedRatedPlyFloor()`: `03-time-control.md` §7 makes a game abortable **iff** that helper returns false, so the abort window is the exact negation of this clause |
 | 5 | `NONE` means not finished. **`ABORTED` is a strict subset of unrated, not a synonym for it**: a first-move-clamp expiry at ply 0-1 finalises `ABORTED`, but a `TIMEOUT` at ply 2 or 3 has a real winner and a real `endReason` and is still unrated on clause 4. That is why 4 and 5 are independent conjuncts rather than one check on `endReason` |
 
@@ -800,7 +800,7 @@ This also replaces the existing per-user aggregates.
 `AdminStatsRepository::getUserStats()`
 (`src/Repository/AdminStatsRepository.php:133-159`) and `getOutcomeDistribution()`
 (`:49-65`) both resolve win/lose/draw from `g.isWhite` and `g.owner`, columns
-P0.2 removes. The `game_player` join above is their replacement shape: `gp.color`
+P0.2 removes. The `game_player` join above is their replacement shape: `gp.colorValue`
 supplies the perspective `g.isWhite` used to, for both players rather than only
 the owner.
 

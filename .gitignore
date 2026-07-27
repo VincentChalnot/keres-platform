@@ -26,3 +26,4 @@
 # Local environment overrides (may contain secrets) — never commit.
 /.env
 /deploy/.env
+.playwright-mcp/

@@ -21,9 +21,13 @@ services:
     App\:
         resource: '../src/'
 
-    # Bound explicitly (not a global _defaults.bind) so only this dev-only
-    # authenticator ever sees kernel.environment.
+    # Bound explicitly (not a global _defaults.bind) so only these dev-only
+    # classes ever see kernel.environment.
     App\Security\DevLoginAuthenticator:
+        arguments:
+            $environment: '%kernel.environment%'
+
+    App\EventListener\Dev\DevUserSwitchListener:
         arguments:
             $environment: '%kernel.environment%'
 
@@ -61,8 +65,7 @@ services:
     # to mint/clear the subscriber-JWT cookie.
     Symfony\Component\Mercure\Authorization:
         arguments:
-            $hubUrl: '%env(MERCURE_PUBLIC_URL)%'
-            $defaultLifetime: '%mercure.default_cookie_lifetime%'
+            $cookieLifetime: '%mercure.default_cookie_lifetime%'
 
     # add more service definitions when explicit configuration is needed
     # please note that last definitions always *replace* previous ones

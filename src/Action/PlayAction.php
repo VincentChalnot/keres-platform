@@ -37,7 +37,9 @@ class PlayAction extends AbstractController
             throw $this->createNotFoundException('Game not found');
         }
 
-        $this->denyAccessUnlessGranted(GameVoter::VIEW, $game);
+        if (!$this->isGranted(GameVoter::VIEW, $game)) {
+            throw $this->createNotFoundException('Game not found');
+        }
 
         $user = $this->getUser();
         $colors = $game->getColorsForUser($user instanceof User ? $user : null);

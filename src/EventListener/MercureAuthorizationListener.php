@@ -32,6 +32,7 @@ final readonly class MercureAuthorizationListener
         }
 
         $user = $this->security->getUser();
+
         if (!$user instanceof User) {
             return;
         }

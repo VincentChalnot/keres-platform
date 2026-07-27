@@ -6,7 +6,6 @@ namespace App\Service\Game;
 
 use App\Entity\Game;
 use App\Model\BoardMovesData;
-use App\Model\PieceColor;
 
 final readonly class GameStatePayloadBuilder
 {

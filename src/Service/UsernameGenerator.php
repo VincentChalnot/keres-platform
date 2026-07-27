@@ -25,6 +25,7 @@ final readonly class UsernameGenerator
     public function generate(?string $displayName, string $email): string
     {
         $source = $displayName ?: '';
+
         if ('' === $source) {
             $source = str_contains($email, '@') ? explode('@', $email, 2)[0] : $email;
         }
@@ -32,7 +33,7 @@ final readonly class UsernameGenerator
         $stripped = preg_replace('/[^a-zA-Z0-9_-]/', '', $source) ?? '';
         $candidate = substr($stripped, 0, self::MAX_LENGTH);
 
-        if (strlen($candidate) < self::MIN_LENGTH) {
+        if (\strlen($candidate) < self::MIN_LENGTH) {
             $candidate = self::FALLBACK;
         }
 
@@ -46,9 +47,10 @@ final readonly class UsernameGenerator
         }
 
         $n = 2;
+
         while (true) {
             $suffix = (string) $n;
-            $deduped = substr($candidate, 0, self::MAX_LENGTH - strlen($suffix)).$suffix;
+            $deduped = substr($candidate, 0, self::MAX_LENGTH - \strlen($suffix)).$suffix;
 
             if (!$this->userRepository->usernameExists($deduped)) {
                 return $deduped;

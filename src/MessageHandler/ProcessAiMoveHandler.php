@@ -34,7 +34,7 @@ readonly class ProcessAiMoveHandler
         if ($game->getGameMoves()->count() !== $message->moveCounter) {
             $boardMovesData = $this->gameEngine->getBoardMovesData($game);
         } else {
-            $boardMovesData = $this->gameEngine->aiMove($game);
+            $boardMovesData = $this->gameEngine->aiMove($game, (int) (microtime(true) * 1_000_000));
         }
 
         $payload = $this->payloadBuilder->build($game, $boardMovesData);

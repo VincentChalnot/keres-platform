@@ -7,8 +7,8 @@ namespace App\Engine;
 use App\Entity\Game;
 use App\Model\BoardMovesData;
 use App\Model\MoveData;
+use Doctrine\DBAL\LockMode;
 use Doctrine\ORM\EntityManagerInterface;
-use Doctrine\ORM\LockMode;
 
 readonly class GameEngine
 {
@@ -30,7 +30,7 @@ readonly class GameEngine
         return new BoardMovesData($boardData, $movesData);
     }
 
-    public function applyMove(Game $game, MoveData $moveData): BoardMovesData
+    public function applyMove(Game $game, MoveData $moveData, int $receivedAtMicros): BoardMovesData
     {
         // Engine round trip: no transaction, no lock.
         $movesData = $game->getMovesData();
@@ -82,7 +82,7 @@ readonly class GameEngine
         );
     }
 
-    public function aiMove(Game $game): BoardMovesData
+    public function aiMove(Game $game, int $receivedAtMicros): BoardMovesData
     {
         if ($game->isGameOver()) {
             // Game is already over, nothing to do
@@ -96,6 +96,6 @@ readonly class GameEngine
         $aiMoveData = $this->engineApi->aiMove($movesData);
 
         // Apply AI move
-        return $this->applyMove($game, $aiMoveData);
+        return $this->applyMove($game, $aiMoveData, $receivedAtMicros);
     }
 }

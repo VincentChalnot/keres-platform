@@ -25,7 +25,13 @@ class Game
     private ?int $id = null;
 
     #[ORM\Column(type: UuidType::NAME, unique: true)]
-    private readonly Uuid $uuid;
+    // Not `readonly`: Doctrine's readonly-property accessor compares hydrated
+    // values with `!==`, which for a value object is identity comparison -
+    // any refresh() or find(..., LockMode::PESSIMISTIC_*) on an already-managed
+    // Game (see GameEngine::applyMove()) re-hydrates a *new* Uuid instance for
+    // the same value and throws "Attempting to change readonly property".
+    // Immutability is still enforced by convention: no setter exists.
+    private Uuid $uuid;
 
     #[ORM\Column(type: Types::INTEGER)]
     private int $opponentTypeValue;
@@ -176,6 +182,7 @@ class Game
         if ($this->players->count() >= 2) {
             throw new \LogicException('A game has exactly two players.');
         }
+
         foreach ($this->players as $existing) {
             if ($existing->getColor() === $player->getColor()) {
                 throw new \LogicException('Colour already taken.');
@@ -208,6 +215,7 @@ class Game
         }
 
         $colors = [];
+
         foreach ($this->players as $player) {
             if ($player->isHumanUser($user)) {
                 $colors[] = $player->getColor();

@@ -179,7 +179,7 @@ that clocks and ratings need — which would otherwise become
 clock, rating snapshot before and after, in-game presence, and per-player
 archiving. It also reduces `GameVoter` to a membership query. Hot-seat is
 expressible (two rows, same user, different colour) because the unique
-constraint is on `(game_id, color)`, not `(game_id, user_id)`.
+constraint is on `(game_id, color_value)`, not `(game_id, user_id)`.
 
 `OpponentType` gains `HUMAN = 2`. It stays even though it is derivable from
 `GamePlayer`, because filtering game lists by mode should not require a join.

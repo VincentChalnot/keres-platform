@@ -46,6 +46,12 @@ readonly class SubmitMoveAction
     )]
     public function __(string $uuid, Request $request): Response
     {
+        // Captured first, before any lookup/voter/validation: the clock-charging
+        // anchor per `03-time-control.md` sec. 2. Unused until Phase 2 wires
+        // ClockManager, but must already sit at the true controller entry so
+        // Phase 2 doesn't shift the measured window.
+        $receivedAtMicros = (int) (microtime(true) * 1_000_000);
+
         $game = $this->gameRepository->findByUuid(Uuid::fromString($uuid));
 
         if (!$game) {
@@ -71,7 +77,7 @@ readonly class SubmitMoveAction
 
         $user = $this->security->getUser();
         $sideToMove = $game->isWhiteTurn() ? PieceColor::WHITE : PieceColor::BLACK;
-        $isPlayerTurn = in_array(
+        $isPlayerTurn = \in_array(
             $sideToMove,
             $game->getColorsForUser($user instanceof User ? $user : null),
             true
@@ -94,7 +100,7 @@ readonly class SubmitMoveAction
         }
 
         try {
-            $boardMovesData = $this->gameEngine->applyMove($game, $moveData);
+            $boardMovesData = $this->gameEngine->applyMove($game, $moveData, $receivedAtMicros);
         } catch (OptimisticLockException|RetryableException) {
             return new JsonResponse(
                 ['error' => 'concurrent_move'],

@@ -11,7 +11,7 @@ use Doctrine\ORM\Mapping as ORM;
 
 #[ORM\Entity(repositoryClass: GamePlayerRepository::class)]
 #[ORM\Table(name: 'game_player')]
-#[ORM\UniqueConstraint(name: 'uniq_game_player_game_color', columns: ['game_id', 'color'])]
+#[ORM\UniqueConstraint(name: 'uniq_game_player_game_color', columns: ['game_id', 'color_value'])]
 #[ORM\Index(name: 'idx_game_player_user_game', columns: ['user_id', 'game_id'])]
 class GamePlayer
 {
