@@ -22,7 +22,12 @@ if [ "$1" = 'frankenphp' ] || [ "$1" = 'php' ] || [ "$1" = 'bin/console' ]; then
 		fi
 	fi
 
-	if [ -z "$(ls -A 'vendor/' 2>/dev/null)" ]; then
+	# Dev containers bind-mount the repo over the image (.:/app), so vendor/
+	# installed at build time is never present and can drift from
+	# composer.lock across branch switches — always reinstall on every start.
+	# Prod images have vendor/ baked in at build time (see Dockerfile), so
+	# only install there as a fallback if it's somehow missing.
+	if [ "$APP_ENV" = 'dev' ] || [ -z "$(ls -A 'vendor/' 2>/dev/null)" ]; then
 		composer install --prefer-dist --no-progress --no-interaction
 	fi
 
