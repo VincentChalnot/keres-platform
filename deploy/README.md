@@ -24,7 +24,7 @@ Internet ──▶ Cloudflare (TLS, DDoS, cache)
 on the prod host (typically via the standard `traefik:v3` image with a
 companion compose). Its responsibilities:
 
-- Terminate TLS for `app.playkeres.com` (Infomaniak DNS-01 ACME → LetsEncrypt)
+- Terminate TLS for `app.playkeres.com` (Cloudflare DNS-01 ACME → LetsEncrypt)
 - Forward cleartext HTTP to the `php` service on the shared `proxy` network
 - Inject `X-Forwarded-For` / `X-Forwarded-Proto` so Symfony can recover the
   real client IP and trust the upstream scheme

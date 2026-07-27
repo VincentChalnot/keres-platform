@@ -37,7 +37,7 @@
 #                            proxy network's actual CIDR if desired.
 #   CERT_RESOLVER            Name of the ACME resolver configured on the
 #                            external Traefik instance. Defaults to
-#                            "infomaniak".
+#                            "cloudflare".
 #   TRAEFIK_NETWORK          Name of the external docker network the shared
 #                            Traefik instance listens on. Defaults to "proxy".
 #   TRAEFIK_ENTRYPOINT       TLS entrypoint name on the external Traefik
@@ -119,7 +119,7 @@ services:
       - caddy_data:/data
       - caddy_config:/config
     # Expose only to Traefik via the shared proxy network; no host ports needed.
-    # Traefik terminates TLS (Infomaniak DNS-01 ACME) and forwards cleartext
+    # Traefik terminates TLS (Cloudflare DNS-01 ACME) and forwards cleartext
     # HTTP to Caddy on :80.  X-Forwarded-For is injected by Traefik; Symfony
     # trusts the proxy network via TRUSTED_PROXIES to recover the real client IP.
     networks:
@@ -141,12 +141,12 @@ services:
       traefik.http.middlewares.keres-redirect-https.redirectscheme.permanent: "true"
 
       # ── HTTPS — Traefik terminates TLS, forwards cleartext HTTP to Caddy:80
-      # Traefik owns ACME (Infomaniak DNS-01, configured in traefik.yml) and
+      # Traefik owns ACME (Cloudflare DNS-01, configured in traefik.yml) and
       # injects X-Forwarded-For automatically on HTTP routers.
       traefik.http.routers.keres-https.rule: "Host(`app.${SERVER_NAME}`)"
       traefik.http.routers.keres-https.entrypoints: "${TRAEFIK_ENTRYPOINT:-websecure}"
       traefik.http.routers.keres-https.tls: "true"
-      traefik.http.routers.keres-https.tls.certresolver: "${CERT_RESOLVER:-infomaniak}"
+      traefik.http.routers.keres-https.tls.certresolver: "${CERT_RESOLVER:-cloudflare}"
       traefik.http.routers.keres-https.service: "keres-https-svc"
       traefik.http.services.keres-https-svc.loadbalancer.server.port: "80"
 

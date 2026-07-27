@@ -6,7 +6,7 @@
 # .github/workflows/ci.yaml).
 # This keeps the main CI build fast (~2 min instead of ~8 min).
 
-# Base FrankenPHP image (pre-built with Infomaniak DNS module — see Dockerfile.base)
+# Base FrankenPHP image
 FROM ghcr.io/vincentchalnot/keres-platform/php-base AS frankenphp_base
 
 # Dev FrankenPHP image

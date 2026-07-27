@@ -120,7 +120,7 @@ services:
       traefik.http.routers.keres-app-http.rule: "Host(`app.${SERVER_NAME:-local.playkeres.com}`)"
       traefik.http.routers.keres-app-http.entrypoints: "${TRAEFIK_ENTRYPOINT:-websecure}"
       traefik.http.routers.keres-app-http.tls: "true"
-      traefik.http.routers.keres-app-http.tls.certresolver: "${CERT_RESOLVER:-infomaniak}"
+      traefik.http.routers.keres-app-http.tls.certresolver: "${CERT_RESOLVER:-cloudflare}"
       traefik.http.routers.keres-app-http.service: "keres-app-svc"
       traefik.http.services.keres-app-svc.loadbalancer.server.port: "80"
 
@@ -168,7 +168,7 @@ services:
       traefik.http.routers.keres-vite.rule: "Host(`vite.app.${SERVER_NAME:-local.playkeres.com}`)"
       traefik.http.routers.keres-vite.entrypoints: "${TRAEFIK_ENTRYPOINT:-websecure}"
       traefik.http.routers.keres-vite.tls: "true"
-      traefik.http.routers.keres-vite.tls.certresolver: "${CERT_RESOLVER:-infomaniak}"
+      traefik.http.routers.keres-vite.tls.certresolver: "${CERT_RESOLVER:-cloudflare}"
       traefik.http.routers.keres-vite.service: "keres-vite-svc"
       traefik.http.services.keres-vite-svc.loadbalancer.server.port: "5173"
 
@@ -199,7 +199,7 @@ services:
       traefik.http.routers.keres-mail.rule: "Host(`mail.${SERVER_NAME:-local.playkeres.com}`)"
       traefik.http.routers.keres-mail.entrypoints: "${TRAEFIK_ENTRYPOINT:-websecure}"
       traefik.http.routers.keres-mail.tls: "true"
-      traefik.http.routers.keres-mail.tls.certresolver: "${CERT_RESOLVER:-infomaniak}"
+      traefik.http.routers.keres-mail.tls.certresolver: "${CERT_RESOLVER:-cloudflare}"
       traefik.http.routers.keres-mail.service: "keres-mail-svc"
       traefik.http.services.keres-mail-svc.loadbalancer.server.port: "8025"
 
