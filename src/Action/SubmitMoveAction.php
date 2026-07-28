@@ -5,13 +5,22 @@ declare(strict_types=1);
 namespace App\Action;
 
 use App\Engine\GameEngine;
+use App\Entity\Game;
 use App\Entity\User;
+use App\Exception\GameAlreadyFinishedException;
+use App\Exception\MoveFlaggedException;
+use App\Exception\StalePositionException;
+use App\Message\CheckClockExpiryMessage;
 use App\Message\ProcessAiMoveMessage;
 use App\Model\MoveData;
+use App\Model\MultiplayerLimits;
 use App\Model\OpponentType;
 use App\Model\PieceColor;
+use App\Model\TimeControlKind;
 use App\Repository\GameRepository;
 use App\Security\Voter\GameVoter;
+use App\Service\Game\ClockAdjudicator;
+use App\Service\Game\ClockManager;
 use App\Service\Game\GameStatePayloadBuilder;
 use App\Service\Game\GameUpdatePublisher;
 use Doctrine\DBAL\Exception\RetryableException;
@@ -23,6 +32,7 @@ use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\Attribute\AsController;
 use Symfony\Component\HttpKernel\EventListener\AbstractSessionListener;
 use Symfony\Component\Messenger\MessageBusInterface;
+use Symfony\Component\Messenger\Stamp\DelayStamp;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Uid\Uuid;
 
@@ -36,6 +46,8 @@ readonly class SubmitMoveAction
         private Security $security,
         private GameStatePayloadBuilder $payloadBuilder,
         private GameUpdatePublisher $publisher,
+        private ClockAdjudicator $clockAdjudicator,
+        private ClockManager $clockManager,
     ) {
     }
 
@@ -47,9 +59,9 @@ readonly class SubmitMoveAction
     public function __(string $uuid, Request $request): Response
     {
         // Captured first, before any lookup/voter/validation: the clock-charging
-        // anchor per `03-time-control.md` sec. 2. Unused until Phase 2 wires
-        // ClockManager, but must already sit at the true controller entry so
-        // Phase 2 doesn't shift the measured window.
+        // anchor per `03-time-control.md` sec. 2. Threaded into GameEngine so
+        // engine and platform latency between here and the row lock never
+        // burns the mover's clock.
         $receivedAtMicros = (int) (microtime(true) * 1_000_000);
 
         $game = $this->gameRepository->findByUuid(Uuid::fromString($uuid));
@@ -68,11 +80,13 @@ readonly class SubmitMoveAction
             );
         }
 
+        // The safety net (path b, 03-time-control.md sec 5.2): a flag that
+        // fell before this request arrived is resolved here, for free, before
+        // any move is even attempted.
+        $this->clockAdjudicator->adjudicate($game);
+
         if ($game->isGameOver()) {
-            return new JsonResponse(
-                ['error' => 'Game is already over'],
-                Response::HTTP_BAD_REQUEST
-            );
+            return $this->finishedResponse($game, 'game_finished');
         }
 
         $user = $this->security->getUser();
@@ -101,6 +115,15 @@ readonly class SubmitMoveAction
 
         try {
             $boardMovesData = $this->gameEngine->applyMove($game, $moveData, $receivedAtMicros);
+        } catch (MoveFlaggedException) {
+            return $this->finishedResponse($game, 'flagged');
+        } catch (GameAlreadyFinishedException) {
+            return $this->finishedResponse($game, 'game_finished');
+        } catch (StalePositionException) {
+            return new JsonResponse(
+                ['error' => 'not_your_turn', 'state' => $this->currentPayload($game)],
+                Response::HTTP_CONFLICT
+            );
         } catch (OptimisticLockException|RetryableException) {
             return new JsonResponse(
                 ['error' => 'concurrent_move'],
@@ -113,13 +136,21 @@ readonly class SubmitMoveAction
 
         $this->publisher->publishGameState($game->getUuid()->toRfc4122(), $json);
 
-        if (!$game->isGameOver() && OpponentType::AI === $game->getOpponentType()) {
-            $this->messageBus->dispatch(
-                new ProcessAiMoveMessage(
-                    $uuid,
-                    $game->getGameMoves()->count(),
-                )
-            );
+        if (!$game->isGameOver()) {
+            $deadline = $game->getMoveDeadlineAt();
+
+            if (null !== $deadline && TimeControlKind::UNLIMITED !== $game->getTimeControl()->getKind()) {
+                $this->dispatchClockExpiryCheck($game, $deadline);
+            }
+
+            if (OpponentType::AI === $game->getOpponentType()) {
+                $this->messageBus->dispatch(
+                    new ProcessAiMoveMessage(
+                        $uuid,
+                        $game->getGameMoves()->count(),
+                    )
+                );
+            }
         }
 
         return new JsonResponse(
@@ -129,5 +160,33 @@ readonly class SubmitMoveAction
                 AbstractSessionListener::NO_AUTO_CACHE_CONTROL_HEADER => true,
             ]
         );
+    }
+
+    /** Even an UNLIMITED game carries a deadline for its first two plies (the abort clamp). */
+    private function dispatchClockExpiryCheck(Game $game, \DateTimeImmutable $deadline): void
+    {
+        $deadlineMicros = (int) $deadline->format('Uu');
+        $graceMicros = (MultiplayerLimits::CLOCK_LAG_COMPENSATION_MS + MultiplayerLimits::CLOCK_EXPIRY_GRACE_MS) * 1000;
+        $fireAtMicros = $deadlineMicros + $graceMicros;
+        $delayMs = max(0, intdiv($fireAtMicros - $this->clockManager->nowMicros(), 1000));
+
+        $this->messageBus->dispatch(
+            new CheckClockExpiryMessage($game->getUuid()->toRfc4122(), $game->getGameMoves()->count(), $deadlineMicros),
+            [new DelayStamp($delayMs)]
+        );
+    }
+
+    private function finishedResponse(Game $game, string $errorCode): JsonResponse
+    {
+        return new JsonResponse(
+            ['error' => $errorCode, 'state' => $this->currentPayload($game)],
+            Response::HTTP_CONFLICT
+        );
+    }
+
+    /** @return array<string, mixed> */
+    private function currentPayload(Game $game): array
+    {
+        return $this->payloadBuilder->build($game, $this->gameEngine->getBoardMovesData($game));
     }
 }

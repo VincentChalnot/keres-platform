@@ -47,7 +47,7 @@
 #   BACKEND_API_URL          Rust engine URL. Defaults to http://backend:3000.
 #   AI_BACKEND_API_URL       AI endpoints URL. Defaults to http://backend:3000.
 #   MESSENGER_TRANSPORT_DSN  Async transport DSN. Defaults to the Doctrine
-#                            transport (doctrine://default?auto_setup=0).
+#                            transport (doctrine://default?auto_setup=0&check_delayed_interval=1000&redeliver_timeout=60).
 #   MAILER_DSN               Defaults to null://null (no-op — set a real DSN
 #                            to actually send mail in production).
 #   CORS_ALLOW_ORIGIN        Regex matched against the Origin header for
@@ -80,7 +80,7 @@ x-app-env: &app-env
   MERCURE_PUBLIC_URL: https://app.${SERVER_NAME}/.well-known/mercure
   BACKEND_API_URL: ${BACKEND_API_URL:-http://backend:3000}
   AI_BACKEND_API_URL: ${AI_BACKEND_API_URL:-http://backend:3000}
-  MESSENGER_TRANSPORT_DSN: ${MESSENGER_TRANSPORT_DSN:-doctrine://default?auto_setup=0}
+  MESSENGER_TRANSPORT_DSN: ${MESSENGER_TRANSPORT_DSN:-doctrine://default?auto_setup=0&check_delayed_interval=1000&redeliver_timeout=60}
   # No-op by default — set a real DSN in .env to actually send mail.
   MAILER_DSN: ${MAILER_DSN:-null://null}
   CORS_ALLOW_ORIGIN: '${CORS_ALLOW_ORIGIN:-^https://playkeres\.com$}'

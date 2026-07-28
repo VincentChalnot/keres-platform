@@ -4,9 +4,11 @@ declare(strict_types=1);
 
 namespace App\Action;
 
-use App\Model\PieceColor;
+use App\Entity\User;
 use App\Repository\GameRepository;
 use App\Security\Voter\GameVoter;
+use App\Service\Game\ClockManager;
+use App\Service\Game\GameLifecycleManager;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Response;
@@ -20,6 +22,8 @@ class ResignGameAction extends AbstractController
     public function __construct(
         private readonly GameRepository $gameRepository,
         private readonly EntityManagerInterface $entityManager,
+        private readonly GameLifecycleManager $gameLifecycleManager,
+        private readonly ClockManager $clockManager,
     ) {
     }
 
@@ -42,9 +46,16 @@ class ResignGameAction extends AbstractController
             return $this->redirectToRoute('new_game');
         }
 
-        $game->setGameOverAt(new \DateTimeImmutable());
-        $game->setWhiteWins(PieceColor::BLACK === $game->getCreatorColor());
-        $game->setDraw(false);
+        $user = $this->getUser();
+        $colors = $game->getColorsForUser($user instanceof User ? $user : null);
+        // Hot-seat holds both colours for the same user - ambiguous who
+        // resigned, so fall back to the creator's colour, matching this
+        // action's pre-multiplayer behaviour exactly. Every other mode has
+        // exactly one acting colour.
+        $resignerColor = 1 === \count($colors) ? $colors[0] : $game->getCreatorColor();
+
+        $this->clockManager->stop($game, $this->clockManager->nowMicros());
+        $this->gameLifecycleManager->resign($game, $resignerColor);
 
         $this->entityManager->persist($game);
         $this->entityManager->flush();

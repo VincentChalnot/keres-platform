@@ -62,7 +62,7 @@ x-app-env: &app-env
   # the public Traefik-fronted hostname (unreachable from inside containers).
   MERCURE_URL: http://php/.well-known/mercure
   MERCURE_PUBLIC_URL: https://app.${SERVER_NAME:-local.playkeres.com}/.well-known/mercure
-  MESSENGER_TRANSPORT_DSN: ${MESSENGER_TRANSPORT_DSN:-doctrine://default?auto_setup=0}
+  MESSENGER_TRANSPORT_DSN: ${MESSENGER_TRANSPORT_DSN:-doctrine://default?auto_setup=0&check_delayed_interval=1000&redeliver_timeout=60}
   BACKEND_API_URL: ${BACKEND_API_URL:-http://backend:3000}
   AI_BACKEND_API_URL: ${AI_BACKEND_API_URL:-http://backend:3000}
   MAILER_DSN: ${MAILER_DSN:-smtp://mailer:1025}

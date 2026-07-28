@@ -56,6 +56,15 @@ readonly class UndoMoveAction
             ], Response::HTTP_BAD_REQUEST);
         }
 
+        if (OpponentType::MULTIPLAYER === $game->getOpponentType()) {
+            // D8: the unconditional Undo button survives only in AI/hot-seat
+            // games; a multiplayer game must never be reopened (invariant 5).
+            return new JsonResponse([
+                'success' => false,
+                'error' => 'Undo is not available in multiplayer games',
+            ], Response::HTTP_FORBIDDEN);
+        }
+
         $this->entityManager->wrapInTransaction(function (EntityManagerInterface $em) use ($game): void {
             $lastMove = $this->removeLastMoveFromGame($game);
             $em->remove($lastMove);
@@ -69,9 +78,7 @@ readonly class UndoMoveAction
                     // Ignore if there was no AI move to remove @todo better handling for production is needed
                 }
             }
-            $game->setGameOverAt(null);
-            $game->setWhiteWins(false);
-            $game->setDraw(false);
+            $game->reopenForUndo();
             $em->persist($game);
         });
 

@@ -22,6 +22,7 @@
         "sidus/filter-bundle": "^6.0.3",
         "sidus/template-bundle": ">=1",
         "symfony/asset": "7.4.*",
+        "symfony/clock": "7.4.*",
         "symfony/console": "7.4.*",
         "symfony/doctrine-messenger": "7.4.*",
         "symfony/flex": "^2.11",

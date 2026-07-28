@@ -10,6 +10,7 @@ use App\Model\OpponentType;
 use App\Model\PieceColor;
 use App\Repository\GameRepository;
 use App\Security\Voter\GameVoter;
+use App\Service\Game\ClockAdjudicator;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpKernel\Attribute\AsController;
 use Symfony\Component\Messenger\MessageBusInterface;
@@ -22,6 +23,7 @@ class PlayAction extends AbstractController
     public function __construct(
         private readonly GameRepository $gameRepository,
         private readonly MessageBusInterface $messageBus,
+        private readonly ClockAdjudicator $clockAdjudicator,
     ) {
     }
 
@@ -42,6 +44,15 @@ class PlayAction extends AbstractController
         }
 
         $user = $this->getUser();
+
+        // Path (b), authenticated participants only (03-time-control.md
+        // sec 5.2): never for anonymous spectators - GAME_VIEW is public,
+        // and letting an anonymous page load finalise a rated game hands a
+        // write-amplification lever to anyone holding a game UUID.
+        if ($user instanceof User && $game->isParticipant($user)) {
+            $this->clockAdjudicator->adjudicate($game);
+        }
+
         $colors = $game->getColorsForUser($user instanceof User ? $user : null);
         $playerColor = $colors[0] ?? PieceColor::WHITE;
 

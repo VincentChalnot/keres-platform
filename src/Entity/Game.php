@@ -4,9 +4,13 @@ declare(strict_types=1);
 
 namespace App\Entity;
 
+use App\Model\GameEndReason;
 use App\Model\MovesData;
+use App\Model\MultiplayerLimits;
 use App\Model\OpponentType;
 use App\Model\PieceColor;
+use App\Model\SpeedCategory;
+use App\Model\TimeControl;
 use App\Repository\GameRepository;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
@@ -17,6 +21,11 @@ use Symfony\Component\Uid\Uuid;
 
 #[ORM\Entity(repositoryClass: GameRepository::class)]
 #[ORM\Table(name: 'game')]
+#[ORM\Index(
+    name: 'idx_game_move_deadline',
+    columns: ['move_deadline_at'],
+    options: ['where' => 'move_deadline_at IS NOT NULL AND game_over_at IS NULL'],
+)]
 class Game
 {
     #[ORM\Id]
@@ -36,11 +45,38 @@ class Game
     #[ORM\Column(type: Types::INTEGER)]
     private int $opponentTypeValue;
 
-    #[ORM\Column(type: Types::DATETIME_IMMUTABLE)]
+    #[ORM\Embedded(class: TimeControl::class, columnPrefix: false)]
+    private TimeControl $timeControl;
+
+    #[ORM\Column(type: Types::SMALLINT, nullable: true)]
+    private ?int $speedCategoryValue = null;
+
+    #[ORM\Column(type: Types::BOOLEAN)]
+    private bool $rated = false;
+
+    #[ORM\Column(type: Types::SMALLINT, options: ['default' => 0])]
+    private int $endReasonValue = GameEndReason::NONE->value;
+
+    #[ORM\Column(type: Types::DATETIMETZ_IMMUTABLE)]
     private \DateTimeImmutable $createdAt;
 
-    #[ORM\Column(type: Types::DATETIME_IMMUTABLE, nullable: true)]
+    #[ORM\Column(type: Types::DATETIMETZ_IMMUTABLE, nullable: true)]
+    private ?\DateTimeImmutable $startedAt = null;
+
+    #[ORM\Column(type: Types::DATETIMETZ_IMMUTABLE, nullable: true)]
     private ?\DateTimeImmutable $gameOverAt = null;
+
+    #[ORM\Column(type: 'timestamptz_micro', nullable: true)]
+    private ?\DateTimeImmutable $clockTurnStartedAt = null;
+
+    #[ORM\Column(type: 'timestamptz_micro', nullable: true)]
+    private ?\DateTimeImmutable $moveDeadlineAt = null;
+
+    #[ORM\Column(type: Types::SMALLINT, nullable: true)]
+    private ?int $drawOfferedByColorValue = null;
+
+    #[ORM\Column(type: Types::SMALLINT, nullable: true)]
+    private ?int $rematchOfferedByColorValue = null;
 
     #[ORM\Column(type: Types::BOOLEAN)]
     private bool $whiteWins = false;
@@ -52,7 +88,7 @@ class Game
     #[ORM\Column(type: Types::INTEGER)]
     private int $version = 1;
 
-    #[ORM\Column(type: Types::DATETIME_IMMUTABLE, nullable: true)]
+    #[ORM\Column(type: Types::DATETIMETZ_IMMUTABLE, nullable: true)]
     private ?\DateTimeImmutable $deletedAt = null;
 
     #[ORM\ManyToOne(targetEntity: User::class)]
@@ -79,14 +115,17 @@ class Game
     #[ORM\OrderBy(['id' => 'ASC'])]
     private Collection $gameMoves;
 
-    public function __construct(User $createdBy, OpponentType $opponentType = OpponentType::AI)
+    public function __construct(User $createdBy, OpponentType $opponentType, TimeControl $timeControl, bool $rated)
     {
         $this->uuid = Uuid::v4();
         $this->createdAt = new \DateTimeImmutable();
         $this->gameMoves = new ArrayCollection();
         $this->players = new ArrayCollection();
-        $this->opponentTypeValue = $opponentType->value;
         $this->createdBy = $createdBy;
+        $this->opponentTypeValue = $opponentType->value;
+        $this->timeControl = $timeControl;
+        $this->rated = $rated;
+        $this->speedCategoryValue = $timeControl->speedCategory()?->value;
     }
 
     public function getId(): ?int
@@ -116,6 +155,26 @@ class Game
         return $this;
     }
 
+    public function getTimeControl(): TimeControl
+    {
+        return $this->timeControl;
+    }
+
+    public function getSpeedCategory(): ?SpeedCategory
+    {
+        return null === $this->speedCategoryValue ? null : SpeedCategory::from($this->speedCategoryValue);
+    }
+
+    public function isRated(): bool
+    {
+        return $this->rated;
+    }
+
+    public function getEndReason(): GameEndReason
+    {
+        return GameEndReason::from($this->endReasonValue);
+    }
+
     public function getCreatedAt(): ?\DateTimeImmutable
     {
         return $this->createdAt;
@@ -128,16 +187,62 @@ class Game
         return $this;
     }
 
+    public function getStartedAt(): ?\DateTimeImmutable
+    {
+        return $this->startedAt;
+    }
+
+    /** ClockManager::arm() only - the `created` -> `ongoing` transition anchor. */
+    public function setStartedAt(?\DateTimeImmutable $startedAt): void
+    {
+        $this->startedAt = $startedAt;
+    }
+
     public function getGameOverAt(): ?\DateTimeImmutable
     {
         return $this->gameOverAt;
     }
 
-    public function setGameOverAt(?\DateTimeImmutable $gameOverAt): self
+    public function getClockTurnStartedAt(): ?\DateTimeImmutable
     {
-        $this->gameOverAt = $gameOverAt;
+        return $this->clockTurnStartedAt;
+    }
 
-        return $this;
+    /** ClockManager only (03-time-control.md sec 2.4: the only writer). */
+    public function setClockTurnStartedAt(?\DateTimeImmutable $clockTurnStartedAt): void
+    {
+        $this->clockTurnStartedAt = $clockTurnStartedAt;
+    }
+
+    public function getMoveDeadlineAt(): ?\DateTimeImmutable
+    {
+        return $this->moveDeadlineAt;
+    }
+
+    /** ClockManager only (03-time-control.md sec 2.4: the only writer). */
+    public function setMoveDeadlineAt(?\DateTimeImmutable $moveDeadlineAt): void
+    {
+        $this->moveDeadlineAt = $moveDeadlineAt;
+    }
+
+    public function getDrawOfferedByColor(): ?PieceColor
+    {
+        return null === $this->drawOfferedByColorValue ? null : PieceColor::from($this->drawOfferedByColorValue);
+    }
+
+    public function setDrawOfferedByColor(?PieceColor $color): void
+    {
+        $this->drawOfferedByColorValue = $color?->value;
+    }
+
+    public function getRematchOfferedByColor(): ?PieceColor
+    {
+        return null === $this->rematchOfferedByColorValue ? null : PieceColor::from($this->rematchOfferedByColorValue);
+    }
+
+    public function setRematchOfferedByColor(?PieceColor $color): void
+    {
+        $this->rematchOfferedByColorValue = $color?->value;
     }
 
     public function isWhiteWins(): bool
@@ -145,23 +250,9 @@ class Game
         return $this->whiteWins;
     }
 
-    public function setWhiteWins(bool $whiteWins): self
-    {
-        $this->whiteWins = $whiteWins;
-
-        return $this;
-    }
-
     public function isDraw(): bool
     {
         return $this->draw;
-    }
-
-    public function setDraw(bool $draw): self
-    {
-        $this->draw = $draw;
-
-        return $this;
     }
 
     public function getVersion(): int
@@ -303,5 +394,64 @@ class Game
         }
 
         return $data;
+    }
+
+    /**
+     * Invariant 3 clause 4 / 03-time-control.md sec 7.2: min(whitePlies,
+     * blackPlies) >= RATED_MIN_PLIES, i.e. both sides have moved at least
+     * twice. The exact negation of this predicate is the abort window - one
+     * shared method so they cannot drift.
+     */
+    public function hasReachedRatedPlyFloor(): bool
+    {
+        $count = $this->gameMoves->count();
+        $whitePlies = intdiv($count + 1, 2);
+        $blackPlies = intdiv($count, 2);
+
+        return min($whitePlies, $blackPlies) >= MultiplayerLimits::RATED_MIN_PLIES;
+    }
+
+    /** 03-time-control.md sec 7.2: a game may be aborted exactly while it would not have counted anyway. */
+    public function isAbortable(): bool
+    {
+        return null === $this->gameOverAt && !$this->hasReachedRatedPlyFloor();
+    }
+
+    /**
+     * Invariant 5: write-once. Replaces setGameOverAt/setWhiteWins/setDraw -
+     * the only path permitted to finalise a game (03-time-control.md sec 5.6,
+     * 01-domain-model.md sec 4.3). Callers own clock finalisation
+     * (ClockManager::stop()) themselves; this only writes the result.
+     */
+    public function finish(GameEndReason $reason, ?PieceColor $winner): void
+    {
+        if (null !== $this->gameOverAt) {
+            throw new \LogicException('A finished game is never reopened.');
+        }
+
+        $this->gameOverAt = new \DateTimeImmutable();
+        $this->endReasonValue = $reason->value;
+        // Abort has no result at all - distinct from a draw, even though
+        // both leave $winner null (06-rating.md sec 6.2: ABORTED writes
+        // whiteWins = false, draw = false).
+        $this->draw = GameEndReason::ABORTED !== $reason && null === $winner;
+        $this->whiteWins = PieceColor::WHITE === $winner;
+        $this->moveDeadlineAt = null;
+        $this->clockTurnStartedAt = null;
+        $this->drawOfferedByColorValue = null;
+    }
+
+    /**
+     * AI/hot-seat only. D8/09-api-reference.md restrict Undo to those modes;
+     * invariant 5 ("a finished game is never reopened") governs `finish()`
+     * and every clocked/rated path, not this one. Reverses exactly what
+     * `finish()` sets. The caller is responsible for the opponent-type gate.
+     */
+    public function reopenForUndo(): void
+    {
+        $this->gameOverAt = null;
+        $this->endReasonValue = GameEndReason::NONE->value;
+        $this->whiteWins = false;
+        $this->draw = false;
     }
 }

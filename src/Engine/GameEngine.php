@@ -5,8 +5,14 @@ declare(strict_types=1);
 namespace App\Engine;
 
 use App\Entity\Game;
+use App\Exception\GameAlreadyFinishedException;
+use App\Exception\MoveFlaggedException;
+use App\Exception\StalePositionException;
 use App\Model\BoardMovesData;
 use App\Model\MoveData;
+use App\Model\PieceColor;
+use App\Service\Game\ClockManager;
+use App\Service\Game\GameLifecycleManager;
 use Doctrine\DBAL\LockMode;
 use Doctrine\ORM\EntityManagerInterface;
 
@@ -16,6 +22,8 @@ readonly class GameEngine
         private BoardTreeManager $boardTreeManager,
         private EntityManagerInterface $entityManager,
         private EngineApi $engineApi,
+        private ClockManager $clockManager,
+        private GameLifecycleManager $gameLifecycleManager,
     ) {
     }
 
@@ -30,56 +38,70 @@ readonly class GameEngine
         return new BoardMovesData($boardData, $movesData);
     }
 
+    /**
+     * @throws GameAlreadyFinishedException post-lock re-check: already over (409 game_finished)
+     * @throws StalePositionException post-lock re-check: move count changed under us (409 not_your_turn)
+     * @throws MoveFlaggedException the mover's clock had already run out; the game is
+     *                              finalised and committed by the time this throws (409 flagged)
+     */
     public function applyMove(Game $game, MoveData $moveData, int $receivedAtMicros): BoardMovesData
     {
-        // Engine round trip: no transaction, no lock.
+        // 1. Engine round trip: no transaction, no lock, unbounded, uncharged.
         $movesData = $game->getMovesData();
         $movesData->addMove($moveData);
-        $expectedVersion = $game->getVersion();
+        $expectedMoveCount = $game->getGameMoves()->count();
+        $mover = $game->isWhiteTurn() ? PieceColor::WHITE : PieceColor::BLACK;
         $boardData = $this->engineApi->replayMoves($movesData);
         $boardMovesData = new BoardMovesData($boardData, $movesData);
 
-        return $this->entityManager->wrapInTransaction(
-            function (EntityManagerInterface $em) use ($game, $boardMovesData, $expectedVersion, $boardData): BoardMovesData {
+        // 2. One transaction, one lock, one flush. Returns whether the move
+        // was rejected as flagged - thrown *after* this returns, so the
+        // flag-finalisation commit is never rolled back by the throw.
+        $flagged = $this->entityManager->wrapInTransaction(
+            function (EntityManagerInterface $em) use ($game, $boardMovesData, $boardData, $expectedMoveCount, $receivedAtMicros, $mover): bool {
                 $em->getConnection()->executeStatement("SET LOCAL lock_timeout = '3s'");
 
+                // SELECT ... FOR UPDATE + re-hydrate (EntityManager.php:339-343).
                 $em->find(Game::class, $game->getId(), LockMode::PESSIMISTIC_WRITE);
 
                 if (null !== $game->getGameOverAt()) {
-                    throw new \RuntimeException('Game is over.');
+                    throw new GameAlreadyFinishedException();
                 }
 
-                if ($game->getVersion() !== $expectedVersion) {
-                    throw new \RuntimeException('A concurrent move was applied.');
+                if ($game->getGameMoves()->count() !== $expectedMoveCount) {
+                    throw new StalePositionException();
+                }
+
+                $outcome = $this->clockManager->chargeAndSwap($game, $mover, $receivedAtMicros, $this->clockManager->nowMicros());
+
+                if ($outcome->flagged) {
+                    $this->clockManager->stop($game, $receivedAtMicros);
+                    $this->gameLifecycleManager->finaliseTimeout($game, $mover);
+                    $em->flush();
+
+                    return true;
                 }
 
                 $newMove = $this->boardTreeManager->getGameMove($game, $boardMovesData);
                 $em->persist($newMove);
+                $game->setDrawOfferedByColor(null); // any move revokes a standing offer
 
                 if ($boardData->gameOver) {
-                    $game->setGameOverAt(new \DateTimeImmutable());
-                    $game->setWhiteWins($boardData->whiteWins);
-                    $game->setDraw($boardData->draw);
+                    $this->gameLifecycleManager->finaliseEngineResult($game, $boardData->whiteWins, $boardData->draw);
+                    $this->clockManager->stop($game, $receivedAtMicros);
                 }
 
                 $em->flush();
 
-                // Without clock fields (Phase 2), non-terminal moves do not dirty
-                // Game, so Doctrine emits no UPDATE and the version does not bump.
-                // Bump it directly and refresh so getVersion() returns the correct
-                // value. This transitional block is deleted when clocks write Game
-                // on every move.
-                if (!$boardData->gameOver) {
-                    $em->getConnection()->executeStatement(
-                        'UPDATE game SET version = version + 1 WHERE id = :id',
-                        ['id' => $game->getId()]
-                    );
-                    $em->refresh($game);
-                }
-
-                return $boardMovesData;
+                return false;
             }
         );
+
+        if ($flagged) {
+            throw new MoveFlaggedException();
+        }
+
+        return $boardMovesData;
     }
 
     public function aiMove(Game $game, int $receivedAtMicros): BoardMovesData

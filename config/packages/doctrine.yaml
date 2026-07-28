@@ -1,6 +1,8 @@
 doctrine:
     dbal:
         url: '%env(resolve:DATABASE_URL)%'
+        types:
+            timestamptz_micro: App\Doctrine\Types\TimestampTzMicroType
 
         # IMPORTANT: You MUST configure your server version,
         # either here or in the DATABASE_URL env var (see .env file)
@@ -24,6 +26,18 @@ doctrine:
                 dir: '%kernel.project_dir%/src/Entity'
                 prefix: 'App\Entity'
                 alias: App
+            # `TimeControl` (App\Model\TimeControl) is an #[ORM\Embeddable]
+            # embedded on Game - Doctrine loads its metadata through the same
+            # driver chain as entities, so it needs its own namespace/dir
+            # pointed at `src/Model` alongside the value objects that live
+            # there without any Doctrine mapping (harmless: the attribute
+            # driver treats unmapped classes as transient).
+            AppModel:
+                type: attribute
+                is_bundle: false
+                dir: '%kernel.project_dir%/src/Model'
+                prefix: 'App\Model'
+                alias: AppModel
         controller_resolver:
             auto_mapping: false
 
