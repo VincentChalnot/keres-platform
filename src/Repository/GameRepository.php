@@ -6,6 +6,7 @@ namespace App\Repository;
 
 use App\Entity\Game;
 use App\Entity\User;
+use App\Model\GameEndReason;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
 use Symfony\Component\Uid\Uuid;
@@ -124,7 +125,10 @@ class GameRepository extends ServiceEntityRepository
      * `GamePlayer` rows, so a naive colour comparison would double-count
      * every result as both a win and a loss - the same trap documented on
      * `AdminStatsRepository::getUserStats()`) but still counted as draws
-     * consistently with that method.
+     * consistently with that method. Aborted games (03-time-control.md sec
+     * 7.3: `whiteWins = false, draw = false`, i.e. no result at all) are
+     * excluded outright - `draw = false` alone would otherwise silently
+     * misattribute every abort as a decisive win/loss.
      *
      * @return array{wins: int, losses: int, draws: int}
      */
@@ -139,8 +143,9 @@ class GameRepository extends ServiceEntityRepository
                 SUM(CASE WHEN g.draw = true THEN 1 ELSE 0 END) AS draws
              FROM App\Entity\GamePlayer p
              JOIN p.game g
-             WHERE p.user = :user AND p.hiddenAt IS NULL AND g.deletedAt IS NULL AND g.gameOverAt IS NOT NULL'
-        )->setParameter('user', $user)->getSingleResult();
+             WHERE p.user = :user AND p.hiddenAt IS NULL AND g.deletedAt IS NULL
+                 AND g.gameOverAt IS NOT NULL AND g.endReasonValue <> :aborted'
+        )->setParameter('user', $user)->setParameter('aborted', GameEndReason::ABORTED->value)->getSingleResult();
 
         return [
             'wins' => (int) ($row['wins'] ?? 0),

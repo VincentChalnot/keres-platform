@@ -40,6 +40,12 @@ final class GameFactory
      * Until Phase 3's seek/challenge flow lands, `$timeControl`/`$rated`
      * default to unlimited/unrated so a manually-created multiplayer game
      * (there is no matchmaking UI yet) behaves like today's casual games.
+     *
+     * `$arm = false` leaves the clock columns null (no first-move clamp
+     * ticking yet) - `CreateTestGameCommand` uses this to let a human open
+     * both browser tabs before starting the 30s "did anyone turn up" timer.
+     * Call `arm()` once ready. Never expose `$arm` outside dev/test tooling
+     * - every real caller (Phase 3 matchmaking) arms immediately.
      */
     public function createMultiplayerGame(
         User $creator,
@@ -47,13 +53,22 @@ final class GameFactory
         PieceColor $creatorColor,
         ?TimeControl $timeControl = null,
         bool $rated = false,
+        bool $arm = true,
     ): Game {
         $game = new Game($creator, OpponentType::MULTIPLAYER, $timeControl ?? TimeControl::unlimited(), $rated);
         new GamePlayer($game, $creatorColor, $creator);
         new GamePlayer($game, $creatorColor->opposite(), $opponent);
 
-        $this->clockManager->arm($game);
+        if ($arm) {
+            $this->clockManager->arm($game);
+        }
 
         return $game;
+    }
+
+    /** Passthrough so `ClockManager::arm()` is still only ever reached through GameFactory. */
+    public function arm(Game $game): void
+    {
+        $this->clockManager->arm($game);
     }
 }

@@ -40,7 +40,8 @@ class CreateTestGameCommand extends Command
             ->addArgument('black-email', InputArgument::REQUIRED)
             ->addOption('initial-seconds', null, InputOption::VALUE_REQUIRED, 'REALTIME initial seconds; omit for unlimited')
             ->addOption('increment-seconds', null, InputOption::VALUE_REQUIRED, 'REALTIME increment seconds', '0')
-            ->addOption('rated', null, InputOption::VALUE_NONE);
+            ->addOption('rated', null, InputOption::VALUE_NONE)
+            ->addOption('wait', null, InputOption::VALUE_NONE, 'Print the UUID and wait for Enter before starting the clock, so a human has time to open both browser tabs before the 30s first-move clamp (03-time-control.md sec 7.1) starts ticking');
     }
 
     protected function execute(InputInterface $input, OutputInterface $output): int
@@ -59,18 +60,30 @@ class CreateTestGameCommand extends Command
             ? TimeControl::unlimited()
             : TimeControl::realtime((int) $initialSeconds, (int) $input->getOption('increment-seconds'));
 
+        $wait = (bool) $input->getOption('wait');
+
         $game = $this->gameFactory->createMultiplayerGame(
             $white,
             $black,
             PieceColor::WHITE,
             $timeControl,
             (bool) $input->getOption('rated'),
+            !$wait,
         );
 
         $this->entityManager->persist($game);
         $this->entityManager->flush();
 
-        $output->writeln($game->getUuid()->toRfc4122());
+        if ($wait) {
+            $output->writeln($game->getUuid()->toRfc4122());
+            $output->writeln('Clock is not armed yet. Open both browser tabs on /play/{uuid} now, then press Enter to start the 30s first-move clamp.');
+            fgets(\STDIN);
+            $this->gameFactory->arm($game);
+            $this->entityManager->flush();
+            $output->writeln('Clock armed.');
+        } else {
+            $output->writeln($game->getUuid()->toRfc4122());
+        }
 
         return Command::SUCCESS;
     }

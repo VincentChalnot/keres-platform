@@ -7,6 +7,7 @@ namespace App\Repository;
 use App\Entity\Game;
 use App\Entity\Move;
 use App\Entity\User;
+use App\Model\GameEndReason;
 use Doctrine\ORM\EntityManagerInterface;
 
 /**
@@ -43,7 +44,10 @@ class AdminStatsRepository
 
     /**
      * Win/lose/draw distribution across every finished game (AI + hotseat),
-     * resolved from the human player's perspective.
+     * resolved from the human player's perspective. Aborted games
+     * (03-time-control.md sec 7.3: no result at all) are excluded outright -
+     * `whiteWins = false, draw = false` would otherwise misattribute every
+     * abort as a decisive loss/win.
      *
      * @return array{win: int, lose: int, draw: int}
      */
@@ -56,8 +60,9 @@ class AdminStatsRepository
                 SUM(CASE WHEN g.draw = true THEN 1 ELSE 0 END) AS drawCount
              FROM App\Entity\GamePlayer gp
              JOIN gp.game g
-             WHERE g.gameOverAt IS NOT NULL AND gp.user IS NOT NULL AND g.opponentTypeValue <> 1'
-        )->getSingleResult();
+             WHERE g.gameOverAt IS NOT NULL AND gp.user IS NOT NULL AND g.opponentTypeValue <> 1
+                 AND g.endReasonValue <> :aborted'
+        )->setParameter('aborted', GameEndReason::ABORTED->value)->getSingleResult();
 
         return [
             'win' => (int) ($row['winCount'] ?? 0),
@@ -144,8 +149,8 @@ class AdminStatsRepository
                 SUM(CASE WHEN g.draw = true THEN 1 ELSE 0 END) AS drawCount
              FROM App\Entity\GamePlayer gp
              JOIN gp.game g
-             WHERE gp.user = :user AND g.deletedAt IS NULL'
-        )->setParameter('user', $user)->getSingleResult();
+             WHERE gp.user = :user AND g.deletedAt IS NULL AND g.endReasonValue <> :aborted'
+        )->setParameter('user', $user)->setParameter('aborted', GameEndReason::ABORTED->value)->getSingleResult();
 
         $lastMoveAt = $this->entityManager->createQuery(
             'SELECT MAX(gm.createdAt)
@@ -260,8 +265,9 @@ class AdminStatsRepository
              JOIN move mv ON mv.id = ranked.move_id
              JOIN game g ON g.id = ranked.game_id
              JOIN game_player gp ON gp.game_id = g.id AND gp.user_id IS NOT NULL
-             WHERE ranked.ply = :ply AND mv.to_board_position_id = :positionId',
-            ['ply' => $ply, 'positionId' => $positionId]
+             WHERE ranked.ply = :ply AND mv.to_board_position_id = :positionId
+                 AND g.end_reason_value <> :aborted',
+            ['ply' => $ply, 'positionId' => $positionId, 'aborted' => GameEndReason::ABORTED->value]
         )->fetchAllAssociative();
 
         $stats = ['win' => 0, 'lose' => 0, 'draw' => 0, 'inProgress' => 0];

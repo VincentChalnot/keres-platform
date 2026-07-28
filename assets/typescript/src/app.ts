@@ -113,9 +113,10 @@ class KeresGame {
         const moves = decodeMoveListFromBase64(movesBase64);
         await this.controller.setMoves(moves);
 
-        // In AI mode, set board orientation based on player color
-        if (this.gameMode === OPPONENT_TYPE_AI && !this.playerWhite) {
-            // If player is black, flip the board so blacks are at the bottom
+        // In AI and multiplayer modes, orientation is a fixed per-player
+        // setting: flip whenever the viewer plays Black, regardless of
+        // whose turn it is or how many moves have been played.
+        if ((this.gameMode === OPPONENT_TYPE_AI || this.gameMode === OPPONENT_TYPE_MULTIPLAYER) && !this.playerWhite) {
             await this.controller.flipBoard();
         }
         // In hotseat mode, determine orientation based on last move

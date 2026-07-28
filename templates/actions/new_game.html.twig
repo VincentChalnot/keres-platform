@@ -91,7 +91,9 @@
                                 <p><strong>Last Move:</strong> {{ game.lastMoveAt|date('Y-m-d H:i') }}</p>
                             {% endif %}
                             <p><strong>Result:</strong>
-                                {% if game.draw %}
+                                {% if game.endReason == enum('App\\Model\\GameEndReason').ABORTED %}
+                                    Aborted
+                                {% elseif game.draw %}
                                     Draw
                                 {% elseif game.whiteWins %}
                                     White wins
