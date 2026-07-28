@@ -33,6 +33,7 @@
                     {% block nav_extra %}
                         {% if app.user %}
                             <a href="{{ path('dashboard') }}" class="navbar-item">Dashboard</a>
+                            <a href="{{ path('friends') }}" class="navbar-item">Friends</a>
                         {% endif %}
                     {% endblock %}
                     <a href="{{ static_site_url }}/rules" class="navbar-item">Rules</a>
@@ -43,6 +44,9 @@
                     </div>
                     <div class="navbar-item">
                         {% if app.user %}
+                            <a href="{{ path('settings_profile') }}" class="icon mr-2" aria-label="Account settings" title="Account settings">
+                                <i class="fa-solid fa-user-gear" aria-hidden="true"></i>
+                            </a>
                             <a href="{{ path('preferences') }}" class="icon mr-2" aria-label="Preferences" title="Preferences">
                                 <i class="fa-solid fa-gear" aria-hidden="true"></i>
                             </a>
@@ -53,7 +57,7 @@
                                     <i class="fa-solid fa-circle-user" aria-hidden="true"></i>
                                 </span>
                             {% endif %}
-                            <span class="site-navbar__username">{{ app.user.displayName ?? app.user.email }}</span>
+                            <a href="{{ path('profile', {username: app.user.username}) }}" class="site-navbar__username">{{ app.user.displayName ?? app.user.username }}</a>
                             <a href="{{ path('logout') }}" class="button is-small is-rounded is-outlined is-light">
                                 <span class="icon">
                                     <i class="fa-solid fa-right-from-bracket" aria-hidden="true"></i>

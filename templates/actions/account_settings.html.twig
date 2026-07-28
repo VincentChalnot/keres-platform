@@ -1,0 +1,121 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Account settings{% endblock %}
+
+{% block body %}
+<main class="section">
+    <div class="container">
+        <div class="columns is-centered">
+            <div class="column is-7">
+                <h1 class="title">Account settings</h1>
+                <p class="subtitle">Manage your username, display name and social connections.</p>
+
+                {% if saved %}
+                    <div class="notification is-success">
+                        <strong>Settings saved.</strong>
+                    </div>
+                {% endif %}
+
+                <div class="box">
+                    {{ form_start(form, {attr: {novalidate: 'novalidate'}}) }}
+
+                        {{ form_errors(form) }}
+
+                        <div class="field">
+                            {{ form_label(form.username, null, {label_attr: {class: 'label'}}) }}
+                            <div class="control">
+                                {{ form_widget(form.username, {attr: {class: 'input'}}) }}
+                            </div>
+                            {% if user.canChangeUsername %}
+                                <p class="help">You may change your username once, ever — choose carefully.</p>
+                            {% else %}
+                                <p class="help">You have already used your one-time username change.</p>
+                            {% endif %}
+                            {{ form_errors(form.username) }}
+                        </div>
+
+                        <div class="field">
+                            {{ form_label(form.displayName, null, {label_attr: {class: 'label'}}) }}
+                            <div class="control">
+                                {{ form_widget(form.displayName, {attr: {class: 'input'}}) }}
+                            </div>
+                            {{ form_errors(form.displayName) }}
+                        </div>
+
+                        <div class="field mt-5">
+                            <div class="control">
+                                {{ form_widget(form.submit, {attr: {class: 'button is-primary is-rounded'}}) }}
+                            </div>
+                        </div>
+
+                    {{ form_end(form) }}
+                </div>
+
+                <div class="box">
+                    <h2 class="title is-5">Linked sign-in providers</h2>
+                    {% if user.auths|length > 0 %}
+                        <ul>
+                            {% for auth in user.auths %}
+                                <li>{{ auth.provider|capitalize }}</li>
+                            {% endfor %}
+                        </ul>
+                    {% else %}
+                        <p class="has-text-grey">No linked sign-in providers — you sign in with your email and password.</p>
+                    {% endif %}
+                </div>
+
+                <div class="box">
+                    <h2 class="title is-5">Blocked users</h2>
+                    {% if blockedUsers|length > 0 %}
+                        <ul>
+                            {% for friendship in blockedUsers %}
+                                {% set blocked = friendship.getOther(user) %}
+                                <li>
+                                    <a href="{{ path('profile', {username: blocked.username}) }}">{{ blocked.displayName ?? blocked.username }}</a>
+                                </li>
+                            {% endfor %}
+                        </ul>
+                        <p class="help">Unblock from their profile page.</p>
+                    {% else %}
+                        <p class="has-text-grey">You haven't blocked anyone.</p>
+                    {% endif %}
+                </div>
+
+                <div class="box">
+                    <h2 class="title is-5">Sent friend requests</h2>
+                    {% if outgoingRequests|length > 0 %}
+                        <ul>
+                            {% for friendship in outgoingRequests %}
+                                {% set addressee = friendship.getOther(user) %}
+                                <li>{{ addressee.displayName ?? addressee.username }}</li>
+                            {% endfor %}
+                        </ul>
+                        <p class="help">Manage pending requests on the <a href="{{ path('friends') }}">friends page</a>.</p>
+                    {% else %}
+                        <p class="has-text-grey">No pending outgoing requests.</p>
+                    {% endif %}
+                </div>
+
+                <div class="box">
+                    <h2 class="title is-5">Received friend requests</h2>
+                    {% if incomingRequests|length > 0 %}
+                        <ul>
+                            {% for friendship in incomingRequests %}
+                                {% set requester = friendship.getOther(user) %}
+                                <li>{{ requester.displayName ?? requester.username }}</li>
+                            {% endfor %}
+                        </ul>
+                        <p class="help">Respond to requests on the <a href="{{ path('friends') }}">friends page</a>.</p>
+                    {% else %}
+                        <p class="has-text-grey">No pending incoming requests.</p>
+                    {% endif %}
+                </div>
+
+                <div class="box">
+                    <p class="has-text-grey">Notification preferences are coming in a future update.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</main>
+{% endblock %}

@@ -1,0 +1,182 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}{{ subject.displayName ?? subject.username }} (@{{ subject.username }}){% endblock %}
+
+{% block body %}
+    <section class="section">
+        <div class="container">
+            <div id="profile-root" data-username="{{ subject.username }}" data-is-self="{{ isSelf ? 'true' : 'false' }}">
+                <div class="box">
+                    <div class="columns is-vcentered">
+                        <div class="column is-narrow">
+                            {% if subject.avatarUrl %}
+                                <figure class="image is-64x64">
+                                    <img class="is-rounded" src="{{ subject.avatarUrl }}" alt="">
+                                </figure>
+                            {% else %}
+                                <span class="icon is-large">
+                                    <i class="fa-solid fa-circle-user fa-3x" aria-hidden="true"></i>
+                                </span>
+                            {% endif %}
+                        </div>
+                        <div class="column">
+                            <h1 class="title mb-1">
+                                {{ subject.displayName ?? subject.username }}
+                                {% if online %}
+                                    <span class="tag is-success is-rounded ml-2">Online</span>
+                                {% endif %}
+                            </h1>
+                            <p class="subtitle is-6 has-text-grey">
+                                @{{ subject.username }} &middot; Member since {{ subject.createdAt|date('F Y') }}
+                            </p>
+                        </div>
+                        <div class="column is-narrow buttons">
+                            {% if isSelf %}
+                                <a href="{{ path('settings_profile') }}" class="button is-rounded is-light">Edit profile</a>
+                            {% endif %}
+
+                            {% if not isSelf and relationship is not null %}
+                                {% if relationship.value == 'none' %}
+                                    <button type="button" class="button is-rounded is-primary" data-action="friend-request">Add friend</button>
+                                {% elseif relationship.value == 'pending_out' %}
+                                    <span class="tag is-light is-rounded">Request sent</span>
+                                {% elseif relationship.value == 'pending_in' %}
+                                    <button type="button" class="button is-rounded is-primary" data-action="friend-accept">Accept</button>
+                                    <button type="button" class="button is-rounded is-light" data-action="friend-decline">Decline</button>
+                                {% elseif relationship.value == 'friends' %}
+                                    <button type="button" class="button is-rounded is-light" data-action="friend-remove">Unfriend</button>
+                                {% endif %}
+
+                                {% if relationship.value == 'blocked_by_me' %}
+                                    <button type="button" class="button is-rounded is-light" data-action="friend-unblock">Unblock</button>
+                                {% else %}
+                                    <button type="button" class="button is-rounded is-danger is-light" data-action="friend-block">Block</button>
+                                {% endif %}
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+
+                <div class="columns is-multiline">
+                    <div class="column is-half">
+                        <div class="box">
+                            <h3 class="title is-5">Ratings</h3>
+                            <table class="table is-fullwidth">
+                                <thead>
+                                <tr>
+                                    <th>Category</th>
+                                    <th>Rating</th>
+                                    <th>Games</th>
+                                </tr>
+                                </thead>
+                                <tbody>
+                                {% for category, rating in ratings %}
+                                    <tr>
+                                        <td>{{ category|capitalize }}</td>
+                                        <td class="{{ rating.provisional ? 'has-text-grey' : '' }}">
+                                            {{ rating.rating }}{% if rating.provisional %}<span title="Provisional - fewer than the established-rating floor of games played">?</span>{% endif %}
+                                        </td>
+                                        <td>{{ rating.games }}</td>
+                                    </tr>
+                                {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    <div class="column is-half">
+                        <div class="box">
+                            <h3 class="title is-5">Record</h3>
+                            <div class="level is-mobile">
+                                <div class="level-item has-text-centered">
+                                    <div>
+                                        <p class="heading">Wins</p>
+                                        <p class="title">{{ stats.wins }}</p>
+                                    </div>
+                                </div>
+                                <div class="level-item has-text-centered">
+                                    <div>
+                                        <p class="heading">Losses</p>
+                                        <p class="title">{{ stats.losses }}</p>
+                                    </div>
+                                </div>
+                                <div class="level-item has-text-centered">
+                                    <div>
+                                        <p class="heading">Draws</p>
+                                        <p class="title">{{ stats.draws }}</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <h2 class="title is-4">Recent games</h2>
+
+                {% for game in games %}
+                    {# @var game \App\Entity\Game #}
+                    {% set subjectColors = game.getColorsForUser(subject) %}
+                    {% set myColor = subjectColors[0] is defined ? subjectColors[0] : null %}
+                    {% set opponentPlayer = null %}
+                    {% for p in game.players %}
+                        {% if opponentPlayer is null and p.color != myColor %}
+                            {% set opponentPlayer = p %}
+                        {% endif %}
+                    {% endfor %}
+                    <div class="box mb-4">
+                        <a href="{{ path('play', {uuid: game.uuid}) }}" class="button is-rounded is-primary is-pulled-right">
+                            {{ game.gameOver ? 'View' : 'Watch' }}
+                        </a>
+                        <p><strong>{{ isSelf ? 'You played' : (subject.displayName ?? subject.username) ~ ' played' }}:</strong> {{ myColor and myColor.name == 'WHITE' ? 'White' : 'Black' }}</p>
+                        <p><strong>Opponent:</strong>
+                            {% if opponentPlayer is null or opponentPlayer.user is null %}
+                                AI
+                            {% elseif opponentPlayer.user == subject %}
+                                Themselves (hot-seat)
+                            {% else %}
+                                <a href="{{ path('profile', {username: opponentPlayer.user.username}) }}">{{ opponentPlayer.user.displayName ?? opponentPlayer.user.username }}</a>
+                            {% endif %}
+                        </p>
+                        <p><strong>Created:</strong> {{ game.createdAt|date('Y-m-d H:i') }}</p>
+                        {% if game.gameOver %}
+                            <p><strong>Result:</strong>
+                                {% if game.endReason == enum('App\\Model\\GameEndReason').ABORTED %}
+                                    Aborted
+                                {% elseif game.draw %}
+                                    Draw
+                                {% elseif game.whiteWins %}
+                                    White wins
+                                {% else %}
+                                    Black wins
+                                {% endif %}
+                            </p>
+                        {% else %}
+                            <p><strong>Next to play:</strong> {{ game.whiteTurn ? 'White' : 'Black' }}</p>
+                        {% endif %}
+                    </div>
+                {% else %}
+                    <p class="has-text-grey">No games to show{{ isSelf ? '' : ' yet' }}.</p>
+                {% endfor %}
+
+                {% if games.haveToPaginate %}
+                    <nav class="pagination" role="navigation" aria-label="pagination">
+                        {% if games.hasPreviousPage %}
+                            <a class="pagination-previous" href="{{ path('profile', {username: subject.username, page: games.previousPage}) }}">Previous</a>
+                        {% else %}
+                            <a class="pagination-previous" disabled>Previous</a>
+                        {% endif %}
+                        {% if games.hasNextPage %}
+                            <a class="pagination-next" href="{{ path('profile', {username: subject.username, page: games.nextPage}) }}">Next</a>
+                        {% else %}
+                            <a class="pagination-next" disabled>Next</a>
+                        {% endif %}
+                        <span class="pagination-list ml-3">Page {{ games.currentPage }} of {{ games.nbPages }}</span>
+                    </nav>
+                {% endif %}
+            </div>
+        </div>
+    </section>
+{% endblock %}
+
+{% block end_javascripts %}
+    {{ vite_entry_script_tags('lobby') }}
+{% endblock %}

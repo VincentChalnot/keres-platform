@@ -26,3 +26,9 @@ sidus_template:
             template: 'actions/dashboard.html.twig'
         preferences:
             template: 'actions/preferences.html.twig'
+        profile:
+            template: 'actions/profile.html.twig'
+        settings_profile:
+            template: 'actions/account_settings.html.twig'
+        friends:
+            template: 'actions/friends.html.twig'

@@ -25,3 +25,22 @@ framework:
             policy: 'sliding_window'
             limit: 120
             interval: '1 minute'
+
+        # 09-api-reference.md sec 7. No `_limiter` suffix, same reasoning as
+        # above (config/services.yaml:34-39).
+        social_action:               # $socialActionLimiter, keyed on user id
+            policy: 'sliding_window'
+            limit: 60
+            interval: '1 hour'
+        friend_request:              # $friendRequestLimiter, keyed on user id
+            policy: 'sliding_window'
+            limit: 20
+            interval: '1 day'
+        friend_search:               # $friendSearchLimiter, keyed on user id
+            policy: 'sliding_window'
+            limit: 30
+            interval: '1 minute'
+        username_change:             # $usernameChangeLimiter, keyed on user id
+            policy: 'sliding_window'
+            limit: 3
+            interval: '1 day'

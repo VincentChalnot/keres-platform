@@ -7,6 +7,7 @@ namespace App\Service\Matchmaking;
 use App\Entity\Seek;
 use App\Entity\User;
 use App\Model\MultiplayerLimits;
+use App\Repository\FriendshipRepository;
 use Symfony\Component\Uid\Uuid;
 
 /**
@@ -24,6 +25,11 @@ final readonly class SeekPayloadBuilder
     private const int ENCODE_FLAGS = \JSON_THROW_ON_ERROR
         | \JSON_UNESCAPED_SLASHES
         | \JSON_UNESCAPED_UNICODE;
+
+    public function __construct(
+        private FriendshipRepository $friendshipRepository,
+    ) {
+    }
 
     /**
      * @param Seek[] $seeks
@@ -99,9 +105,15 @@ final readonly class SeekPayloadBuilder
      * sec 3.2/5.1: the poster's side of `accepts()` only - "ignoring the
      * viewer's own window, because clicking is consent" (sec 3.8c). Colour
      * never blocks: `accept()` always mirrors to the complement or RANDOM.
+     * Block relations (sec 3.2/04-matchmaking.md line 610) always apply,
+     * even under `autoWiden` - a wide-open window still never crosses a block.
      */
     private function isPlayableFor(Seek $seek, User $viewer): bool
     {
+        if ($this->friendshipRepository->isBlockedEitherWay($viewer, $seek->getUser())) {
+            return false;
+        }
+
         if ($seek->isAutoWiden()) {
             return true; // width(0) already covers the placeholder-rating case; a real widening window only grows.
         }

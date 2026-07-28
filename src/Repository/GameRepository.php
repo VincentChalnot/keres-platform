@@ -7,6 +7,7 @@ namespace App\Repository;
 use App\Entity\Game;
 use App\Entity\User;
 use App\Model\GameEndReason;
+use App\Model\OpponentType;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\ORM\QueryBuilder;
 use Doctrine\Persistence\ManagerRegistry;
@@ -179,5 +180,39 @@ class GameRepository extends ServiceEntityRepository
             'losses' => (int) ($row['losses'] ?? 0),
             'draws' => (int) ($row['draws'] ?? 0),
         ];
+    }
+
+    /**
+     * Profile game history (05-social.md sec 9.3, 09-api-reference.md sec
+     * 4.6) - `ProfilePageAction` and `ProfileGamesAction`. Pagerfanta-ready,
+     * mirrors queryFinishedForUser()'s shape.
+     *
+     * `$includeAllOpponentTypes` lifts the `opponentTypeValue = MULTIPLAYER`
+     * predicate: AI/hot-seat games are participant-only (contract sec 4.3),
+     * so the public view lists HUMAN opponents only; self view drops the
+     * filter (sec 9.3 third bullet, sec 11 open question 7).
+     *
+     * `$includeHidden` lifts the `hiddenAt IS NULL` predicate - self view
+     * only, gated by the caller (09-api-reference.md sec 4.6 item 2).
+     */
+    public function queryProfileGamesForUser(User $subject, bool $includeAllOpponentTypes = false, bool $includeHidden = false): QueryBuilder
+    {
+        $queryBuilder = $this->createQueryBuilder('g')
+            ->join('g.players', 'p')
+            ->andWhere('p.user = :subject')
+            ->andWhere('g.deletedAt IS NULL')
+            ->setParameter('subject', $subject)
+            ->orderBy('g.createdAt', 'DESC');
+
+        if (!$includeHidden) {
+            $queryBuilder->andWhere('p.hiddenAt IS NULL');
+        }
+
+        if (!$includeAllOpponentTypes) {
+            $queryBuilder->andWhere('g.opponentTypeValue = :opponentType')
+                ->setParameter('opponentType', OpponentType::MULTIPLAYER->value);
+        }
+
+        return $queryBuilder;
     }
 }

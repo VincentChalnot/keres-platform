@@ -9,6 +9,7 @@ use App\Http\ApiResponse;
 use App\Model\ApiErrorCode;
 use App\Model\ColorPreference;
 use App\Model\MultiplayerLimits;
+use App\Repository\FriendshipRepository;
 use App\Repository\SeekRepository;
 use App\Service\Matchmaking\SeekCreationService;
 use App\Service\Matchmaking\SeekMatcher;
@@ -47,6 +48,7 @@ readonly class AcceptSeekAction
         private SeekRepository $seekRepository,
         private SeekCreationService $seekCreationService,
         private SeekMatcher $seekMatcher,
+        private FriendshipRepository $friendshipRepository,
         private ClockInterface $clock,
         private RateLimiterFactory $seekAcceptLimiter,
     ) {
@@ -73,6 +75,10 @@ readonly class AcceptSeekAction
 
         if ($target->getUser() === $user) {
             return ApiResponse::error(ApiErrorCode::CANNOT_ACCEPT_OWN_SEEK, 'You cannot accept your own seek.');
+        }
+
+        if ($this->friendshipRepository->isBlockedEitherWay($user, $target->getUser())) {
+            return ApiResponse::error(ApiErrorCode::BLOCKED, 'You cannot accept a seek from a blocked user.');
         }
 
         $now = $this->clock->now();

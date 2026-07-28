@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Entity;
 
+use App\Model\MultiplayerLimits;
 use App\Repository\UserRepository;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
@@ -128,6 +129,13 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     public function setLastSeenAt(?\DateTimeImmutable $lastSeenAt): void
     {
         $this->lastSeenAt = $lastSeenAt;
+    }
+
+    /** 05-social.md sec 9.1: the profile/friends-list online dot. */
+    public function isOnline(\DateTimeImmutable $now): bool
+    {
+        return null !== $this->lastSeenAt
+            && ($now->getTimestamp() - $this->lastSeenAt->getTimestamp()) < MultiplayerLimits::PROFILE_ONLINE_WINDOW_SECONDS;
     }
 
     /**

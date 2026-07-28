@@ -5,6 +5,7 @@ import {
     SeekCreateResult,
     SeekListing,
 } from '../models/seek';
+import {FriendRequestResult, FriendsListResult, PlayerSearchResult} from '../models/friends';
 
 /** Thrown on any `{"error": {...}}` envelope or transport failure - `code` is the only field a caller may branch on (09-api-reference.md sec 2.2/9). */
 export class ApiError extends Error {
@@ -18,17 +19,40 @@ export class ApiError extends Error {
     }
 }
 
-async function request<T>(path: string, method: 'GET' | 'POST' = 'GET', body?: unknown): Promise<T> {
+/**
+ * Dev-only testing aid mirroring `App\EventListener\Dev\DevUserSwitchListener`:
+ * when the current page URL carries `?_as=<email>`, every AJAX call made from
+ * that page forwards the same param so the acting identity stays consistent
+ * with the page's own per-request override, even though a shared Playwright
+ * cookie jar means the *real* session may belong to a different dev user.
+ * A no-op whenever `_as` is absent from the page URL (i.e. always in prod).
+ */
+function withDevAs(path: string): string {
+    const as = new URLSearchParams(window.location.search).get('_as');
+
+    if (null === as) {
+        return path;
+    }
+
+    return `${path}${path.includes('?') ? '&' : '?'}_as=${encodeURIComponent(as)}`;
+}
+
+async function request<T>(path: string, method: 'GET' | 'POST' = 'GET', body?: unknown, signal?: AbortSignal): Promise<T> {
     let response: Response;
 
     try {
-        response = await fetch(path, {
+        response = await fetch(withDevAs(path), {
             method,
             headers: undefined !== body ? {'Content-Type': 'application/json'} : {},
             body: undefined !== body ? JSON.stringify(body) : undefined,
             credentials: 'same-origin',
+            signal,
         });
     } catch (error) {
+        if (error instanceof DOMException && 'AbortError' === error.name) {
+            throw error; // let the caller's catch distinguish a deliberate cancel from a real failure
+        }
+
         throw new ApiError('network_error', 0, {message: String(error)});
     }
 
@@ -89,5 +113,39 @@ export class LobbyAPI {
 
     acceptSeek(uuid: string): Promise<{gameUuid: string}> {
         return request<{gameUuid: string}>(`/lobby/seeks/${encodeURIComponent(uuid)}/accept`, 'POST');
+    }
+
+    // 05-social.md sec 3/4, 09-api-reference.md sec 4.3.
+    listFriends(): Promise<FriendsListResult> {
+        return request<FriendsListResult>('/friends/list');
+    }
+
+    requestFriend(username: string): Promise<FriendRequestResult> {
+        return request<FriendRequestResult>('/friends/request', 'POST', {username});
+    }
+
+    acceptFriend(username: string): Promise<void> {
+        return request<void>(`/friends/${encodeURIComponent(username)}/accept`, 'POST');
+    }
+
+    declineFriend(username: string): Promise<void> {
+        return request<void>(`/friends/${encodeURIComponent(username)}/decline`, 'POST');
+    }
+
+    removeFriend(username: string): Promise<void> {
+        return request<void>(`/friends/${encodeURIComponent(username)}/remove`, 'POST');
+    }
+
+    blockUser(username: string): Promise<void> {
+        return request<void>('/friends/block', 'POST', {username});
+    }
+
+    unblockUser(username: string): Promise<void> {
+        return request<void>(`/friends/${encodeURIComponent(username)}/unblock`, 'POST');
+    }
+
+    searchPlayers(q: string, signal?: AbortSignal): Promise<PlayerSearchResult[]> {
+        return request<{players: PlayerSearchResult[]}>(`/players/search?q=${encodeURIComponent(q)}`, 'GET', undefined, signal)
+            .then((result) => result.players);
     }
 }

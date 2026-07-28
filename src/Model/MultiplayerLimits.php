@@ -52,6 +52,24 @@ final class MultiplayerLimits
      */
     public const int GLICKO_DEFAULT_RATING = 1500;
 
+    /** 05-social.md sec 3.5: cooldown before a declined request may be re-sent. */
+    public const int FRIEND_REQUEST_COOLDOWN_SECONDS = 604800;
+
+    /** 05-social.md sec 2.2: shorter is a paginated dump of the user table. */
+    public const int USERNAME_MIN_SEARCH_PREFIX = 3;
+
+    /** 05-social.md sec 5.4 (Phase 7 - challenges). */
+    public const int MAX_OUTBOUND_CHALLENGES = 10;
+
+    /** 05-social.md sec 7.2 (Phase 6 - draw offers). */
+    public const int DRAW_OFFER_COOLDOWN_PLIES = 6;
+
+    /** 05-social.md sec 9.1: window for the profile page's online dot. */
+    public const int PROFILE_ONLINE_WINDOW_SECONDS = 300;
+
+    /** 05-social.md sec 9.3. */
+    public const int PROFILE_GAMES_PER_PAGE = 20;
+
     private function __construct()
     {
     }

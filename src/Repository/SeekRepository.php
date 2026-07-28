@@ -113,6 +113,7 @@ class SeekRepository extends ServiceEntityRepository
         return false !== $row;
     }
 
+    /** 05-social.md sec 4.4: the block anti-join rides in here, not as a per-candidate check. */
     private function candidateWhereClause(): string
     {
         return <<<'SQL'
@@ -144,6 +145,13 @@ class SeekRepository extends ServiceEntityRepository
                        ELSE (c.rating_min IS NULL OR :selfRatingC >= c.rating_min)
                         AND (c.rating_max IS NULL OR :selfRatingD <= c.rating_max)
                   END)
+            AND NOT EXISTS (
+                  SELECT 1
+                    FROM friendship b
+                   WHERE b.status_value = 3
+                     AND (   (b.requester_id = :selfUserId AND b.addressee_id = c.user_id)
+                          OR (b.requester_id = c.user_id   AND b.addressee_id = :selfUserId) )
+                )
             AND (:restrictToUuid = '' OR c.uuid::text = :restrictToUuid)
             SQL;
     }

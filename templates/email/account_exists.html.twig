@@ -1,0 +1,11 @@
+<p>Hello {{ user.displayName ?? user.email }},</p>
+
+<p>Someone just tried to create a new Keres account using your email address. No new account was created, because you already have one.</p>
+
+<p>If this was you and you'd simply forgotten you already had an account, you can log in directly, or reset your password if you don't remember it:</p>
+
+<p>
+    <a href="{{ lostPasswordUrl }}">Reset your password</a>
+</p>
+
+<p>If you did not try to register, you can safely ignore this email — no action is needed and your account is unchanged.</p>
