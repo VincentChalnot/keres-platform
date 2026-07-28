@@ -11,6 +11,7 @@ use App\Model\OpponentType;
 use App\Model\PieceColor;
 use App\Model\SpeedCategory;
 use App\Model\TimeControl;
+use App\Model\TimeControlKind;
 use App\Repository\GameRepository;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
@@ -409,6 +410,42 @@ class Game
         $blackPlies = intdiv($count, 2);
 
         return min($whitePlies, $blackPlies) >= MultiplayerLimits::RATED_MIN_PLIES;
+    }
+
+    /**
+     * Invariant 3, made executable (06-rating.md sec 6.1). Never
+     * short-circuited on `$this->rated` alone - all six conjuncts are
+     * re-evaluated from scratch at finish, which is what lets a rematch
+     * inherit `rated` verbatim from the finished game (05-social.md sec 7).
+     * Pure and side-effect-free: no Doctrine query, only the already-loaded
+     * `$players`/`$gameMoves` collections.
+     */
+    public function isRatedOutcome(): bool
+    {
+        if (!$this->rated) {
+            return false; // (1) consent
+        }
+
+        if (TimeControlKind::UNLIMITED === $this->timeControl->getKind()) {
+            return false; // (2) no pool to write to
+        }
+
+        $white = $this->getPlayer(PieceColor::WHITE)->getUser();
+        $black = $this->getPlayer(PieceColor::BLACK)->getUser();
+
+        if (null === $white || null === $black) {
+            return false; // (3a) engine opponent
+        }
+
+        if ($white === $black) {
+            return false; // (3b) hot-seat, same user both colours
+        }
+
+        if (!$this->hasReachedRatedPlyFloor()) {
+            return false; // (4)
+        }
+
+        return !\in_array($this->getEndReason(), [GameEndReason::NONE, GameEndReason::ABORTED], true); // (5)
     }
 
     /** 03-time-control.md sec 7.2: a game may be aborted exactly while it would not have counted anyway. */

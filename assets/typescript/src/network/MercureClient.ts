@@ -1,6 +1,12 @@
 import {Board, Move} from '../models/types';
 import {decodeBoardFromBinary} from '../utils/boardUtils';
 
+export interface RatingSide {
+    before: number;
+    after: number;
+    delta: number;
+}
+
 export interface GameUpdate {
     seq: number;
     board: Board;
@@ -8,6 +14,8 @@ export interface GameUpdate {
     gameOver: boolean;
     whiteWins: boolean;
     draw: boolean;
+    // null unless the game just finished rated (02-realtime.md sec 4.1)
+    rating: {white: RatingSide; black: RatingSide} | null;
     serverTime: number;
 }
 
@@ -98,6 +106,7 @@ export class MercureClient {
                     gameOver: data.gameOver,
                     whiteWins: data.whiteWins,
                     draw: data.draw,
+                    rating: data.rating ?? null,
                     serverTime: data.serverTime ?? 0,
                 };
 

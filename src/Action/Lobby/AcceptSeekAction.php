@@ -13,6 +13,7 @@ use App\Repository\FriendshipRepository;
 use App\Repository\SeekRepository;
 use App\Service\Matchmaking\SeekCreationService;
 use App\Service\Matchmaking\SeekMatcher;
+use App\Service\Rating\RatingUpdater;
 use Symfony\Bundle\SecurityBundle\Security;
 use Symfony\Component\Clock\ClockInterface;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -49,6 +50,7 @@ readonly class AcceptSeekAction
         private SeekCreationService $seekCreationService,
         private SeekMatcher $seekMatcher,
         private FriendshipRepository $friendshipRepository,
+        private RatingUpdater $ratingUpdater,
         private ClockInterface $clock,
         private RateLimiterFactory $seekAcceptLimiter,
     ) {
@@ -92,7 +94,10 @@ readonly class AcceptSeekAction
         }
 
         // sec 3.2/5.1 "playable": ignoring the clicker's own window - clicking is consent.
-        $viewerRating = MultiplayerLimits::GLICKO_DEFAULT_RATING;
+        $category = $target->getTimeControl()->speedCategory();
+        $viewerRating = null === $category
+            ? MultiplayerLimits::GLICKO_DEFAULT_RATING
+            : $this->ratingUpdater->currentRating($user, $category, $now)->display();
 
         if (!$target->isAutoWiden()) {
             $outOfRange = (null !== $target->getRatingMin() && $viewerRating < $target->getRatingMin())

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Service\Game;
 
 use App\Entity\Game;
+use App\Entity\GamePlayer;
 use App\Model\BoardMovesData;
 use App\Model\PieceColor;
 use App\Model\TimeControlKind;
@@ -52,6 +53,7 @@ final readonly class GameStatePayloadBuilder
             'whiteWins' => $game->isWhiteWins(),
             'draw' => $game->isDraw(),
             'clock' => $this->buildClock($game),
+            'rating' => $this->buildRating($game),
             'serverTime' => (int) (new \DateTimeImmutable())->format('Uu'),
         ];
     }
@@ -81,6 +83,39 @@ final readonly class GameStatePayloadBuilder
             'turnStartedAt' => $this->microsOrNull($game->getClockTurnStartedAt()),
             'deadlineAt' => $this->microsOrNull($game->getMoveDeadlineAt()),
         ];
+    }
+
+    /**
+     * `null` unless the game finished rated (02-realtime.md sec 4.1) - the
+     * only source of truth is `Game::isRatedOutcome()`, called after
+     * `finish()` has already run so `rated`/`endReason`/ply counts are
+     * final. `GamePlayer.ratingBefore`/`.ratingAfter` are write-once,
+     * populated by `RatingUpdater::applyForFinishedGame()` in the same
+     * transaction that called `finish()`.
+     *
+     * @return array<string, array<string, int>>|null
+     */
+    private function buildRating(Game $game): ?array
+    {
+        if (!$game->isRatedOutcome()) {
+            return null;
+        }
+
+        return [
+            'white' => $this->buildRatingSide($game->getPlayer(PieceColor::WHITE)),
+            'black' => $this->buildRatingSide($game->getPlayer(PieceColor::BLACK)),
+        ];
+    }
+
+    /** @return array<string, int> */
+    private function buildRatingSide(GamePlayer $player): array
+    {
+        $before = $player->getRatingBefore();
+        $after = $player->getRatingAfter();
+
+        \assert(null !== $before && null !== $after, 'RatingUpdater::applyForFinishedGame() must have run for a rated outcome.');
+
+        return ['before' => $before, 'after' => $after, 'delta' => $after - $before];
     }
 
     private function microsOrNull(?\DateTimeImmutable $dateTime): ?int

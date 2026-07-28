@@ -4,11 +4,13 @@ declare(strict_types=1);
 
 namespace App\Action;
 
+use App\Entity\Game;
 use App\Entity\User;
 use App\Repository\GameRepository;
 use App\Security\Voter\GameVoter;
 use App\Service\Game\ClockManager;
 use App\Service\Game\GameLifecycleManager;
+use Doctrine\DBAL\LockMode;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Response;
@@ -54,11 +56,24 @@ class ResignGameAction extends AbstractController
         // exactly one acting colour.
         $resignerColor = 1 === \count($colors) ? $colors[0] : $game->getCreatorColor();
 
-        $this->clockManager->stop($game, $this->clockManager->nowMicros());
-        $this->gameLifecycleManager->resign($game, $resignerColor);
+        // Transaction + row lock (matching AbortGameAction/ClockAdjudicator):
+        // RatingUpdater::applyForFinishedGame() must run inside the same
+        // transaction that writes gameOverAt (06-rating.md sec 9.3), and a
+        // bare persist()/flush() here raced a concurrent finaliser (a
+        // second resign click, or a flag fall landing at the same instant)
+        // into an uncaught OptimisticLockException instead of a clean no-op.
+        $this->entityManager->wrapInTransaction(function (EntityManagerInterface $em) use ($game, $resignerColor): void {
+            $em->getConnection()->executeStatement("SET LOCAL lock_timeout = '3s'");
+            $em->find(Game::class, $game->getId(), LockMode::PESSIMISTIC_WRITE);
 
-        $this->entityManager->persist($game);
-        $this->entityManager->flush();
+            if ($game->isGameOver()) {
+                return;
+            }
+
+            $this->clockManager->stop($game, $this->clockManager->nowMicros());
+            $this->gameLifecycleManager->resign($game, $resignerColor);
+            $em->flush();
+        });
 
         return $this->redirectToRoute('lobby');
     }

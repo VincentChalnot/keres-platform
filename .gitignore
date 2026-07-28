@@ -27,3 +27,8 @@
 /.env
 /deploy/.env
 .playwright-mcp/
+
+###> phpunit/phpunit ###
+/phpunit.xml
+/.phpunit.cache/
+###< phpunit/phpunit ###

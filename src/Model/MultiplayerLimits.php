@@ -70,6 +70,30 @@ final class MultiplayerLimits
     /** 05-social.md sec 9.3. */
     public const int PROFILE_GAMES_PER_PAGE = 20;
 
+    /** 06-rating.md sec 2.1: bounds how fast sigma may move. */
+    public const float GLICKO_TAU = 0.5;
+
+    /** 06-rating.md sec 3.1/8.1: `RD > this` is provisional, strictly greater so exactly 110 is established. */
+    public const int GLICKO_PROVISIONAL_RD = 110;
+
+    /** 06-rating.md sec 2.1/2.4: the read-time and write-time RD ceiling. */
+    public const int GLICKO_MAX_RD = 350;
+
+    /** 06-rating.md sec 2.1: default deviation for a player with no `user_rating` row. */
+    public const float GLICKO_DEFAULT_RD = 350.0;
+
+    /** 06-rating.md sec 2.1: default volatility for a player with no `user_rating` row. */
+    public const float GLICKO_DEFAULT_VOLATILITY = 0.06;
+
+    /** 06-rating.md sec 4.1: the `t` denominator - fixtures F6/F7 pin this to 7 (a weekly period, Glickman's own convention). */
+    public const int GLICKO_RATING_PERIOD_DAYS = 7;
+
+    /** 06-rating.md sec 8.4 / open question 2: leaderboard eligibility floor - a lucky short run clears `RD` under 110 well before 20 games. */
+    public const int LEADERBOARD_MIN_GAMES = 20;
+
+    /** 06-rating.md sec 8.4 / open question 2: leaderboard recency window - stops a dormant account squatting the top before RD inflation alone would (~18 months). */
+    public const int LEADERBOARD_ACTIVE_DAYS = 90;
+
     private function __construct()
     {
     }

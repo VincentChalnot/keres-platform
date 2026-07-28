@@ -9,6 +9,7 @@ use App\Model\MultiplayerLimits;
 use App\Model\Social\RatingSummary;
 use App\Repository\GameRepository;
 use App\Repository\UserRepository;
+use App\Service\Rating\RatingUpdater;
 use App\Service\Social\FriendshipManager;
 use Pagerfanta\Doctrine\ORM\QueryAdapter;
 use Pagerfanta\Pagerfanta;
@@ -33,6 +34,7 @@ class ProfilePageAction extends AbstractController
         private readonly UserRepository $userRepository,
         private readonly GameRepository $gameRepository,
         private readonly FriendshipManager $friendshipManager,
+        private readonly RatingUpdater $ratingUpdater,
         private readonly ClockInterface $clock,
     ) {
     }
@@ -76,7 +78,7 @@ class ProfilePageAction extends AbstractController
             // template uses `relationship is null` to hide every
             // friend/block action at once (sec 9.1).
             'relationship' => (null !== $viewer && !$isSelf) ? $this->friendshipManager->relationOf($viewer, $subject) : null,
-            'ratings' => RatingSummary::defaultsForAllCategories(),
+            'ratings' => array_map(RatingSummary::fromRating(...), $this->ratingUpdater->currentRatingsForAllCategories($subject, $now)),
             'stats' => $this->gameRepository->getFinishedGameStatsForUser($subject),
             'online' => $subject->isOnline($now),
             'games' => $pager,

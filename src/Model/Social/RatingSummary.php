@@ -4,15 +4,15 @@ declare(strict_types=1);
 
 namespace App\Model\Social;
 
-use App\Model\MultiplayerLimits;
-use App\Model\SpeedCategory;
+use App\Model\Glicko\Rating;
 
 /**
  * One rating-pool row for a profile/friends-list/search payload
- * (05-social.md sec 9.1). Phase 5 (`06-rating.md`) introduces `UserRating`
- * and `Glicko2Calculator::inflate()`; until then every user renders as
- * `1500?` with 0 games in every pool - "not an error and not a gap"
- * (sec 9.1), because no `UserRating` row exists anywhere yet.
+ * (05-social.md sec 9.1). Built from an inflated `Rating` via
+ * `fromRating()` - a user with zero rated games in a category still gets
+ * a row here, because `RatingUpdater::currentRating()` returns
+ * `Rating::initial()` (1500/350/0.06, `provisional: true`) rather than
+ * omitting the pool (06-rating.md sec 5.3).
  */
 final readonly class RatingSummary
 {
@@ -23,16 +23,9 @@ final readonly class RatingSummary
     ) {
     }
 
-    /** @return array<string, self> keyed by the lowercase SpeedCategory case name (bullet/blitz/rapid/classical/correspondence) */
-    public static function defaultsForAllCategories(): array
+    public static function fromRating(Rating $rating): self
     {
-        $out = [];
-
-        foreach (SpeedCategory::cases() as $category) {
-            $out[strtolower($category->name)] = new self(MultiplayerLimits::GLICKO_DEFAULT_RATING, true, 0);
-        }
-
-        return $out;
+        return new self($rating->display(), $rating->isProvisional(), $rating->gamesPlayed);
     }
 
     /** @return array{rating: int, provisional: bool, games: int} */

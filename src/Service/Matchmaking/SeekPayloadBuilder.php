@@ -6,8 +6,11 @@ namespace App\Service\Matchmaking;
 
 use App\Entity\Seek;
 use App\Entity\User;
+use App\Model\Glicko\Rating;
 use App\Model\MultiplayerLimits;
+use App\Model\SpeedCategory;
 use App\Repository\FriendshipRepository;
+use App\Service\Rating\RatingUpdater;
 use Symfony\Component\Uid\Uuid;
 
 /**
@@ -16,9 +19,10 @@ use Symfony\Component\Uid\Uuid;
  * shared by the HTTP listing and the SSE broadcast, so they can never drift
  * (the same discipline `GameStatePayloadBuilder` already applies).
  *
- * `PlayerRef.rating`/`.provisional` are the literal `GLICKO_DEFAULT_RATING`
- * and `true` for everyone until Phase 5 adds `UserRating` - never a lie,
- * because nobody has a rated game yet either.
+ * `PlayerRef.rating`/`.provisional` are `RatingUpdater::currentRating()`,
+ * inflation-adjusted at render time (06-rating.md sec 4.3/8.1) - `UNLIMITED`
+ * seeks (no pool) fall back to the literal `GLICKO_DEFAULT_RATING`
+ * placeholder, per sec 4.3's explicit exception.
  */
 final readonly class SeekPayloadBuilder
 {
@@ -28,6 +32,7 @@ final readonly class SeekPayloadBuilder
 
     public function __construct(
         private FriendshipRepository $friendshipRepository,
+        private RatingUpdater $ratingUpdater,
     ) {
     }
 
@@ -54,7 +59,7 @@ final readonly class SeekPayloadBuilder
 
         return [
             'uuid' => $seek->getUuid()->toRfc4122(),
-            'user' => $this->buildPlayerRef($seek->getUser()),
+            'user' => $this->buildPlayerRef($seek->getUser(), $seek->getTimeControl()->speedCategory(), $now),
             'timeControl' => $this->buildTimeControlRef($seek),
             'rated' => $seek->isRated(),
             'color' => strtolower($seek->getColorPreference()->name),
@@ -62,7 +67,7 @@ final readonly class SeekPayloadBuilder
             'autoWiden' => $seek->isAutoWiden(),
             'createdAt' => $this->micros($seek->getCreatedAt()),
             'self' => null === $viewer ? null : $self,
-            'playable' => null === $viewer ? null : (!$self && $this->isPlayableFor($seek, $viewer)),
+            'playable' => null === $viewer ? null : (!$self && $this->isPlayableFor($seek, $viewer, $now)),
         ];
     }
 
@@ -108,7 +113,7 @@ final readonly class SeekPayloadBuilder
      * Block relations (sec 3.2/04-matchmaking.md line 610) always apply,
      * even under `autoWiden` - a wide-open window still never crosses a block.
      */
-    private function isPlayableFor(Seek $seek, User $viewer): bool
+    private function isPlayableFor(Seek $seek, User $viewer, \DateTimeImmutable $now): bool
     {
         if ($this->friendshipRepository->isBlockedEitherWay($viewer, $seek->getUser())) {
             return false;
@@ -118,7 +123,10 @@ final readonly class SeekPayloadBuilder
             return true; // width(0) already covers the placeholder-rating case; a real widening window only grows.
         }
 
-        $viewerRating = MultiplayerLimits::GLICKO_DEFAULT_RATING;
+        $category = $seek->getTimeControl()->speedCategory();
+        $viewerRating = null === $category
+            ? MultiplayerLimits::GLICKO_DEFAULT_RATING
+            : $this->ratingUpdater->currentRating($viewer, $category, $now)->display();
 
         if (null !== $seek->getRatingMin() && $viewerRating < $seek->getRatingMin()) {
             return false;
@@ -134,13 +142,17 @@ final readonly class SeekPayloadBuilder
     /**
      * @return array<string, mixed>
      */
-    private function buildPlayerRef(User $user): array
+    private function buildPlayerRef(User $user, ?SpeedCategory $category, \DateTimeImmutable $now): array
     {
+        $rating = null === $category
+            ? new Rating(rating: MultiplayerLimits::GLICKO_DEFAULT_RATING)
+            : $this->ratingUpdater->currentRating($user, $category, $now);
+
         return [
             'uuid' => $user->getId()->toRfc4122(),
             'username' => $user->getUsername(),
-            'rating' => MultiplayerLimits::GLICKO_DEFAULT_RATING,
-            'provisional' => true,
+            'rating' => $rating->display(),
+            'provisional' => $rating->isProvisional(),
         ];
     }
 

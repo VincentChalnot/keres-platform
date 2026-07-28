@@ -8,7 +8,9 @@ use App\Entity\User;
 use App\Http\ApiResponse;
 use App\Model\ApiErrorCode;
 use App\Model\MultiplayerLimits;
+use App\Model\SpeedCategory;
 use App\Repository\UserRepository;
+use App\Service\Rating\RatingUpdater;
 use Symfony\Bundle\SecurityBundle\Security;
 use Symfony\Component\Clock\ClockInterface;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -33,6 +35,7 @@ readonly class UserSearchAction
         private UserRepository $userRepository,
         private ClockInterface $clock,
         private RateLimiterFactory $friendSearchLimiter,
+        private RatingUpdater $ratingUpdater,
     ) {
     }
 
@@ -63,12 +66,21 @@ readonly class UserSearchAction
         $now = $this->clock->now();
 
         $players = array_map(
-            static fn (User $u): array => [
-                'username' => $u->getUsername(),
-                'rating' => MultiplayerLimits::GLICKO_DEFAULT_RATING,
-                'provisional' => true,
-                'online' => $u->isOnline($now),
-            ],
+            function (User $u) use ($now): array {
+                // No time control is chosen at search time, so there is no
+                // real per-category rating to show yet (06-rating.md sec 5.1
+                // has one pool per SpeedCategory, never a global one).
+                // BLITZ is the platform's headline category for this
+                // context-free display - same convention as chess.com/lichess.
+                $rating = $this->ratingUpdater->currentRating($u, SpeedCategory::BLITZ, $now);
+
+                return [
+                    'username' => $u->getUsername(),
+                    'rating' => $rating->display(),
+                    'provisional' => $rating->isProvisional(),
+                    'online' => $u->isOnline($now),
+                ];
+            },
             $this->userRepository->searchByUsernamePrefix($q, $user, $limit),
         );
 

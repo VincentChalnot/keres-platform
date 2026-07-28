@@ -128,6 +128,24 @@ class GamePlayer
         return $this->provisionalBefore;
     }
 
+    /**
+     * `RatingUpdater::applyForFinishedGame()` only - the invariant-4
+     * idempotence latch (06-rating.md sec 3.4/7.1). Write-once: `ratingAfter`
+     * not being null is what the caller checks before ever getting here, but
+     * this throws too rather than silently overwrite a permanent record.
+     */
+    public function writeRatingSnapshot(int $ratingBefore, int $ratingDeviationBefore, int $ratingAfter, bool $provisionalBefore): void
+    {
+        if (null !== $this->ratingAfter) {
+            throw new \LogicException('Rating snapshot already written for this game_player row.');
+        }
+
+        $this->ratingBefore = $ratingBefore;
+        $this->ratingDeviationBefore = $ratingDeviationBefore;
+        $this->ratingAfter = $ratingAfter;
+        $this->provisionalBefore = $provisionalBefore;
+    }
+
     public function getHiddenAt(): ?\DateTimeImmutable
     {
         return $this->hiddenAt;

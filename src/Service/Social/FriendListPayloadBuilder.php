@@ -6,8 +6,10 @@ namespace App\Service\Social;
 
 use App\Entity\Friendship;
 use App\Entity\User;
+use App\Model\Glicko\Rating;
 use App\Model\Social\RatingSummary;
 use App\Repository\FriendshipRepository;
+use App\Service\Rating\RatingUpdater;
 
 /**
  * The `{friends, incoming, outgoing, blocked}` shape shared by
@@ -20,6 +22,7 @@ final readonly class FriendListPayloadBuilder
 {
     public function __construct(
         private FriendshipRepository $friendshipRepository,
+        private RatingUpdater $ratingUpdater,
     ) {
     }
 
@@ -56,8 +59,8 @@ final readonly class FriendListPayloadBuilder
             'online' => $friend->isOnline($now),
             'lastSeenAt' => $friend->getLastSeenAt()?->format(\DateTimeInterface::ATOM),
             'ratings' => array_map(
-                static fn (RatingSummary $r): array => $r->toArray(),
-                RatingSummary::defaultsForAllCategories(),
+                static fn (Rating $rating): array => RatingSummary::fromRating($rating)->toArray(),
+                $this->ratingUpdater->currentRatingsForAllCategories($friend, $now),
             ),
         ];
     }

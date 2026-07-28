@@ -6,7 +6,8 @@ namespace App\Service\Social;
 
 use App\Entity\Friendship;
 use App\Entity\User;
-use App\Model\MultiplayerLimits;
+use App\Model\SpeedCategory;
+use App\Service\Rating\RatingUpdater;
 
 /**
  * `UserEventPayload` for the two events this phase publishes to
@@ -29,16 +30,21 @@ final readonly class FriendEventPayloadBuilder
         | \JSON_UNESCAPED_SLASHES
         | \JSON_UNESCAPED_UNICODE;
 
+    public function __construct(
+        private RatingUpdater $ratingUpdater,
+    ) {
+    }
+
     /** @return array<string, mixed> */
     public function buildFriendRequest(Friendship $friendship, User $from, \DateTimeImmutable $now): array
     {
-        return $this->envelope('friend_request', ['friendshipId' => $friendship->getId(), 'from' => $this->buildPlayerRef($from)], $now);
+        return $this->envelope('friend_request', ['friendshipId' => $friendship->getId(), 'from' => $this->buildPlayerRef($from, $now)], $now);
     }
 
     /** @return array<string, mixed> */
     public function buildFriendAccepted(Friendship $friendship, User $by, \DateTimeImmutable $now): array
     {
-        return $this->envelope('friend_accepted', ['friendshipId' => $friendship->getId(), 'by' => $this->buildPlayerRef($by)], $now);
+        return $this->envelope('friend_accepted', ['friendshipId' => $friendship->getId(), 'by' => $this->buildPlayerRef($by, $now)], $now);
     }
 
     public function encode(array $payload): string
@@ -62,13 +68,20 @@ final readonly class FriendEventPayloadBuilder
     }
 
     /** @return array<string, mixed> */
-    private function buildPlayerRef(User $user): array
+    private function buildPlayerRef(User $user, \DateTimeImmutable $now): array
     {
+        // No time control is attached to a friend event, so there is no
+        // real per-category rating to show (06-rating.md sec 5.1 has one
+        // pool per SpeedCategory, never a global one). BLITZ is the
+        // platform's headline category for this context-free display -
+        // same convention as chess.com/lichess.
+        $rating = $this->ratingUpdater->currentRating($user, SpeedCategory::BLITZ, $now);
+
         return [
             'uuid' => $user->getId()->toRfc4122(),
             'username' => $user->getUsername(),
-            'rating' => MultiplayerLimits::GLICKO_DEFAULT_RATING,
-            'provisional' => true,
+            'rating' => $rating->display(),
+            'provisional' => $rating->isProvisional(),
         ];
     }
 

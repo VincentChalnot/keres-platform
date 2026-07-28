@@ -15,6 +15,7 @@ use App\Model\TimeControl;
 use App\Model\TimeControlKind;
 use App\Repository\SeekRepository;
 use App\Service\Game\GameUpdatePublisher;
+use App\Service\Rating\RatingUpdater;
 use Doctrine\DBAL\Exception\UniqueConstraintViolationException;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\Clock\ClockInterface;
@@ -38,6 +39,7 @@ final readonly class SeekCreationService
         private SeekMatcher $seekMatcher,
         private SeekPayloadBuilder $seekPayloadBuilder,
         private GameUpdatePublisher $publisher,
+        private RatingUpdater $ratingUpdater,
         private ClockInterface $clock,
         private MessageBusInterface $messageBus,
     ) {
@@ -133,6 +135,13 @@ final readonly class SeekCreationService
         return $this->entityManager->wrapInTransaction(
             function (EntityManagerInterface $em) use ($user, $timeControl, $rated, $colorPreference, $autoWiden, $ratingMin, $ratingMax, $now, $ttl): SeekCreationResult {
                 $existing = $this->seekRepository->findOpenForUserForUpdate($user);
+                $category = $timeControl->speedCategory();
+                // 04-matchmaking.md sec 4 / 06-rating.md sec 4.3: server-side, frozen at
+                // creation. UNLIMITED has no pool - the literal placeholder is the
+                // documented exception, not a Phase-5 gap (sec 4.3 last paragraph).
+                $ratingSnapshot = null === $category
+                    ? MultiplayerLimits::GLICKO_DEFAULT_RATING
+                    : $this->ratingUpdater->currentRating($user, $category, $now)->display();
 
                 $candidate = new Seek(
                     $user,
@@ -140,7 +149,7 @@ final readonly class SeekCreationService
                     $rated,
                     $colorPreference,
                     $autoWiden,
-                    MultiplayerLimits::GLICKO_DEFAULT_RATING,
+                    $ratingSnapshot,
                     $now,
                     $ttl,
                     $ratingMin,
