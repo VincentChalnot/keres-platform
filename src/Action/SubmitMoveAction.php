@@ -13,7 +13,6 @@ use App\Exception\StalePositionException;
 use App\Message\CheckClockExpiryMessage;
 use App\Message\ProcessAiMoveMessage;
 use App\Model\MoveData;
-use App\Model\MultiplayerLimits;
 use App\Model\OpponentType;
 use App\Model\PieceColor;
 use App\Model\TimeControlKind;
@@ -166,9 +165,7 @@ readonly class SubmitMoveAction
     private function dispatchClockExpiryCheck(Game $game, \DateTimeImmutable $deadline): void
     {
         $deadlineMicros = (int) $deadline->format('Uu');
-        $graceMicros = (MultiplayerLimits::CLOCK_LAG_COMPENSATION_MS + MultiplayerLimits::CLOCK_EXPIRY_GRACE_MS) * 1000;
-        $fireAtMicros = $deadlineMicros + $graceMicros;
-        $delayMs = max(0, intdiv($fireAtMicros - $this->clockManager->nowMicros(), 1000));
+        $delayMs = $this->clockManager->expiryCheckDelayMs($deadline);
 
         $this->messageBus->dispatch(
             new CheckClockExpiryMessage($game->getUuid()->toRfc4122(), $game->getGameMoves()->count(), $deadlineMicros),

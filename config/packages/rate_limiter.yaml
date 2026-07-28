@@ -4,3 +4,24 @@ framework:
             policy: 'sliding_window'
             limit: 3
             interval: '1 hour'
+
+        # 04-matchmaking.md sec 6.1. No `_limiter` suffix -> the autowiring
+        # alias is the readable $seekCreateLimiter/etc, no explicit bind needed
+        # (config/services.yaml:34-39 documents the contact_limiter gotcha
+        # this naming avoids).
+        seek_create:                # $seekCreateLimiter, keyed on user id
+            policy: 'token_bucket'
+            limit: 10
+            rate: { interval: '1 minute', amount: 6 }
+        seek_accept:                # $seekAcceptLimiter, keyed on user id
+            policy: 'token_bucket'
+            limit: 5
+            rate: { interval: '1 minute', amount: 10 }
+        seek_heartbeat:             # $seekHeartbeatLimiter, keyed on seek uuid
+            policy: 'fixed_window'
+            limit: 30
+            interval: '1 minute'
+        lobby_read:                 # $lobbyReadLimiter, keyed on client IP
+            policy: 'sliding_window'
+            limit: 120
+            interval: '1 minute'

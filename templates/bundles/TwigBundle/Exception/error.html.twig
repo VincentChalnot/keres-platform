@@ -27,7 +27,7 @@
             <p class="error-page__message">{{ error_message }}</p>
             <div class="buttons is-centered">
                 {% if app.user %}
-                    <a href="{{ path('new_game') }}" class="button is-primary is-rounded">Back to your games</a>
+                    <a href="{{ path('lobby') }}" class="button is-primary is-rounded">Back to your games</a>
                 {% else %}
                     <a href="{{ static_site_url }}/" class="button is-primary is-rounded">Back to home</a>
                 {% endif %}

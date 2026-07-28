@@ -49,6 +49,7 @@ export default defineConfig({
                 app: "./assets/app.js",
                 play: "./assets/typescript/src/app.ts",
                 admin: "./assets/typescript/src/admin.ts",
+                lobby: "./assets/typescript/src/lobby.ts",
             },
         },
     },

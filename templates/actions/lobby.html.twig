@@ -1,0 +1,126 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Lobby - Keres{% endblock %}
+
+{% block head %}
+    {{ parent() }}
+    <meta name="mercure-url" content="{{ mercure() }}">
+{% endblock %}
+
+{% block body %}
+    <section class="section">
+        <div class="container">
+            <h1 class="title">Lobby</h1>
+            <p class="subtitle">Quick pair, post a custom seek, or join someone else's.</p>
+
+            <div id="lobby-root" data-user-uuid="{{ app.user ? app.user.id : '' }}">
+                <script type="application/json" id="lobby-bootstrap">{{ seeksBootstrap|raw }}</script>
+
+                <div class="box">
+                    <h3 class="title is-5">Quick pair</h3>
+                    {% if app.user %}
+                        <div class="buttons">
+                            {% for preset, info in presets %}
+                                <button type="button" class="button is-rounded is-primary" data-preset="{{ preset }}">
+                                    {{ info.label }} <span class="ml-1 has-text-grey-light">({{ info.speed }})</span>
+                                </button>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <p><a href="{{ path('login') }}">Sign in</a> to quick pair or post a seek.</p>
+                    {% endif %}
+                </div>
+
+                {% if app.user %}
+                    <div class="box">
+                        <h3 class="title is-5">Custom seek</h3>
+                        <form id="lobby-custom-seek-form">
+                            <div class="field is-grouped is-grouped-multiline">
+                                <div class="control">
+                                    <label class="label">Time control</label>
+                                    <div class="select">
+                                        <select name="kind" id="lobby-seek-kind">
+                                            <option value="realtime">Real-time</option>
+                                            <option value="correspondence">Correspondence</option>
+                                            <option value="unlimited">Unlimited</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="control" data-field="realtime">
+                                    <label class="label">Initial (s)</label>
+                                    <input class="input" type="number" name="initialSeconds" min="15" max="10800" value="600">
+                                </div>
+                                <div class="control" data-field="realtime">
+                                    <label class="label">Increment (s)</label>
+                                    <input class="input" type="number" name="incrementSeconds" min="0" max="180" value="0">
+                                </div>
+                                <div class="control" data-field="correspondence" style="display:none">
+                                    <label class="label">Days per move</label>
+                                    <div class="select">
+                                        <select name="daysPerMove">
+                                            <option value="1">1</option>
+                                            <option value="3">3</option>
+                                            <option value="7">7</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="control">
+                                    <label class="label">Colour</label>
+                                    <div class="select">
+                                        <select name="colorPreference">
+                                            <option value="random">Random</option>
+                                            <option value="white">White</option>
+                                            <option value="black">Black</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="control">
+                                    <label class="label">Rated</label>
+                                    <div class="select">
+                                        <select name="rated">
+                                            <option value="true">Rated</option>
+                                            <option value="false">Casual</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="field">
+                                <button type="submit" class="button is-primary is-rounded">Post seek</button>
+                            </div>
+                        </form>
+                    </div>
+                {% endif %}
+
+                <div class="box">
+                    <h3 class="title is-5">Open seeks <span class="has-text-grey-light" id="lobby-pool-size"></span></h3>
+                    <table class="table is-fullwidth" id="lobby-seek-table">
+                        <thead>
+                        <tr>
+                            <th>Player</th>
+                            <th>Time control</th>
+                            <th>Rated</th>
+                            <th>Colour</th>
+                            <th></th>
+                        </tr>
+                        </thead>
+                        <tbody id="lobby-seek-table-body"></tbody>
+                    </table>
+                </div>
+
+                {% if app.user %}
+                    <div class="box">
+                        <h3 class="title is-5">Prefer a computer or a local opponent?</h3>
+                        <a href="{{ path('new_local_game') }}" class="button is-rounded is-outlined is-light">Play AI or hot-seat</a>
+                        {% if ongoingGames|length > 0 %}
+                            <a href="{{ path('game_list') }}" class="button is-rounded is-outlined is-light">Your games ({{ ongoingGames|length }})</a>
+                        {% endif %}
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </section>
+{% endblock %}
+
+{% block end_javascripts %}
+    {{ vite_entry_script_tags('lobby') }}
+{% endblock %}

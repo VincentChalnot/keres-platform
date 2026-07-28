@@ -11,7 +11,14 @@ use Symfony\Component\Form\Extension\Core\Type\SubmitType;
 use Symfony\Component\Form\FormBuilderInterface;
 use Symfony\Component\OptionsResolver\OptionsResolver;
 
-class NewGameType extends AbstractType
+/**
+ * Renamed from `NewGameType`, deliberately narrowed
+ * (04-matchmaking.md sec 9.3): `opponentType` keeps exactly AI and HOTSEAT.
+ * `HUMAN`/`MULTIPLAYER` must never be addable here - a networked game is
+ * only ever constructed by `GameFactory` from a matched seek or an accepted
+ * challenge, never this form.
+ */
+class LocalGameType extends AbstractType
 {
     public function buildForm(FormBuilderInterface $builder, array $options): void
     {

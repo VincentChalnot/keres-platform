@@ -35,7 +35,7 @@ class RegisterAction extends AbstractController
     public function __invoke(Request $request): RedirectResponse|array
     {
         if ($this->getUser()) {
-            return $this->redirectToRoute('new_game');
+            return $this->redirectToRoute('lobby');
         }
 
         $form = $this->createForm(RegisterType::class);

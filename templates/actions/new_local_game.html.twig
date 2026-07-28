@@ -1,0 +1,44 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}New Local Game - Keres{% endblock %}
+
+{% block body %}
+    <section class="section">
+        <div class="container">
+            <div class="columns is-centered">
+                <div class="column is-half">
+                    <div class="box">
+                        <h3 class="title">Play AI or hot-seat</h3>
+                        <p class="subtitle">Want to play another person online instead? Head to the <a href="{{ path('lobby') }}">lobby</a>.</p>
+
+                        {{ form_start(form) }}
+
+                        <div class="field">
+                            {{ form_label(form.playerSide, null, {label_attr: {class: 'label'}}) }}
+                            <div class="control">
+                                {{ form_widget(form.playerSide) }}
+                            </div>
+                            {{ form_errors(form.playerSide) }}
+                        </div>
+
+                        <div class="field">
+                            {{ form_label(form.opponentType, null, {label_attr: {class: 'label'}}) }}
+                            <div class="control">
+                                {{ form_widget(form.opponentType) }}
+                            </div>
+                            {{ form_errors(form.opponentType) }}
+                        </div>
+
+                        <div class="field">
+                            <div class="control">
+                                {{ form_widget(form.submit, {attr: {class: 'button is-rounded is-primary'}}) }}
+                            </div>
+                        </div>
+
+                        {{ form_end(form) }}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+{% endblock %}

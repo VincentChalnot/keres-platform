@@ -36,7 +36,7 @@ class ResetPasswordAction extends AbstractController
         if ($this->getUser()) {
             $this->addFlash('error', 'You are already logged in.');
 
-            return $this->redirectToRoute('new_game');
+            return $this->redirectToRoute('lobby');
         }
 
         $token = $request->query->get('token');

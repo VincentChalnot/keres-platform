@@ -12,6 +12,7 @@ framework:
             # Route your messages to the transports
             'App\Message\ProcessAiMoveMessage': async
             'App\Message\CheckClockExpiryMessage': async
+            'App\Message\ExpireSeekMessage': async
 
 # when@test:
 #    framework:

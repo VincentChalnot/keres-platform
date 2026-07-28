@@ -25,7 +25,7 @@ security:
                 login_path: login
                 check_path: login_check
                 enable_csrf: true
-                default_target_path: new_game
+                default_target_path: lobby
             entry_point: App\Security\MultiProviderOidcAuthenticator
             logout:
                 path: logout
@@ -33,11 +33,12 @@ security:
 
     access_control:
         - { path: ^/admin, roles: ROLE_ADMIN }
-        - { path: '^/play/[^/]+$', roles: PUBLIC_ACCESS, methods: [GET] }
+        - { path: '^/play/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$', roles: PUBLIC_ACCESS, methods: [GET] }
         - { path: ^/play, roles: ROLE_USER }
         - { path: ^/feedback, roles: ROLE_USER }
         - { path: ^/preferences, roles: ROLE_USER }
         - { path: ^/dashboard, roles: ROLE_USER }
+        - { path: ^/games, roles: ROLE_USER }
 
 when@test:
     security:

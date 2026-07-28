@@ -35,6 +35,21 @@ final readonly class ClockManager
         return (int) $this->now()->format('Uu');
     }
 
+    /**
+     * Delay (ms) from now until `deadline + (lag compensation + grace)`,
+     * floored at 0 - the arithmetic behind every `CheckClockExpiryMessage`
+     * dispatch site (03-time-control.md sec 4.1 step 21), shared so it
+     * cannot drift between the move path and the pairing path.
+     */
+    public function expiryCheckDelayMs(\DateTimeImmutable $deadline): int
+    {
+        $deadlineMicros = (int) $deadline->format('Uu');
+        $graceMicros = (MultiplayerLimits::CLOCK_LAG_COMPENSATION_MS + MultiplayerLimits::CLOCK_EXPIRY_GRACE_MS) * 1000;
+        $fireAtMicros = $deadlineMicros + $graceMicros;
+
+        return max(0, intdiv($fireAtMicros - $this->nowMicros(), 1000));
+    }
+
     /** Seam for making lag compensation adaptive (03-time-control.md sec 3.3, open question 4). Constant today. */
     public function compensationMsFor(GamePlayer $player): int
     {

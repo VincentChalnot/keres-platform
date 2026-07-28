@@ -41,6 +41,6 @@ class DeleteGameAction extends AbstractController
         $this->entityManager->persist($game);
         $this->entityManager->flush();
 
-        return $this->redirectToRoute('new_game');
+        return $this->redirectToRoute('lobby');
     }
 }

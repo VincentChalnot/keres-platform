@@ -8,6 +8,7 @@ use App\Entity\Game;
 use App\Entity\User;
 use App\Model\GameEndReason;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
+use Doctrine\ORM\QueryBuilder;
 use Doctrine\Persistence\ManagerRegistry;
 use Symfony\Component\Uid\Uuid;
 
@@ -85,6 +86,32 @@ class GameRepository extends ServiceEntityRepository
             ->orderBy('g.createdAt', 'DESC')
             ->getQuery()
             ->getResult();
+    }
+
+    /** `GameListAction` (04-matchmaking.md sec 9.2) - paginated with Pagerfanta, per 00-overview.md sec 6. */
+    public function queryOngoingForUser(User $user): QueryBuilder
+    {
+        return $this->createQueryBuilder('g')
+            ->join('g.players', 'p')
+            ->andWhere('p.user = :user')
+            ->andWhere('p.hiddenAt IS NULL')
+            ->andWhere('g.deletedAt IS NULL')
+            ->andWhere('g.gameOverAt IS NULL')
+            ->setParameter('user', $user)
+            ->orderBy('g.createdAt', 'DESC');
+    }
+
+    /** @see self::queryOngoingForUser() */
+    public function queryFinishedForUser(User $user): QueryBuilder
+    {
+        return $this->createQueryBuilder('g')
+            ->join('g.players', 'p')
+            ->andWhere('p.user = :user')
+            ->andWhere('p.hiddenAt IS NULL')
+            ->andWhere('g.deletedAt IS NULL')
+            ->andWhere('g.gameOverAt IS NOT NULL')
+            ->setParameter('user', $user)
+            ->orderBy('g.createdAt', 'DESC');
     }
 
     /**

@@ -1,0 +1,79 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Your Games - Keres{% endblock %}
+
+{% block body %}
+    <section class="section">
+        <div class="container">
+            <h1 class="title">Your games</h1>
+
+            <div class="tabs">
+                <ul>
+                    <li class="{{ status == 'in_progress' ? 'is-active' }}">
+                        <a href="{{ path('game_list', {status: 'in_progress'}) }}">In progress</a>
+                    </li>
+                    <li class="{{ status == 'finished' ? 'is-active' }}">
+                        <a href="{{ path('game_list', {status: 'finished'}) }}">Finished</a>
+                    </li>
+                </ul>
+            </div>
+
+            {% for game in games %}
+                {# @var game \App\Entity\Game #}
+                {% set myColors = game.getColorsForUser(app.user) %}
+                <div class="box mb-4">
+                    <a href="{{ path('play', {uuid: game.uuid}) }}" class="button is-rounded is-primary is-pulled-right">
+                        {{ game.gameOver ? 'View' : 'Resume' }}
+                    </a>
+                    <p><strong>You play:</strong> {{ myColors[0] is defined and myColors[0].name == 'WHITE' ? 'White' : 'Black' }}</p>
+                    <p><strong>Opponent:</strong>
+                        {% if game.opponentType == enum('App\\Model\\OpponentType').AI %}
+                            AI
+                        {% elseif game.opponentType == enum('App\\Model\\OpponentType').HOTSEAT %}
+                            Hot Seat
+                        {% else %}
+                            Multiplayer
+                        {% endif %}
+                    </p>
+                    <p><strong>Created:</strong> {{ game.createdAt|date('Y-m-d H:i') }}</p>
+                    {% if game.lastMoveAt %}
+                        <p><strong>Last Move:</strong> {{ game.lastMoveAt|date('Y-m-d H:i') }}</p>
+                    {% endif %}
+                    {% if game.gameOver %}
+                        <p><strong>Result:</strong>
+                            {% if game.endReason == enum('App\\Model\\GameEndReason').ABORTED %}
+                                Aborted
+                            {% elseif game.draw %}
+                                Draw
+                            {% elseif game.whiteWins %}
+                                White wins
+                            {% else %}
+                                Black wins
+                            {% endif %}
+                        </p>
+                    {% else %}
+                        <p><strong>Next to play:</strong> {{ game.whiteTurn ? 'White' : 'Black' }}</p>
+                    {% endif %}
+                </div>
+            {% else %}
+                <p>No games {{ status == 'finished' ? 'finished' : 'in progress' }}.</p>
+            {% endfor %}
+
+            {% if games.haveToPaginate %}
+                <nav class="pagination" role="navigation" aria-label="pagination">
+                    {% if games.hasPreviousPage %}
+                        <a class="pagination-previous" href="{{ path('game_list', {status: status, page: games.previousPage}) }}">Previous</a>
+                    {% else %}
+                        <a class="pagination-previous" disabled>Previous</a>
+                    {% endif %}
+                    {% if games.hasNextPage %}
+                        <a class="pagination-next" href="{{ path('game_list', {status: status, page: games.nextPage}) }}">Next</a>
+                    {% else %}
+                        <a class="pagination-next" disabled>Next</a>
+                    {% endif %}
+                    <span class="pagination-list ml-3">Page {{ games.currentPage }} of {{ games.nbPages }}</span>
+                </nav>
+            {% endif %}
+        </div>
+    </section>
+{% endblock %}

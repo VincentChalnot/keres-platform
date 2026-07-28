@@ -43,7 +43,7 @@ class ResignGameAction extends AbstractController
         $this->denyAccessUnlessGranted(GameVoter::PARTICIPATE, $game);
 
         if ($game->isGameOver()) {
-            return $this->redirectToRoute('new_game');
+            return $this->redirectToRoute('lobby');
         }
 
         $user = $this->getUser();
@@ -60,6 +60,6 @@ class ResignGameAction extends AbstractController
         $this->entityManager->persist($game);
         $this->entityManager->flush();
 
-        return $this->redirectToRoute('new_game');
+        return $this->redirectToRoute('lobby');
     }
 }
