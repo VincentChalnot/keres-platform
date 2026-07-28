@@ -21,9 +21,7 @@
                     <div class="field">
                         {{ form_label(form.category, null, {label_attr: {class: 'label'}}) }}
                         <div class="control">
-                            <div class="select is-fullwidth">
-                                {{ form_widget(form.category) }}
-                            </div>
+                            {{ form_widget(form.category, {fullwidth: true}) }}
                         </div>
                         {{ form_errors(form.category) }}
                     </div>

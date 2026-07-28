@@ -51,9 +51,7 @@
                             <div class="field">
                                 {{ form_label(form.locale, null, {label_attr: {class: 'label'}}) }}
                                 <div class="control">
-                                    <div class="select is-fullwidth">
-                                        {{ form_widget(form.locale) }}
-                                    </div>
+                                    {{ form_widget(form.locale, {fullwidth: true}) }}
                                 </div>
                                 {{ form_errors(form.locale) }}
                             </div>
@@ -62,9 +60,7 @@
                             <div class="field">
                                 {{ form_label(form.country, null, {label_attr: {class: 'label'}}) }}
                                 <div class="control">
-                                    <div class="select is-fullwidth">
-                                        {{ form_widget(form.country) }}
-                                    </div>
+                                    {{ form_widget(form.country, {fullwidth: true}) }}
                                 </div>
                                 {{ form_errors(form.country) }}
                             </div>

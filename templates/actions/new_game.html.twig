@@ -14,9 +14,7 @@
                         <div class="field">
                             {{ form_label(form.playerSide, null, {label_attr: {class: 'label'}}) }}
                             <div class="control">
-                                <div class="select">
-                                    {{ form_widget(form.playerSide) }}
-                                </div>
+                                {{ form_widget(form.playerSide) }}
                             </div>
                             {{ form_errors(form.playerSide) }}
                         </div>
@@ -24,9 +22,7 @@
                         <div class="field">
                             {{ form_label(form.opponentType, null, {label_attr: {class: 'label'}}) }}
                             <div class="control">
-                                <div class="select">
-                                    {{ form_widget(form.opponentType) }}
-                                </div>
+                                {{ form_widget(form.opponentType) }}
                             </div>
                             {{ form_errors(form.opponentType) }}
                         </div>

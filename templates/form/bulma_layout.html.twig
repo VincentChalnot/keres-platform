@@ -75,7 +75,7 @@
 {%- endblock textarea_widget -%}
 
 {%- block choice_widget_collapsed -%}
-    <div class="select{% if multiple %} is-multiple{% endif %}">
+    <div class="select{% if multiple %} is-multiple{% endif %}{% if fullwidth|default(false) %} is-fullwidth{% endif %}">
         {{- parent() -}}
     </div>
 {%- endblock choice_widget_collapsed -%}
