@@ -8,17 +8,27 @@
 {% endblock %}
 
 {% block body %}
-    <div class="game-container">
-        <div class="material-top-row">
+    <div class="game-container"
+         id="game-container"
+         data-opponent-type="{{ game.opponentType.value }}">
+        <script type="application/json" id="game-state-bootstrap">{{ gameStateBootstrap|raw }}</script>
+
+        <div class="player-info-row" id="player-info-top">
             <div class="material-bar" id="material-top"></div>
-            <div id="status">Loading...</div>
+            <div class="player-clock" id="clock-top"><span class="player-clock__time">--:--</span></div>
         </div>
         <div id="board-container"
              data-moves="{{ moves }}"
              data-game-uuid="{{ game.uuid }}"
              data-opponent-type="{{ game.opponentType.value }}"
              data-player-white="{{ playerWhite ? 'true' : 'false' }}"></div>
-        <div class="material-bar" id="material-bottom"></div>
+        <div class="player-info-row" id="player-info-bottom">
+            <div class="material-bar" id="material-bottom"></div>
+            <div class="player-clock" id="clock-bottom"><span class="player-clock__time">--:--</span></div>
+        </div>
+
+        <div class="notification game-status-banner is-hidden" id="game-status-banner"></div>
+
         <div class="buttons mt-3">
             {% if game.opponentType == enum('App\\Model\\OpponentType').AI %}
                 <button class="button is-rounded is-outlined is-light" id="switch-sides-btn">Switch Sides</button>
@@ -27,11 +37,9 @@
             <button class="button is-rounded is-outlined is-light" id="toggle-coords-btn">Hide Coords</button>
             <button class="button is-rounded is-light" id="undo-btn">Undo</button>
             {% if not game.gameOver %}
-                <form method="post" action="{{ path('resign_game', {uuid: game.uuid}) }}" style="display:inline" onsubmit="return confirm('Are you sure you want to resign? The game will be lost.')">
-                    <button type="submit" class="button is-rounded is-danger">Resign</button>
-                </form>
+                <button type="button" class="button is-rounded is-danger" id="resign-btn">Resign</button>
             {% endif %}
-            <a href="{{ path('feedback') }}" class="button is-rounded is-outlined is-light">Feedback</a>
+            <button type="button" class="button is-rounded is-outlined is-light" id="feedback-btn">Feedback</button>
         </div>
         <div class="move-history">
             <label class="label">Move History</label>
@@ -68,6 +76,19 @@
                 <button class="button is-primary" id="move-stack">Move Full Stack</button>
                 <button class="button" id="move-unstack">Move Top Piece</button>
             </footer>
+        </div>
+    </div>
+
+    <div class="modal" id="feedback-modal">
+        <div class="modal-background"></div>
+        <div class="modal-card">
+            <header class="modal-card-head">
+                <p class="modal-card-title">Feedback</p>
+                <button class="delete" aria-label="close" id="feedback-modal-close"></button>
+            </header>
+            <section class="modal-card-body" id="feedback-modal-body">
+                <progress class="progress is-small is-primary" max="100">Loading</progress>
+            </section>
         </div>
     </div>
 {% endblock %}

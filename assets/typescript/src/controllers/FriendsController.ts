@@ -1,6 +1,7 @@
 import {ApiError, LobbyAPI} from '../network/LobbyAPI';
 import {FriendEventClient} from '../network/FriendEventClient';
 import {FriendRequestRow, FriendRow, FriendsListResult, PlayerSearchResult, UserEvent} from '../models/friends';
+import {alertModal} from '../utils/modal';
 
 const SEARCH_DEBOUNCE_MS = 250;
 const MIN_SEARCH_LENGTH = 3;
@@ -287,6 +288,6 @@ export class FriendsController {
     private reportError(context: string, error: unknown): void {
         const message = error instanceof ApiError ? error.code : String(error);
         console.error(`${context}: ${message}`);
-        window.alert(`${context}: ${message}`);
+        void alertModal(`${context}: ${message}`, 'Error');
     }
 }

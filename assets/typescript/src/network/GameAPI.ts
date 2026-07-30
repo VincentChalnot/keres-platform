@@ -1,5 +1,23 @@
 import {Board, PotentialMove, Move} from '../models/types';
 import {decodeBoardFromBinary, encodeBoardToBinary, decodePotentialMove, encodeMove, encodeMoveListToBinary} from '../utils/boardUtils';
+import {ClockState} from './MercureClient';
+
+/**
+ * Full authoritative game state returned by the move/finish endpoints.
+ * Mirrors the JSON payload built by GameStatePayloadBuilder (PHP).
+ */
+export interface GameStatePayload {
+    board: Board;
+    moves: number[];
+    status: string;
+    endReason: string;
+    result: string | null;
+    gameOver: boolean;
+    whiteWins: boolean;
+    draw: boolean;
+    clock: ClockState | null;
+    serverTime: number;
+}
 
 /**
  * API client for game backend
@@ -65,11 +83,11 @@ export class GameAPI {
     }
 
     /**
-     * Submit a move to the game and get the new board state
-     * This submits to Symfony which validates and may add an AI response
-     * Returns both the board and the updated moves list
+     * Submit a move to the game and get the new board state.
+     * Returns the full authoritative payload (board, moves, game-over
+     * verdict, clock) exactly as built by GameStatePayloadBuilder.
      */
-    async submitMove(move: Move): Promise<{board: Board, moves: number[]}> {
+    async submitMove(move: Move): Promise<GameStatePayload> {
         if (!this.gameUuid) {
             throw new Error('No game UUID available');
         }
@@ -89,17 +107,47 @@ export class GameAPI {
         }
 
         const data = await response.json();
-        
-        // Decode board from base64
-        const boardBase64 = data.board;
+        return this.parsePayload(data);
+    }
+
+    /**
+     * Parse a raw GameStatePayloadBuilder JSON object into a typed
+ * GameStatePayload, decoding the base64 board and overriding the board's
+ * binary flags with the authoritative JSON verdict.
+     */
+    parsePayload(data: {board?: string; moves?: number[]; status?: string; endReason?: string; result?: string | null; gameOver?: boolean; whiteWins?: boolean; draw?: boolean; clock?: ClockState | null; serverTime?: number}): GameStatePayload {
+        const boardBase64 = data.board ?? '';
         const binaryString = atob(boardBase64);
         const bytes = new Uint8Array(binaryString.length);
         for (let i = 0; i < binaryString.length; i++) {
             bytes[i] = binaryString.charCodeAt(i);
         }
-        
         const board = decodeBoardFromBinary(bytes);
-        return {board, moves: data.moves};
+
+        // Override the board's binary game-over flags with the authoritative
+        // JSON verdict (resignation/timeout/abort never set the engine flag).
+        if (typeof data.gameOver === 'boolean') {
+            board.gameOver = data.gameOver;
+        }
+        if (typeof data.whiteWins === 'boolean') {
+            board.whiteWins = data.whiteWins;
+        }
+        if (typeof data.draw === 'boolean') {
+            board.draw = data.draw;
+        }
+
+        return {
+            board,
+            moves: data.moves ?? [],
+            status: data.status ?? '',
+            endReason: data.endReason ?? '',
+            result: data.result ?? null,
+            gameOver: data.gameOver ?? board.isGameOver(),
+            whiteWins: data.whiteWins ?? board.whiteWins,
+            draw: data.draw ?? board.draw,
+            clock: data.clock ?? null,
+            serverTime: data.serverTime ?? 0,
+        };
     }
 
     /**
@@ -167,5 +215,28 @@ export class GameAPI {
         }
 
         return response.text();
+    }
+
+    /**
+     * Resign the current game via AJAX. Returns the finished game state
+     * payload (the server publishes the Mercure update for the opponent).
+     */
+    async resign(): Promise<GameStatePayload> {
+        if (!this.gameUuid) {
+            throw new Error('No game UUID available');
+        }
+
+        const response = await fetch(`/play/${this.gameUuid}/resign`, {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+            throw new Error(data.error || 'Failed to resign');
+        }
+
+        return this.parsePayload(data);
     }
 }

@@ -1,6 +1,7 @@
 import {LobbyAPI} from './network/LobbyAPI';
 import {LobbyController} from './controllers/LobbyController';
 import {FriendsController} from './controllers/FriendsController';
+import {alertModal} from './utils/modal';
 
 const lobbyRoot = document.getElementById('lobby-root');
 
@@ -77,7 +78,7 @@ if (profileRoot) {
                     window.location.reload();
                 } catch (error) {
                     console.error(`Could not complete "${action}":`, error);
-                    window.alert(`Could not complete "${action}".`);
+                    void alertModal(`Could not complete "${action}".`, 'Error');
                 }
             })();
         });

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Action;
 
+use App\Engine\GameEngine;
 use App\Entity\User;
 use App\Message\ProcessAiMoveMessage;
 use App\Model\OpponentType;
@@ -11,6 +12,7 @@ use App\Model\PieceColor;
 use App\Repository\GameRepository;
 use App\Security\Voter\GameVoter;
 use App\Service\Game\ClockAdjudicator;
+use App\Service\Game\GameStatePayloadBuilder;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpKernel\Attribute\AsController;
 use Symfony\Component\Messenger\MessageBusInterface;
@@ -24,6 +26,8 @@ class PlayAction extends AbstractController
         private readonly GameRepository $gameRepository,
         private readonly MessageBusInterface $messageBus,
         private readonly ClockAdjudicator $clockAdjudicator,
+        private readonly GameEngine $gameEngine,
+        private readonly GameStatePayloadBuilder $payloadBuilder,
     ) {
     }
 
@@ -73,10 +77,17 @@ class PlayAction extends AbstractController
         $movesData = $game->getMovesData();
         $movesBase64 = base64_encode($movesData->toBinary());
 
+        // Seeds the client's authoritative clock/result state (mirrors what
+        // a Mercure update carries) so the initial render - before the first
+        // SSE message arrives - already reflects the true Game entity state
+        // rather than only the board binary's engine-only verdict.
+        $statePayload = $this->payloadBuilder->build($game, $this->gameEngine->getBoardMovesData($game));
+
         return [
             'game' => $game,
             'moves' => $movesBase64,
             'playerWhite' => PieceColor::WHITE === $playerColor,
+            'gameStateBootstrap' => $this->payloadBuilder->encode($statePayload),
         ];
     }
 }

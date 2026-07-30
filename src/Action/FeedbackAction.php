@@ -9,8 +9,10 @@ use App\Entity\User;
 use App\Form\FeedbackType;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\Attribute\AsController;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
@@ -29,10 +31,11 @@ class FeedbackAction extends AbstractController
         name: 'feedback',
         methods: ['GET', 'POST'],
     )]
-    public function __invoke(Request $request): RedirectResponse|array
+    public function __invoke(Request $request): RedirectResponse|Response|array
     {
         $form = $this->createForm(FeedbackType::class);
         $form->handleRequest($request);
+        $ajax = $request->isXmlHttpRequest();
 
         if ($form->isSubmitted() && $form->isValid()) {
             $data = $form->getData();
@@ -52,12 +55,28 @@ class FeedbackAction extends AbstractController
             $this->entityManager->persist($feedback);
             $this->entityManager->flush();
 
+            // The game view's feedback modal (08-frontend.md-style AJAX flow,
+            // matching the resign modal) posts here and stays in place; the
+            // plain <form> fallback (feedback.html.twig, no JS) still redirects.
+            if ($ajax) {
+                return new JsonResponse(['success' => true]);
+            }
+
             return $this->redirectToRoute('feedback', ['sent' => 1]);
+        }
+
+        $sent = $request->query->getBoolean('sent');
+
+        if ($ajax) {
+            return new Response($this->renderView('actions/_feedback_form.html.twig', [
+                'form' => $form->createView(),
+                'sent' => $sent,
+            ]));
         }
 
         return [
             'form' => $form->createView(),
-            'sent' => $request->query->getBoolean('sent'),
+            'sent' => $sent,
         ];
     }
 }

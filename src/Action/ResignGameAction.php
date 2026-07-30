@@ -4,28 +4,36 @@ declare(strict_types=1);
 
 namespace App\Action;
 
+use App\Engine\GameEngine;
 use App\Entity\Game;
 use App\Entity\User;
 use App\Repository\GameRepository;
 use App\Security\Voter\GameVoter;
 use App\Service\Game\ClockManager;
 use App\Service\Game\GameLifecycleManager;
+use App\Service\Game\GameStatePayloadBuilder;
+use App\Service\Game\GameUpdatePublisher;
 use Doctrine\DBAL\LockMode;
 use Doctrine\ORM\EntityManagerInterface;
-use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Bundle\SecurityBundle\Security;
+use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\Attribute\AsController;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Uid\Uuid;
 
 #[AsController]
-class ResignGameAction extends AbstractController
+readonly class ResignGameAction
 {
     public function __construct(
         private readonly GameRepository $gameRepository,
         private readonly EntityManagerInterface $entityManager,
         private readonly GameLifecycleManager $gameLifecycleManager,
         private readonly ClockManager $clockManager,
+        private readonly Security $security,
+        private readonly GameEngine $gameEngine,
+        private readonly GameStatePayloadBuilder $payloadBuilder,
+        private readonly GameUpdatePublisher $publisher,
     ) {
     }
 
@@ -39,16 +47,21 @@ class ResignGameAction extends AbstractController
         $game = $this->gameRepository->findByUuid(Uuid::fromString($uuid));
 
         if (!$game) {
-            throw $this->createNotFoundException('Game not found');
+            return new JsonResponse(['error' => 'Game not found'], Response::HTTP_NOT_FOUND);
         }
 
-        $this->denyAccessUnlessGranted(GameVoter::PARTICIPATE, $game);
+        if (!$this->security->isGranted(GameVoter::PARTICIPATE, $game)) {
+            return new JsonResponse(['error' => 'Access denied'], Response::HTTP_FORBIDDEN);
+        }
 
         if ($game->isGameOver()) {
-            return $this->redirectToRoute('lobby');
+            return new JsonResponse(
+                ['error' => 'game_finished', 'state' => $this->currentPayload($game)],
+                Response::HTTP_CONFLICT
+            );
         }
 
-        $user = $this->getUser();
+        $user = $this->security->getUser();
         $colors = $game->getColorsForUser($user instanceof User ? $user : null);
         // Hot-seat holds both colours for the same user - ambiguous who
         // resigned, so fall back to the creator's colour, matching this
@@ -75,6 +88,19 @@ class ResignGameAction extends AbstractController
             $em->flush();
         });
 
-        return $this->redirectToRoute('lobby');
+        // Publish the finished state so the opponent (and the resigner's own
+        // tab, which stays on the game page) both see the result via Mercure.
+        // Every other finaliser (engine finish, timeout, abort) publishes;
+        // resign must too, otherwise the opponent's screen never updates.
+        $payload = $this->currentPayload($game);
+        $this->publisher->publishGameState($game->getUuid()->toRfc4122(), $this->payloadBuilder->encode($payload));
+
+        return new JsonResponse($payload, Response::HTTP_OK);
+    }
+
+    /** @return array<string, mixed> */
+    private function currentPayload(Game $game): array
+    {
+        return $this->payloadBuilder->build($game, $this->gameEngine->getBoardMovesData($game));
     }
 }

@@ -1,6 +1,6 @@
 import {GameState} from '../models/GameState';
 import {GameAPI} from '../network/GameAPI';
-import {MercureClient, GameUpdate} from '../network/MercureClient';
+import {MercureClient, GameUpdate, ClockState} from '../network/MercureClient';
 import {IBoardView, TileHighlight} from '../views/IBoardView';
 import {Move} from '../models/types';
 import {decodeMoveListFromBase64, posToAlgebraic, encodeBoardToBinary} from '../utils/boardUtils';
@@ -19,6 +19,23 @@ export class GameController {
     private mercureClient: MercureClient | null = null;
     private opponentType: number;
     private playerWhite: boolean;
+    // Authoritative game state from the server (Game entity, not the board
+    // binary which only carries the engine's verdict). Updated on every
+    // Mercure update and every move/resign response.
+    private endReason: string = '';
+    private resultValue: string | null = null;
+    private clockState: ClockState | null = null;
+    // Wall-clock anchor pairing a server timestamp (micros, from the same
+    // payload as clockState) with the local time it was received, so the
+    // UI can extrapolate a live countdown between server updates.
+    private clockServerTimeMs: number = Date.now();
+    private clockReceivedAtMs: number = Date.now();
+
+    /** Three call sites (Mercure, move, resign) plus the page bootstrap need identical anchoring. */
+    private captureClockTiming(serverTimeMicros: number): void {
+        this.clockServerTimeMs = serverTimeMicros / 1000;
+        this.clockReceivedAtMs = Date.now();
+    }
 
     constructor(gameState: GameState, api: GameAPI, view: IBoardView, opponentType: number, playerWhite: boolean) {
         this.gameState = gameState;
@@ -66,7 +83,14 @@ export class GameController {
     private async handleMercureUpdate(update: GameUpdate): Promise<void> {
         console.log('Received Mercure update:', update);
 
-        // Update the board state
+        // Store authoritative game-over verdict + clock (from the Game entity,
+        // not the board binary which only carries the engine's verdict).
+        this.endReason = update.endReason;
+        this.resultValue = update.result;
+        this.clockState = update.clock;
+        this.captureClockTiming(update.serverTime);
+
+        // Update the board state (flags already overridden in MercureClient)
         this.gameState.setBoard(update.board);
 
         // Decode moves from the update
@@ -80,12 +104,12 @@ export class GameController {
         }
 
         // Update move list
-            this.gameState.setMoveList(moves);
-            this.gameState.setCurrentMoveIndex(moves.length - 1);
+        this.gameState.setMoveList(moves);
+        this.gameState.setCurrentMoveIndex(moves.length - 1);
 
-            // Update move history
-            this.gameState.clearMoveHistory();
-            for (const move of moves) {
+        // Update move history
+        this.gameState.clearMoveHistory();
+        for (const move of moves) {
             const fromPos = posToAlgebraic(move.from);
             const toPos = posToAlgebraic(move.to);
             const notation = `${fromPos}-${toPos}${move.unstack ? '*' : ''}`;
@@ -99,6 +123,7 @@ export class GameController {
         await this.updatePotentialMoves();
         await this.renderBoard();
         window.dispatchEvent(new CustomEvent('boardStateChanged'));
+        window.dispatchEvent(new CustomEvent('clockChanged'));
     }
 
     /**
@@ -141,6 +166,11 @@ export class GameController {
     async updatePotentialMoves(): Promise<void> {
         const board = this.gameState.getBoard();
         if (!board) return;
+        if (board.isGameOver()) {
+            this.gameState.setPotentialMoves([]);
+            this.gameState.setOpponentThreats([]);
+            return;
+        }
         this.gameState.setPotentialMoves(await this.api.getPotentialMoves(board));
         this.gameState.setOpponentThreats(await this.api.getOpponentThreats(board));
     }
@@ -161,6 +191,13 @@ export class GameController {
         const move: Move = {from, to, unstack};
         try {
             const result = await this.api.submitMove(move);
+
+            // Store authoritative game-over verdict + clock
+            this.endReason = result.endReason;
+            this.resultValue = result.result;
+            this.clockState = result.clock;
+            this.captureClockTiming(result.serverTime);
+
             this.gameState.setBoard(result.board);
 
             // Update move list with all moves (including AI response if any)
@@ -169,7 +206,6 @@ export class GameController {
 
             // Update move history
             this.gameState.clearMoveHistory();
-   
             for (const mv of this.gameState.getMoveList()) {
                 const fromPos = posToAlgebraic(mv.from);
                 const toPos = posToAlgebraic(mv.to);
@@ -183,12 +219,13 @@ export class GameController {
             await this.updatePotentialMoves();
             await this.renderBoard();
             window.dispatchEvent(new CustomEvent('boardStateChanged'));
+            window.dispatchEvent(new CustomEvent('clockChanged'));
             window.dispatchEvent(new CustomEvent('moveSubmitted'));
         } catch (error) {
             // Unlock board on error
             this.gameState.setBoardLocked(false);
             console.error('Failed to play move:', error);
-            alert('Failed to play move: ' + (error as Error).message);
+            window.dispatchEvent(new CustomEvent('showError', {detail: {message: 'Failed to play move: ' + (error as Error).message}}));
         }
     }
 
@@ -207,14 +244,14 @@ export class GameController {
                 moves = decodeMoveListFromBase64(movesBase64);
             } catch (error) {
                 console.error('Failed to decode move stack:', error);
-                alert('Failed to decode move stack: ' + (error as Error).message);
+                window.dispatchEvent(new CustomEvent('showError', {detail: {message: 'Failed to decode move stack: ' + (error as Error).message}}));
                 moves = [];
             }
             await this.setMoves(moves);
             window.dispatchEvent(new CustomEvent('boardStateChanged'));
         } catch (error) {
             console.error('Failed to undo move:', error);
-            alert('Failed to undo move: ' + (error as Error).message);
+            window.dispatchEvent(new CustomEvent('showError', {detail: {message: 'Failed to undo move: ' + (error as Error).message}}));
         }
     }
 
@@ -313,7 +350,7 @@ export class GameController {
             return;
         }
         const board = this.gameState.getBoard();
-        if (!board) return;
+        if (!board || board.isGameOver()) return;
         const selectedPosition = this.gameState.getSelectedPosition();
         if (selectedPosition === null) {
             this.gameState.setHoveredPosition(pos);
@@ -425,6 +462,61 @@ export class GameController {
     canNavigateToNext(): boolean {
         const moveList = this.gameState.getMoveList();
         return this.gameState.getCurrentMoveIndex() < moveList.length - 1;
+    }
+
+    /**
+     * Resign the current game. Server finishes the game and publishes the
+     * Mercure update (which reaches this same client too); we also apply
+     * the response directly so the resigner's own screen updates without
+     * waiting on the SSE round-trip.
+     */
+    async resign(): Promise<void> {
+        try {
+            const result = await this.api.resign();
+            this.endReason = result.endReason;
+            this.resultValue = result.result;
+            this.clockState = result.clock;
+            this.captureClockTiming(result.serverTime);
+            this.gameState.setBoard(result.board);
+            this.gameState.setBoardLocked(true);
+            await this.renderBoard();
+            window.dispatchEvent(new CustomEvent('boardStateChanged'));
+            window.dispatchEvent(new CustomEvent('clockChanged'));
+        } catch (error) {
+            console.error('Failed to resign:', error);
+            window.dispatchEvent(new CustomEvent('showError', {detail: {message: 'Failed to resign: ' + (error as Error).message}}));
+        }
+    }
+
+    isGameOver(): boolean {
+        return this.gameState.getBoard()?.isGameOver() ?? false;
+    }
+    getEndReason(): string {
+        return this.endReason;
+    }
+    getResult(): string | null {
+        return this.resultValue;
+    }
+    getClock(): ClockState | null {
+        return this.clockState;
+    }
+    /** Snapshot for a live countdown: extrapolate `clock` forward from `receivedAtMs` using `serverTimeMs`. */
+    getClockSnapshot(): {clock: ClockState | null; serverTimeMs: number; receivedAtMs: number} {
+        return {clock: this.clockState, serverTimeMs: this.clockServerTimeMs, receivedAtMs: this.clockReceivedAtMs};
+    }
+    getOpponentType(): number {
+        return this.opponentType;
+    }
+    isPlayerWhite(): boolean {
+        return this.playerWhite;
+    }
+
+    /** Seeds the authoritative clock/result state from the page's initial bootstrap. */
+    setInitialState(clock: ClockState | null, endReason: string, result: string | null, serverTimeMicros: number): void {
+        this.clockState = clock;
+        this.endReason = endReason;
+        this.resultValue = result;
+        this.captureClockTiming(serverTimeMicros);
     }
 
 }

@@ -1,4 +1,4 @@
-import {Board, Move} from '../models/types';
+import {Board} from '../models/types';
 import {decodeBoardFromBinary} from '../utils/boardUtils';
 
 export interface RatingSide {
@@ -7,13 +7,31 @@ export interface RatingSide {
     delta: number;
 }
 
+export interface ClockState {
+    kind: string;
+    /** Milliseconds remaining on each side's clock (authoritative, from the Game entity). */
+    whiteMs: number | null;
+    blackMs: number | null;
+    /** Which side's clock is running ('white' | 'black' | null when stopped/game over). */
+    running: string | null;
+    /** Server timestamp (microseconds) when the current turn started ticking. */
+    turnStartedAt: number | null;
+    /** Server timestamp (microseconds) of the move deadline. */
+    deadlineAt: number | null;
+}
+
 export interface GameUpdate {
     seq: number;
     board: Board;
     moves: number[];
+    status: string;
+    endReason: string;
+    /** 'white' | 'black' | 'draw' | null — authoritative result from the Game entity. */
+    result: string | null;
     gameOver: boolean;
     whiteWins: boolean;
     draw: boolean;
+    clock: ClockState | null;
     // null unless the game just finished rated (02-realtime.md sec 4.1)
     rating: {white: RatingSide; black: RatingSide} | null;
     serverTime: number;
@@ -99,13 +117,24 @@ export class MercureClient {
                     moves = Array.from(movesU16);
                 }
 
+                // The board binary's game-over flags reflect only the engine's
+                // verdict, which is absent on every non-engine finish
+                // (resignation, timeout, abort). The JSON payload's fields are
+                // authoritative — apply them onto the board so isGameOver()
+                // matches the real Game entity state.
+                this.applyAuthoritativeState(board, data);
+
                 const update: GameUpdate = {
                     seq: data.seq ?? 0,
                     board: board,
                     moves: moves,
-                    gameOver: data.gameOver,
-                    whiteWins: data.whiteWins,
-                    draw: data.draw,
+                    status: data.status ?? '',
+                    endReason: data.endReason ?? '',
+                    result: data.result ?? null,
+                    gameOver: data.gameOver ?? board.isGameOver(),
+                    whiteWins: data.whiteWins ?? board.whiteWins,
+                    draw: data.draw ?? board.draw,
+                    clock: data.clock ?? null,
                     rating: data.rating ?? null,
                     serverTime: data.serverTime ?? 0,
                 };
@@ -124,6 +153,24 @@ export class MercureClient {
         this.eventSource.onopen = () => {
             console.log('Mercure connection opened');
         };
+    }
+
+    /**
+     * Override the board's binary flags with the authoritative JSON fields.
+     * The board's byte-81 flags only carry the engine's own verdict; for
+     * resignation/timeout/abort the engine never runs, so the JSON payload
+     * (read from the Game entity) is the single source of truth.
+     */
+    private applyAuthoritativeState(board: Board, data: {gameOver?: unknown; whiteWins?: unknown; draw?: unknown}): void {
+        if (typeof data.gameOver === 'boolean') {
+            board.gameOver = data.gameOver;
+        }
+        if (typeof data.whiteWins === 'boolean') {
+            board.whiteWins = data.whiteWins;
+        }
+        if (typeof data.draw === 'boolean') {
+            board.draw = data.draw;
+        }
     }
 
     /**

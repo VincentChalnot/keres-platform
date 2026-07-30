@@ -90,6 +90,21 @@
     {% endfor %}
 {% endblock %}
 {% block body %}{% endblock %}
+{% block modals %}
+    <div class="modal" id="app-confirm-modal">
+        <div class="modal-background"></div>
+        <div class="modal-card">
+            <header class="modal-card-head">
+                <p class="modal-card-title" id="app-confirm-modal-title">Confirm</p>
+            </header>
+            <section class="modal-card-body" id="app-confirm-modal-body"></section>
+            <footer class="modal-card-foot">
+                <button type="button" class="button is-rounded is-primary" id="app-confirm-modal-ok">Confirm</button>
+                <button type="button" class="button is-rounded is-outlined is-light" id="app-confirm-modal-cancel">Cancel</button>
+            </footer>
+        </div>
+    </div>
+{% endblock %}
 {% block footer %}
 <footer class="footer">
     <div class="content has-text-centered">

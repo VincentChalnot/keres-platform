@@ -1,6 +1,7 @@
 import {LobbyAPI, ApiError} from '../network/LobbyAPI';
 import {LobbySeekClient} from '../network/LobbySeekClient';
 import {CustomSeekInput, QuickPairPreset, SeekEvent, SeekListing, SeekSummary} from '../models/seek';
+import {alertModal} from '../utils/modal';
 
 /** 04-matchmaking.md sec 4.2: the client heartbeat period; also the pairing-retry granularity. */
 const SEEK_HEARTBEAT_INTERVAL_MS = 10000;
@@ -103,10 +104,16 @@ export class LobbyController {
 
     private handleSeekEvent(event: SeekEvent): void {
         if ('seek.added' === event.type && event.seek) {
-            // Broadcasts never carry `self`/`playable` (02-realtime.md sec 4.3);
-            // only adopt a foreign seek here, never overwrite my own richer row.
+            // Broadcasts never carry viewer-specific `self`/`playable`
+            // (02-realtime.md sec 4.3) — `playable` arrives as null, so
+            // buildRow would render no button at all and the seek would sit
+            // unplayable until the 30s backstop refetch. Adopt the seek with
+            // an optimistic playable flag: we know it's foreign (not ours),
+            // and the accept endpoint enforces its own guards. The refetch
+            // still corrects it if the viewer is blocked/out-of-range.
             if (event.seekUuid !== this.mySeekUuid) {
-                this.seeks.set(event.seekUuid, event.seek);
+                const foreign: SeekSummary = {...event.seek, self: false, playable: true};
+                this.seeks.set(event.seekUuid, foreign);
             }
         } else if ('seek.removed' === event.type) {
             this.seeks.delete(event.seekUuid);
@@ -388,6 +395,6 @@ export class LobbyController {
     private reportError(context: string, error: unknown): void {
         const message = error instanceof ApiError ? error.code : String(error);
         console.error(`${context}: ${message}`);
-        window.alert(`${context}: ${message}`);
+        void alertModal(`${context}: ${message}`, 'Error');
     }
 }

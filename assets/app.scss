@@ -158,24 +158,55 @@ li { margin-bottom: 8px; }
     color: $keres-light;
 }
 
-// ─── Material top row (material bar + status side by side) ────────────────────
+// ─── Player info row (material bar + remaining-time clock side by side) ───────
 
-.material-top-row {
+.player-info-row {
     display: flex;
     align-items: center;
     justify-content: space-between;
+    gap: 0.75rem;
 
     .material-bar {
         flex: 1;
+        min-width: 0;
+    }
+}
+
+.player-clock {
+    flex-shrink: 0;
+    min-width: 5.5em;
+    padding: 0.4em 0.9em;
+    border-radius: 0.5em;
+    text-align: center;
+    font-family: 'RomanSerif', serif;
+    font-size: 1.3rem;
+    font-variant-numeric: tabular-nums;
+    background: #1a1a1a;
+    color: $keres-secondary;
+    border: 1px solid $keres-dark;
+    transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease;
+
+    // Stopped/not-to-move: dim, dark background (per spec — inactive stays dark).
+    &.is-inactive {
+        background: #141414;
+        color: color.adjust($keres-secondary, $lightness: -20%);
     }
 
-    #status {
-        flex-shrink: 0;
-        font-size: 0.95rem;
-        color: $keres-secondary;
-        padding: 0 1rem;
-        text-align: right;
+    // Ticking/to-move: highlighted so the active side is unmistakable.
+    &.is-active {
+        background: $keres-primary;
+        color: #1a1208;
+        border-color: $keres-primary;
+        font-weight: bold;
     }
+}
+
+// ─── Game status banner (waiting states + final result; never "X's turn") ─────
+
+.game-status-banner {
+    margin: 0.75rem 0 0;
+    text-align: center;
+    padding: 0.6em 1em;
 }
 
 // ─── Hero (landing page) ──────────────────────────────────────────────────────
@@ -252,6 +283,12 @@ li { margin-bottom: 8px; }
     // Dark background so .section doesn't use Bulma's default light scheme
     background-color: transparent;
     color: $keres-light;
+
+    // The global h1 rule reserves a 3rem top margin for the landing-page
+    // hero; inside a padded .section that doubles up and wastes space.
+    h1 {
+        margin-top: 0;
+    }
 
     &.section-flex {
         // Two-column flex layout used on the landing page sections
@@ -470,6 +507,15 @@ footer.footer {
     max-width: 1200px;
     margin: auto;
     padding: 1rem;
+}
+
+// Game over: desaturate the board and fully disable pointer interaction
+// (click, drag-start, and — critically — hover) so no stale "your move"
+// affordance survives a finished game. `pointer-events: none` is stronger
+// than gating each JS handler individually: it also blocks CSS :hover.
+#board-container.game-over svg {
+    filter: saturate(0.35) brightness(0.85);
+    pointer-events: none;
 }
 
 .move-history {
