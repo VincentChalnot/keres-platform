@@ -132,7 +132,7 @@ export class FriendsController {
                 return `<button type="button" class="button is-small is-rounded ${cls}" data-action="${action}" data-username="${this.escape(row.username)}">${label}</button>`;
             }).join(' ');
 
-            li.innerHTML = `<span>${this.escape(row.displayName ?? row.username)} <span class="has-text-grey">@${this.escape(row.username)}</span></span> `
+            li.innerHTML = `${this.profileLink(row.username, row.displayName)} `
                 + (staticLabel ? `<span class="tag is-light is-rounded">${staticLabel}</span>` : buttons);
 
             list.appendChild(li);
@@ -153,7 +153,7 @@ export class FriendsController {
             li.className = 'friends-list__row mb-2';
             li.dataset.username = row.username;
             const dot = row.online ? '<span class="tag is-success is-rounded is-small">online</span>' : '';
-            li.innerHTML = `<span>${this.escape(row.displayName ?? row.username)} <span class="has-text-grey">@${this.escape(row.username)}</span></span> ${dot} `
+            li.innerHTML = `${this.profileLink(row.username, row.displayName)} ${dot} `
                 + `<button type="button" class="button is-small is-rounded is-light" data-action="friend-remove" data-username="${this.escape(row.username)}">Unfriend</button>`;
             this.friendsList.appendChild(li);
         }
@@ -267,12 +267,22 @@ export class FriendsController {
             const li = document.createElement('li');
             li.className = 'friends-list__row mb-2';
             const dot = player.online ? '<span class="tag is-success is-rounded is-small">online</span>' : '';
-            li.innerHTML = `<span>@${this.escape(player.username)}</span> ${dot} `
+            li.innerHTML = `${this.profileLink(player.username, null)} ${dot} `
                 + `<button type="button" class="button is-small is-rounded is-primary" data-action="friend-request" data-username="${this.escape(player.username)}">Add friend</button>`;
             list.appendChild(li);
         }
 
         this.searchResults.appendChild(list);
+    }
+
+    /** Name and @username, both linking to the player's public profile (`GET /@/{username}`). */
+    private profileLink(username: string, displayName: string | null): string {
+        const href = `/@/${encodeURIComponent(username)}`;
+        const name = displayName && displayName !== username
+            ? `<a href="${href}">${this.escape(displayName)}</a> `
+            : '';
+
+        return `<span>${name}<a href="${href}" class="has-text-grey">@${this.escape(username)}</a></span>`;
     }
 
     private escape(value: string): string {

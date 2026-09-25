@@ -439,10 +439,15 @@ independent of discovery time.** That single line is what makes §10.5 true.
 | b | `adjudicate()` on read | Every authenticated `GET /play/{uuid}`, `GET /play/{uuid}/state`, and step 5 of the move transaction. Zero extra queries in the common case. | The safety net: worker down, message in `failed`, deadline passed unobserved. |
 | c | `POST /play/{uuid}/claim-timeout` | Explicit, `GAME_PARTICIPATE` | The player-facing escape hatch. `false` -> `409 clock_not_expired` + `details.state`, so the client resyncs its countdown instead of arguing. |
 
-Path (b) runs for **authenticated participants only**, never anonymous
-spectators: `GAME_VIEW` is public (`00-overview.md` §4.3), and letting an
-anonymous page load finalise a rated game hands a write-amplification lever to
-anyone holding a game UUID. Spectators see the result on the next Mercure event.
+Path (b) runs for **every signed-in viewer**, spectators included (amended by
+`00-overview.md` R8): viewing a game now requires an account, so no anonymous
+page load can reach it, and a spectator must not be shown a clock frozen past
+zero. It is idempotent and short-circuits unless the deadline has passed.
+
+Path (c) is also driven by the client (R8): a participant's page claims the
+timeout once the running clock has read zero for 1.5 s, retrying at most every
+10 s, so the flag falls even when the delayed message is late or its worker is
+down.
 
 ### 5.3 The staleness guard
 

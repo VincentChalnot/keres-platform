@@ -76,6 +76,8 @@ original behaviour.
 | R4 | Speed categories | Bands re-tuned for Keres: `estimated = initial + 40 * increment`; `< 300` Bullet, `< 900` Blitz, `< 3000` Rapid, else Classical, so each default lands in its own pool. Existing games keep the category frozen at creation | `03-time-control.md` §1.3, `06-rating.md` §5.2 |
 | R5 | Notifications | In-app only for now: `Notification` rows, a header bell with an unread count, "mark as read" per item and for all, and per-type on/off toggles in Settings → Notifications. Types: friend request, friend accepted, seek accepted (game started), your turn (correspondence/unlimited games only) and game ended. No Web Push, no email yet | `07-notifications.md` §0 |
 | R6 | Settings | One **Settings** page (single header icon, vertical section nav): Profile, Board & gameplay, Notifications, Privacy, Connected accounts. `/preferences` redirects to Settings → Profile. Friend requests live only on the Friends page; blocked users only in Settings → Privacy | `05-social.md` §9.2 |
+| R8 | Game visibility and stale clocks | Viewing a game requires an account (§4.3). Opening `/play/{uuid}` adjudicates an expired clock for **any** signed-in viewer, not only participants. The page applies the bootstrap's `gameOver`/`whiteWins`/`draw` onto the replayed board — the engine replay only knows engine results, so a timeout, resignation or abort used to render as an ongoing game. A participant whose running clock has read zero for 1.5 s calls `POST /play/{uuid}/claim-timeout` (at most every 10 s), so a flag falls even when the delayed clock-expiry message is late or its worker is down. A move refused with `game_finished`/`flagged` shows the final result instead of an error | `03-time-control.md` §5.2, `08-frontend.md` §7.7 |
+| R9 | Profiles | Another player's profile shows their ratings and record but not their game history; your own profile keeps the paginated history. Names and @usernames on the Friends page (lists and search results) link to the profile | `05-social.md` §9.1 |
 | R7 | Play UI | The status bar under the board is always visible: "Your turn" in the active-clock accent, "Waiting for opponent…" muted | `08-frontend.md` §7.7 |
 
 ### 2.1 Derived scope decisions
@@ -206,19 +208,22 @@ constraint is on `(game_id, color_value)`, not `(game_id, user_id)`.
 it is — `0 === $gameMoves->count() % 2` — because "white moves first" is already
 baked into the engine's board format and is not new rules knowledge.
 
-### 4.3 Games are publicly viewable; participation is not
+### 4.3 Games are viewable by signed-in players; participation is not
 
 `GameVoter` is rewritten with three attributes:
 
-- `GAME_VIEW` — multiplayer games: **anyone**, including anonymous visitors.
-  AI and hot-seat games: participants only.
+- `GAME_VIEW` — multiplayer games: **any signed-in user** (amended by R8 —
+  originally anyone, including anonymous visitors; `/play/{uuid}` now sits
+  behind the `^/play` `ROLE_USER` rule and an anonymous visitor is sent to
+  login). AI and hot-seat games: participants only.
 - `GAME_PARTICIPATE` — the acting user holds a `GamePlayer` row on this game.
   Required for every mutating endpoint.
 - `GAME_MANAGE` — archiving/hiding; the acting participant, for their own side.
 
-Making multiplayer games publicly viewable is not a new exposure: the Mercure
-topic `game/{uuid}` is already world-readable (§3.4). The spec makes that
-honest rather than pretending otherwise, and keeps single-player games private.
+The Mercure topic `game/{uuid}` is still published as a public update (§3.4):
+someone who already holds a game UUID can subscribe without an account. Closing
+that needs private game updates plus a `game/{uuid}` URI-template claim in the
+subscriber cookie — a follow-up, tracked by R8.
 
 ### 4.4 Usernames are a prerequisite
 

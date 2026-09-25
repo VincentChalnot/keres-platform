@@ -1224,6 +1224,11 @@ public page.
 
 ### 9.1 `GET /@/{username}` — public profile
 
+> **Revision R9** (`00-overview.md`): another player's profile shows their
+> ratings and win/loss/draw record but **not** their game history, which stays
+> on your own profile only. The Friends page links every name and @username
+> (friends, requests, search results) to this page.
+
 ```php
 #[Route(
     path: '/@/{username}',

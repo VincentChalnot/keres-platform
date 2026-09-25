@@ -20,6 +20,18 @@ export interface GameStatePayload {
 }
 
 /**
+ * The server refused a move or claim because the game is already over
+ * (`409 game_finished` / `flagged`). Carries the authoritative final state
+ * so the caller can show the result instead of a bare error.
+ */
+export class GameFinishedError extends Error {
+    constructor(public readonly state: GameStatePayload) {
+        super('game_finished');
+        this.name = 'GameFinishedError';
+    }
+}
+
+/**
  * API client for game backend
  * Handles binary communication with server and converts to/from objects
  */
@@ -103,11 +115,37 @@ export class GameAPI {
 
         if (!response.ok) {
             const errorData = await response.json();
+            if (('game_finished' === errorData.error || 'flagged' === errorData.error) && errorData.state) {
+                throw new GameFinishedError(this.parsePayload(errorData.state));
+            }
             throw new Error(errorData.error || 'Failed to submit move');
         }
 
         const data = await response.json();
         return this.parsePayload(data);
+    }
+
+    /**
+     * Asks the server to adjudicate an expired clock (03-time-control.md
+     * sec 5.2 path c). Returns the authoritative state either way: finished
+     * when the flag fell, still ongoing (409 clock_not_expired) otherwise.
+     */
+    async claimTimeout(): Promise<GameStatePayload> {
+        if (!this.gameUuid) {
+            throw new Error('No game UUID available');
+        }
+
+        const response = await fetch(`/play/${this.gameUuid}/claim-timeout`, {method: 'POST'});
+        const data = await response.json();
+
+        if (response.ok) {
+            return this.parsePayload(data);
+        }
+        if (409 === response.status && data.state) {
+            return this.parsePayload(data.state);
+        }
+
+        throw new Error(data.error || 'Failed to claim timeout');
     }
 
     /**

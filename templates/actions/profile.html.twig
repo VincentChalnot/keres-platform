@@ -110,6 +110,7 @@
                     </div>
                 </div>
 
+                {% if games is not null %}
                 <h2 class="title is-4">Recent games</h2>
 
                 {% for game in games %}
@@ -171,6 +172,7 @@
                         {% endif %}
                         <span class="pagination-list ml-3">Page {{ games.currentPage }} of {{ games.nbPages }}</span>
                     </nav>
+                {% endif %}
                 {% endif %}
             </div>
         </div>

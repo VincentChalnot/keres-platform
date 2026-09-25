@@ -1,5 +1,5 @@
 import {GameState} from '../models/GameState';
-import {GameAPI} from '../network/GameAPI';
+import {GameAPI, GameFinishedError, GameStatePayload} from '../network/GameAPI';
 import {MercureClient, GameUpdate, ClockState} from '../network/MercureClient';
 import {IBoardView, TileHighlight} from '../views/IBoardView';
 import {Move} from '../models/types';
@@ -233,6 +233,11 @@ export class GameController {
             window.dispatchEvent(new CustomEvent('clockChanged'));
             window.dispatchEvent(new CustomEvent('moveSubmitted'));
         } catch (error) {
+            if (error instanceof GameFinishedError) {
+                // The game ended before this move reached the server (flag, resignation...): show the result.
+                await this.applyFinishedState(error.state);
+                return;
+            }
             // Unlock board on error
             this.gameState.setBoardLocked(false);
             console.error('Failed to play move:', error);
@@ -483,20 +488,61 @@ export class GameController {
      */
     async resign(): Promise<void> {
         try {
-            const result = await this.api.resign();
-            this.endReason = result.endReason;
-            this.resultValue = result.result;
-            this.clockState = result.clock;
-            this.captureClockTiming(result.serverTime);
-            this.gameState.setBoard(result.board);
-            this.gameState.setBoardLocked(true);
-            await this.renderBoard();
-            window.dispatchEvent(new CustomEvent('boardStateChanged'));
-            window.dispatchEvent(new CustomEvent('clockChanged'));
+            await this.applyFinishedState(await this.api.resign());
         } catch (error) {
             console.error('Failed to resign:', error);
             window.dispatchEvent(new CustomEvent('showError', {detail: {message: 'Failed to resign: ' + (error as Error).message}}));
         }
+    }
+
+    /**
+     * Asks the server to adjudicate the running clock once it reads zero
+     * locally, so a flag falls even if the delayed clock-expiry message is
+     * late or its worker is down. A not-yet-expired answer resyncs the clock.
+     */
+    async claimTimeout(): Promise<void> {
+        const state = await this.api.claimTimeout();
+
+        if (state.gameOver) {
+            await this.applyFinishedState(state);
+            return;
+        }
+
+        this.clockState = state.clock;
+        this.captureClockTiming(state.serverTime);
+        window.dispatchEvent(new CustomEvent('clockChanged'));
+    }
+
+    /** Applies a finished game's authoritative state (resign, flag, refused move) without touching the move list. */
+    private async applyFinishedState(state: GameStatePayload): Promise<void> {
+        this.endReason = state.endReason;
+        this.resultValue = state.result;
+        this.clockState = state.clock;
+        this.captureClockTiming(state.serverTime);
+        this.gameState.setBoard(state.board);
+        this.gameState.setBoardLocked(true);
+        await this.updatePotentialMoves();
+        await this.renderBoard();
+        window.dispatchEvent(new CustomEvent('boardStateChanged'));
+        window.dispatchEvent(new CustomEvent('clockChanged'));
+    }
+
+    /**
+     * The page bootstrap's verdict (Game entity) onto the replayed board:
+     * the engine replay only knows about checkmate/draws, not timeouts,
+     * resignations or aborts.
+     */
+    async applyAuthoritativeResult(gameOver: boolean, whiteWins: boolean, draw: boolean): Promise<void> {
+        const board = this.gameState.getBoard();
+
+        if (!board || !gameOver) return;
+
+        board.gameOver = true;
+        board.whiteWins = whiteWins;
+        board.draw = draw;
+        this.gameState.setBoardLocked(true);
+        await this.updatePotentialMoves();
+        await this.renderBoard();
     }
 
     isGameOver(): boolean {

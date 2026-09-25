@@ -27,9 +27,11 @@ final class GameVoter extends Voter
         $user = $token->getUser();
         $member = $user instanceof User && $subject->isParticipant($user);
 
+        // Multiplayer games are open to any signed-in spectator, never to an
+        // anonymous visitor (00-overview.md sec 4.3, amended by R8).
         return match ($attribute) {
             self::VIEW => null === $subject->getDeletedAt()
-                && (OpponentType::MULTIPLAYER === $subject->getOpponentType() || $member),
+                && ($member || ($user instanceof User && OpponentType::MULTIPLAYER === $subject->getOpponentType())),
             self::PARTICIPATE => null === $subject->getDeletedAt() && $member,
             self::MANAGE => $member,
         };

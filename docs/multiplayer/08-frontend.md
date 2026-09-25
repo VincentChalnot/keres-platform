@@ -1046,6 +1046,14 @@ as in a persisted AI/hot-seat game; no clock, no feedback button.
 (muted); the result once the game is over. `data-spectator` tells a spectator
 from a participant.
 
+**Authoritative result and timeout claims (R8).** After the initial replay,
+`app.ts` applies the bootstrap's `gameOver`/`whiteWins`/`draw` onto the board
+(`GameController.applyAuthoritativeResult()`); `renderClocks()` calls
+`GameController.claimTimeout()` once the running clock has been at zero for
+`CLAIM_TIMEOUT_AFTER_MS` (1.5 s), retrying at most every 10 s, for participants
+only; `GameAPI.submitMove()` turns a `409 game_finished`/`flagged` carrying
+`state` into a `GameFinishedError`, which the controller renders as the result.
+
 **Board preferences (R6).** `data-show-coordinates` / `data-show-threats` on
 `#board-container` carry Settings → Board & gameplay into the page's initial
 toggle state.

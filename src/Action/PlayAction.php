@@ -55,12 +55,13 @@ class PlayAction extends AbstractController
 
         $user = $this->getUser();
 
-        // Path (b), authenticated participants only (03-time-control.md
-        // sec 5.2): never for anonymous spectators - GAME_VIEW is public,
-        // and letting an anonymous page load finalise a rated game hands a
-        // write-amplification lever to anyone holding a game UUID.
+        // Path (b) (03-time-control.md sec 5.2), for every viewer: viewing
+        // requires an account (R8), so no anonymous page load can reach this.
+        // A signed-in spectator must not be shown a clock frozen past zero
+        // just because the delayed expiry message has not run.
+        $this->clockAdjudicator->adjudicate($game);
+
         if ($user instanceof User && $game->isParticipant($user)) {
-            $this->clockAdjudicator->adjudicate($game);
             // Opening the game is reading its "your turn"/"game ended" rows.
             $this->notificationCenter->markGameRead($user, $game);
         }

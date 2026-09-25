@@ -33,7 +33,6 @@ security:
 
     access_control:
         - { path: ^/admin, roles: ROLE_ADMIN }
-        - { path: '^/play/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$', roles: PUBLIC_ACCESS, methods: [GET] }
         # AI/hot-seat without an account (browser-only guest games).
         - { path: ^/play/(new|guest)$, roles: PUBLIC_ACCESS }
         - { path: ^/play, roles: ROLE_USER }

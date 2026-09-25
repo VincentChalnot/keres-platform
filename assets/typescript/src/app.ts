@@ -43,8 +43,15 @@ interface GameStateBootstrap {
     clock: ClockState | null;
     endReason: string;
     result: string | null;
+    gameOver: boolean;
+    whiteWins: boolean;
+    draw: boolean;
     serverTime: number;
 }
+
+/** Past zero on the running clock, wait this long for the server's own flag before claiming it (grace + lag). */
+const CLAIM_TIMEOUT_AFTER_MS = 1500;
+const CLAIM_TIMEOUT_RETRY_MS = 10000;
 
 /**
  * Automation surface for driving a game without reverse-engineering
@@ -109,6 +116,7 @@ class KeresGame {
     private guestRecord: GuestGameRecord | null = null; // browser-only game without an account
     private coordsVisible: boolean = true;
     private clockTimer: ReturnType<typeof setInterval> | null = null;
+    private lastTimeoutClaimAt = 0; // Date.now() of the last timeout claim, to retry at most every CLAIM_TIMEOUT_RETRY_MS
 
     constructor() {
         this.gameState = new GameState();
@@ -218,6 +226,10 @@ class KeresGame {
         const movesBase64 = this.boardContainer.getAttribute('data-moves') || '';
         const moves = localApi ? localApi.getMoves() : decodeMoveListFromBase64(movesBase64);
         await this.controller.setMoves(moves);
+        if (bootstrap) {
+            // Timeouts, resignations and aborts are invisible to the engine replay.
+            await this.controller.applyAuthoritativeResult(bootstrap.gameOver, bootstrap.whiteWins, bootstrap.draw);
+        }
 
         if (localApi) {
             // The AI's replies arrive where a Mercure update would for a persisted game.
@@ -724,11 +736,13 @@ class KeresGame {
         if (clock.running && null !== clock.turnStartedAt) {
             const turnStartedAtMs = clock.turnStartedAt / 1000;
             const elapsedMs = Math.max(0, estimatedServerNowMs - turnStartedAtMs);
+            const runningMs = ('white' === clock.running ? whiteMs : blackMs) - elapsedMs;
             if ('white' === clock.running) {
                 whiteMs = Math.max(0, whiteMs - elapsedMs);
             } else if ('black' === clock.running) {
                 blackMs = Math.max(0, blackMs - elapsedMs);
             }
+            this.claimTimeoutIfDue(runningMs);
         }
 
         const gameOver = this.controller.isGameOver();
@@ -738,6 +752,23 @@ class KeresGame {
 
         this.setClockDisplay(this.clockTop, flipped ? whiteMs : blackMs, !gameOver && clock.running === topColor);
         this.setClockDisplay(this.clockBottom, flipped ? blackMs : whiteMs, !gameOver && clock.running === bottomColor);
+    }
+
+    /**
+     * The flag is normally dropped by the server's delayed clock-expiry
+     * message and pushed over Mercure. If nothing has arrived shortly after
+     * the running clock reads zero, a participant asks the server to
+     * adjudicate (at most every CLAIM_TIMEOUT_RETRY_MS), so the game never
+     * sits frozen at 0:00.
+     */
+    private claimTimeoutIfDue(runningMs: number): void {
+        if (this.spectator || this.guestRecord || this.controller.isGameOver()) return;
+        if (runningMs > -CLAIM_TIMEOUT_AFTER_MS || Date.now() - this.lastTimeoutClaimAt < CLAIM_TIMEOUT_RETRY_MS) return;
+
+        this.lastTimeoutClaimAt = Date.now();
+        void this.controller.claimTimeout()
+            .then(() => this.refreshUI())
+            .catch((error: unknown) => console.error('Timeout claim failed:', error));
     }
 
     private setClockDisplay(el: HTMLElement, ms: number, active: boolean): void {

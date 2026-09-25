@@ -22,10 +22,10 @@ use Symfony\Component\Routing\Attribute\Route;
 
 /**
  * `GET /@/{username}` (05-social.md sec 9.1, 09-api-reference.md sec
- * 3.7/4.6). Public: multiplayer games are already publicly viewable
- * (contract sec 4.3) and a profile link must work pasted into a chat, so
- * this never requires authentication - `getUser()` is handled as nullable
- * throughout, matching `LobbyAction`.
+ * 3.7/4.6). Public: a profile link must work pasted into a chat, so this
+ * never requires authentication - `getUser()` is handled as nullable
+ * throughout. Ratings and record are shown to everyone; the game history
+ * only on your own profile (00-overview.md R9).
  */
 #[AsController]
 class ProfilePageAction extends AbstractController
@@ -64,11 +64,16 @@ class ProfilePageAction extends AbstractController
         $isSelf = null !== $viewer && $viewer === $subject;
         $now = $this->clock->now();
 
-        $queryBuilder = $this->gameRepository->queryProfileGamesForUser($subject, $isSelf);
-        $pager = new Pagerfanta(new QueryAdapter($queryBuilder));
-        $pager->setMaxPerPage(MultiplayerLimits::PROFILE_GAMES_PER_PAGE);
-        $page = max(1, $request->query->getInt('page', 1));
-        $pager->setCurrentPage(min($page, max(1, $pager->getNbPages())));
+        // The game history is shown on your own profile only; anyone else's
+        // profile carries their ratings and record, not the list of games.
+        $pager = null;
+
+        if ($isSelf) {
+            $pager = new Pagerfanta(new QueryAdapter($this->gameRepository->queryProfileGamesForUser($subject, true)));
+            $pager->setMaxPerPage(MultiplayerLimits::PROFILE_GAMES_PER_PAGE);
+            $page = max(1, $request->query->getInt('page', 1));
+            $pager->setCurrentPage(min($page, max(1, $pager->getNbPages())));
+        }
 
         return [
             'subject' => $subject,

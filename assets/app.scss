@@ -796,6 +796,9 @@ footer.footer {
         padding-top: 0.45em;
         padding-bottom: 0.45em;
         line-height: 1.2;
+        // Bulma's outlined buttons go 2px on hover; with `height: auto` that
+        // would grow the pill and nudge the whole page down.
+        border-width: 1px !important;
     }
 }
 
