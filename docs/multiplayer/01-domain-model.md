@@ -345,9 +345,9 @@ class TimeControl
             TimeControlKind::UNLIMITED => null,
             TimeControlKind::CORRESPONDENCE => SpeedCategory::CORRESPONDENCE,
             TimeControlKind::REALTIME => match (true) {
-                $this->estimatedSeconds() < 180 => SpeedCategory::BULLET,
-                $this->estimatedSeconds() < 480 => SpeedCategory::BLITZ,
-                $this->estimatedSeconds() < 1500 => SpeedCategory::RAPID,
+                $this->estimatedSeconds() < 300 => SpeedCategory::BULLET,   // bands per 00-overview.md R4
+                $this->estimatedSeconds() < 900 => SpeedCategory::BLITZ,
+                $this->estimatedSeconds() < 3000 => SpeedCategory::RAPID,
                 default => SpeedCategory::CLASSICAL,
             },
         };
@@ -373,8 +373,8 @@ Constraints this design accepts:
   immutability is achieved by having no setters and a private constructor, not by
   the keyword.
 - **DQL reaches through the dot:** `WHERE s.timeControl.kindValue = :kind`.
-- The four quick-pair presets classify as 1+0 BULLET, 3+2 BLITZ, 5+0 BLITZ,
-  10+0 RAPID, 15+10 RAPID (per `06-rating.md`); no preset yields CLASSICAL.
+- The lobby's format presets (`04-matchmaking.md` §1.1) classify as 3+2 BULLET,
+  7+5 BLITZ, 20+10 RAPID, 100+0 CLASSICAL (per `06-rating.md`, bands R4).
 
 ### 3.2 Why `speed_category` is stored on `seek` and `game` but not `challenge`
 
@@ -572,7 +572,18 @@ public function setUsername(string $username): void
     $this->username = $username;
 }
 
-public function canChangeUsername(): bool { return null === $this->usernameChangedAt; }
+// 00-overview.md R2: once every MultiplayerLimits::USERNAME_CHANGE_INTERVAL ('P12M').
+public function canChangeUsername(\DateTimeImmutable $now): bool
+{
+    $next = $this->getNextUsernameChangeAt();
+
+    return null === $next || $next <= $now;
+}
+
+public function getNextUsernameChangeAt(): ?\DateTimeImmutable
+{
+    return $this->usernameChangedAt?->add(new \DateInterval(MultiplayerLimits::USERNAME_CHANGE_INTERVAL));
+}
 ```
 
 ### 4.2 `UserRating` (new, `user_rating`)
@@ -833,6 +844,7 @@ exactly why it is documented here.
 | `uuid` | `UuidType`, unique | `UUID` | no | - | `uniq_notification_uuid` | `POST /notifications/{uuid}/read` must not expose a sequential id |
 | `user_id` | ManyToOne `User` | `UUID` | no | - | 1st of `idx_notification_inbox` | Recipient |
 | `type` | `STRING(32)`, `enumType: NotificationType::class` | `VARCHAR(32)` | no | - | - | String-backed enum -> `enumType`, per sec. 2.1 and the `Feedback` precedent. The stored value is already the wire value (`challenge_received`, ...), so no mapping layer exists to drift |
+| `subject` | `STRING(64)`, nullable | `VARCHAR(64)` | yes | `NULL` | 2nd of `idx_notification_subject` | What the row is about: `game:<uuid>` or `user:<uuid>`. A repeat "your turn" refreshes the unread row with the same type/subject instead of stacking; opening a game (or answering a friend request) marks that subject's rows read. Added by the R5 implementation (`Version20260925120000`) |
 | `payload` | `JSON` | `JSON` | no | - | - | Type-specific body (game uuid, challenger username, ...). Never queried into, so `JSON` not `JSONB` |
 | `read_at` | `DATETIMETZ_IMMUTABLE`, nullable | `TIMESTAMP(0) WITH TIME ZONE` | yes | `NULL` | 2nd of `idx_notification_inbox` | `NULL` = unread. A nullable timestamp beats a boolean: it answers "unread?" and "when dismissed?" with one column |
 | `created_at` | `DATETIMETZ_IMMUTABLE` | `TIMESTAMP(0) WITH TIME ZONE` | no | - | 3rd of `idx_notification_inbox` | Inbox ordering |

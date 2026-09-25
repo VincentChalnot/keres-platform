@@ -106,9 +106,18 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
         $this->username = $username;
     }
 
-    public function canChangeUsername(): bool
+    /** 05-social.md sec 1.6: one change per `MultiplayerLimits::USERNAME_CHANGE_INTERVAL`. */
+    public function canChangeUsername(\DateTimeImmutable $now): bool
     {
-        return null === $this->usernameChangedAt;
+        $next = $this->getNextUsernameChangeAt();
+
+        return null === $next || $next <= $now;
+    }
+
+    /** Null when the user never changed their username (a change is available right away). */
+    public function getNextUsernameChangeAt(): ?\DateTimeImmutable
+    {
+        return $this->usernameChangedAt?->add(new \DateInterval(MultiplayerLimits::USERNAME_CHANGE_INTERVAL));
     }
 
     public function getUsernameChangedAt(): ?\DateTimeImmutable

@@ -126,6 +126,11 @@ export class GameController {
         window.dispatchEvent(new CustomEvent('clockChanged'));
     }
 
+    /** Applies a state update that didn't come through Mercure (a guest game's AI reply). */
+    async applyRemoteUpdate(update: GameUpdate): Promise<void> {
+        await this.handleMercureUpdate(update);
+    }
+
     /**
      * Disconnect from Mercure
      */
@@ -155,7 +160,7 @@ export class GameController {
         const board = await this.api.replayMoves(moves);
         this.gameState.setBoard(board);
         this.gameState.setCurrentMoveIndex(moves.length - 1);
-        this.gameState.setBoardLocked(false);
+        this.gameState.setBoardLocked(this.computeInputLocked());
         await this.updatePotentialMoves();
         await this.renderBoard();
     }
@@ -171,8 +176,14 @@ export class GameController {
             this.gameState.setOpponentThreats([]);
             return;
         }
-        this.gameState.setPotentialMoves(await this.api.getPotentialMoves(board));
-        this.gameState.setOpponentThreats(await this.api.getOpponentThreats(board));
+        const [potentialMoves, opponentThreats] = await Promise.all([
+            this.api.getPotentialMoves(board),
+            this.api.getOpponentThreats(board),
+        ]);
+        // A newer board (e.g. the opponent's reply) may have landed meanwhile.
+        if (this.gameState.getBoard() !== board) return;
+        this.gameState.setPotentialMoves(potentialMoves);
+        this.gameState.setOpponentThreats(opponentThreats);
     }
 
     /**

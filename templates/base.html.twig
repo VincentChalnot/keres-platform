@@ -44,10 +44,28 @@
                     </div>
                     <div class="navbar-item">
                         {% if app.user %}
-                            <a href="{{ path('settings_profile') }}" class="icon mr-2" aria-label="Account settings" title="Account settings">
-                                <i class="fa-solid fa-user-gear" aria-hidden="true"></i>
-                            </a>
-                            <a href="{{ path('preferences') }}" class="icon mr-2" aria-label="Preferences" title="Preferences">
+                            {% set unread = unread_notification_count() %}
+                            <div class="notification-bell mr-2" id="notification-bell"
+                                 data-user-uuid="{{ app.user.id }}"
+                                 data-mercure-url="{{ mercure() }}">
+                                <button type="button" class="notification-bell__toggle" id="notification-bell-toggle"
+                                        aria-haspopup="true" aria-expanded="false" aria-controls="notification-bell-panel"
+                                        aria-label="Notifications{{ unread > 0 ? ' (' ~ unread ~ ' unread)' }}" title="Notifications">
+                                    <span class="icon"><i class="fa-solid fa-bell" aria-hidden="true"></i></span>
+                                    <span class="notification-bell__badge" id="notification-bell-badge" {% if unread == 0 %}hidden{% endif %}>{{ unread >= 100 ? '99+' : unread }}</span>
+                                </button>
+                                <div class="notification-bell__panel" id="notification-bell-panel" hidden>
+                                    <div class="notification-bell__header">
+                                        <strong>Notifications</strong>
+                                        <button type="button" class="button is-small is-text" id="notification-bell-read-all">Mark all as read</button>
+                                    </div>
+                                    <ul class="notification-bell__list" id="notification-bell-list">
+                                        <li class="notification-bell__empty">Loading…</li>
+                                    </ul>
+                                    <a href="{{ path('notifications') }}" class="notification-bell__footer">See all notifications</a>
+                                </div>
+                            </div>
+                            <a href="{{ path('settings') }}" class="icon mr-2" aria-label="Settings" title="Settings">
                                 <i class="fa-solid fa-gear" aria-hidden="true"></i>
                             </a>
                             {% if app.user.avatarUrl %}

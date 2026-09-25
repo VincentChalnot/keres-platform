@@ -919,10 +919,13 @@ Each needs one line in `config/packages/templating.yaml`, keyed by route name
 |---|---|---|
 | `actions/new_game.html.twig` | `new_game` (`/play`, `NewGameAction.php:27-31`) | **repurposed**, §7.4 |
 | `actions/play.html.twig` | `play` | **changed**, §7.5 |
-| `actions/lobby.html.twig` | `lobby` | quick-pair presets (1+0 bullet, 3+2 blitz, 5+0 blitz, 10+0 rapid, 15+10 rapid per `06-rating.md`, no preset yields classical, plus 1/3/7-day correspondence), the live seek table, a custom-seek form |
-| `actions/friends.html.twig` | `friends` | accepted friends with presence dots, incoming and outgoing requests, username search, block list |
+| `actions/lobby.html.twig` | `lobby` | the "New seek" panel — five format presets that fill the form in (Bullet 3+2, Blitz 7+5, Rapid 20+10, Classical 100+0, Correspondence 1 day; `04-matchmaking.md` §1.1) above one form with a single "Post seek" — and the live seek table. Anonymous viewers get `actions/play_welcome.html.twig` instead (§7.7) |
+| `actions/friends.html.twig` | `friends` | accepted friends with presence dots, incoming and outgoing requests, username search. Blocked users moved to Settings → Privacy (R6) |
 | `actions/profile.html.twig` | `player_profile` (`GET /@/{username}`, with `/@/{username}/games` for the paginated history) | identity, the five rating pools with `?` provisional markers (D1), W/L/D counts, paginated history (`pagerfanta`), Challenge and Add-friend |
-| `actions/account_settings.html.twig` | `settings_profile` | username (changeable once, `00-overview.md` §4.4), notification-preference matrix, push toggle, clock-sound toggle |
+| `actions/settings/*.html.twig` | `settings_*` | the Settings page (R6): `_layout` (vertical nav) plus one template per section — profile, board, notifications, privacy, connections (`05-social.md` §9.2) |
+| `actions/notifications.html.twig` | `notifications` | the full inbox (`07-notifications.md` §0.4) |
+| `actions/play_welcome.html.twig` | `lobby` (anonymous) | sign-in / sign-up prompt, secondary "Play the AI or hot-seat without an account" (R1) |
+| `actions/play_guest.html.twig`, `_play_board.html.twig` | `play_guest`, shared | the browser-only guest board (R1); `_play_board` is the board markup shared with `play.html.twig` |
 | `actions/challenge.html.twig` | `challenge_show` | terms and challenger identity; Accept/Decline for the challenged, Cancel plus copy-link for the challenger, "log in to accept" for an anonymous visitor on an open link |
 | `actions/leaderboard.html.twig` | `leaderboard` | top N per category; last phase (`00-overview.md` §2.1) |
 | `partials/_player_panel.html.twig`, `_clock.html.twig` | | one panel and one clock; the panel is included twice by `play.html.twig` |
@@ -1014,6 +1017,45 @@ All lists are `GamePlayer`-scoped rather than `owner`-scoped, and paginated with
 | `meta[name=user-uuid]` | `content` | UUID, only when authenticated | `app-shell.ts` guard |
 
 **Removed:** `#board-container[data-player-white]`, `#board-container[data-moves]`.
+
+### 7.7 Post-review revisions (`00-overview.md` §2.0)
+
+**Entry flow (R1).** The header's **Play** always points at `/lobby`. Signed
+in, that is the lobby; anonymous, `LobbyAction` renders `play_welcome.html.twig`:
+Google / Discord / email sign-in and account creation first, then "Play the AI
+or hot-seat without an account" (`/play/new`). `/` redirects signed-in users to
+the dashboard, which is also the post-login landing page (`default_target_path`,
+both OIDC and dev authenticators).
+
+**Guest games (R1).** An anonymous `/play/new` submit redirects to
+`/play/guest?new=ai|hotseat&side=white|black`. `play_guest.html.twig` renders
+the same `_play_board.html.twig` with `data-guest="true"`; `app.ts` then swaps
+`GameAPI` for `LocalGameAPI`, which keeps the move list in localStorage
+(`keres.guestGame.v1`), replays it through `/api/replay-moves`, gets legal moves
+from `/api/moves` like every board, and asks `/api/engine-move-game` for the AI
+reply — delivered through `GameController.applyRemoteUpdate()`, exactly where a
+Mercure update lands for a persisted game. The query string is dropped with
+`history.replaceState` so a reload resumes the saved game; with no saved game
+the page returns to `/play/new`. Undo, resign, switch sides and move history work
+as in a persisted AI/hot-seat game; no clock, no feedback button.
+
+**Status bar (R7).** `#game-status-banner` is always visible under the board:
+"Your turn" with the active-clock accent (`.is-your-turn`, same colours as
+`.player-clock.is-active`); "Waiting for opponent…" / "Waiting for AI…" muted
+(`.is-muted`); "White/Black to move" for hot-seat (accent) and spectators
+(muted); the result once the game is over. `data-spectator` tells a spectator
+from a participant.
+
+**Board preferences (R6).** `data-show-coordinates` / `data-show-threats` on
+`#board-container` carry Settings → Board & gameplay into the page's initial
+toggle state.
+
+**Notification bell (R5).** `NotificationBell.ts`, imported by `assets/app.js`
+so it runs on every page; see `07-notifications.md` §0.4.
+
+**Dashboard.** Each in-progress game shows the opponent ("vs <name>", "vs AI",
+"Hot-seat game") and a "Your turn" / "Their turn" tag instead of the colour
+pair (`Game::getOpponentOf()`, `Game::isTurnOf()`).
 
 ## 8. The board view
 

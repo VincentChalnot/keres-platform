@@ -1,0 +1,19 @@
+{% extends 'actions/settings/_layout.html.twig' %}
+
+{% block title %}Board & gameplay - Settings{% endblock %}
+
+{% block settings_content %}
+    {{ form_start(form, {attr: {novalidate: 'novalidate', class: 'box'}}) }}
+        <h2 class="title is-4">Board &amp; gameplay</h2>
+        <p class="has-text-grey">How the board opens in your games. You can still toggle both from the game page.</p>
+
+        {{ form_row(form.showBoardCoordinates) }}
+        {{ form_row(form.showOpponentThreatsOnHover) }}
+
+        <div class="field mt-5">
+            <div class="control">
+                {{ form_widget(form.submit, {attr: {class: 'button is-primary is-rounded'}}) }}
+            </div>
+        </div>
+    {{ form_end(form) }}
+{% endblock %}

@@ -1,55 +1,75 @@
-# Matchmaking — Seeks, Quick Pair, Pairing, Lobby
+# Matchmaking — Seeks, the "New seek" Panel, Pairing, Lobby
 
-> **Status**: specification, not yet implemented. Elaborates `00-overview.md` D6, D7, §6, §7
+> **Status**: implemented (Phase 3), amended by `00-overview.md` R3/R4. Elaborates `00-overview.md` D6, D7, §6, §7
 > and invariant 12. Owns the `Seek` entity's *behaviour* only: `01-domain-model.md` owns its
 > DDL, `02-realtime.md` the transport and wire encoding, `03-time-control.md` the clock that
 > starts when a pairing commits, `05-social.md` challenges and blocking, `06-rating.md`
 > `rating_snapshot`, `09-api-reference.md` the route table and error catalogue.
 
-## 1. Two front doors, one mechanism
+## 1. One front door, one mechanism
 
-### 1.1 The presets
+> **Revision R3.** The original design had two front doors — a row of eight
+> *quick pair* buttons that posted a seek in one click (`POST /lobby/seeks/quick`,
+> `auto_widen` forced on) and a separate *custom seek* form. New players could
+> not tell how the two related, so they were merged into the single panel
+> below and the quick-pair endpoint was removed. `auto_widen` and the widening
+> machinery in §3.3 are unchanged and remain reachable through
+> `POST /lobby/seeks` (`"autoWiden": true`); the panel does not set it.
 
-Quick pair is a row of buttons: one click, no form. Speed is derived per the contract,
-`estimated = initialSeconds + 40 * incrementSeconds`.
+### 1.1 The "New seek" panel
 
-| Preset | `initial` | `increment` | `estimated` | Speed |
-|---|---|---|---|---|
-| 1+0 | 60 | 0 | 60 | BULLET |
-| 3+2 | 180 | 2 | 260 | BLITZ |
-| 5+0 | 300 | 0 | 300 | BLITZ |
-| 10+0 | 600 | 0 | 600 | RAPID |
-| 15+10 | 900 | 10 | 1300 | RAPID |
-| 1 / 3 / 7 days | — | — | — | CORRESPONDENCE |
+Signed-in players only (an anonymous visitor on `/lobby` gets the sign-in
+prompt instead — `00-overview.md` R1). The panel is one form:
 
-No preset yields CLASSICAL: the threshold is 1500 and the largest preset is 1300. CLASSICAL
-is reachable only by custom seek or challenge, which is correct — nobody starts a 30-minute
-game by mashing a button, and a CLASSICAL button would front an always-empty pool.
+| Field | Values | Wire field |
+|---|---|---|
+| Time control | Real-time / Correspondence / Unlimited | `kind` |
+| Initial time | **minutes**, 1–180 (Real-time only) | `initialSeconds` = minutes × 60 |
+| Increment | seconds per move, 0–180 (Real-time only) | `incrementSeconds` |
+| Days per move | 1 / 3 / 7 (Correspondence only) | `daysPerMove` |
+| Colour | Random / White / Black | `colorPreference` |
+| Rated | Rated / Casual (forced Casual for Unlimited) | `rated` |
 
-The lobby is the second door: a live list of every open seek, plus a form for an arbitrary
-time control, rated flag, colour preference and optional explicit rating range. A directed
-invitation to a named user, or an open shareable link, is **not** a seek — that is a
+**Post seek** is the only submit action. Above the form sit the **format
+presets** — one per format. They only fill the form in; they never post
+anything, and the pill stays highlighted only while the form still matches it.
+Keres games run 35–60 full moves, far longer than chess, hence clocks well above
+their chess namesakes:
+
+| Preset | Fills in | `estimated` (R4) | Speed |
+|---|---|---|---|
+| Bullet | 3+2 | 260 | BULLET |
+| Blitz | 7+5 | 620 | BLITZ |
+| Rapid | 20+10 (page default) | 1600 | RAPID |
+| Classical | 100+0 | 6000 | CLASSICAL |
+| Correspondence | 1 day per move | — | CORRESPONDENCE |
+
+The preset values live in `LobbyAction::PRESETS` and reach the page as `data-*`
+attributes; the server never trusts them — the posted form is validated by
+`CreateSeekAction` like any other body.
+
+The lobby is also the live list of every open seek. A directed invitation to a
+named user, or an open shareable link, is **not** a seek — that is a
 `Challenge` (`05-social.md`), and a rematch is a pre-accepted challenge.
 
-### 1.2 Both doors write one row
+### 1.2 Every seek is one row, in one pool
 
-| Column | Quick pair | Custom seek |
+| Column | Posted from the panel | API caller |
 |---|---|---|
-| `auto_widen` | `true` (REALTIME only, §1.3) | `false` |
-| `rating_min` / `rating_max` | `NULL` | user-supplied, both nullable |
-| `color_preference` | `RANDOM` | user choice |
-| `rated` | `true` unless `UNLIMITED` | user choice |
-| time-control tuple | one preset row above | arbitrary, validated |
+| `auto_widen` | `false` | optional, REALTIME only (§1.3) |
+| `rating_min` / `rating_max` | `NULL` | optional, both nullable |
+| `color_preference` | user choice | user choice |
+| `rated` | user choice (never for `UNLIMITED`) | user choice |
+| time-control tuple | the form | arbitrary, validated |
 
-Everything else is identical: a quick-pair seek is listed in the lobby and clickable, a
-custom seek is a candidate for a quick-pairer, and the affordances stay distinct only in the
-template. **There is one pool.** Two pools would be wrong:
+Accepting a listed seek (`AcceptSeekAction`) writes a mirror seek through the
+same `SeekCreationService` path. **There is one pool.** Two pools would be wrong:
 
 | | Why two pools fail |
 |---|---|
 | Liquidity | The binding constraint at this scale is whether anyone else is waiting at all. Splitting five waiters into two and three roughly halves everyone's chance of pairing. |
-| The cross-edge | A quick-pairer obviously should match a compatible posted seek. Adding that edge gives one mechanism plus a bridge plus two sets of races — not two mechanisms. |
-| Invariants | Invariant 12 needs proving per pool, and "consumed by quick pair while simultaneously accepted from the lobby" becomes a race with no shared lock to resolve it. |
+| The cross-edge | An auto-widening seek obviously should match a compatible posted seek. Adding that edge gives one mechanism plus a bridge plus two sets of races — not two mechanisms. |
+| Invariants | Invariant 12 needs proving per pool, and "consumed by one pool while simultaneously accepted from the other" becomes a race with no shared lock to resolve it. |
 | Size of the delta | `auto_widen` and the presence of an explicit window. A mechanism boundary is not justified by two nullable columns. |
 
 ### 1.3 Three lanes, keyed on time-control kind
@@ -894,11 +914,12 @@ point at the route: `src/Action/IndexAction.php:28` redirects `/` to `new_game`,
 
 | New unit | Route / name | Takes over |
 |---|---|---|
-| `LobbyAction` | `GET /lobby`, `lobby` | the front-door role. HTML, `AbstractController`, returns `array`. **Anonymous-allowed.** Renders presets, the custom-seek form, the live list, and the viewer's own active games |
+| `LobbyAction` | `GET /lobby`, `lobby` | the front-door role. HTML, `AbstractController`. Signed in: the "New seek" panel (§1.1), the live list, and the viewer's own active games. **Anonymous:** the sign-in / sign-up prompt with "Play the AI or hot-seat without an account" as the secondary option (`00-overview.md` R1) |
 | `LobbySeekListAction` | `GET /lobby/seeks` | §5.1, JSON, anonymous |
-| `CreateSeekAction` / `QuickPairAction` | `POST /lobby/seeks`, `.../quick` | the POST half of `new_game`, for human games |
+| `CreateSeekAction` | `POST /lobby/seeks` | the POST half of `new_game`, for human games. (`QuickPairAction`, `POST /lobby/seeks/quick`, was removed by R3) |
 | `CancelSeekAction` / `HeartbeatSeekAction` / `AcceptSeekAction` | `POST /lobby/seeks/{uuid}/{cancel,heartbeat,accept}` | §2, §4.2, §5.3 |
-| `NewLocalGameAction` | `GET\|POST /play/new`, `new_local_game` | the AI / hot-seat half of `new_game`. HTML, keeps the form, calls `GameFactory` |
+| `NewLocalGameAction` | `GET\|POST /play/new`, `new_local_game` | the AI / hot-seat half of `new_game`. HTML, keeps the form, calls `GameFactory`. Anonymous submitters are redirected to `play_guest` instead (R1) |
+| `PlayGuestAction` | `GET /play/guest`, `play_guest` | R1: the browser-only guest board page (anonymous only; signed-in players are sent to `/play/new`) |
 | `GameListAction` | `GET /games`, `game_list` | the two game lists, paginated with Pagerfanta (overview §6) |
 
 `new_game` disappears; both references move to `lobby`. Bare `/play` is kept as a `302` to

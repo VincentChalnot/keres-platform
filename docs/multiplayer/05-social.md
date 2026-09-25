@@ -63,7 +63,7 @@ private ?\DateTimeImmutable $usernameChangedAt = null;
 | Storage | Case-**preserving** | `VincentC` displays as the owner typed it |
 | Uniqueness | Case-**insensitive**, `UNIQUE(LOWER(username))` | `Vincent` and `vincent` must not be two people |
 | Nullability | `NOT NULL` after the backfill | A user without a handle has no profile URL and cannot be found; there is no valid intermediate state after §1.7 completes |
-| Mutability | Once, ever, tracked by `usernameChangedAt` | §1.6 |
+| Mutability | Once every 12 months, tracked by `usernameChangedAt` (`00-overview.md` R2) | §1.6 |
 
 `usernameChangedAt` is an addition to the contract's enumerated `User` field
 list — see §11.
@@ -177,13 +177,18 @@ This is deliberate:
 The username is a **display and lookup handle**. It never appears in a
 `UserBadge`, a `UserProvider`, or an access-control rule.
 
-### 1.6 The one-time change
+### 1.6 The rate-limited change
+
+> **Revision R2** (`00-overview.md`): originally "once, ever". A username may now
+> change once every `MultiplayerLimits::USERNAME_CHANGE_INTERVAL` (`P12M`).
+> Settings → Profile shows the next allowed date under the field ("Next change
+> available on YYYY-MM-DD").
 
 Rules:
 
 | # | Rule |
 |---|---|
-| U1 | A user may change their username at most once, ever. `usernameChangedAt IS NOT NULL` closes the door permanently — error `username_already_changed`. |
+| U1 | A user may change their username at most once every 12 months. While `usernameChangedAt + 12 months` is in the future the change is refused and the form shows the next allowed date. The server enforces it in the guarded `UPDATE` below, not only in the form. |
 | U2 | The new value passes the same format regex, reserved-word list and case-folded uniqueness check as generation. |
 | U3 | Changing only the *case* of the current username (`vincent` -> `Vincent`) is free and does **not** consume the allowance: the folded form is unchanged, so no third party is affected. |
 | U4 | The old username is released immediately, with no tombstone (§11, question 6). |
@@ -193,8 +198,9 @@ The write is a guarded DBAL statement, not an ORM flush, so a collision cannot
 close the `EntityManager` mid-request:
 
 ```php
-$sql = 'UPDATE "user" SET username = :new, username_changed_at = now()
-         WHERE id = :id AND username_changed_at IS NULL';
+$sql = 'UPDATE "user" SET username = :new, username_changed_at = :now
+         WHERE id = :id AND (username_changed_at IS NULL OR username_changed_at <= :cutoff)';
+// :cutoff = :now - USERNAME_CHANGE_INTERVAL
 try {
     $affected = $connection->executeStatement($sql, [...]);
 } catch (UniqueConstraintViolationException) {
@@ -638,8 +644,8 @@ row in §5.3 — a challenge response carries a UUID the client will poll, so
 returning a fabricated one would break within seconds).
 
 Corollary: because the mechanism is invisible, the *blocker* needs an explicit
-management surface. `GET /settings/profile` lists blocked users with an unblock
-control (§9.2). Without it a block is unauditable and irreversible in practice.
+management surface. Settings → Privacy (`GET /settings/privacy`) lists blocked
+users with an unblock control (§9.2). Without it a block is unauditable and irreversible in practice.
 
 ### 4.4 Blocking inside the pairing query
 
@@ -1280,36 +1286,32 @@ absence of `blocked_by_them`: that value is never computed for the viewer,
 which is what makes §4.3 enforceable at the template level rather than by
 convention.
 
-### 9.2 `GET|POST /settings/profile` — account settings
+### 9.2 `/settings/*` — the Settings page
 
-`ROLE_USER`. Requires a new access-control line, since `/settings` matches none
-of the three existing prefixes:
+> **Revision R6** (`00-overview.md`). The original design had two pages behind
+> two header icons ("Account settings" at `/settings/profile`, "Your
+> preferences" at `/preferences`) and duplicated friend requests and blocked
+> users between Account settings and the Friends page. They are now one
+> **Settings** page behind one header icon (`GET /settings` redirects to the
+> first section), with a vertical section nav. `/preferences` is a `301` to
+> Settings → Profile.
 
-```yaml
-- { path: ^/settings, roles: ROLE_USER }
-```
+`ROLE_USER` (`{ path: ^/settings, roles: ROLE_USER }`). One action, one form and
+one template per section (`App\Action\Settings\*`,
+`templates/actions/settings/*`, sharing `settings/_layout.html.twig`). Every form
+uses inline per-field constraints per contract §6.
 
-`App\Form\AccountSettingsType`, with inline per-field constraints per contract
-§6 (no `#[Assert\*]` attributes, no `validation.yaml`):
+| Section | Route | Form | Contents |
+|---|---|---|---|
+| Profile | `settings_profile` | `ProfileSettingsType` (array-backed) | `username` (§1.6: rendered `disabled` with "Next change available on YYYY-MM-DD" while the 12-month cooldown runs; re-checked server-side), `displayName`, first/last name, email (read-only: it is the login identity), language, country. Written to `User` and `UserPreferences`; the username through §1.6's guarded DBAL statement, never a plain form flush |
+| Board & gameplay | `settings_board` | `BoardSettingsType` (`UserPreferences`) | Show board coordinates, highlight opponent threats on hover. Applied when a game page opens (both still toggle in-page) |
+| Notifications | `settings_notifications` | `NotificationSettingsType` (array-backed) | One in-app toggle per `NotificationType`, built from the enum, persisted into `User.notificationPreferences` (`07-notifications.md` §0); newsletter subscription |
+| Privacy | `settings_privacy` | `PrivacySettingsType` (`UserPreferences`) | Appear in player search, allow contact by email. **Blocked users** are listed below the form with an Unblock button (`POST /friends/{username}/unblock`) — the only place a block is auditable (§4.3) and the only place blocked users are listed |
+| Connected accounts | `settings_connections` | — | Linked sign-in providers (Google, Discord), read-only |
 
-| Field | Constraints | Notes |
-|---|---|---|
-| `username` | `NotBlank`, `Regex('/^[a-zA-Z0-9_-]{3,32}$/')`, `Callback` for the reserved list and the case-folded uniqueness probe | Rendered `disabled` with an explanatory note when `usernameChangedAt IS NOT NULL` (U1). Submitting a disabled field is re-checked server-side |
-| `displayName` | `Length(max: 255)` | Free text; Twig escapes it. No uniqueness, no format |
-| notification preferences | one checkbox per `NotificationType` x channel | Persisted into `User.notificationPreferences` JSON; the schema is owned by `07-notifications.md` §3 |
-
-The write path for `username` is §1.6's guarded DBAL statement, not a plain
-form flush.
-
-Rendered outside the form, as separate sections:
-
-| Section | Source | Actions |
-|---|---|---|
-| Linked sign-in providers | `User::getAuths()` (`src/Entity/User.php:165-168`) | read-only list |
-| Blocked users | `friendship WHERE requester_id = me AND status = 3` | Unblock (§4.3 makes this the only place a block is auditable) |
-| Sent friend requests | `status = PENDING AND requester_id = me` | Cancel (T5). Rows silently declined (T4) still render as pending — §3.5 |
-| Received friend requests | `status = PENDING AND addressee_id = me` | Accept / Decline |
-| Push devices | `PushSubscription` | `07-notifications.md` |
+**Friend requests (sent and received) live only on the Friends page**, which
+no longer lists blocked users. Sent requests silently declined (T4) still
+render as pending there — §3.5.
 
 Form CSRF is automatic (contract §6). The JSON social endpoints rely on
 `SameSite=Lax` and living outside the CORS `^/api/` block

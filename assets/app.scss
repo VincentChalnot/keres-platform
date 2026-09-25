@@ -201,12 +201,28 @@ li { margin-bottom: 8px; }
     }
 }
 
-// ─── Game status banner (waiting states + final result; never "X's turn") ─────
+// ─── Game status bar (whose turn / waiting / final result) ───────────────────
 
 .game-status-banner {
     margin: 0.75rem 0 0;
     text-align: center;
     padding: 0.6em 1em;
+    transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease;
+
+    // Opponent's turn, history view, loading: neutral and quiet.
+    &.is-muted {
+        background: #141414;
+        color: #a3a3a3;
+        border: 1px solid #2a2a2a;
+    }
+
+    // The viewer's turn: same accent as the active `.player-clock`.
+    &.is-your-turn {
+        background: $keres-primary;
+        color: #1a1208;
+        border: 1px solid $keres-primary;
+        font-weight: bold;
+    }
 }
 
 // ─── Hero (landing page) ──────────────────────────────────────────────────────
@@ -761,4 +777,222 @@ footer.footer {
     }
 
     @page { margin: 1cm; }
+}
+
+// ─── Lobby: "New seek" panel ──────────────────────────────────────────────────
+
+// Bulma's `.column`/`.help` display rules would otherwise beat `[hidden]`.
+.lobby-new-seek [hidden] {
+    display: none !important;
+}
+
+.lobby-presets {
+    flex-wrap: wrap;
+
+    .button {
+        flex-direction: column;
+        height: auto;
+        min-width: 7.5rem;
+        padding-top: 0.45em;
+        padding-bottom: 0.45em;
+        line-height: 1.2;
+    }
+}
+
+// The selected preset keeps its accent while hovered/focused.
+.lobby-presets .button.is-primary:not(.is-outlined) {
+    &:hover,
+    &:focus,
+    &:active {
+        background-color: $keres-primary;
+        color: #1a1208;
+    }
+}
+
+.lobby-presets__value {
+    font-size: 0.8em;
+    opacity: 0.8;
+    font-variant-numeric: tabular-nums;
+}
+
+// ─── Header notification bell ─────────────────────────────────────────────────
+
+.notification-bell {
+    position: relative;
+}
+
+.notification-bell__toggle {
+    position: relative;
+    background: none;
+    border: 0;
+    padding: 0;
+    color: $keres-light;
+    cursor: pointer;
+
+    &:hover,
+    &[aria-expanded="true"] {
+        color: $keres-primary;
+    }
+}
+
+.notification-bell__badge {
+    position: absolute;
+    top: -0.45rem;
+    right: -0.55rem;
+    min-width: 1.15rem;
+    padding: 0 0.3rem;
+    border-radius: 9999px;
+    background: $keres-primary;
+    color: #1a1208;
+    font-size: 0.7rem;
+    font-weight: bold;
+    line-height: 1.15rem;
+    text-align: center;
+
+    &[hidden] {
+        display: none;
+    }
+}
+
+.notification-bell__panel {
+    position: absolute;
+    right: -1rem;
+    top: calc(100% + 0.9rem);
+    width: min(24rem, calc(100vw - 2rem));
+    background: #111;
+    border: 1px solid $keres-dark;
+    border-radius: 0.5rem;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.6);
+    z-index: 200;
+    font-size: 0.95rem;
+
+    &[hidden] {
+        display: none;
+    }
+}
+
+.notification-bell__header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.6rem 0.9rem;
+    border-bottom: 1px solid #2a2a2a;
+
+    .button.is-text {
+        color: $keres-primary;
+    }
+}
+
+.notification-bell__list {
+    list-style: none;
+    margin: 0;
+    max-height: 22rem;
+    overflow-y: auto;
+}
+
+.notification-bell__item,
+.notification-list__item {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.25rem;
+    margin: 0;
+    border-bottom: 1px solid #1f1f1f;
+
+    &.is-unread {
+        background: rgba($keres-primary, 0.08);
+        box-shadow: inset 3px 0 0 $keres-primary;
+    }
+
+    .button.is-text {
+        color: $keres-secondary;
+        align-self: center;
+        margin-right: 0.4rem;
+    }
+}
+
+.notification-bell__link,
+.notification-list__link {
+    flex: 1;
+    display: flex;
+    gap: 0.6rem;
+    padding: 0.6rem 0.9rem;
+    color: $keres-light;
+
+    &:hover {
+        text-decoration: none;
+        background: rgba(255, 255, 255, 0.04);
+    }
+
+    .icon {
+        color: $keres-primary;
+        flex-shrink: 0;
+    }
+}
+
+.notification-bell__body {
+    display: flex;
+    flex-direction: column;
+}
+
+.notification-bell__time,
+.notification-list__time {
+    font-size: 0.8em;
+    color: color.adjust($keres-light, $lightness: -40%);
+}
+
+.notification-list__link {
+    align-items: baseline;
+}
+
+.notification-list__text {
+    flex: 1;
+}
+
+.notification-bell__empty {
+    padding: 0.9rem;
+    margin: 0;
+    color: color.adjust($keres-light, $lightness: -40%);
+}
+
+.notification-bell__footer {
+    display: block;
+    padding: 0.6rem 0.9rem;
+    text-align: center;
+    border-top: 1px solid #2a2a2a;
+}
+
+.notification-list {
+    list-style: none;
+    margin: 0;
+}
+
+// ─── Settings ─────────────────────────────────────────────────────────────────
+
+.settings-nav .menu-list a {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    color: $keres-light;
+    border-radius: 0.4rem;
+
+    &:hover {
+        background: rgba(255, 255, 255, 0.05);
+        text-decoration: none;
+    }
+
+    &.is-active {
+        background: $keres-primary;
+        color: #1a1208;
+    }
+}
+
+.settings-providers {
+    list-style: none;
+    margin-left: 0;
+}
+
+.settings-providers__row {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
 }

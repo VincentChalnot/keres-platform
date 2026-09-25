@@ -1,0 +1,25 @@
+{% extends 'actions/settings/_layout.html.twig' %}
+
+{% block title %}Notifications - Settings{% endblock %}
+
+{% block settings_content %}
+    {{ form_start(form, {attr: {novalidate: 'novalidate', class: 'box'}}) }}
+        <h2 class="title is-4">Notifications</h2>
+
+        <h3 class="title is-5 mt-4">In-app notifications</h3>
+        <p class="has-text-grey">Choose what shows up under the <span class="icon"><i class="fa-solid fa-bell" aria-hidden="true"></i></span> bell. Notify me when:</p>
+        {% for child in form.inApp %}
+            {{ form_row(child) }}
+        {% endfor %}
+        {% do form.inApp.setRendered %}
+
+        <h3 class="title is-5 mt-5">Email</h3>
+        {{ form_row(form.newsletterOptIn) }}
+
+        <div class="field mt-5">
+            <div class="control">
+                {{ form_widget(form.submit, {attr: {class: 'button is-primary is-rounded'}}) }}
+            </div>
+        </div>
+    {{ form_end(form) }}
+{% endblock %}

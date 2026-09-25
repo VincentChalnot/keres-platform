@@ -10,13 +10,16 @@ use App\Message\ProcessAiMoveMessage;
 use App\Model\OpponentType;
 use App\Model\PieceColor;
 use App\Repository\GameRepository;
+use App\Repository\UserPreferencesRepository;
 use App\Security\Voter\GameVoter;
 use App\Service\Game\ClockAdjudicator;
 use App\Service\Game\GameStatePayloadBuilder;
+use App\Service\Notification\NotificationCenter;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpKernel\Attribute\AsController;
 use Symfony\Component\Messenger\MessageBusInterface;
 use Symfony\Component\Routing\Attribute\Route;
+use Symfony\Component\Routing\Requirement\Requirement;
 use Symfony\Component\Uid\Uuid;
 
 #[AsController]
@@ -28,12 +31,15 @@ class PlayAction extends AbstractController
         private readonly ClockAdjudicator $clockAdjudicator,
         private readonly GameEngine $gameEngine,
         private readonly GameStatePayloadBuilder $payloadBuilder,
+        private readonly NotificationCenter $notificationCenter,
+        private readonly UserPreferencesRepository $userPreferencesRepository,
     ) {
     }
 
     #[Route(
         path: '/play/{uuid}',
         name: 'play',
+        requirements: ['uuid' => Requirement::UUID],
     )]
     public function __(string $uuid): array
     {
@@ -55,6 +61,8 @@ class PlayAction extends AbstractController
         // write-amplification lever to anyone holding a game UUID.
         if ($user instanceof User && $game->isParticipant($user)) {
             $this->clockAdjudicator->adjudicate($game);
+            // Opening the game is reading its "your turn"/"game ended" rows.
+            $this->notificationCenter->markGameRead($user, $game);
         }
 
         $colors = $game->getColorsForUser($user instanceof User ? $user : null);
@@ -83,7 +91,12 @@ class PlayAction extends AbstractController
         // rather than only the board binary's engine-only verdict.
         $statePayload = $this->payloadBuilder->build($game, $this->gameEngine->getBoardMovesData($game));
 
+        // Settings -> Board & gameplay: how the board opens (both still toggle in-page).
+        $preferences = $user instanceof User ? $this->userPreferencesRepository->findByUser($user) : null;
+
         return [
+            'showCoordinates' => $preferences?->isShowBoardCoordinates() ?? true,
+            'showThreats' => $preferences?->isShowOpponentThreatsOnHover() ?? true,
             'game' => $game,
             'moves' => $movesBase64,
             'playerWhite' => PieceColor::WHITE === $playerColor,

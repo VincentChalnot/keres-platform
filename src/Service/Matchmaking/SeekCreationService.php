@@ -26,7 +26,7 @@ use Symfony\Component\Uid\Uuid;
 /**
  * The write side of a seek's create/dedupe/replace lifecycle
  * (04-matchmaking.md sec 2/6.2), shared by `CreateSeekAction` and
- * `QuickPairAction` so the two front doors (sec 1) really do write one row
+ * `AcceptSeekAction` so the two front doors (sec 1) really do write one row
  * through one path. Immediate pairing (sec 3.1) always follows a genuine
  * insert; a dedupe never re-attempts pairing (it already ran once, at the
  * original create).

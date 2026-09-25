@@ -1,7 +1,6 @@
 import {
     CustomSeekInput,
     HeartbeatResult,
-    QuickPairPreset,
     SeekCreateResult,
     SeekListing,
 } from '../models/seek';
@@ -37,7 +36,7 @@ function withDevAs(path: string): string {
     return `${path}${path.includes('?') ? '&' : '?'}_as=${encodeURIComponent(as)}`;
 }
 
-async function request<T>(path: string, method: 'GET' | 'POST' = 'GET', body?: unknown, signal?: AbortSignal): Promise<T> {
+export async function request<T>(path: string, method: 'GET' | 'POST' = 'GET', body?: unknown, signal?: AbortSignal): Promise<T> {
     let response: Response;
 
     try {
@@ -97,10 +96,6 @@ export class LobbyAPI {
 
     createSeek(input: CustomSeekInput): Promise<SeekCreateResult> {
         return request<SeekCreateResult>('/lobby/seeks', 'POST', input);
-    }
-
-    quickPair(preset: QuickPairPreset): Promise<SeekCreateResult> {
-        return request<SeekCreateResult>('/lobby/seeks/quick', 'POST', {preset});
     }
 
     heartbeatSeek(uuid: string): Promise<HeartbeatResult> {

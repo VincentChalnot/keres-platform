@@ -238,3 +238,25 @@ export function decodeMoveListFromBase64(base64Moves: string): Move[] {
     }
     return moves;
 }
+
+/**
+ * Decode a single u16 move (the 2-byte `MoveData` wire value) into a Move
+ */
+export function decodeMove(moveU16: number): Move {
+    return {
+        from: moveU16 & 0x7F,
+        to: (moveU16 >> 7) & 0x7F,
+        unstack: ((moveU16 >> 14) & 0x1) === 1,
+    };
+}
+
+/**
+ * Encode a move list as base64 - the inverse of decodeMoveListFromBase64
+ */
+export function encodeMoveListToBase64(moves: Move[]): string {
+    let binary = '';
+    for (const byte of encodeMoveListToBinary(moves)) {
+        binary += String.fromCharCode(byte);
+    }
+    return btoa(binary);
+}

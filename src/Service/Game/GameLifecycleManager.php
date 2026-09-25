@@ -7,6 +7,7 @@ namespace App\Service\Game;
 use App\Entity\Game;
 use App\Model\GameEndReason;
 use App\Model\PieceColor;
+use App\Service\Notification\NotificationCenter;
 use App\Service\Rating\RatingUpdater;
 
 /**
@@ -14,7 +15,8 @@ use App\Service\Rating\RatingUpdater;
  * 01-domain-model.md sec 4.3) - every path funnels through `Game::finish()`
  * from here, never directly, which is why the rating hook (06-rating.md
  * sec 9.3) attaches here and nowhere else: one call site, so no finaliser
- * can forget it. Callers own clock finalisation (`ClockManager::stop()`)
+ * can forget it. The "game ended" notification (07-notifications.md)
+ * attaches here for the same reason. Callers own clock finalisation (`ClockManager::stop()`)
  * themselves, immediately before calling in here - see
  * 03-time-control.md sec 4.1 steps 13/16 and sec 5.1.
  */
@@ -22,6 +24,7 @@ final readonly class GameLifecycleManager
 {
     public function __construct(
         private RatingUpdater $ratingUpdater,
+        private NotificationCenter $notificationCenter,
     ) {
     }
 
@@ -31,6 +34,7 @@ final readonly class GameLifecycleManager
         $winner = $draw ? null : ($whiteWins ? PieceColor::WHITE : PieceColor::BLACK);
         $game->finish(GameEndReason::ENGINE, $winner);
         $this->ratingUpdater->applyForFinishedGame($game);
+        $this->notificationCenter->gameFinished($game);
     }
 
     /** Never a draw (06-rating.md sec 6.2). */
@@ -38,6 +42,7 @@ final readonly class GameLifecycleManager
     {
         $game->finish(GameEndReason::RESIGNATION, $resigner->opposite());
         $this->ratingUpdater->applyForFinishedGame($game);
+        $this->notificationCenter->gameFinished($game, $resigner);
     }
 
     /** A flag falling past ply 1 - real result, rated if invariant 3 otherwise holds. */
@@ -45,6 +50,7 @@ final readonly class GameLifecycleManager
     {
         $game->finish(GameEndReason::TIMEOUT, $loser->opposite());
         $this->ratingUpdater->applyForFinishedGame($game);
+        $this->notificationCenter->gameFinished($game);
     }
 
     /**
@@ -58,5 +64,6 @@ final readonly class GameLifecycleManager
     {
         $game->finish(GameEndReason::ABORTED, null);
         $this->ratingUpdater->applyForFinishedGame($game);
+        $this->notificationCenter->gameFinished($game);
     }
 }

@@ -32,7 +32,8 @@
                         {% elseif game.opponentType == enum('App\\Model\\OpponentType').HOTSEAT %}
                             Hot Seat
                         {% else %}
-                            Multiplayer
+                            {% set opponent = game.getOpponentOf(app.user) %}
+                            {{ opponent ? (opponent.displayName ?? opponent.username) : 'Multiplayer' }}
                         {% endif %}
                     </p>
                     <p><strong>Created:</strong> {{ game.createdAt|date('Y-m-d H:i') }}</p>
@@ -52,7 +53,11 @@
                             {% endif %}
                         </p>
                     {% else %}
-                        <p><strong>Next to play:</strong> {{ game.whiteTurn ? 'White' : 'Black' }}</p>
+                        {% if game.opponentType == enum('App\\Model\\OpponentType').HOTSEAT %}
+                            <p><strong>Next to play:</strong> {{ game.whiteTurn ? 'White' : 'Black' }}</p>
+                        {% else %}
+                            <p><strong>Turn:</strong> {{ game.isTurnOf(app.user) ? 'Your turn' : 'Their turn' }}</p>
+                        {% endif %}
                     {% endif %}
                 </div>
             {% else %}

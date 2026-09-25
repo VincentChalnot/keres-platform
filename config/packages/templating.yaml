@@ -8,6 +8,8 @@ sidus_template:
             template: 'actions/game_list.html.twig'
         play:
             template: 'actions/play.html.twig'
+        play_guest:
+            template: 'actions/play_guest.html.twig'
         feedback:
             template: 'actions/feedback.html.twig'
         admin_dashboard:
@@ -24,11 +26,19 @@ sidus_template:
             template: 'security/reset_password.html.twig'
         dashboard:
             template: 'actions/dashboard.html.twig'
-        preferences:
-            template: 'actions/preferences.html.twig'
         profile:
             template: 'actions/profile.html.twig'
         settings_profile:
-            template: 'actions/account_settings.html.twig'
+            template: 'actions/settings/profile.html.twig'
+        settings_board:
+            template: 'actions/settings/board.html.twig'
+        settings_notifications:
+            template: 'actions/settings/notifications.html.twig'
+        settings_privacy:
+            template: 'actions/settings/privacy.html.twig'
+        settings_connections:
+            template: 'actions/settings/connections.html.twig'
+        notifications:
+            template: 'actions/notifications.html.twig'
         friends:
             template: 'actions/friends.html.twig'

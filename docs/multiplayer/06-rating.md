@@ -541,13 +541,15 @@ Bands are half-open (lower inclusive, upper exclusive):
 
 | `estimated` | Category | Value | Boundary cases |
 |---|---|---|---|
-| `0 .. 179` | `BULLET` | 0 | `2+1` = 160, `0+2` = 80 |
-| `180 .. 479` | `BLITZ` | 1 | `3+0` = 180 is the first blitz, `5+3` = 420 |
-| `480 .. 1499` | `RAPID` | 2 | `8+0` = 480 is the first rapid, `10+5` = 800 |
-| `>= 1500` | `CLASSICAL` | 3 | `25+0` = 1500 and `15+15` = 1500 are the first classical |
+| `0 .. 299` | `BULLET` | 0 | `2+1` = 160, `3+2` = 260 (the lobby's Bullet default) |
+| `300 .. 899` | `BLITZ` | 1 | `5+0` = 300 is the first blitz, `7+5` = 620 |
+| `900 .. 2999` | `RAPID` | 2 | `15+0` = 900 is the first rapid, `20+10` = 1600 |
+| `>= 3000` | `CLASSICAL` | 3 | `50+0` = 3000 is the first classical, `100+0` = 6000 |
 
-`3+0` is blitz not bullet; `8+0` is rapid not blitz; `15+15` is classical while
-`15+10` is rapid. Those are the cases a test must pin.
+Re-tuned by `00-overview.md` R4 (originally 180 / 480 / 1500, copied from chess):
+a Keres game runs 35–60 full moves, so each lobby preset (`04-matchmaking.md`
+§1.1) must land in the pool it is named after. Games keep the category frozen at
+creation, so the change only affects games created after it.
 
 The `40` assumes 40 moves per side, so a player collects 40 increments. It is
 inherited from chess convention, not measured on Keres — see Open questions.

@@ -7,6 +7,7 @@ namespace App\Action;
 use App\Entity\User;
 use App\Form\LocalGameType;
 use App\Model\ColorPreference;
+use App\Model\OpponentType;
 use App\Service\GameFactory;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -17,7 +18,8 @@ use Symfony\Component\Routing\Attribute\Route;
 
 /**
  * `GET|POST /play/new` (04-matchmaking.md sec 9.2) - the AI/hot-seat half
- * of the old `NewGameAction`. `HUMAN` games come from the lobby or a
+ * of the old `NewGameAction`. Open to anonymous visitors, whose game is
+ * handed to the browser-only `PlayGuestAction` instead of persisted. `HUMAN` games come from the lobby or a
  * challenge, never this form (`LocalGameType`'s own docblock).
  */
 #[AsController]
@@ -40,7 +42,13 @@ class NewLocalGameAction extends AbstractController
             $user = $this->getUser();
 
             if (!$user instanceof User) {
-                throw $this->createAccessDeniedException('User is required to create a game');
+                // No account: the game runs in the browser (PlayGuestAction).
+                $side = 'random' === $data['playerSide'] ? (0 === random_int(0, 1) ? 'white' : 'black') : $data['playerSide'];
+
+                return $this->redirectToRoute('play_guest', [
+                    'new' => OpponentType::AI === $data['opponentType'] ? 'ai' : 'hotseat',
+                    'side' => $side,
+                ]);
             }
 
             $colorPreference = match ($data['playerSide']) {

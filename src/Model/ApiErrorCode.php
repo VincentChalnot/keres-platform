@@ -18,7 +18,7 @@ enum ApiErrorCode: string
         return match ($this) {
             self::AUTHENTICATION_REQUIRED => 401,
             self::FORBIDDEN, self::BLOCKED => 403,
-            self::NOT_FOUND, self::SEEK_NOT_FOUND, self::USER_NOT_FOUND, self::FRIENDSHIP_NOT_FOUND => 404,
+            self::NOT_FOUND, self::SEEK_NOT_FOUND, self::USER_NOT_FOUND, self::FRIENDSHIP_NOT_FOUND, self::NOTIFICATION_NOT_FOUND => 404,
             self::VALIDATION_FAILED, self::UNRATED_TIME_CONTROL, self::INVALID_TIME_CONTROL,
             self::CANNOT_REQUEST_SELF, self::CANNOT_BLOCK_SELF, self::SEARCH_PREFIX_TOO_SHORT => 422,
             self::MALFORMED_JSON => 400,
@@ -58,4 +58,6 @@ enum ApiErrorCode: string
     case USERNAME_TAKEN = 'username_taken';
     case USERNAME_RESERVED = 'username_reserved';
     case USERNAME_ALREADY_CHANGED = 'username_already_changed';
+
+    case NOTIFICATION_NOT_FOUND = 'notification_not_found';
 }

@@ -1,0 +1,28 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Guest game - Keres{% endblock %}
+
+{% block body %}
+    <div class="container mt-4">
+        <div class="notification is-dark is-light guest-game-notice">
+            You're playing as a guest: this game lives in this browser only.
+            <a href="{{ path('login') }}">Sign in</a> or <a href="{{ path('register') }}">create an account</a> to play online and keep your games.
+        </div>
+    </div>
+    {# Opponent type and side are resolved client-side (query string on a new game, localStorage on reload). #}
+    {% include 'actions/_play_board.html.twig' with {
+        opponentType: 0,
+        moves: '',
+        gameUuid: null,
+        playerWhite: true,
+        spectator: false,
+        guest: true,
+        isAi: true,
+        gameOver: false,
+        gameStateBootstrap: null,
+    } %}
+{% endblock %}
+
+{% block end_javascripts %}
+    {{ vite_entry_script_tags('play') }}
+{% endblock %}

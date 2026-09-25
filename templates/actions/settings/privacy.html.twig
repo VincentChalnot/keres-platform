@@ -1,0 +1,40 @@
+{% extends 'actions/settings/_layout.html.twig' %}
+
+{% block title %}Privacy - Settings{% endblock %}
+
+{% block settings_content %}
+    {{ form_start(form, {attr: {novalidate: 'novalidate', class: 'box'}}) }}
+        <h2 class="title is-4">Privacy</h2>
+
+        {{ form_row(form.searchableByOtherUsers) }}
+        {{ form_row(form.allowContactByEmail) }}
+
+        <div class="field mt-5">
+            <div class="control">
+                {{ form_widget(form.submit, {attr: {class: 'button is-primary is-rounded'}}) }}
+            </div>
+        </div>
+    {{ form_end(form) }}
+
+    <div class="box" id="settings-blocked-root">
+        <h3 class="title is-5">Blocked users</h3>
+        {% if blockedUsers|length > 0 %}
+            <ul class="friends-list">
+                {% for friendship in blockedUsers %}
+                    {% set blocked = friendship.getOther(user) %}
+                    <li class="friends-list__row mb-2">
+                        <a href="{{ path('profile', {username: blocked.username}) }}">{{ blocked.displayName ?? blocked.username }}</a>
+                        <button type="button" class="button is-small is-rounded is-outlined is-light ml-2"
+                                data-action="friend-unblock" data-username="{{ blocked.username }}">Unblock</button>
+                    </li>
+                {% endfor %}
+            </ul>
+        {% else %}
+            <p class="has-text-grey">You haven't blocked anyone. You can block a player from their profile page.</p>
+        {% endif %}
+    </div>
+{% endblock %}
+
+{% block end_javascripts %}
+    {{ vite_entry_script_tags('lobby') }}
+{% endblock %}

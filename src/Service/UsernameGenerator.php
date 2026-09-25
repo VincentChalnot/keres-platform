@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Service;
 
 use App\Entity\User;
+use App\Model\MultiplayerLimits;
 use App\Repository\UserRepository;
 use Doctrine\DBAL\Connection;
 use Doctrine\ORM\EntityManagerInterface;
@@ -88,16 +89,17 @@ final readonly class UsernameGenerator
     }
 
     /**
-     * The one-time username change (05-social.md sec 1.6). A guarded DBAL
+     * The rate-limited username change (05-social.md sec 1.6: once every
+     * `MultiplayerLimits::USERNAME_CHANGE_INTERVAL`). A guarded DBAL
      * statement, not an ORM flush, so a unique-constraint collision cannot
      * close the `EntityManager` mid-request. Returns false when the
-     * allowance was already spent (`usernameChangedAt IS NOT NULL`,
-     * possibly by a concurrent tab reading a stale in-memory entity); the
+     * allowance is still spent (`usernameChangedAt` inside the interval,
+     * possibly written by a concurrent tab reading a stale in-memory entity); the
      * caller is expected to have validated availability first via
      * `isAvailable()`, but a concurrent claim of the same name is still
      * possible and surfaces as `UniqueConstraintViolationException`.
      */
-    public function changeOnce(User $user, string $newUsername, \DateTimeImmutable $now): bool
+    public function change(User $user, string $newUsername, \DateTimeImmutable $now): bool
     {
         // U3: a pure case change is free and does not consume the allowance.
         if (0 === strcasecmp($user->getUsername(), $newUsername)) {
@@ -107,9 +109,15 @@ final readonly class UsernameGenerator
             return true;
         }
 
+        $cutoff = $now->sub(new \DateInterval(MultiplayerLimits::USERNAME_CHANGE_INTERVAL));
         $affected = $this->connection->executeStatement(
-            'UPDATE "user" SET username = :new, username_changed_at = :now WHERE id = :id AND username_changed_at IS NULL',
-            ['new' => $newUsername, 'now' => $now->format('Y-m-d H:i:sP'), 'id' => $user->getId()->toRfc4122()],
+            'UPDATE "user" SET username = :new, username_changed_at = :now WHERE id = :id AND (username_changed_at IS NULL OR username_changed_at <= :cutoff)',
+            [
+                'new' => $newUsername,
+                'now' => $now->format('Y-m-d H:i:sP'),
+                'cutoff' => $cutoff->format('Y-m-d H:i:sP'),
+                'id' => $user->getId()->toRfc4122(),
+            ],
         );
 
         if (0 === $affected) {

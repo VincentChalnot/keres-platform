@@ -1,0 +1,56 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Notifications{% endblock %}
+
+{% block body %}
+<main class="section">
+    <div class="container">
+        <div class="level">
+            <div class="level-left">
+                <h1 class="title">Notifications</h1>
+            </div>
+            <div class="level-right">
+                {% if unread > 0 %}
+                    <button type="button" class="button is-rounded is-outlined is-light" data-notifications-read-all>Mark all as read</button>
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="box">
+            {% if notifications|length > 0 %}
+                <ul class="notification-list" id="notification-page-list">
+                    {% for n in notifications %}
+                        <li class="notification-list__item{{ n.read ? '' : ' is-unread' }}" data-uuid="{{ n.uuid }}">
+                            <a href="{{ n.url }}" class="notification-list__link" data-notification-link>
+                                <span class="icon"><i class="fa-solid {{ n.icon }}" aria-hidden="true"></i></span>
+                                <span class="notification-list__text">{{ n.text }}</span>
+                                <time class="notification-list__time" datetime="{{ n.createdAt }}">{{ n.createdAt|date('Y-m-d H:i') }}</time>
+                            </a>
+                            {% if not n.read %}
+                                <button type="button" class="button is-small is-text" data-notification-read title="Mark as read" aria-label="Mark as read">
+                                    <span class="icon"><i class="fa-solid fa-check" aria-hidden="true"></i></span>
+                                </button>
+                            {% endif %}
+                        </li>
+                    {% endfor %}
+                </ul>
+            {% else %}
+                <p class="has-text-grey">No notifications yet. You'll hear about friend requests, accepted seeks, moves in your correspondence games and finished games here.</p>
+            {% endif %}
+        </div>
+
+        {% if pages > 1 %}
+            <nav class="pagination" role="navigation" aria-label="pagination">
+                {% if page > 1 %}
+                    <a class="pagination-previous" href="{{ path('notifications', {page: page - 1}) }}">Previous</a>
+                {% endif %}
+                {% if page < pages %}
+                    <a class="pagination-next" href="{{ path('notifications', {page: page + 1}) }}">Next</a>
+                {% endif %}
+                <span class="pagination-list ml-3">Page {{ page }} of {{ pages }}</span>
+            </nav>
+        {% endif %}
+        <p class="mt-4"><a href="{{ path('settings_notifications') }}">Choose which notifications you get &rarr;</a></p>
+    </div>
+</main>
+{% endblock %}

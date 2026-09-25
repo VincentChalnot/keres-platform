@@ -13,10 +13,12 @@ use App\Exception\FriendshipExistsException;
 use App\Exception\FriendshipNotFoundException;
 use App\Model\FriendshipStatus;
 use App\Model\MultiplayerLimits;
+use App\Model\Notification\NotificationType;
 use App\Model\Social\FriendRequestOutcome;
 use App\Model\Social\Relationship;
 use App\Repository\FriendshipRepository;
 use App\Service\Game\GameUpdatePublisher;
+use App\Service\Notification\NotificationCenter;
 use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\Exception\UniqueConstraintViolationException;
 use Doctrine\ORM\EntityManagerInterface;
@@ -37,6 +39,7 @@ final readonly class FriendshipManager
         private FriendshipRepository $friendshipRepository,
         private GameUpdatePublisher $publisher,
         private FriendEventPayloadBuilder $payloadBuilder,
+        private NotificationCenter $notificationCenter,
     ) {
     }
 
@@ -112,12 +115,16 @@ final readonly class FriendshipManager
             $accepted = $row;
         });
 
+        // Answering the request is reading its notification.
+        $this->notificationCenter->markSubjectRead($addressee, NotificationCenter::userSubject($requester));
+
         if (null !== $accepted) {
             // sec 3.3 T3: only the requester is notified - the acceptor already knows.
             $this->publisher->publishUserEvent(
                 $requester->getId()->toRfc4122(),
                 $this->payloadBuilder->encode($this->payloadBuilder->buildFriendAccepted($accepted, $addressee, $now)),
             );
+            $this->notifyFriendAccepted($requester, $addressee);
         }
     }
 
@@ -148,6 +155,8 @@ final readonly class FriendshipManager
             $row->transitionTo(FriendshipStatus::DECLINED, $now);
             $this->entityManager->flush();
         });
+
+        $this->notificationCenter->markSubjectRead($addressee, NotificationCenter::userSubject($requester));
     }
 
     /**
@@ -358,6 +367,8 @@ final readonly class FriendshipManager
                 $notify['to']->getId()->toRfc4122(),
                 $this->payloadBuilder->encode($this->payloadBuilder->buildFriendAccepted($notify['friendship'], $notify['from'], $now)),
             );
+            $this->notifyFriendAccepted($notify['from'], $notify['to']);
+            $this->notifyFriendAccepted($notify['to'], $notify['from']);
 
             return;
         }
@@ -366,6 +377,22 @@ final readonly class FriendshipManager
         $this->publisher->publishUserEvent(
             $notify['to']->getId()->toRfc4122(),
             $this->payloadBuilder->encode($this->payloadBuilder->buildFriendRequest($notify['friendship'], $notify['from'], $now)),
+        );
+        $this->notificationCenter->notify(
+            $notify['to'],
+            NotificationType::FRIEND_REQUEST,
+            ['actor' => NotificationCenter::actorRef($notify['from'])],
+            NotificationCenter::userSubject($notify['from']),
+        );
+    }
+
+    private function notifyFriendAccepted(User $recipient, User $friend): void
+    {
+        $this->notificationCenter->notify(
+            $recipient,
+            NotificationType::FRIEND_ACCEPTED,
+            ['actor' => NotificationCenter::actorRef($friend)],
+            NotificationCenter::userSubject($friend),
         );
     }
 }

@@ -68,8 +68,6 @@ export interface HeartbeatResult {
     widenedTo: {min: number; max: number} | null;
 }
 
-export type QuickPairPreset = '1+0' | '3+2' | '5+0' | '10+0' | '15+10' | 'corr1' | 'corr3' | 'corr7';
-
 export interface CustomSeekInput {
     kind: ClockKind;
     initialSeconds?: number | null;

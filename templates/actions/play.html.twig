@@ -8,89 +8,14 @@
 {% endblock %}
 
 {% block body %}
-    <div class="game-container"
-         id="game-container"
-         data-opponent-type="{{ game.opponentType.value }}">
-        <script type="application/json" id="game-state-bootstrap">{{ gameStateBootstrap|raw }}</script>
-
-        <div class="player-info-row" id="player-info-top">
-            <div class="material-bar" id="material-top"></div>
-            <div class="player-clock" id="clock-top"><span class="player-clock__time">--:--</span></div>
-        </div>
-        <div id="board-container"
-             data-moves="{{ moves }}"
-             data-game-uuid="{{ game.uuid }}"
-             data-opponent-type="{{ game.opponentType.value }}"
-             data-player-white="{{ playerWhite ? 'true' : 'false' }}"></div>
-        <div class="player-info-row" id="player-info-bottom">
-            <div class="material-bar" id="material-bottom"></div>
-            <div class="player-clock" id="clock-bottom"><span class="player-clock__time">--:--</span></div>
-        </div>
-
-        <div class="notification game-status-banner is-hidden" id="game-status-banner"></div>
-
-        <div class="buttons mt-3">
-            {% if game.opponentType == enum('App\\Model\\OpponentType').AI %}
-                <button class="button is-rounded is-outlined is-light" id="switch-sides-btn">Switch Sides</button>
-            {% endif %}
-            <button class="button is-rounded is-outlined is-light" id="toggle-threats-btn">Hide Threats</button>
-            <button class="button is-rounded is-outlined is-light" id="toggle-coords-btn">Hide Coords</button>
-            <button class="button is-rounded is-light" id="undo-btn">Undo</button>
-            {% if not game.gameOver %}
-                <button type="button" class="button is-rounded is-danger" id="resign-btn">Resign</button>
-            {% endif %}
-            <button type="button" class="button is-rounded is-outlined is-light" id="feedback-btn">Feedback</button>
-        </div>
-        <div class="move-history">
-            <label class="label">Move History</label>
-            <div class="buttons">
-                <button class="button is-rounded is-small is-outlined is-light" id="prev-move-btn" title="Previous Move">◄ Prev</button>
-                <button class="button is-rounded is-small is-outlined is-light" id="next-move-btn" title="Next Move">Next ►</button>
-            </div>
-            <div id="move-history-display" class="move-history-box">
-                <table class="table is-fullwidth move-history-table">
-                    <thead>
-                    <tr>
-                        <th>#</th>
-                        <th>White</th>
-                        <th>Black</th>
-                    </tr>
-                    </thead>
-                    <tbody id="move-history-body">
-                    </tbody>
-                </table>
-            </div>
-        </div>
-    </div>
-
-    <div class="modal" id="unstack-modal">
-        <div class="modal-background"></div>
-        <div class="modal-card">
-            <header class="modal-card-head">
-                <p class="modal-card-title">Choose your move</p>
-            </header>
-            <section class="modal-card-body">
-                <p>You are moving a stacked piece. Do you want to move the full stack or only the top piece?</p>
-            </section>
-            <footer class="modal-card-foot">
-                <button class="button is-primary" id="move-stack">Move Full Stack</button>
-                <button class="button" id="move-unstack">Move Top Piece</button>
-            </footer>
-        </div>
-    </div>
-
-    <div class="modal" id="feedback-modal">
-        <div class="modal-background"></div>
-        <div class="modal-card">
-            <header class="modal-card-head">
-                <p class="modal-card-title">Feedback</p>
-                <button class="delete" aria-label="close" id="feedback-modal-close"></button>
-            </header>
-            <section class="modal-card-body" id="feedback-modal-body">
-                <progress class="progress is-small is-primary" max="100">Loading</progress>
-            </section>
-        </div>
-    </div>
+    {% include 'actions/_play_board.html.twig' with {
+        opponentType: game.opponentType.value,
+        gameUuid: game.uuid,
+        spectator: not game.isParticipant(app.user),
+        guest: false,
+        isAi: game.opponentType == enum('App\\Model\\OpponentType').AI,
+        gameOver: game.gameOver,
+    } %}
 {% endblock %}
 
 {% block end_javascripts %}

@@ -1,6 +1,6 @@
 # Multiplayer — Overview & Decision Register
 
-> **Status**: specification, not yet implemented.
+> **Status**: implemented through Phase 5, with the post-review revisions in §2.0.
 > **Scope**: turning Keres from a single-player platform (human vs. engine, or
 > hot-seat on one device) into a real multiplayer platform: matchmaking, time
 > control, friends, invites, browser notifications, and ratings.
@@ -18,7 +18,7 @@
 | `01-domain-model.md` | Entities, columns, indexes, migrations, backfill |
 | `02-realtime.md` | Mercure topics, subscriber authorization, payload contracts |
 | `03-time-control.md` | Clock model, flag adjudication, lag compensation, abort |
-| `04-matchmaking.md` | Seeks, quick pair, pairing algorithm, lobby |
+| `04-matchmaking.md` | Seeks, the "New seek" panel, pairing algorithm, lobby |
 | `05-social.md` | Friendships, challenges, blocking |
 | `06-rating.md` | Glicko-2, rating pools, when a game is rated |
 | `07-notifications.md` | Web Push, service worker, preferences, in-tab fallback |
@@ -56,11 +56,27 @@ table.
 | D2 | Rating pools | **Per speed category** — Bullet / Blitz / Rapid / Classical / Correspondence | A bullet specialist and a classical specialist must not share one number, or pairing quality collapses |
 | D3 | Time-control modes | **Real-time (Fischer increment)**, **Correspondence (days per move)**, **Untimed casual**. No Bronstein/delay. | Covers competitive play, asynchronous play, and friendly play with three code paths instead of four |
 | D4 | Flag adjudication | **Persisted server clock + one delayed Messenger message per move**, with a lazy check on read and an explicit claim endpoint as safety nets | Exact, live "flag falls" moment with no polling and no new infrastructure — the Doctrine transport already supports `available_at` |
-| D5 | Browser notifications | **Full Web Push** (service worker + VAPID), with an in-tab `Notification` fallback | Required for correspondence and "your turn while away"; in-tab-only would not deliver the feature asked for |
-| D6 | Matchmaking | **Quick-pair buttons over a shared seek pool**, plus a lobby listing custom seeks | Closest to current lichess; one mechanism (seeks) serves both UX affordances |
+| D5 | Browser notifications | **In-app notification centre first** (header bell, durable inbox, per-type toggles). Full Web Push (service worker + VAPID) with an in-tab `Notification` fallback stays the target, deferred — see R5 | The inbox is the channel every other one hangs off; push and email add delivery, not content |
+| D6 | Matchmaking | **One "New seek" panel over a shared seek pool** — format presets fill the form, "Post seek" is the only submit — plus a lobby listing everyone's seeks. *Amended by R3; originally "quick-pair buttons + custom seek form".* | One mechanism (seeks), one form: new players could not tell how the two affordances related |
 | D7 | Infrastructure | **Postgres only.** `SELECT … FOR UPDATE SKIP LOCKED` for pairing. Redis documented as an escape hatch with explicit trigger thresholds. | Zero new containers, matches current ops posture. See §7 for the exact conditions that would force Redis. |
 | D8 | Takeback | **Never in rated play.** The existing unconditional Undo button is removed from every multiplayer game and survives only in AI and hot-seat games. No consent flow is built. | User decision. Also removes a whole class of clock/rating abuse |
 | D9 | Deliverable | `docs/multiplayer/` split by concern | This document set |
+
+### 2.0 Revisions after the multiplayer review
+
+Amendments made after the first multiplayer implementation was reviewed.
+They override anything in the other files that still describes the
+original behaviour.
+
+| # | Area | Revision | Where |
+|---|---|---|---|
+| R1 | Entry flow / anonymous play | **Visitors may play without an account**, but only against the AI or hot-seat. A logged-out **Play** shows a sign-in / sign-up prompt with "Play the AI or hot-seat without an account" as the secondary option. A guest game lives entirely in the browser (localStorage), reaching the engine through the public `/api/*` relays, including `POST /api/engine-move-game` for the AI's reply: no `User` or `Game` row is written, nothing is rated, nothing enters the `BoardPosition` tree. Online play (seeks, challenges, friends) still requires an account. After sign-in the landing page is the **Dashboard**; **Play** opens the lobby | `08-frontend.md` §7.7, `09-api-reference.md` §3 |
+| R2 | Username changes | **Once every 12 months** (`MultiplayerLimits::USERNAME_CHANGE_INTERVAL = 'P12M'`) instead of once ever, enforced by the guarded `UPDATE` on `user.username_changed_at`. The settings page shows the next allowed date | `05-social.md` §1.6 |
+| R3 | Lobby | Quick pair and the custom-seek form are merged into one **New seek** panel. One preset per format, defaults tuned for Keres' 35–60 full-move games: Bullet 3+2, Blitz 7+5, Rapid 20+10, Classical 100+0, Correspondence 1 day per move. Initial time is entered in minutes, increment in seconds. `POST /lobby/seeks/quick` is removed; `autoWiden` stays available on `POST /lobby/seeks` | `04-matchmaking.md` §1 |
+| R4 | Speed categories | Bands re-tuned for Keres: `estimated = initial + 40 * increment`; `< 300` Bullet, `< 900` Blitz, `< 3000` Rapid, else Classical, so each default lands in its own pool. Existing games keep the category frozen at creation | `03-time-control.md` §1.3, `06-rating.md` §5.2 |
+| R5 | Notifications | In-app only for now: `Notification` rows, a header bell with an unread count, "mark as read" per item and for all, and per-type on/off toggles in Settings → Notifications. Types: friend request, friend accepted, seek accepted (game started), your turn (correspondence/unlimited games only) and game ended. No Web Push, no email yet | `07-notifications.md` §0 |
+| R6 | Settings | One **Settings** page (single header icon, vertical section nav): Profile, Board & gameplay, Notifications, Privacy, Connected accounts. `/preferences` redirects to Settings → Profile. Friend requests live only on the Friends page; blocked users only in Settings → Privacy | `05-social.md` §9.2 |
+| R7 | Play UI | The status bar under the board is always visible: "Your turn" in the active-clock accent, "Waiting for opponent…" muted | `08-frontend.md` §7.7 |
 
 ### 2.1 Derived scope decisions
 
@@ -316,7 +332,7 @@ these into acceptance tests.
 |---|---|
 | **Seek** | A standing, anonymous offer to play under given conditions, visible in the lobby pool and matched automatically |
 | **Challenge** | A directed invitation to a specific user, or an open shareable link |
-| **Quick pair** | A preset button that creates a seek with an auto-widening rating window |
+| **Format preset** | A button in the lobby's "New seek" panel that fills the form in with one format's default time control (R3). Replaced the original *quick pair* buttons, which posted a seek directly |
 | **Flag / flag-fall** | A player's clock reaching zero |
 | **Abort** | Ending a game before it counts — no result, no rating change |
 | **Abandonment** | A disconnected player losing after the disconnect grace period |

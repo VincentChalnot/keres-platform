@@ -391,13 +391,26 @@ implementer needs:
 
 | Route name | Method | Path | Controller | Authorization | Limiter | Request | Response |
 |---|---|---|---|---|---|---|---|
-| `lobby` | GET | `/lobby` | `LobbyPageAction` | `PUBLIC_ACCESS` | -- | -- | HTML |
+| `lobby` | GET | `/lobby` | `LobbyPageAction` | `PUBLIC_ACCESS` | -- | -- | HTML (anonymous: the sign-in prompt, `00-overview.md` R1) |
 | `lobby_seeks` | GET | `/lobby/seeks` | `SeekListAction` | `PUBLIC_ACCESS` | -- | -- | JSON list |
 | `lobby_seek_create` | POST | `/lobby/seeks` | `SeekCreateAction` | `ROLE_USER` | `seek_create` | `application/json` | JSON |
-| `lobby_seek_quick` | POST | `/lobby/seeks/quick` | `SeekQuickPairAction` | `ROLE_USER` | `seek_create` | `application/json` | JSON |
 | `lobby_seek_heartbeat` | POST | `/lobby/seeks/{uuid}/heartbeat` | `SeekHeartbeatAction` | `ROLE_USER` + owner | `seek_heartbeat` | -- | JSON |
 | `lobby_seek_cancel` | POST | `/lobby/seeks/{uuid}/cancel` | `SeekCancelAction` | `ROLE_USER` + owner | `seek_create` | -- | JSON |
 | `lobby_seek_accept` | POST | `/lobby/seeks/{uuid}/accept` | `SeekAcceptAction` | `ROLE_USER` | `seek_create` | -- | JSON |
+
+`lobby_seek_quick` (`POST /lobby/seeks/quick`) was removed by `00-overview.md`
+R3: the lobby's format presets only fill the "New seek" form, which posts to
+`lobby_seek_create`.
+
+**Guest play (R1)** adds two anonymous routes outside this namespace:
+
+| Route name | Method | Path | Controller | Authorization | Limiter | Request | Response |
+|---|---|---|---|---|---|---|---|
+| `play_guest` | GET | `/play/guest` | `PlayGuestAction` | `PUBLIC_ACCESS` (signed-in users are redirected to `/play/new`) | -- | -- | HTML |
+| `api_guest_engine_move` | POST | `/api/engine-move-game` | `Api\GuestEngineMoveAction` | `PUBLIC_ACCESS` | `guest_engine_move` (per IP, token bucket 20 / +30 per min) | `application/octet-stream`, 2N bytes, N <= 1000 | 2 bytes (`MoveData`); 400 on a malformed body, 429 when limited, 502 when the engine fails |
+
+`new_local_game` (`/play/new`) is `PUBLIC_ACCESS` as well: an anonymous submit
+redirects to `play_guest` instead of persisting a game.
 
 ### 3.2 Challenges -- `App\Action\Challenge\`
 
@@ -452,11 +465,11 @@ their route name and path.
 | Route name | Method | Path | Controller | Authorization | Limiter | Request | Response |
 |---|---|---|---|---|---|---|---|
 | `notifications` | GET | `/notifications` | `NotificationPageAction` | `ROLE_USER` | -- | -- | HTML |
-| `notifications_list` | GET | `/notifications/list` | `NotificationListAction` | `ROLE_USER` | -- | -- | JSON, paginated |
+| `notifications_list` | GET | `/notifications/list` | `NotificationListAction` | `ROLE_USER` | -- | `limit` (1..50, default 10) | JSON `{"notifications": [...], "unread": N}` -- the latest rows (the inbox page paginates server-side) |
 | `notifications_unread_count` | GET | `/notifications/unread-count` | `UnreadCountAction` | `ROLE_USER` | -- | -- | JSON |
 | `notification_read` | POST | `/notifications/{uuid}/read` | `NotificationReadAction` | `ROLE_USER` + owner | `notification_read` | -- | JSON |
 | `notifications_read_all` | POST | `/notifications/read-all` | `NotificationReadAllAction` | `ROLE_USER` | `notification_read` | -- | JSON |
-| `notification_preferences` | POST | `/notifications/preferences` | `NotificationPreferencesAction` | `ROLE_USER` | `social_action` | `application/json` | JSON |
+| `notification_preferences` | POST | `/notifications/preferences` | `NotificationPreferencesAction` | `ROLE_USER` | `social_action` | `application/json` | JSON -- **not built** (R5): the in-app toggles are a Settings form, see `settings_notifications` |
 
 ### 3.6 Web Push -- `App\Action\Push\`
 
@@ -477,7 +490,13 @@ there is no legacy URL to redirect from.
 |---|---|---|---|---|---|---|---|
 | `profile` | GET | `/@/{username}` | `ProfilePageAction` | `PUBLIC_ACCESS` | -- | -- | HTML |
 | `profile_games` | GET | `/@/{username}/games` | `ProfileGamesAction` | `PUBLIC_ACCESS` | -- | -- | JSON, paginated |
-| `settings_profile` | GET, POST | `/settings/profile` | `ProfileSettingsAction` | `ROLE_USER` | `username_change` | form | HTML \| 302 |
+| `settings` | GET | `/settings` | `Settings\SettingsIndexAction` | `ROLE_USER` | -- | -- | 302 to `settings_profile` |
+| `settings_profile` | GET, POST | `/settings/profile` | `Settings\SettingsProfileAction` | `ROLE_USER` | `username_change` | form | HTML \| 302 |
+| `settings_board` | GET, POST | `/settings/board` | `Settings\SettingsBoardAction` | `ROLE_USER` | -- | form | HTML \| 302 |
+| `settings_notifications` | GET, POST | `/settings/notifications` | `Settings\SettingsNotificationsAction` | `ROLE_USER` | -- | form | HTML \| 302 |
+| `settings_privacy` | GET, POST | `/settings/privacy` | `Settings\SettingsPrivacyAction` | `ROLE_USER` | -- | form | HTML \| 302 |
+| `settings_connections` | GET | `/settings/connections` | `Settings\SettingsConnectionsAction` | `ROLE_USER` | -- | -- | HTML |
+| `preferences` *(existing)* | GET | `/preferences` | `PreferencesAction` | `ROLE_USER` | -- | -- | 301 to `settings_profile` (R6) |
 | `leaderboard` | GET | `/leaderboard/{category}` | `LeaderboardAction` | `PUBLIC_ACCESS` | -- | -- | HTML |
 
 ---
@@ -550,7 +569,7 @@ distinct code from `unrated_time_control`, which is specifically
 |---|---|---|---|---|
 | `GET /lobby/seeks` | none. Anonymous callers get the pool with `mine:false` on every row | `{"seeks":[{"uuid","username","rating","provisional","kind","initialSeconds","incrementSeconds","daysPerMove","speedCategory","rated","colorPreference","ratingMin","ratingMax","createdAt","mine"}]}` filtered to `status=OPEN` and `lastHeartbeatAt > now - SEEK_STALE_AFTER_SECONDS` | none | pure read |
 | `POST /lobby/seeks` | (1) `rated=true` requires `kind != unlimited` -> 422 `unrated_time_control`. (2) The caller already has an `OPEN` seek -> **not an error**: return 200 with the existing seek and `deduped:true`. (3) Immediate pairing attempt inside the pairing transaction | `{"seek":{...},"matched":null\|{"gameUuid":"..."},"deduped":false}` | writes `seek`; on immediate match also `game` + 2x `game_player` and `seek.status=MATCHED`; dispatches `ExpireSeekMessage(seekUuid)` with `DelayStamp(SEEK_TTL_SECONDS*1000)`; on match dispatches `CheckClockExpiryMessage`; publishes `lobby/seeks` and, on match, `user/{opponentUuid}` | dedupe rule (2) makes a double-submit idempotent |
-| `POST /lobby/seeks/quick` | body is `{"preset":"1+0"\|"3+2"\|"5+0"\|"10+0"\|"15+10"\|"corr1"\|"corr3"\|"corr7"}`; unknown value -> 422 `validation_failed`. Equivalent to `POST /lobby/seeks` with `autoWiden=true`, `colorPreference=random`, no explicit window, `rated=true` | same as above | same as above | same as above |
+| ~~`POST /lobby/seeks/quick`~~ | *Removed by `00-overview.md` R3.* Was: body `{"preset":"1+0"\|"3+2"\|"5+0"\|"10+0"\|"15+10"\|"corr1"\|"corr3"\|"corr7"}`; unknown value -> 422 `validation_failed`. Equivalent to `POST /lobby/seeks` with `autoWiden=true`, `colorPreference=random`, no explicit window, `rated=true` | same as above | same as above | same as above |
 | `POST /lobby/seeks/{uuid}/heartbeat` | (1) seek exists -> 404 `seek_not_found`; (2) `seek.user === caller` -> 403 `forbidden`; (3) `status=OPEN` -> 409 `seek_unavailable` unless `status=MATCHED`, which returns 200 with the `gameUuid`; (4) not past `expiresAt` -> 410 `seek_expired` | `{"status":"open"\|"matched","gameUuid":null\|"...","widenedTo":{"min":1350,"max":1650}}` | updates `seek.last_heartbeat_at`; **re-runs the pairing attempt**, so this can create a game exactly as `POST /lobby/seeks` does | yes -- repeated calls converge; pairing is single-consumption (`00-overview.md` invariant 12) |
 | `POST /lobby/seeks/{uuid}/cancel` | (1) 404 `seek_not_found`; (2) owner -> 403 `forbidden`; (3) `status=MATCHED` -> 409 `seek_already_matched` with `details.gameUuid`; (4) already `CANCELED` -> 200 no-op | `{"seek":{"uuid","status":"canceled"}}` | `seek.status=CANCELED`; publishes `lobby/seeks` | yes |
 | `POST /lobby/seeks/{uuid}/accept` | (1) 404 `seek_not_found`; (2) `seek.user === caller` -> 409 `cannot_accept_own_seek`; (3) blocked in either direction -> 403 `blocked`; (4) status not `OPEN` or expired -> 409 `seek_unavailable` / 410 `seek_expired`; (5) caller's rating outside the seek window -> 409 `rating_out_of_range` | `{"gameUuid":"..."}` | `seek.status=MATCHED`, `seek.matched_game_id`; `game` + 2x `game_player`; dispatches `CheckClockExpiryMessage` (realtime) or `CorrespondenceNudgeMessage`; publishes `lobby/seeks` and `user/{seekOwnerUuid}` | single-consumption: the second caller loses the `FOR UPDATE SKIP LOCKED` race and gets 409 `seek_unavailable` |
@@ -768,7 +787,7 @@ there is no counterparty to consent, and hot-seat is one human on both sides.
 |---|---|---|---|---|---|
 | `GET /@/{username}` | -- | (1) unknown username -> 404 (HTML error page, not the envelope -- this is an HTML action) | HTML: five rating rows from `user_rating`, provisional markers, recent games | none | pure read |
 | `GET /@/{username}/games` | `page` >=1 default 1; `perPage` 1..50 default 20; `status` `all`\|`in_progress`\|`finished` default `all`; `includeHidden` bool default false | (1) unknown username -> 404 `user_not_found`; (2) `includeHidden=true` while `username` is not the authenticated caller -> 403 `forbidden` | `{"games":[{"uuid","opponent","color","result","endReason","speedCategory","rated","ratingDelta","movesCount","createdAt","gameOverAt"}]}` plus `meta`. Rows with `game_player.hidden_at` set for the profile owner are excluded unless `includeHidden` and self | none | pure read |
-| `GET\|POST /settings/profile` | Symfony form (`UsernameChangeType`), real CSRF token via `config/packages/csrf.yaml` | (1) username taken -> form error `username_taken`; (2) reserved word -> `username_reserved`; (3) the one allowed change is used -> `username_already_changed` | HTML \| 302 back to `settings_profile` | `user.username`, `user.username_changed_at` | no |
+| `GET\|POST /settings/profile` | Symfony form (`UsernameChangeType`), real CSRF token via `config/packages/csrf.yaml` | (1) username taken -> form error `username_taken`; (2) reserved word -> `username_reserved`; (3) the 12-month cooldown is running (`00-overview.md` R2) -> form error naming the next allowed date | HTML \| 302 back to `settings_profile` | `user.username`, `user.username_changed_at` | no |
 | `GET /leaderboard/{category}` | `category` in `bullet\|blitz\|rapid\|classical\|correspondence` -- the lowercased `SpeedCategory` case name, never the int (rule G3); a miss is a routing 404, not `validation_failed`. `page` >=1 | none | HTML: top N by rating with `deviation <= GLICKO_PROVISIONAL_RD`, paginated. **A pool with zero qualifying rows renders "no rated games yet" at 200 -- never a 404.** `classical` will legitimately stay empty for a long time: no quick-pair preset classifies there (1+0 bullet, 3+2 and 5+0 blitz, 10+0 and 15+10 rapid, per `06-rating.md`), so it is reachable only from a custom seek or challenge | none | pure read |
 
 ### 4.7 Modified existing endpoints not covered above
@@ -953,7 +972,6 @@ rejection.
 | `GET /lobby` | allow | allow | allow | allow | allow |
 | `GET /lobby/seeks` | allow | allow | allow | allow | allow |
 | `POST /lobby/seeks` | 401 | allow | allow | allow | allow |
-| `POST /lobby/seeks/quick` | 401 | allow | allow | allow | allow |
 | `POST /lobby/seeks/{uuid}/heartbeat` | 401 | 403 | allow | allow | 403 unless owner |
 | `POST /lobby/seeks/{uuid}/cancel` | 401 | 403 | allow | allow | 403 unless owner |
 | `POST /lobby/seeks/{uuid}/accept` | 401 | allow | 409 `cannot_accept_own_seek` | allow | allow |

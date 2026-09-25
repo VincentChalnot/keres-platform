@@ -322,6 +322,24 @@ class Game
         return [] !== $this->getColorsForUser($user);
     }
 
+    /** True when `$user` plays the side to move (always true for a hot-seat participant). */
+    public function isTurnOf(?User $user): bool
+    {
+        return \in_array($this->isWhiteTurn() ? PieceColor::WHITE : PieceColor::BLACK, $this->getColorsForUser($user), true);
+    }
+
+    /** The other human in a multiplayer game; null for AI/hot-seat games or a non-participant. */
+    public function getOpponentOf(?User $user): ?User
+    {
+        $colors = $this->getColorsForUser($user);
+
+        if (OpponentType::MULTIPLAYER !== $this->getOpponentType() || 1 !== \count($colors)) {
+            return null;
+        }
+
+        return $this->getPlayer($colors[0]->opposite())->getUser();
+    }
+
     /**
      * In AI/hot-seat mode, returns the human player's colour.
      * Returns null for multiplayer games (call getColorsForUser instead).

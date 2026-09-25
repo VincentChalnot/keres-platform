@@ -1,7 +1,8 @@
 # Multiplayer -- Notifications
 
-> **Status**: specification, not yet implemented. **Contract**: `00-overview.md`
-> D5 (full Web Push + VAPID, with an in-tab `Notification` fallback).
+> **Status**: §0 (in-app notification centre) is implemented; §1-§6 and §8-§11
+> (Web Push, service worker, VAPID, email, toasts) remain the target design,
+> deferred by `00-overview.md` R5. **Contract**: `00-overview.md` D5.
 >
 > **Owns**: the three delivery channels and the rules that choose between them,
 > the service worker, VAPID, `PushSubscription` lifecycle, `WebPushSender`, the
@@ -12,6 +13,78 @@
 > `CorrespondenceNudgeMessage` scheduling (`03-time-control.md` §5), routes and
 > the JSON envelope (`09-api-reference.md`), TS module layout (`08-frontend.md`),
 > column DDL and migrations (`01-domain-model.md`).
+
+---
+
+## 0. What is implemented: the in-app notification centre (R5)
+
+In-app only: no Web Push, no email, no OS notifications. Everything below
+reuses the entity, routes and preference column this document designs, so the
+push/email channels can be layered on later without a data migration.
+
+### 0.1 Types
+
+`App\Model\Notification\NotificationType` (string-backed, the value is the
+stored/wire string). Every type is **on by default**; an inbox row costs nothing.
+
+| Case | Value | Recipient | Written by | Subject |
+|---|---|---|---|---|
+| `FRIEND_REQUEST` | `friend_request` | addressee | `FriendshipManager` (post-commit) | `user:<requester>` |
+| `FRIEND_ACCEPTED` | `friend_accepted` | requester (both sides on a crossing request) | `FriendshipManager` (post-commit) | `user:<friend>` |
+| `SEEK_MATCHED` | `seek_matched` | owner of the seek that was consumed by someone else's seek/accept | `SeekMatcher` (post-commit) | `game:<uuid>` |
+| `YOUR_TURN` | `your_turn` | the opponent of the mover, **correspondence and unlimited games only** — in a clocked real-time game the player is watching the board and one row per ply would bury the inbox | `SubmitMoveAction` (post-commit) | `game:<uuid>` |
+| `GAME_FINISHED` | `game_finished` | both players of a multiplayer game, minus the resigner | `GameLifecycleManager` (inside the finalising transaction) | `game:<uuid>` |
+
+A repeat event with the same type and subject refreshes the unread row instead
+of stacking (two opponent moves before you look = one "your turn"). Opening
+`/play/{uuid}` marks that game's rows read; accepting or declining a friend
+request marks its row read; a game ending marks its pending "your turn" read.
+
+**Adding a type**: a case in `NotificationType` (with `label()`), one arm in
+`NotificationFormatter::format()` (text, link, icon), one
+`NotificationCenter::notify()`/`record()` call where the event happens. The
+settings toggle, bell and inbox need no change.
+
+### 0.2 Write path
+
+`App\Service\Notification\NotificationCenter` is the only writer:
+
+- `notify()` — for post-commit callers: persist, flush, then publish a
+  `UserEventPayload` frame (`"event": "notification"`, `notificationUuid`,
+  `unreadCount`, `data` = the formatted row) on `user/{uuid}`.
+- `record()` — for callers inside a transaction they flush themselves
+  (`GameLifecycleManager`): persist only, no frame, since a frame published
+  before commit could be read before the row exists. The bell's periodic
+  refresh picks these up.
+
+Both check the recipient's in-app preference first; a disabled type writes
+nothing.
+
+### 0.3 Preferences
+
+`User.notificationPreferences` holds `{"version": 1, "inApp": {"<type>": bool}}`,
+read only through `NotificationPreferences` (defaults merged in, only non-default
+values stored — §8.3's rule). Settings → Notifications renders one checkbox per
+enum case (`05-social.md` §9.2). Keys outside `inApp` are preserved, reserved for
+the push/email channels of §8.1.
+
+### 0.4 Routes and UI
+
+| Route | Action | Purpose |
+|---|---|---|
+| `GET /notifications` | `NotificationPageAction` | Full inbox, paginated (30/page) |
+| `GET /notifications/list?limit=` | `NotificationListAction` | Latest rows (default 10, max 50) + unread count, for the bell |
+| `GET /notifications/unread-count` | `UnreadCountAction` | Bell fallback refresh |
+| `POST /notifications/{uuid}/read` | `NotificationReadAction` | Mark one read; 404 `notification_not_found` unless owned |
+| `POST /notifications/read-all` | `NotificationReadAllAction` | One `UPDATE ... WHERE user_id = ? AND read_at IS NULL` |
+
+Both POSTs are limited by `notification_read` (120/min per user). The header
+bell (`templates/base.html.twig`, `NotificationBell.ts` loaded from the `app`
+entry on every page) shows the unread count (capped at `99+`), opens a dropdown
+of the latest rows, each linking to its target (game, friends page, profile),
+with per-item and "mark all as read" buttons and a "See all" link to the inbox.
+It stays live via the `user/{uuid}` Mercure topic plus a 60 s poll of
+`/notifications/unread-count` while the tab is visible.
 
 ---
 

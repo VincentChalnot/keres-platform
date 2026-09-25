@@ -2,6 +2,15 @@ import "./app.scss";
 import "@fortawesome/fontawesome-free/css/fontawesome.min.css";
 import "@fortawesome/fontawesome-free/css/brands.min.css";
 import "@fortawesome/fontawesome-free/css/solid.min.css";
+import {initNotifications} from "./typescript/src/notifications/NotificationBell";
+
+// ─── Notification bell (every signed-in page) ────────────────────────────────
+
+if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", initNotifications);
+} else {
+    initNotifications();
+}
 
 // ─── Lightbox ────────────────────────────────────────────────────────────────
 
@@ -44,4 +53,3 @@ document.addEventListener("DOMContentLoaded", () => {
     });
 });
 
-console.log("Happy coding !!");

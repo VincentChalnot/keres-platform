@@ -22,6 +22,7 @@ use App\Service\Game\ClockAdjudicator;
 use App\Service\Game\ClockManager;
 use App\Service\Game\GameStatePayloadBuilder;
 use App\Service\Game\GameUpdatePublisher;
+use App\Service\Notification\NotificationCenter;
 use Doctrine\DBAL\Exception\RetryableException;
 use Doctrine\ORM\OptimisticLockException;
 use Symfony\Bundle\SecurityBundle\Security;
@@ -47,6 +48,7 @@ readonly class SubmitMoveAction
         private GameUpdatePublisher $publisher,
         private ClockAdjudicator $clockAdjudicator,
         private ClockManager $clockManager,
+        private NotificationCenter $notificationCenter,
     ) {
     }
 
@@ -134,6 +136,10 @@ readonly class SubmitMoveAction
         $json = $this->payloadBuilder->encode($payload);
 
         $this->publisher->publishGameState($game->getUuid()->toRfc4122(), $json);
+
+        if ($user instanceof User) {
+            $this->notificationCenter->movePlayed($game, $user);
+        }
 
         if (!$game->isGameOver()) {
             $deadline = $game->getMoveDeadlineAt();

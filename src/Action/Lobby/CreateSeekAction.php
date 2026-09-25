@@ -24,8 +24,9 @@ use Symfony\Component\Validator\Validator\ValidatorInterface;
 
 /**
  * `POST /lobby/seeks` - the custom-seek front door (04-matchmaking.md sec
- * 1.1/9.2). Every real seek row, whether from here or `QuickPairAction`,
- * is built by `SeekCreationService`.
+ * 1.1/9.2), and the only one the lobby's "New seek" panel posts to - its
+ * format presets just fill the form in. Every real seek row, whether from
+ * here or `AcceptSeekAction`, is built by `SeekCreationService`.
  */
 #[AsController]
 readonly class CreateSeekAction

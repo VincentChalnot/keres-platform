@@ -82,7 +82,12 @@ class TimeControl
         return $this->daysPerMove;
     }
 
-    /** Contract: estimated = initial + 40 * increment. REALTIME only. */
+    /**
+     * Contract: estimated = initial + 40 * increment. REALTIME only. The
+     * category boundaries below are tuned for Keres, whose games run
+     * 35-60 full moves - far longer than chess - so each pool sits well
+     * above its chess namesake (03-time-control.md sec 1.1).
+     */
     public function estimatedSeconds(): ?int
     {
         return TimeControlKind::REALTIME === $this->getKind()
@@ -96,9 +101,9 @@ class TimeControl
             TimeControlKind::UNLIMITED => null,
             TimeControlKind::CORRESPONDENCE => SpeedCategory::CORRESPONDENCE,
             TimeControlKind::REALTIME => match (true) {
-                $this->estimatedSeconds() < 180 => SpeedCategory::BULLET,
-                $this->estimatedSeconds() < 480 => SpeedCategory::BLITZ,
-                $this->estimatedSeconds() < 1500 => SpeedCategory::RAPID,
+                $this->estimatedSeconds() < 300 => SpeedCategory::BULLET,
+                $this->estimatedSeconds() < 900 => SpeedCategory::BLITZ,
+                $this->estimatedSeconds() < 3000 => SpeedCategory::RAPID,
                 default => SpeedCategory::CLASSICAL,
             },
         };

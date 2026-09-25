@@ -1,0 +1,42 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Play - Keres{% endblock %}
+
+{% block body %}
+    <section class="section">
+        <div class="container">
+            <div class="columns is-centered">
+                <div class="column is-half">
+                    <div class="box play-welcome">
+                        <h3 class="title">Play Keres online</h3>
+                        <p class="subtitle">Sign in to find opponents, play rated games and keep your history.</p>
+
+                        <div class="buttons">
+                            <a href="{{ path('oidc_login', {provider: 'google'}) }}" class="button is-rounded is-light is-fullwidth">
+                                <span class="icon"><i class="fa-brands fa-google" aria-hidden="true"></i></span>
+                                <span>Continue with Google</span>
+                            </a>
+                            <a href="{{ path('oidc_login', {provider: 'discord'}) }}" class="button is-rounded is-light is-fullwidth">
+                                <span class="icon"><i class="fa-brands fa-discord" aria-hidden="true"></i></span>
+                                <span>Continue with Discord</span>
+                            </a>
+                        </div>
+                        <div class="buttons">
+                            <a href="{{ path('login') }}" class="button is-rounded is-primary">Sign in</a>
+                            <a href="{{ path('register') }}" class="button is-rounded is-primary is-outlined">Create an account</a>
+                        </div>
+
+                        <hr>
+
+                        <p class="mb-3">Just want to try it?</p>
+                        <a href="{{ path('new_local_game') }}" class="button is-rounded is-outlined is-light">
+                            <span class="icon"><i class="fa-solid fa-chess-board" aria-hidden="true"></i></span>
+                            <span>Play the AI or hot-seat without an account</span>
+                        </a>
+                        <p class="help mt-2">Guest games live in this browser only: they aren't rated or saved to an account.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+{% endblock %}

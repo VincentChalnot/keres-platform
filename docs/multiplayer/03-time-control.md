@@ -104,8 +104,9 @@ behaviour, not a special case.
 `604_800_000 ms`, well inside signed 32-bit. No cap on accumulated increment.
 
 **Speed category** (contract, pure, computed once at creation and never again):
-`estimated = initialSeconds + 40 * incrementSeconds`; `< 180` BULLET, `< 480`
-BLITZ, `< 1500` RAPID, else CLASSICAL. `CORRESPONDENCE` yields
+`estimated = initialSeconds + 40 * incrementSeconds`; `< 300` BULLET, `< 900`
+BLITZ, `< 3000` RAPID, else CLASSICAL (bands re-tuned for Keres' longer games by
+`00-overview.md` R4; originally 180/480/1500). `CORRESPONDENCE` yields
 `CORRESPONDENCE`; `UNLIMITED` yields `null` and is never rated.
 
 ### 1.4 Payload mapping

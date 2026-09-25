@@ -16,6 +16,7 @@ use App\Service\Game\ClockManager;
 use App\Service\Game\GameStatePayloadBuilder;
 use App\Service\Game\GameUpdatePublisher;
 use App\Service\GameFactory;
+use App\Service\Notification\NotificationCenter;
 use Doctrine\DBAL\Connection;
 use Doctrine\ORM\EntityManagerInterface;
 use Psr\Log\LoggerInterface;
@@ -46,6 +47,7 @@ final readonly class SeekMatcher
         private GameStatePayloadBuilder $payloadBuilder,
         private SeekPayloadBuilder $seekPayloadBuilder,
         private LoggerInterface $logger,
+        private NotificationCenter $notificationCenter,
     ) {
     }
 
@@ -157,6 +159,10 @@ final readonly class SeekMatcher
             // Step 7: publish, strictly post-commit.
             $this->publishMatch($game, $selfSeek->getUuid(), $candidateSeek->getUuid());
 
+            // The acting side learns about the game from its own response;
+            // the candidate seek's owner may be on another page entirely.
+            $this->notificationCenter->seekMatched($candidateSeek->getUser(), $selfSeek->getUser(), $game);
+
             return new PairOutcome($game, false);
         } catch (\Throwable $e) {
             if ($this->connection->isTransactionActive()) {
@@ -196,10 +202,8 @@ final readonly class SeekMatcher
         // viewer's listing to reconcile, and for the *other* seek's owner -
         // who learns the gameUuid from their own next heartbeat response
         // (sec 4.2), not from this broadcast, which carries no gameUuid by
-        // design (02-realtime.md sec 4.3). Publishing a richer
-        // `user/{uuid}` SEEK_MATCHED event is deferred to Phase 6, when a
-        // `Notification` row exists to back it and something client-side
-        // subscribes to that topic.
+        // design (02-realtime.md sec 4.3). The durable SEEK_MATCHED
+        // notification (and its `user/{uuid}` frame) is sent by the caller.
         $poolSize = \count($this->seekRepository->findOpenForListing($this->clock->now()));
         $now = $this->clock->now();
 

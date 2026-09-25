@@ -84,3 +84,30 @@ if (profileRoot) {
         });
     }
 }
+
+// Settings -> Privacy: the blocked-users list's Unblock buttons. Same
+// POST-then-reload approach as the profile page above.
+const blockedRoot = document.getElementById('settings-blocked-root');
+
+if (blockedRoot) {
+    const api = new LobbyAPI();
+
+    blockedRoot.addEventListener('click', (event) => {
+        const target = event.target;
+        const button = target instanceof HTMLElement ? target.closest<HTMLButtonElement>('[data-action="friend-unblock"]') : null;
+        const username = button?.dataset.username;
+
+        if (!button || !username) {
+            return;
+        }
+
+        button.disabled = true;
+        void api.unblockUser(username)
+            .then(() => window.location.reload())
+            .catch((error: unknown) => {
+                button.disabled = false;
+                console.error(`Could not unblock ${username}:`, error);
+                void alertModal(`Could not unblock ${username}.`, 'Error');
+            });
+    });
+}

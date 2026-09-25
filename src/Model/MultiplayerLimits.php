@@ -55,6 +55,9 @@ final class MultiplayerLimits
     /** 05-social.md sec 3.5: cooldown before a declined request may be re-sent. */
     public const int FRIEND_REQUEST_COOLDOWN_SECONDS = 604800;
 
+    /** 05-social.md sec 1.6: minimum gap between two username changes (any `DateInterval` spec). */
+    public const string USERNAME_CHANGE_INTERVAL = 'P12M';
+
     /** 05-social.md sec 2.2: shorter is a paginated dump of the user table. */
     public const int USERNAME_MIN_SEARCH_PREFIX = 3;
 

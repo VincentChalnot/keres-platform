@@ -2,10 +2,29 @@
     <h3 class="title is-5">Games in progress</h3>
     {% for game in recentGames %}
         {# @var game \App\Entity\Game #}
+        {% set opponent = game.getOpponentOf(app.user) %}
+        {% set isHotseat = game.opponentType == enum('App\\Model\\OpponentType').HOTSEAT %}
         <div class="dashboard-widget__row mb-3">
             <a href="{{ path('play', {uuid: game.uuid}) }}" class="button is-rounded is-primary is-small is-pulled-right">Resume</a>
-            {% set myColors = game.getColorsForUser(app.user) %}
-            <p><strong>{{ myColors[0] is defined and myColors[0].name == 'WHITE' ? 'White' : 'Black' }}</strong> &middot; Next: {{ game.whiteTurn ? 'White' : 'Black' }}</p>
+            <p>
+                <strong>
+                    {%- if opponent -%}
+                        vs {{ opponent.displayName ?? opponent.username }}
+                    {%- elseif game.opponentType == enum('App\\Model\\OpponentType').AI -%}
+                        vs AI
+                    {%- else -%}
+                        Hot-seat game
+                    {%- endif -%}
+                </strong>
+                &middot;
+                {% if isHotseat %}
+                    <span class="tag is-rounded is-primary is-light">{{ game.whiteTurn ? 'White' : 'Black' }} to move</span>
+                {% elseif game.isTurnOf(app.user) %}
+                    <span class="tag is-rounded is-primary">Your turn</span>
+                {% else %}
+                    <span class="tag is-rounded is-dark">Their turn</span>
+                {% endif %}
+            </p>
             {% if game.lastMoveAt %}
                 <p class="has-text-grey">Last move: {{ game.lastMoveAt|date('Y-m-d H:i') }}</p>
             {% else %}

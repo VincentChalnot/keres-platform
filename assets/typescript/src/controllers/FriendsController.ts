@@ -19,7 +19,6 @@ export class FriendsController {
     private readonly incomingList: HTMLElement;
     private readonly outgoingList: HTMLElement;
     private readonly friendsList: HTMLElement;
-    private readonly blockedList: HTMLElement;
     private readonly searchInput: HTMLInputElement;
     private readonly searchResults: HTMLElement;
 
@@ -33,7 +32,6 @@ export class FriendsController {
         this.incomingList = this.required('friends-incoming-list');
         this.outgoingList = this.required('friends-outgoing-list');
         this.friendsList = this.required('friends-accepted-list');
-        this.blockedList = this.required('friends-blocked-list');
         this.searchInput = this.required('friends-search-input') as HTMLInputElement;
         this.searchResults = this.required('friends-search-results');
         this.eventClient = new FriendEventClient(root.dataset.userUuid ?? '');
@@ -105,7 +103,6 @@ export class FriendsController {
         this.renderRequests(this.incomingList, listing.incoming, ['friend-accept', 'friend-decline'], 'No pending requests.');
         this.renderRequests(this.outgoingList, listing.outgoing, [], 'No pending requests.', 'Request sent');
         this.renderFriends(listing.friends);
-        this.renderRequests(this.blockedList, listing.blocked, ['friend-unblock'], "You haven't blocked anyone.");
     }
 
     private renderRequests(

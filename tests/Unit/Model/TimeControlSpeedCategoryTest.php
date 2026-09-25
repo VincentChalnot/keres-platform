@@ -36,15 +36,16 @@ final class TimeControlSpeedCategoryTest extends TestCase
 
     public static function realtimeBoundaryProvider(): iterable
     {
-        // estimated = initial + 40*increment (sec 5.1)
-        yield '2+1 = 160 -> bullet' => [2, 1, SpeedCategory::BULLET];
+        // estimated = initial + 40*increment (sec 5.1), Keres-tuned boundaries 300/900/3000
+        yield '2+1 = 160 -> bullet' => [120, 1, SpeedCategory::BULLET];
         yield '0+2 = 80 -> bullet' => [0, 2, SpeedCategory::BULLET];
-        yield '3+0 = 180 -> first blitz' => [180, 0, SpeedCategory::BLITZ];
-        yield '5+3 = 420 -> blitz' => [300, 3, SpeedCategory::BLITZ];
-        yield '8+0 = 480 -> first rapid' => [480, 0, SpeedCategory::RAPID];
-        yield '10+5 = 800 -> rapid' => [600, 5, SpeedCategory::RAPID];
-        yield '15+10 = 1300 -> rapid, not classical' => [900, 10, SpeedCategory::RAPID];
-        yield '25+0 = 1500 -> first classical' => [1500, 0, SpeedCategory::CLASSICAL];
-        yield '15+15 = 1500 -> classical, not rapid' => [900, 15, SpeedCategory::CLASSICAL];
+        yield '3+2 = 260 -> bullet (lobby default)' => [180, 2, SpeedCategory::BULLET];
+        yield '5+0 = 300 -> first blitz' => [300, 0, SpeedCategory::BLITZ];
+        yield '7+5 = 620 -> blitz (lobby default)' => [420, 5, SpeedCategory::BLITZ];
+        yield '15+0 = 900 -> first rapid' => [900, 0, SpeedCategory::RAPID];
+        yield '20+10 = 1600 -> rapid (lobby default)' => [1200, 10, SpeedCategory::RAPID];
+        yield '30+15 = 2400 -> rapid, not classical' => [1800, 15, SpeedCategory::RAPID];
+        yield '50+0 = 3000 -> first classical' => [3000, 0, SpeedCategory::CLASSICAL];
+        yield '100+0 = 6000 -> classical (lobby default)' => [6000, 0, SpeedCategory::CLASSICAL];
     }
 }

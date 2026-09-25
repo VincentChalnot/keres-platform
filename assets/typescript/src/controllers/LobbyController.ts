@@ -1,6 +1,6 @@
 import {LobbyAPI, ApiError} from '../network/LobbyAPI';
 import {LobbySeekClient} from '../network/LobbySeekClient';
-import {CustomSeekInput, QuickPairPreset, SeekEvent, SeekListing, SeekSummary} from '../models/seek';
+import {CustomSeekInput, SeekEvent, SeekListing, SeekSummary} from '../models/seek';
 import {alertModal} from '../utils/modal';
 
 /** 04-matchmaking.md sec 4.2: the client heartbeat period; also the pairing-retry granularity. */
@@ -13,7 +13,7 @@ const RECONCILE_BACKSTOP_MS = 30000;
  * 5). Renders the live seek table from the server-supplied bootstrap, then
  * keeps it live from `lobby/seeks`; owns at most one of *my* seeks and
  * runs a heartbeat while it is open; navigates to `/play/{uuid}` the
- * moment any response - create, quick-pair, heartbeat or accept - reports
+ * moment any response - create, heartbeat or accept - reports
  * a match.
  */
 export class LobbyController {
@@ -43,8 +43,7 @@ export class LobbyController {
 
     init(): void {
         this.hydrateFromBootstrap();
-        this.wirePresetButtons();
-        this.wireCustomSeekForm();
+        this.wireSeekForm();
         this.seekClient.connect(
             (event) => this.handleSeekEvent(event),
             () => void this.refetch(),
@@ -215,56 +214,133 @@ export class LobbyController {
             return `${timeControl.daysPerMove} day${1 === timeControl.daysPerMove ? '' : 's'}/move`;
         }
 
-        return `${Math.round((timeControl.initialSeconds ?? 0) / 60)}+${timeControl.incrementSeconds ?? 0}`;
+        const clock = `${Math.round((timeControl.initialSeconds ?? 0) / 60)}+${timeControl.incrementSeconds ?? 0}`;
+
+        return timeControl.speed ? `${clock} · ${timeControl.speed.charAt(0).toUpperCase()}${timeControl.speed.slice(1)}` : clock;
     }
 
-    private wirePresetButtons(): void {
-        for (const button of Array.from(this.root.querySelectorAll<HTMLButtonElement>('[data-preset]'))) {
-            button.addEventListener('click', () => {
-                const preset = button.dataset.preset as QuickPairPreset;
-                void this.quickPair(preset);
-            });
-        }
-    }
-
-    private wireCustomSeekForm(): void {
-        const form = document.getElementById('lobby-custom-seek-form') as HTMLFormElement | null;
+    /**
+     * The "New seek" panel (04-matchmaking.md sec 1.1): the format presets
+     * only fill the form in; "Post seek" is the one submit action. Times
+     * are entered in minutes and converted to the wire's seconds here.
+     */
+    private wireSeekForm(): void {
+        const form = document.getElementById('lobby-seek-form') as HTMLFormElement | null;
 
         if (!form) {
             return;
         }
 
         const kindSelect = form.querySelector<HTMLSelectElement>('[name="kind"]');
-        const toggleFieldVisibility = (): void => {
+        const ratedSelect = form.querySelector<HTMLSelectElement>('[name="rated"]');
+        const presetButtons = Array.from(form.querySelectorAll<HTMLButtonElement>('[data-preset]'));
+
+        const syncFields = (): void => {
             const kind = kindSelect?.value ?? 'realtime';
 
-            for (const el of Array.from(form.querySelectorAll<HTMLElement>('[data-field="realtime"]'))) {
-                el.style.display = 'realtime' === kind ? '' : 'none';
+            for (const el of Array.from(form.querySelectorAll<HTMLElement>('[data-field]'))) {
+                el.hidden = el.dataset.field !== kind;
             }
 
-            for (const el of Array.from(form.querySelectorAll<HTMLElement>('[data-field="correspondence"]'))) {
-                el.style.display = 'correspondence' === kind ? '' : 'none';
+            // Unlimited games are never rated (CreateSeekAction: unrated_time_control).
+            if (ratedSelect) {
+                if ('unlimited' === kind) {
+                    ratedSelect.value = 'false';
+                }
+                ratedSelect.disabled = 'unlimited' === kind;
             }
         };
 
-        kindSelect?.addEventListener('change', toggleFieldVisibility);
-        toggleFieldVisibility();
+        const markPreset = (active: HTMLButtonElement | null): void => {
+            for (const button of presetButtons) {
+                const isActive = button === active;
+                button.classList.toggle('is-primary', isActive);
+                button.classList.toggle('is-outlined', !isActive);
+                button.classList.toggle('is-light', !isActive);
+                button.setAttribute('aria-pressed', isActive ? 'true' : 'false');
+            }
+        };
+
+        const applyPreset = (button: HTMLButtonElement): void => {
+            const {kind, initialMinutes, incrementSeconds, daysPerMove} = button.dataset;
+
+            if (kindSelect && kind) {
+                kindSelect.value = kind;
+            }
+
+            this.setFormValue(form, 'initialMinutes', initialMinutes);
+            this.setFormValue(form, 'incrementSeconds', incrementSeconds);
+            this.setFormValue(form, 'daysPerMove', daysPerMove);
+            syncFields();
+            markPreset(button);
+        };
+
+        // The pill stays highlighted only while the form still matches it.
+        const matchingPreset = (): HTMLButtonElement | null => {
+            const data = new FormData(form);
+
+            return presetButtons.find((button) => {
+                const {kind, initialMinutes, incrementSeconds, daysPerMove} = button.dataset;
+
+                if (kind !== data.get('kind')) {
+                    return false;
+                }
+
+                return 'realtime' === kind
+                    ? initialMinutes === data.get('initialMinutes') && incrementSeconds === data.get('incrementSeconds')
+                    : daysPerMove === data.get('daysPerMove');
+            }) ?? null;
+        };
+
+        for (const button of presetButtons) {
+            button.addEventListener('click', () => applyPreset(button));
+        }
+
+        form.addEventListener('input', () => {
+            syncFields();
+            markPreset(matchingPreset());
+        });
+        form.addEventListener('change', () => {
+            syncFields();
+            markPreset(matchingPreset());
+        });
+
+        const defaultPreset = presetButtons.find((button) => button.dataset.preset === form.dataset.defaultPreset) ?? presetButtons[0];
+
+        if (defaultPreset) {
+            applyPreset(defaultPreset);
+        } else {
+            syncFields();
+        }
 
         form.addEventListener('submit', (submitEvent) => {
             submitEvent.preventDefault();
-            void this.submitCustomSeek(form);
+            void this.submitSeek(form);
         });
     }
 
-    private async submitCustomSeek(form: HTMLFormElement): Promise<void> {
+    private setFormValue(form: HTMLFormElement, name: string, value: string | undefined): void {
+        const field = form.elements.namedItem(name);
+
+        if (undefined !== value && (field instanceof HTMLInputElement || field instanceof HTMLSelectElement)) {
+            field.value = value;
+        }
+    }
+
+    private async submitSeek(form: HTMLFormElement): Promise<void> {
+        if (!form.reportValidity()) {
+            return;
+        }
+
         const formData = new FormData(form);
         const kind = String(formData.get('kind') ?? 'realtime') as CustomSeekInput['kind'];
 
         const input: CustomSeekInput = {
             kind,
-            initialSeconds: 'realtime' === kind ? Number(formData.get('initialSeconds')) : null,
+            initialSeconds: 'realtime' === kind ? Math.round(Number(formData.get('initialMinutes')) * 60) : null,
             incrementSeconds: 'realtime' === kind ? Number(formData.get('incrementSeconds')) : null,
             daysPerMove: 'correspondence' === kind ? Number(formData.get('daysPerMove')) : null,
+            // A disabled <select> is absent from FormData: unlimited is always casual.
             rated: 'true' === formData.get('rated'),
             colorPreference: String(formData.get('colorPreference') ?? 'random') as CustomSeekInput['colorPreference'],
         };
@@ -284,25 +360,6 @@ export class LobbyController {
             this.syncHeartbeat();
         } catch (error) {
             this.reportError('Could not post seek', error);
-        }
-    }
-
-    private async quickPair(preset: QuickPairPreset): Promise<void> {
-        try {
-            const result = await this.api.quickPair(preset);
-            this.mySeekUuid = result.seek.uuid;
-
-            if (result.matched) {
-                this.navigateToGame(result.matched.gameUuid);
-
-                return;
-            }
-
-            this.seeks.set(result.seek.uuid, result.seek);
-            this.render(this.seeks.size);
-            this.syncHeartbeat();
-        } catch (error) {
-            this.reportError('Could not quick-pair', error);
         }
     }
 

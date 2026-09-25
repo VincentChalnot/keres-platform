@@ -1,5 +1,6 @@
 import {GameState} from './models/GameState';
 import {GameAPI} from './network/GameAPI';
+import {GuestGameRecord, LocalGameAPI} from './network/LocalGameAPI';
 import SVGBoardView from './views/SVGBoardView';
 import {GameController} from './controllers/GameController';
 import {IBoardView} from './views/IBoardView';
@@ -91,7 +92,7 @@ class KeresGame {
     private nextMoveBtn: HTMLButtonElement;
     private undoBtn: HTMLButtonElement;
     private resignBtn: HTMLButtonElement | null;
-    private feedbackBtn: HTMLButtonElement;
+    private feedbackBtn: HTMLButtonElement | null;
     private feedbackModal: HTMLDivElement;
     private feedbackModalBody: HTMLElement;
     private feedbackModalClose: HTMLButtonElement;
@@ -104,6 +105,8 @@ class KeresGame {
     private clockBottom: HTMLElement;
     private gameMode: number = 0; // opponent type as int
     private playerWhite: boolean = true; // true if player is white
+    private spectator: boolean = false; // viewer is not a participant (public multiplayer view)
+    private guestRecord: GuestGameRecord | null = null; // browser-only game without an account
     private coordsVisible: boolean = true;
     private clockTimer: ReturnType<typeof setInterval> | null = null;
 
@@ -122,7 +125,7 @@ class KeresGame {
         this.nextMoveBtn = document.getElementById('next-move-btn') as HTMLButtonElement;
         this.undoBtn = document.getElementById('undo-btn') as HTMLButtonElement;
         this.resignBtn = document.getElementById('resign-btn') as HTMLButtonElement | null;
-        this.feedbackBtn = document.getElementById('feedback-btn') as HTMLButtonElement;
+        this.feedbackBtn = document.getElementById('feedback-btn') as HTMLButtonElement | null;
         this.feedbackModal = document.getElementById('feedback-modal') as HTMLDivElement;
         this.feedbackModalBody = document.getElementById('feedback-modal-body') as HTMLElement;
         this.feedbackModalClose = document.getElementById('feedback-modal-close') as HTMLButtonElement;
@@ -137,13 +140,57 @@ class KeresGame {
         // Read game mode and player color from data attributes
         this.gameMode = parseInt(this.boardContainer.getAttribute('data-opponent-type') || '0', 10);
         this.playerWhite = (this.boardContainer.getAttribute('data-player-white') === 'true');
+        this.spectator = (this.boardContainer.getAttribute('data-spectator') === 'true');
+
+        if (this.boardContainer.getAttribute('data-guest') === 'true') {
+            this.guestRecord = this.resolveGuestRecord();
+            if (this.guestRecord) {
+                this.gameMode = this.guestRecord.opponentType;
+                this.playerWhite = this.guestRecord.playerWhite;
+                if (this.gameMode !== OPPONENT_TYPE_AI) {
+                    this.switchSidesBtn?.remove();
+                    this.switchSidesBtn = null;
+                }
+            }
+        }
+    }
+
+    /**
+     * Guest game set-up: `?new=ai|hotseat&side=white|black` (from the
+     * "Play AI or hot-seat" form) starts a fresh game, otherwise the one
+     * saved in this browser resumes. With neither, back to the form.
+     */
+    private resolveGuestRecord(): GuestGameRecord | null {
+        const params = new URLSearchParams(window.location.search);
+        const requested = params.get('new');
+
+        if ('ai' === requested || 'hotseat' === requested) {
+            const record = LocalGameAPI.start(
+                'ai' === requested ? OPPONENT_TYPE_AI : OPPONENT_TYPE_HOTSEAT,
+                'black' !== params.get('side'),
+            );
+            // A reload must resume this game, not start another one.
+            window.history.replaceState(null, '', window.location.pathname);
+
+            return record;
+        }
+
+        const saved = LocalGameAPI.load();
+        if (!saved) {
+            window.location.replace('/play/new');
+        }
+
+        return saved;
     }
 
     async initialize(): Promise<void> {
-        this.hideBanner();
+        const localApi = this.guestRecord ? new LocalGameAPI(this.guestRecord) : null;
+        if (this.boardContainer.getAttribute('data-guest') === 'true' && !localApi) {
+            return; // redirecting to the new-game form
+        }
 
         // Load configuration
-        this.api = new GameAPI();
+        this.api = localApi ?? new GameAPI();
 
         // Initialize view
         this.view = new SVGBoardView(this.gameState) as IBoardView;
@@ -167,10 +214,31 @@ class KeresGame {
             this.controller.initializeMercure(gameUuid);
         }
 
-        // Read moves from data-moves attribute
+        // Read moves from data-moves attribute (or this browser's saved guest game)
         const movesBase64 = this.boardContainer.getAttribute('data-moves') || '';
-        const moves = decodeMoveListFromBase64(movesBase64);
+        const moves = localApi ? localApi.getMoves() : decodeMoveListFromBase64(movesBase64);
         await this.controller.setMoves(moves);
+
+        if (localApi) {
+            // The AI's replies arrive where a Mercure update would for a persisted game.
+            localApi.onRemoteUpdate((update) => {
+                void this.controller.applyRemoteUpdate(update).then(() => this.refreshUI());
+            });
+            const resignation = await localApi.restoredResignation();
+            if (resignation) {
+                await this.controller.applyRemoteUpdate({...resignation, seq: moves.length, rating: null});
+            }
+            const board = this.gameState.getBoard();
+            if (board) {
+                localApi.requestAiMoveIfDue(board);
+            }
+            window.addEventListener('moveSubmitted', () => {
+                const current = this.gameState.getBoard();
+                if (current) {
+                    localApi.requestAiMoveIfDue(current);
+                }
+            });
+        }
 
         // In AI and multiplayer modes, orientation is a fixed per-player
         // setting: flip whenever the viewer plays Black, regardless of
@@ -182,6 +250,14 @@ class KeresGame {
         else if (this.gameMode === OPPONENT_TYPE_HOTSEAT && moves.length % 2 === 1) {
             // Odd number of moves means black just played, so show white's perspective
             await this.controller.flipBoard();
+        }
+
+        // Settings -> Board & gameplay: initial state of the two in-page toggles.
+        if (this.boardContainer.getAttribute('data-show-coordinates') === 'false') {
+            this.handleToggleCoords();
+        }
+        if (this.boardContainer.getAttribute('data-show-threats') === 'false' && this.controller.isShowThreats()) {
+            this.controller.toggleShowThreats();
         }
 
         // Setup UI event listeners
@@ -270,7 +346,7 @@ class KeresGame {
         if (this.resignBtn) {
             this.resignBtn.addEventListener('click', () => void this.handleResign());
         }
-        this.feedbackBtn.addEventListener('click', () => void this.openFeedbackModal());
+        this.feedbackBtn?.addEventListener('click', () => void this.openFeedbackModal());
         this.feedbackModalClose.addEventListener('click', () => this.closeFeedbackModal());
         this.feedbackModal.querySelector('.modal-background')?.addEventListener('click', () => this.closeFeedbackModal());
 
@@ -465,57 +541,60 @@ class KeresGame {
     }
 
     /**
-     * Game-over/waiting banner. Deliberately never announces "X's turn to
-     * play" for an ongoing game — the player-info-row clocks communicate
-     * that already; this banner is reserved for information the clocks
-     * can't show (waiting states, and the final result once the game ends).
+     * The status bar under the board. Always visible: it says whose turn
+     * it is (highlighted with the active-clock accent when it's the
+     * viewer's), what the viewer is waiting for, or the final result.
      */
     private updateStatus(): void {
         const board = this.gameState.getBoard();
 
         if (!board) {
-            this.setBanner('Loading...', false);
+            this.setBanner('Loading…', 'muted');
             return;
         }
 
         if (board.isGameOver()) {
-            this.setBanner(this.describeGameOver(), true);
+            this.setBanner(this.describeGameOver(), 'game-over');
             if (this.askEngineBtn) this.askEngineBtn.disabled = true;
             return;
         }
 
-        if (this.controller.isBoardLocked()) {
-            if (this.controller.canNavigateToNext()) {
-                this.setBanner('Viewing history - Navigate to latest move to continue playing', false);
-            } else if (this.gameMode === OPPONENT_TYPE_AI) {
-                this.setBanner('Waiting for AI...', false);
-            } else if (this.gameMode === OPPONENT_TYPE_MULTIPLAYER) {
-                this.setBanner('Waiting for opponent...', false);
-            } else {
-                this.hideBanner();
-            }
+        if (this.controller.canNavigateToNext()) {
+            this.setBanner('Viewing history – go to the latest move to continue playing', 'muted');
             if (this.askEngineBtn) this.askEngineBtn.disabled = true;
             return;
         }
 
-        // Normal ongoing turn: the clock communicates whose turn it is.
-        this.hideBanner();
-        if (this.askEngineBtn) this.askEngineBtn.disabled = false;
+        if (this.spectator) {
+            this.setBanner(board.whiteToMove ? 'White to move' : 'Black to move', 'muted');
+            if (this.askEngineBtn) this.askEngineBtn.disabled = true;
+            return;
+        }
+
+        if (this.gameMode === OPPONENT_TYPE_HOTSEAT) {
+            this.setBanner(board.whiteToMove ? 'White to move' : 'Black to move', 'your-turn');
+            if (this.askEngineBtn) this.askEngineBtn.disabled = false;
+            return;
+        }
+
+        if (board.whiteToMove !== this.playerWhite) {
+            this.setBanner(this.gameMode === OPPONENT_TYPE_AI ? 'Waiting for AI…' : 'Waiting for opponent…', 'muted');
+            if (this.askEngineBtn) this.askEngineBtn.disabled = true;
+            return;
+        }
+
+        this.setBanner('Your turn', 'your-turn');
+        if (this.askEngineBtn) this.askEngineBtn.disabled = this.controller.isBoardLocked();
     }
 
-    private setBanner(text: string, gameOver: boolean): void {
+    private setBanner(text: string, tone: 'muted' | 'your-turn' | 'game-over'): void {
         this.gameStatusBanner.textContent = text;
-        this.gameStatusBanner.classList.remove('is-hidden', 'is-dark', 'is-success', 'is-warning');
-        if (gameOver) {
+        this.gameStatusBanner.classList.remove('is-hidden', 'is-muted', 'is-your-turn', 'is-success', 'is-warning');
+        if ('game-over' === tone) {
             this.gameStatusBanner.classList.add(null === this.controller.getResult() || 'draw' === this.controller.getResult() ? 'is-warning' : 'is-success');
         } else {
-            this.gameStatusBanner.classList.add('is-dark');
+            this.gameStatusBanner.classList.add('muted' === tone ? 'is-muted' : 'is-your-turn');
         }
-    }
-
-    private hideBanner(): void {
-        this.gameStatusBanner.classList.add('is-hidden');
-        this.gameStatusBanner.textContent = '';
     }
 
     private describeGameOver(): string {

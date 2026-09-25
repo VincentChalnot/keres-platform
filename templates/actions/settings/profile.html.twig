@@ -1,0 +1,88 @@
+{% extends 'actions/settings/_layout.html.twig' %}
+
+{% block title %}Profile - Settings{% endblock %}
+
+{% block settings_content %}
+    {{ form_start(form, {attr: {novalidate: 'novalidate', class: 'box'}}) }}
+        <h2 class="title is-4">Profile</h2>
+        {{ form_errors(form) }}
+
+        <div class="field">
+            {{ form_label(form.username, null, {label_attr: {class: 'label'}}) }}
+            <div class="control">
+                {{ form_widget(form.username, {attr: {class: 'input'}}) }}
+            </div>
+            {% if canChangeUsername %}
+                <p class="help">You can change your username once every 12 months. After this change, the next one will be available on {{ 'now'|date_modify('+12 months')|date('Y-m-d') }}.</p>
+            {% else %}
+                <p class="help">Next change available on {{ nextUsernameChangeAt|date('Y-m-d') }}. Until then you can only change its capitalisation.</p>
+            {% endif %}
+            {{ form_errors(form.username) }}
+        </div>
+
+        <div class="field">
+            {{ form_label(form.displayName, null, {label_attr: {class: 'label'}}) }}
+            <div class="control">
+                {{ form_widget(form.displayName, {attr: {class: 'input'}}) }}
+            </div>
+            <p class="help">Shown instead of your username where space allows.</p>
+            {{ form_errors(form.displayName) }}
+        </div>
+
+        <div class="columns">
+            <div class="column">
+                <div class="field">
+                    {{ form_label(form.firstName, null, {label_attr: {class: 'label'}}) }}
+                    <div class="control">
+                        {{ form_widget(form.firstName, {attr: {class: 'input'}}) }}
+                    </div>
+                    {{ form_errors(form.firstName) }}
+                </div>
+            </div>
+            <div class="column">
+                <div class="field">
+                    {{ form_label(form.lastName, null, {label_attr: {class: 'label'}}) }}
+                    <div class="control">
+                        {{ form_widget(form.lastName, {attr: {class: 'input'}}) }}
+                    </div>
+                    {{ form_errors(form.lastName) }}
+                </div>
+            </div>
+        </div>
+
+        <div class="field">
+            {{ form_label(form.email, null, {label_attr: {class: 'label'}}) }}
+            <div class="control">
+                {{ form_widget(form.email, {attr: {class: 'input'}}) }}
+            </div>
+            <p class="help">Your sign-in email. It can't be changed here.</p>
+        </div>
+
+        <div class="columns">
+            <div class="column">
+                <div class="field">
+                    {{ form_label(form.locale, null, {label_attr: {class: 'label'}}) }}
+                    <div class="control">
+                        {{ form_widget(form.locale, {fullwidth: true}) }}
+                    </div>
+                    {{ form_errors(form.locale) }}
+                </div>
+            </div>
+            <div class="column">
+                <div class="field">
+                    {{ form_label(form.country, null, {label_attr: {class: 'label'}}) }}
+                    <div class="control">
+                        {{ form_widget(form.country, {fullwidth: true}) }}
+                    </div>
+                    {{ form_errors(form.country) }}
+                </div>
+            </div>
+        </div>
+
+        <div class="field mt-5">
+            <div class="control">
+                {{ form_widget(form.submit, {attr: {class: 'button is-primary is-rounded'}}) }}
+            </div>
+        </div>
+    {{ form_end(form) }}
+{% endblock %}
