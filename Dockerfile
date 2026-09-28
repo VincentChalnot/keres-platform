@@ -52,7 +52,14 @@ RUN npm run build
 # Prod FrankenPHP image
 FROM frankenphp_base AS frankenphp_prod
 
+# Git tag (if the deployed commit is tagged) or short commit hash, computed by
+# CI (.github/workflows/ci.yaml) via `git describe --tags --always` and baked
+# in as a build ARG. Shown in the footer to spot version drift between
+# production and local builds. Dev images have no baked value — the
+# entrypoint script computes it at container start from the bind-mounted .git.
+ARG APP_VERSION=unknown
 ENV APP_ENV=prod
+ENV APP_VERSION=$APP_VERSION
 
 # Build-time-only placeholders — nothing here reaches a real service. They
 # exist purely so `composer run-script post-install-cmd` (which runs

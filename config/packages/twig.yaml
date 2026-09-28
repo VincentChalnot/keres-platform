@@ -6,6 +6,10 @@ twig:
     globals:
         static_site_url: '%env(STATIC_SITE_URL)%'
         mercure_cookie_ttl: '%mercure.default_cookie_lifetime%'
+        # Git tag or short commit hash of the deployed code (see Dockerfile /
+        # frankenphp/docker-entrypoint.sh for how APP_VERSION is populated).
+        # Falls back to "unknown" when the env var isn't set at all (e.g. test).
+        app_version: '%env(default:app_version_unknown:APP_VERSION)%'
 
 when@test:
     twig:

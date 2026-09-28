@@ -35,6 +35,21 @@ if [ "$1" = 'frankenphp' ] || [ "$1" = 'php' ] || [ "$1" = 'bin/console' ]; then
 	# Or about an error in project initialization
 	php bin/console -V
 
+	# Prod images bake APP_VERSION in at build time (see Dockerfile, ARG
+	# APP_VERSION set by CI via `git describe --tags --always`). Dev
+	# containers bind-mount the repo (.:/app), so compute it here instead,
+	# straight from the mounted .git, so the footer always reflects what's
+	# actually checked out locally.
+	if [ -z "$APP_VERSION" ]; then
+		if [ -d .git ] && command -v git >/dev/null 2>&1; then
+			git config --global --add safe.directory /app
+			APP_VERSION=$(git describe --tags --always --dirty 2>/dev/null || echo unknown)
+		else
+			APP_VERSION=unknown
+		fi
+		export APP_VERSION
+	fi
+
 	if [ -n "$DATABASE_URL" ]; then
 		echo 'Waiting for database to be ready...'
 		ATTEMPTS_LEFT_TO_REACH_DATABASE=60
