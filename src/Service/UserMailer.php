@@ -22,13 +22,14 @@ class UserMailer
     public function __construct(
         private readonly MailerInterface $mailer,
         private readonly LoggerInterface $logger,
+        private readonly string $mailerFromAddress,
     ) {
     }
 
     public function sendResetPasswordMail(User $user, string $resetUrl): void
     {
         $email = (new TemplatedEmail())
-            ->from('no-reply@keres.fr')
+            ->from($this->mailerFromAddress)
             ->to($user->getEmail())
             ->subject('Reset your Keres password')
             ->htmlTemplate('email/reset_password.html.twig')
@@ -45,7 +46,7 @@ class UserMailer
     public function sendAccountAlreadyExistsMail(User $user, string $lostPasswordUrl): void
     {
         $email = (new TemplatedEmail())
-            ->from('no-reply@keres.fr')
+            ->from($this->mailerFromAddress)
             ->to($user->getEmail())
             ->subject('Someone tried to create an account with your email')
             ->htmlTemplate('email/account_exists.html.twig')

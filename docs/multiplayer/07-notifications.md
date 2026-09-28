@@ -563,12 +563,14 @@ the three env lines and writes nothing: key material never touches the repo.
 |---|---|---|
 | `VAPID_PUBLIC_KEY` | base64url, 87 chars | `WebPushSender`, **and** exposed to the browser (§4.3) |
 | `VAPID_PRIVATE_KEY` | base64url, 43 chars | `WebPushSender` only. Never rendered, never logged |
-| `VAPID_SUBJECT` | `mailto:no-reply@keres.fr` or `https://playkeres.com` | `WebPushSender`; the JWT `sub` claim, so a push service can contact the operator |
+| `VAPID_SUBJECT` | `mailto:no-reply@playkeres.com` or `https://playkeres.com` | `WebPushSender`; the JWT `sub` claim, so a push service can contact the operator |
 
-`mailto:no-reply@keres.fr` matches the sender hard-coded at
-`src/Service/UserMailer.php:26`. Wire them through the existing global bind
-convention (`AGENTS.md`: `$backendApiUrl` receives `BACKEND_API_URL` via the
-`bind` in `services.yaml`):
+`mailto:no-reply@playkeres.com` matches the (now configurable, see
+PHP-SYMFONY-3) sender at `src/Service/UserMailer.php`, bound to
+`$mailerFromAddress` / `MAILER_FROM_ADDRESS` (default `no-reply@` the bare
+`SERVER_NAME`, e.g. `no-reply@playkeres.com`). Wire `VAPID_SUBJECT` through
+the same existing global bind convention (`AGENTS.md`: `$backendApiUrl`
+receives `BACKEND_API_URL` via the `bind` in `services.yaml`):
 
 ```yaml
 # config/services.yaml, services._defaults.bind
@@ -1343,7 +1345,7 @@ Why the nudge is in scope rather than out:
 | Frequency | At most one per `(game, player, move number)`. Never a digest, never a second reminder |
 | Gate | `email.correspondenceNudge` (default `true`) plus a working DSN |
 | Content | Opponent username, time control, remaining time, a deep link to `/play/{uuid}`, and a one-click link to the preferences page. No board image |
-| Sender | `UserMailer::sendCorrespondenceNudge(User, Game)`, `from('no-reply@keres.fr')` matching `UserMailer.php:26`, templates `email/correspondence_nudge.html.twig` and `.txt.twig` matching the existing pair |
+| Sender | `UserMailer::sendCorrespondenceNudge(User, Game)`, `from($mailerFromAddress)` (`MAILER_FROM_ADDRESS`, same as the other `UserMailer` methods), templates `email/correspondence_nudge.html.twig` and `.txt.twig` matching the existing pair |
 | Prod prerequisite | A real `MAILER_DSN` in `deploy/.env`, plus SPF/DKIM on the sending domain. Until then the send is a silent no-op through `null://null` and no code path fails |
 | Failure | Never blocks the clock or the move. The handler catches `TransportExceptionInterface`, logs `warning`, and acks |
 

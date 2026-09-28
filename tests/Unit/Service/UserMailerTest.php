@@ -24,13 +24,15 @@ use Symfony\Component\Mailer\MailerInterface;
  */
 final class UserMailerTest extends TestCase
 {
+    private const string FROM_ADDRESS = 'no-reply@app.example.test';
+
     public function testSuccessfulSendDoesNotLogAnything(): void
     {
         $mailer = $this->createMock(MailerInterface::class);
         $mailer->expects(self::once())->method('send');
 
         $logger = new RecordingLogger();
-        $userMailer = new UserMailer($mailer, $logger);
+        $userMailer = new UserMailer($mailer, $logger, self::FROM_ADDRESS);
 
         $userMailer->sendResetPasswordMail(new User('victim@example.com'), 'https://app.example.test/reset?token=abc');
 
@@ -43,7 +45,7 @@ final class UserMailerTest extends TestCase
             json_encode([
                 'message' => 'invalid argument(s)',
                 'to' => [['email' => 'victim@example.com']],
-                'from' => ['email' => 'no-reply@keres.fr'],
+                'from' => ['email' => self::FROM_ADDRESS],
             ], \JSON_THROW_ON_ERROR),
             ['http_code' => 400]
         )))->request('POST', 'https://api.scaleway.example/emails');
@@ -56,7 +58,7 @@ final class UserMailerTest extends TestCase
         $mailer->method('send')->willThrowException($exception);
 
         $logger = new RecordingLogger();
-        $userMailer = new UserMailer($mailer, $logger);
+        $userMailer = new UserMailer($mailer, $logger, self::FROM_ADDRESS);
 
         $caught = null;
 
@@ -73,7 +75,7 @@ final class UserMailerTest extends TestCase
         self::assertSame('error', $record['level']);
         self::assertStringContainsString('invalid argument(s)', $record['context']['response_body']);
         self::assertStringNotContainsString('victim@example.com', $record['context']['response_body']);
-        self::assertStringNotContainsString('no-reply@keres.fr', $record['context']['response_body']);
+        self::assertStringNotContainsString(self::FROM_ADDRESS, $record['context']['response_body']);
 
         // Belt and braces: no email address anywhere in the whole log record, not just the body field.
         self::assertStringNotContainsString('victim@example.com', json_encode($record, \JSON_THROW_ON_ERROR));
@@ -87,7 +89,7 @@ final class UserMailerTest extends TestCase
         $mailer->method('send')->willThrowException($exception);
 
         $logger = new RecordingLogger();
-        $userMailer = new UserMailer($mailer, $logger);
+        $userMailer = new UserMailer($mailer, $logger, self::FROM_ADDRESS);
 
         $caught = null;
 
