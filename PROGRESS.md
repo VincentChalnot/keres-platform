@@ -122,4 +122,84 @@ unmonitored notice + working contact link, and — correctly — no unsubscribe
 line on either mail. Plain-text parts confirmed clean (no stray blank lines
 from the unrendered conditional).
 
-**Next action**: await Main's next task (T3).
+**Next action**: T3 (legal pages) was next; see below.
+
+---
+
+## T3 — Legal pages (mentions légales, CGU, politique de confidentialité)
+**Status**: done. **Commits**: `keres-platform` `3a8e1b5`, `keres-website` `f4981bc`.
+
+**What changed**: This content belongs on the marketing site
+(`../keres-website`, Hugo), not this repo — created `v1-integration` there
+too (first time touching it this run) and did the substantive work there.
+
+- **Mentions légales**: filled in the real editor identity (SIREN 889 048 229,
+  SIRET 889 048 229 00039, APE 6202A, 7 rue de Bruxelles 69100 Villeurbanne)
+  from the identity table verbatim, replacing the old bracket placeholders.
+  Replaced the single-provider hosting placeholder with all 4 real
+  providers — IONOS SE (app hosting), Cloudflare, Inc. (static site/CDN),
+  Google Cloud France (AI compute), Scaleway SAS (transactional email) —
+  each with a legal name + registered address fetched from that provider's
+  own published legal/imprint page (not memory). GDPR section now points to
+  the new privacy policy instead of duplicating it; cookies section states
+  plainly that only a strictly-necessary auth cookie is used, no banner
+  needed.
+- **CGV → CGU**: the existing `/terms-of-sale` page was a full French
+  Conditions Générales de *Vente* for a physical "Collector's Edition"
+  board game (pre-orders, 45€, 14-day withdrawal) — inapplicable boilerplate
+  for a platform with no store/payment/stock. Deleted it and replaced with
+  real Conditions Générales d'*Utilisation* at a new slug
+  (`conditions-generales-d-utilisation` FR / `terms-of-use` EN): account
+  creation, user conduct, IP, service availability, account deletion
+  (cross-linking the privacy policy for retention detail), liability,
+  French law/mediation. i18n key prefix renamed `terms_` → `cgu_` too, not
+  just the content.
+- **New Politique de confidentialité / Privacy Policy page**: data
+  collected, purposes/legal basis, cookies (auth-only, explicitly no
+  consent banner required), data recipients (cross-linking the hosting
+  list), retention — including the required clause that games from
+  deleted accounts are kept in irreversibly anonymized form (user↔game
+  link severed, no recoverable mapping) and usable for model training —
+  rights with a stated 30-day response window pointing at the existing
+  contact form (no dedicated privacy inbox or self-service export/delete
+  flow exists yet, and the page doesn't imply one does). English is a full
+  translation (logged as a minor decision, not a French-law stub).
+- Wired into both footers: `keres-website`'s `layouts/partials/footer.html`
+  and the homepage's own duplicated footer block in `layouts/index.html`
+  (pre-existing duplication, not introduced here) now link
+  legal-notice/terms-of-use/privacy-policy/contact. This repo's
+  `templates/base.html.twig` footer updated from `/terms-of-sale` to
+  `/terms-of-use`, plus a new `/privacy-policy` link.
+- No date of birth or any other non-public operator detail appears
+  anywhere, per the brief. No cookie-consent banner was added — grepped
+  both repos for any non-essential cookie/tracker first; found none, so
+  none was needed per the brief's own reasoning.
+
+**Verified live**: `keres-website` has no PHP CS Fixer; ran its actual CI
+build command (`hugo --environment production --minify --gc`) clean, 10 EN
+/ 8 FR pages, zero errors. Brought up `keres-website`'s own dev stack for
+the first time this session (`docker compose up`, plus a one-off `npm ci`
+inside the Hugo image — `node_modules` wasn't present) and drove it via
+Playwright against `https://local.playkeres.com/`: screenshotted
+`/legal-notice/`, `/terms-of-use/`, `/privacy-policy/` and their French
+equivalents, confirmed every hosting provider/address renders correctly,
+confirmed the old `/terms-of-sale/`/`/fr/conditions-generales-de-vente/`
+URLs now 404 (had to clear a stale gitignored `public/`/`resources/_gen`
+build-output directory left over from before this session — Hugo doesn't
+clean orphaned output by default — to get an accurate result), and
+followed every cross-link (legal notice ↔ privacy policy ↔ contact form ↔
+terms of use) to confirm each resolves to the correctly localized page in
+both languages. In `keres-platform`: `composer cs:check` clean,
+`bin/console lint:twig` clean, `bin/phpunit` 45/45 green (unrelated to this
+change, run for regression safety), and confirmed via Playwright
+(dev-login → `/login` page footer) that all three links render with the
+correct hrefs and that clicking through to Terms of Use actually lands on
+the real, newly-written page.
+
+**Decisions logged**: CGU rename rationale, EN-full-translation-vs-stub
+call, the IONOS address verification path (two-source first-party
+corroboration, not a single clean page load — see DECISIONS.md), and an
+observation (not acted on) that pre-existing "keres.fr" domain mentions
+elsewhere on the legal notice page are stale but out of scope for this task.
+
+**Next action**: await Main's next task (T4).

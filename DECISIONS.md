@@ -34,3 +34,21 @@ Reversibility: trivial (CSS values only, no structural/schema lock-in).
 ### T2 — Where should the "unsubscribe" hook live if neither current mail uses it?
 Decision: `_layout.html.twig`/`_layout.txt.twig` accept an optional `unsubscribe_url` context variable and only render the footer line when it's truthy; neither `reset_password` nor `account_exists` passes it. Documented in both layout files' leading comment that it must point at `/settings/notifications` (`settings_notifications` route) for a future non-critical mail, since all recipients are logged-in users (no anonymous unsubscribe-token system needed).
 Reversibility: trivial.
+
+### T3 — CGV → CGU repurpose: slug, i18n key prefix, and shortcode rename
+Decision: Deleted `content/{fr,en}/terms-of-sale.md` and `layouts/shortcodes/i18n_terms.html` (all `terms_*` i18n keys) in `keres-website`; replaced with `content/{fr,en}/terms-of-use.md` (FR slug `conditions-generales-d-utilisation`) and `layouts/shortcodes/i18n_cgu.html` (all `cgu_*` keys), entirely new terms-of-use content (no store/sale language — account creation, conduct, IP, availability, account deletion cross-linking the new privacy policy, liability, French law/mediation).
+Rationale: Directed explicitly by the orchestrator (the platform has no store/payment/stock; the old CGV — pre-order, 45€ Collector's Edition, 14-day withdrawal right, delivery — described a product that doesn't exist in scope). Renaming the i18n key prefix (not just the page content) avoids a stale "terms_" prefix implying "terms of sale" for a future maintainer.
+Reversibility: moderate (content + slug + i18n key rename; URLs change, so any external link to the old `/terms-of-sale`/`/conditions-generales-de-vente` slugs now 404s — acceptable since this is a pre-launch content fix, not a live page with inbound links to preserve).
+
+### T3 — New Privacy Policy page: English translated in full vs. FR-only + note
+Decision: Wrote the English `privacy-policy.md`/`i18n_privacy.html` content as a full translation, not a "governed by French law, see the French version" stub.
+Rationale: The brief left this open ("your call, log it either way"). Full translation keeps the `en.toml`/`fr.toml` key-count lockstep convention (`AGENTS.md`: "keep en.toml and fr.toml in lockstep") intact and gives English-reading users (the platform's own UI is English-first) the actual policy rather than a language-gated stub.
+Reversibility: trivial (translation text only).
+
+### T3 — IONOS legal-entity/address verification path
+Decision: Cited "IONOS SE, Elgendorfer Straße 57, 56410 Montabaur, Germany" in the legal notice.
+Rationale: `ionos.de/impressum` (the exact retail Impressum) is a client-side-rendered Next.js page — my fetch tool returned the page shell/title ("Impressum | IONOS SE", confirming the entity name) but not the JS-hydrated address block. I directly read a second IONOS-owned first-party page, `ionos-group.com/imprint.html`, which explicitly states the identical street address for the sibling/parent entity at the same registered office. Combined with the web-search tool's own citation extraction (sourced from ionos.de/impressum directly, quoting the same address), this is corroborated first-party confirmation, not a guess — not marked `{{TODO}}`. Flagging the caveat here per the brief's "don't rely on memory" instruction, in case Main wants a stricter single-page confirmation.
+Reversibility: trivial (one address line).
+
+### T3 — Pre-existing "keres.fr" domain mentions left untouched
+Observation (not a decision requiring action): `legal_editor_text`/`legal_ip_text1`/`legal_ip_text2`/`legal_links_text` still say "Le site keres.fr" / "keres.fr", while the actual production domain is `playkeres.com` (per this repo's own `AGENTS.md`). This predates T3 and wasn't part of the identity-table/hosting/privacy scope given — left as-is rather than drive-by-fixing unrelated stale content. New content written for T3 (CGU, privacy policy) correctly uses `playkeres.com`/`app.playkeres.com`.
