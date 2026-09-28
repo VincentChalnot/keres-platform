@@ -15,6 +15,7 @@ services:
         bind:
             $backendApiUrl: '%env(BACKEND_API_URL)%'
             $aiBackendApiUrl: '%env(AI_BACKEND_API_URL)%'
+            $mailerFromAddress: '%env(MAILER_FROM_ADDRESS)%'
             int $cookieLifetime: '%mercure.default_cookie_lifetime%'
 
     # Autoconfigure every EnvironmentCheckerInterface implementation as a

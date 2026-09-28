@@ -66,6 +66,10 @@ x-app-env: &app-env
   BACKEND_API_URL: ${BACKEND_API_URL:-http://backend:3000}
   AI_BACKEND_API_URL: ${AI_BACKEND_API_URL:-http://backend:3000}
   MAILER_DSN: ${MAILER_DSN:-smtp://mailer:1025}
+  # Sender address for outgoing mail (password reset, etc). Defaults to the
+  # bare SERVER_NAME (before it's shadowed with the app. subdomain above),
+  # same derivation as STATIC_SITE_URL/SESSION_COOKIE_DOMAIN.
+  MAILER_FROM_ADDRESS: ${MAILER_FROM_ADDRESS:-no-reply@${SERVER_NAME:-local.playkeres.com}}
   CORS_ALLOW_ORIGIN: '${CORS_ALLOW_ORIGIN:-^https://(local\.playkeres\.com|playkeres\.com)$}'
   # Blank unless filled in .env — OIDC login for that provider simply stays
   # unavailable until configured. See .env.example for callback URL setup.
