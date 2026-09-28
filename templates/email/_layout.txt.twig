@@ -1,0 +1,14 @@
+{# Shared transactional-email layout, plain-text counterpart of
+ # _layout.html.twig. See that file for the unsubscribe_url contract - only
+ # non-critical mail should ever pass it.
+ #}
+{% block content %}{% endblock %}
+
+--
+This address is unmonitored and cannot receive replies.
+Need help? Contact us: {{ static_site_url }}/contact
+{%- if unsubscribe_url is defined and unsubscribe_url %}
+
+You're receiving this because of your Keres notification settings.
+Manage email preferences: {{ unsubscribe_url }}
+{%- endif %}

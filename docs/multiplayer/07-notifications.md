@@ -563,12 +563,12 @@ the three env lines and writes nothing: key material never touches the repo.
 |---|---|---|
 | `VAPID_PUBLIC_KEY` | base64url, 87 chars | `WebPushSender`, **and** exposed to the browser (§4.3) |
 | `VAPID_PRIVATE_KEY` | base64url, 43 chars | `WebPushSender` only. Never rendered, never logged |
-| `VAPID_SUBJECT` | `mailto:no-reply@playkeres.com` or `https://playkeres.com` | `WebPushSender`; the JWT `sub` claim, so a push service can contact the operator |
+| `VAPID_SUBJECT` | `mailto:noreply@playkeres.com` or `https://playkeres.com` | `WebPushSender`; the JWT `sub` claim, so a push service can contact the operator |
 
-`mailto:no-reply@playkeres.com` matches the (now configurable, see
+`mailto:noreply@playkeres.com` matches the (now configurable, see
 PHP-SYMFONY-3) sender at `src/Service/UserMailer.php`, bound to
-`$mailerFromAddress` / `MAILER_FROM_ADDRESS` (default `no-reply@` the bare
-`SERVER_NAME`, e.g. `no-reply@playkeres.com`). Wire `VAPID_SUBJECT` through
+`$mailerFromAddress` / `MAILER_FROM_ADDRESS` (default `noreply@` the bare
+`SERVER_NAME`, e.g. `noreply@playkeres.com`). Wire `VAPID_SUBJECT` through
 the same existing global bind convention (`AGENTS.md`: `$backendApiUrl`
 receives `BACKEND_API_URL` via the `bind` in `services.yaml`):
 

@@ -64,4 +64,62 @@ failures — see DECISIONS.md. Judged non-blocking since `MailerError` +
 Sentry still fully surface the failure; flagging in case Main wants the
 diagnostic granularity restored via `MailerFailureListener` instead.
 
-**Next action**: await Main's next task (T2).
+**Next action**: T2 (email templating) is next.
+
+---
+
+## T2 — Email templating
+**Status**: done. **Commit**: `47685f0`.
+
+**What changed**: Built a shared transactional-email layout —
+`templates/email/_layout.html.twig` (table-based, fully inline-styled: dark
+header banner with the "KERES" wordmark in the site's primary gold, cream
+content card, muted footer) and `templates/email/_layout.txt.twig` (plain
+text counterpart) — and ported both existing mails
+(`reset_password.{html,txt}.twig`, `account_exists.{html,txt}.twig`) onto it
+via `{% extends %}`, replacing the previous bare `<p>`-only markup with no
+layout at all. Colors/fonts pulled from `../keres-website/tailwind.config.js`
+(`keres.primary #e19e5b`, `keres.dark #55442d`, `keres.light #f8f0e6`,
+`keres.surface #1a1a1a`) and this repo's own `assets/app.scss` (same values,
+plus the `color:#1a1208` on-primary-button convention, reused for the CTA
+buttons). Fonts fall back to `Georgia, 'Times New Roman', Times, serif`
+web-safe stack — the site's Carolingia/RomanSerif webfonts have no
+email-safe loading path. No `<style>` block, no external stylesheet, no
+remote font — every rule is an inline `style="..."` attribute.
+
+Sender address: changed the `no-reply@` default to `noreply@` (literal,
+no hyphen, per the brief) in `compose.yaml`, `deploy/compose.yaml`, both
+`.env.example` files' comments, `docs/multiplayer/07-notifications.md`'s
+`VAPID_SUBJECT` cross-reference, and `UserMailerTest`'s test constant.
+Confirmed (grep, no matches) that nothing anywhere sets a `Reply-To` header —
+stays that way, matches the brief's "no Reply-To" requirement.
+
+Footer: both mails' footer states the address is unmonitored and links to
+`{{ static_site_url }}/contact` (the marketing site's real contact page, not
+the platform's JSON `/api/contact` POST target). Unsubscribe: the layout
+accepts an optional `unsubscribe_url` context variable and renders a
+"manage email preferences" line only when it's set — neither of the two
+existing mails (password reset, account-exists security notice) passes it,
+since both are critical/transactional and there's nothing to unsubscribe
+from; wired to point at `/settings/notifications`
+(`settings_notifications` route) whenever a future non-critical mail needs
+it.
+
+**Verified live**: `bin/console lint:twig templates/email/` (6 files, all
+valid). `bin/phpunit` (45 tests, all green — no template-shape assumptions
+broken). `composer cs:check` clean. Via Playwright against
+`https://app.local.playkeres.com/`: dev-logged-in as a throwaway user,
+drove `/login/lost-password` (reset-password mail) and `/register` with
+that same already-registered email (account-exists mail). Both landed in
+Mailpit (temporary `MAILER_DSN=smtp://mailer:1025` override for the
+verification window only, restored immediately after — the local `.env`
+points at a real Scaleway project, never touched). Confirmed via the
+Mailpit API (`GET /api/v1/message/{id}`) and a rendered screenshot: correct
+`noreply@local.playkeres.com` sender, dark header banner with gold "KERES"
+wordmark, cream card body, gold pill CTA button matching the site's
+`is-primary is-rounded` buttons, correct subject/body copy, footer with the
+unmonitored notice + working contact link, and — correctly — no unsubscribe
+line on either mail. Plain-text parts confirmed clean (no stray blank lines
+from the unrendered conditional).
+
+**Next action**: await Main's next task (T3).

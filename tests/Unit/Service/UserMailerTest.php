@@ -24,7 +24,7 @@ use Symfony\Component\Mailer\MailerInterface;
  */
 final class UserMailerTest extends TestCase
 {
-    private const string FROM_ADDRESS = 'no-reply@app.example.test';
+    private const string FROM_ADDRESS = 'noreply@app.example.test';
 
     public function testSuccessfulSendDoesNotLogAnything(): void
     {

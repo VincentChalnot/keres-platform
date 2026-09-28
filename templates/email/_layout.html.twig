@@ -1,0 +1,61 @@
+{# Shared transactional-email layout.
+ #
+ # Inline styles only - email clients strip <link rel="stylesheet"> and most
+ # ignore/strip a <head><style> block, and none load remote webfonts, so this
+ # cannot reuse assets/app.scss. Colors are copied from the marketing site's
+ # keres-* palette (../keres-website/tailwind.config.js) and this repo's own
+ # assets/app.scss Bulma overrides, which use the same values:
+ #   keres.primary #e19e5b   keres.dark    #55442d   keres.bg      #010101
+ #   keres.light   #f8f0e6   keres.surface #1a1a1a
+ # Fonts: the site's Carolingia/RomanSerif webfonts have no email-safe way to
+ # load, so this falls back to a plain serif stack that approximates them.
+ #
+ # Pass `unsubscribe_url` from the context to render the "manage email
+ # preferences" footer line - only for non-critical mail. Transactional/
+ # security mail (password reset, account-exists notice) must never set it:
+ # there is nothing to "unsubscribe" from, and offering to would be misleading.
+ #}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="color-scheme" content="light">
+    <title>{% block title %}Keres{% endblock %}</title>
+</head>
+<body style="margin:0; padding:0; background-color:#efe6d6; font-family: Georgia, 'Times New Roman', Times, serif;">
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color:#efe6d6;">
+    <tr>
+        <td align="center" style="padding:24px 16px;">
+            <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="max-width:560px;">
+                <tr>
+                    <td style="background-color:#1a1a1a; padding:20px 32px; border-radius:8px 8px 0 0;">
+                        <span style="font-family: Georgia, 'Times New Roman', Times, serif; font-size:22px; font-weight:bold; color:#e19e5b; letter-spacing:0.06em;">KERES</span>
+                    </td>
+                </tr>
+                <tr>
+                    <td style="background-color:#f8f0e6; padding:32px; color:#4a3a26; font-size:16px; line-height:1.6;">
+                        {% block content %}{% endblock %}
+                    </td>
+                </tr>
+                <tr>
+                    <td style="background-color:#f8f0e6; padding:0 32px 28px 32px; border-radius:0 0 8px 8px; color:#8a7a63; font-size:12px; line-height:1.6; border-top:1px solid #e1c499;">
+                        <p style="margin:20px 0 0 0;">
+                            This address is unmonitored and cannot receive replies.
+                            Need help? <a href="{{ static_site_url }}/contact" style="color:#8a7a63; text-decoration:underline;">Contact us</a>.
+                        </p>
+                        {% if unsubscribe_url is defined and unsubscribe_url %}
+                            <p style="margin:8px 0 0 0;">
+                                You're receiving this because of your Keres notification settings.
+                                <a href="{{ unsubscribe_url }}" style="color:#8a7a63; text-decoration:underline;">Manage email preferences</a>.
+                            </p>
+                        {% endif %}
+                        <p style="margin:8px 0 0 0;">&copy; Keres</p>
+                    </td>
+                </tr>
+            </table>
+        </td>
+    </tr>
+</table>
+</body>
+</html>
