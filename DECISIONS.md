@@ -52,3 +52,18 @@ Reversibility: trivial (one address line).
 
 ### T3 — Pre-existing "keres.fr" domain mentions left untouched
 Observation (not a decision requiring action): `legal_editor_text`/`legal_ip_text1`/`legal_ip_text2`/`legal_links_text` still say "Le site keres.fr" / "keres.fr", while the actual production domain is `playkeres.com` (per this repo's own `AGENTS.md`). This predates T3 and wasn't part of the identity-table/hosting/privacy scope given — left as-is rather than drive-by-fixing unrelated stale content. New content written for T3 (CGU, privacy policy) correctly uses `playkeres.com`/`app.playkeres.com`.
+
+### T4 — Trust page slug and placement of the registration-screen link
+Decision: Slug `/trust` (EN, filename-based) / `/fr/engagements/` (FR `slug: engagements`), matching the URL the brief itself suggested. On `templates/security/register.html.twig`, placed the link as a small muted line ("Read our commitments to you") directly below the submit button, above the existing "Already have an account?" line.
+Rationale: `/trust` was explicitly named in the brief. Placement is a minor, reversible styling call — fine print near the submit button, per the brief's own suggested options, not intrusive on the form itself.
+Reversibility: trivial.
+
+### T4 — Fifth commitment: hard stop honored, placeholder only
+Decision: Did not draft any wording for the open-source-if-abandoned commitment. No licence name, no trigger condition, nothing resembling a rough attempt. Rendered a visually distinct box (dashed border, "COMING SOON"/"À VENIR" badge) under a heading that only restates the *topic* the orchestrator already named in the task brief itself ("open-sourcing the code if the project is ever abandoned") — not new legal content.
+Rationale: Explicit hard stop in this task's brief and the run's §3 rules. Logged as an informational (non-blocking) entry in `BLOCKED.md` per instruction — ships alongside the other four real commitments in the same commit.
+Reversibility: trivial (placeholder swap once wording is settled).
+
+### T4 — "No advertising other than the author's own projects" claim verified before asserting it
+Decision: Asserted the claim as true.
+Rationale: Grepped both repos for any ad-network/analytics/tracking script (adsense, gtag, googletagmanager, doubleclick, facebook-pixel, hotjar, matomo, generic "analytics") before writing the page — zero matches (the one "analytics" hit in `AGENTS.md` refers to the internal `BoardPosition` ML-training tree, unrelated to third-party ad/analytics services). No ad network exists today, so the claim holds without qualification.
+Reversibility: n/a (factual verification, not a design choice).

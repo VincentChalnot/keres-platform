@@ -202,4 +202,52 @@ corroboration, not a single clean page load — see DECISIONS.md), and an
 observation (not acted on) that pre-existing "keres.fr" domain mentions
 elsewhere on the legal notice page are stale but out of scope for this task.
 
-**Next action**: await Main's next task (T4).
+**Next action**: T4 (trust pledge page) was next; see below.
+
+---
+
+## T4 — Trust pledge page
+**Status**: done. **Commits**: `keres-platform` `e50e177`, `keres-website`
+`efab281`.
+
+**What changed**: Public trust-signal content, built on `../keres-website`
+again (already branched from T3). New `/trust` page (FR slug
+`engagements`) presenting four real, verified commitments: no imposed
+third-party cookies, personal data never sold/transferred, no advertising
+beyond the author's own projects, and advance notice + opt-out/
+account-deletion before any of those three change. No donation ask
+anywhere on the page.
+
+**Fifth commitment (hard stop honored)**: the orchestrator's brief named
+this a hard stop on this specific point — the open-source-if-abandoned
+commitment's wording, licence, and trigger condition were **not** drafted,
+not even roughly. Rendered instead as a visually distinct placeholder
+(dashed border, "COMING SOON"/"À VENIR" badge) under a heading that only
+restates the topic already named in the task brief. Logged in `BLOCKED.md`
+as informational/non-blocking — ships in the same commit as the other four
+commitments, doesn't block anything downstream.
+
+**Claims verified before asserting them**: re-confirmed (grep, both repos)
+that no third-party cookie/tracker/ad-network exists anywhere, so "no
+imposed third-party cookies" and "no advertising beyond the author's own
+projects" are both true today, not aspirational.
+
+**Wiring**: `keres-website`'s `layouts/partials/footer.html` and the
+homepage's duplicated footer block in `layouts/index.html` both link the
+new page (`footer_trust` key, same pattern as T3's three links). This
+repo's `templates/security/register.html.twig` (the actual template
+`RegisterAction` renders, per `config/packages/templating.yaml`) gained a
+small fine-print line below the submit button linking to
+`{{ static_site_url }}/trust`.
+
+**Verified live**: `hugo --environment production --minify --gc` (this
+repo's own CI build command) clean, 11 EN / 9 FR pages, zero errors.
+Playwright against `https://local.playkeres.com/`: screenshotted `/trust/`
+and `/fr/engagements/`, confirmed all four commitments render with the
+intended copy and the fifth renders as a clearly-marked, content-free
+placeholder in both languages. In `keres-platform`: `composer cs:check`
+clean, `bin/console lint:twig` clean, `bin/phpunit` 45/45 green (regression
+safety), and confirmed via Playwright that `/register`'s new link actually
+navigates to the real trust page.
+
+**Next action**: await Main's next task (T5).
