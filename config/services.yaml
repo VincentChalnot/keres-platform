@@ -17,6 +17,12 @@ services:
             $aiBackendApiUrl: '%env(AI_BACKEND_API_URL)%'
             int $cookieLifetime: '%mercure.default_cookie_lifetime%'
 
+    # Autoconfigure every EnvironmentCheckerInterface implementation as a
+    # checker consumed by CheckEnvironmentCommand (app:check-environment).
+    _instanceof:
+        App\Service\EnvironmentCheck\EnvironmentCheckerInterface:
+            tags: ['app.environment_checker']
+
     # makes classes in src/ available to be used as services
     # this creates a service per class whose id is the fully-qualified class name
     App\:
@@ -67,6 +73,14 @@ services:
     Symfony\Component\Mercure\Authorization:
         arguments:
             $cookieLifetime: '%mercure.default_cookie_lifetime%'
+
+    # Bound explicitly: MailerDsnEnvironmentChecker needs the raw MAILER_DSN
+    # (to parse/validate it) and kernel.environment (to only enforce
+    # Scaleway credentials in prod) — neither is a sensible global bind.
+    App\Service\EnvironmentCheck\MailerDsnEnvironmentChecker:
+        arguments:
+            $mailerDsn: '%env(MAILER_DSN)%'
+            $environment: '%kernel.environment%'
 
     # add more service definitions when explicit configuration is needed
     # please note that last definitions always *replace* previous ones

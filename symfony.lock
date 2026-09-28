@@ -92,6 +92,18 @@
             "bin/phpunit"
         ]
     },
+    "sentry/sentry-symfony": {
+        "version": "5.13",
+        "recipe": {
+            "repo": "github.com/symfony/recipes-contrib",
+            "branch": "main",
+            "version": "5.0",
+            "ref": "aac2bc5220e9ab5b9e3838a7a4da90e7f74e6148"
+        },
+        "files": [
+            "config/packages/sentry.yaml"
+        ]
+    },
     "sidus/admin-bundle": {
         "version": "v5.0.6"
     },
@@ -221,6 +233,15 @@
             "config/packages/routing.yaml",
             "config/routes.yaml"
         ]
+    },
+    "symfony/scaleway-mailer": {
+        "version": "7.4",
+        "recipe": {
+            "repo": "github.com/symfony/recipes",
+            "branch": "main",
+            "version": "6.4",
+            "ref": "e6c1cd194f4c1ffda138785d827abb9f8dd04559"
+        }
     },
     "symfony/security-bundle": {
         "version": "7.3",

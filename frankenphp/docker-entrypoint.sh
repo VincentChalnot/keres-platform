@@ -35,6 +35,12 @@ if [ "$1" = 'frankenphp' ] || [ "$1" = 'php' ] || [ "$1" = 'bin/console' ]; then
 	# Or about an error in project initialization
 	php bin/console -V
 
+	# Fail fast on a misconfigured environment (e.g. missing Scaleway
+	# mailer credentials in prod, see MailerDsnEnvironmentChecker) before
+	# the app server starts accepting traffic it can't actually support.
+	# No-op in dev — checkers only enforce prod-only requirements.
+	php bin/console app:check-environment
+
 	# Prod images bake APP_VERSION in at build time (see Dockerfile, ARG
 	# APP_VERSION set by CI via `git describe --tags --always`). Dev
 	# containers bind-mount the repo (.:/app), so compute it here instead,

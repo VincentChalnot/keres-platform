@@ -25,6 +25,13 @@
 #   POSTGRES_PASSWORD        Database password
 #   POSTGRES_DB              Database name
 #   MERCURE_JWT_SECRET       Mercure JWT secret (random 32+ char string)
+#   MAILER_DSN               Full Scaleway HTTP API DSN:
+#                            scaleway+api://PROJECT_ID:API_KEY@default. The
+#                            php container refuses to start
+#                            (app:check-environment, run from
+#                            docker-entrypoint.sh) without a valid
+#                            "scaleway+api" MAILER_DSN — this is
+#                            deliberate, not a bug.
 #
 # Optional .env variables:
 #   POSTGRES_VERSION         Defaults to 16
@@ -48,8 +55,6 @@
 #   AI_BACKEND_API_URL       AI endpoints URL. Defaults to http://backend:3000.
 #   MESSENGER_TRANSPORT_DSN  Async transport DSN. Defaults to the Doctrine
 #                            transport (doctrine://default?auto_setup=0&check_delayed_interval=1000&redeliver_timeout=60).
-#   MAILER_DSN               Defaults to null://null (no-op — set a real DSN
-#                            to actually send mail in production).
 #   CORS_ALLOW_ORIGIN        Regex matched against the Origin header for
 #                            CORS. Defaults to ^https://playkeres\.com$.
 #   OIDC_{GOOGLE,FACEBOOK,DISCORD}_CLIENT_{ID,SECRET}
@@ -81,8 +86,12 @@ x-app-env: &app-env
   BACKEND_API_URL: ${BACKEND_API_URL:-http://backend:3000}
   AI_BACKEND_API_URL: ${AI_BACKEND_API_URL:-http://backend:3000}
   MESSENGER_TRANSPORT_DSN: ${MESSENGER_TRANSPORT_DSN:-doctrine://default?auto_setup=0&check_delayed_interval=1000&redeliver_timeout=60}
-  # No-op by default — set a real DSN in .env to actually send mail.
-  MAILER_DSN: ${MAILER_DSN:-null://null}
+  # No safe no-op default anymore: app:check-environment (run from
+  # docker-entrypoint.sh) refuses to start the php container unless this
+  # is a valid scaleway+api DSN — required, no compose-level fallback
+  # (see APP_SECRET above for why: a missing value must surface as empty,
+  # not silently degrade to null://null).
+  MAILER_DSN: ${MAILER_DSN}
   CORS_ALLOW_ORIGIN: '${CORS_ALLOW_ORIGIN:-^https://playkeres\.com$}'
   # Blank unless set in .env — that provider's login stays unavailable.
   OIDC_GOOGLE_CLIENT_ID: ${OIDC_GOOGLE_CLIENT_ID:-}

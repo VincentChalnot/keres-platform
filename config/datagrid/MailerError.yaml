@@ -1,0 +1,27 @@
+sidus_data_grid:
+    configurations:
+        MailerError:
+            columns:
+                createdAt: ~
+                errorClass:
+                    label: 'Error'
+                errorMessage:
+                    label: 'Message'
+                subject: ~
+                recipients: ~
+            query_handler:
+                provider: doctrine
+                options:
+                    entity: App\Entity\MailerError
+                sortable: [createdAt, errorClass]
+                default_sort:
+                    createdAt: DESC
+                filters:
+                    errorClass:
+                        type: text
+                    subject:
+                        type: text
+                    recipients:
+                        type: text
+                    createdAt:
+                        type: date_range
