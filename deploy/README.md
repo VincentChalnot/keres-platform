@@ -54,8 +54,8 @@ docker network create proxy 2>/dev/null || true
 docker compose pull
 docker compose up -d
 
-# 5. Run migrations (one-off):
-docker compose exec php bin/console doctrine:migrations:migrate --no-interaction
+# The php container applies pending migrations on start, before FrankenPHP
+# begins serving — no separate migration step is needed.
 ```
 
 ## Deploying a new image tag
@@ -75,6 +75,13 @@ IMAGES_TAG=sha-abc123 docker compose up -d php php-worker
 BACKEND_IMAGE_TAG=sha-def456 docker compose pull backend
 BACKEND_IMAGE_TAG=sha-def456 docker compose up -d backend
 ```
+
+`docker compose up -d php php-worker` applies pending migrations automatically
+as part of the `php` container's startup, before it begins serving; `php-worker`
+starts only once `php` is healthy. Before deploying a tag that contains an
+irreversible or destructive migration, run `./db-backup.sh` first — rolling
+back the image tag does not roll back the schema. A failed migration leaves
+`php` restarting; inspect with `docker compose logs php`.
 
 `IMAGES_TAG` and `BACKEND_IMAGE_TAG` both default to `latest` if unset.
 

@@ -9,6 +9,10 @@
 # Base FrankenPHP image
 FROM ghcr.io/vincentchalnot/keres-platform/php-base AS frankenphp_base
 
+# Always copy the entrypoint from source so changes take effect on every image
+# build, not only when the slow base image (Dockerfile.base) is rebuilt.
+COPY --link --chmod=755 frankenphp/docker-entrypoint.sh /usr/local/bin/docker-entrypoint
+
 # Dev FrankenPHP image
 FROM frankenphp_base AS frankenphp_dev
 

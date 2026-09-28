@@ -162,7 +162,7 @@ docker compose exec php bin/console cache:clear
 ### TypeScript / Node commands (inside the Node container)
 
 ```bash
-docker compose exec node npm run dev         # Vite HMR dev server (local.playkeres.com:5173)
+docker compose exec node npm run dev         # Vite HMR dev server (https://vite.app.local.playkeres.com)
 docker compose exec node npm run build       # Production build → public/build/
 docker compose exec node npm run type-check  # TypeScript strict check (must pass, no emit)
 ```
@@ -187,7 +187,7 @@ GET /dev/login?email=<anything>@example.com
 ```
 
 Navigate a browser tab straight to that URL (e.g.
-`https://local.playkeres.com/dev/login?email=agent-test@example.com`). It
+`https://app.local.playkeres.com/dev/login?email=agent-test@example.com`). It
 authenticates the session as that user, creating the `User` row on first
 hit — no password, no OIDC round trip. Use different emails to test as
 different users (e.g. two players in the same game).
@@ -202,6 +202,32 @@ different users (e.g. two players in the same game).
 - This bypasses `UserAuth`/OIDC provider linkage entirely — it only creates
   a bare `User` by email. Don't use it to test the OIDC callback flow
   itself; that still requires real Google/Discord credentials.
+
+### If the browser tool runs in its own container
+
+DNS for `*.local.playkeres.com` is public and points at **loopback**
+(`127.0.0.1` / `::1`), which inside a container means *that container*, not
+the host — so every navigation dies with `ERR_CONNECTION_CLOSED` even
+though the same URL works from the host. Fix it on the browser container by
+remapping the dev hostnames to the host gateway, e.g. in its compose file:
+
+```yaml
+extra_hosts:
+  - "app.local.playkeres.com:host-gateway"       # Symfony app
+  - "vite.app.local.playkeres.com:host-gateway"  # Vite dev server / HMR
+  - "mail.local.playkeres.com:host-gateway"      # Mailpit UI
+  - "local.playkeres.com:host-gateway"           # marketing site (logout target)
+```
+
+Traefik publishes 80/443 on the host, and the dev certificate is a real
+Let's Encrypt one, so HTTPS validates normally — no need to disable TLS
+verification. `network_mode: host` works too and needs no hostname list,
+at the cost of network isolation.
+
+Do **not** work around this by pointing the browser at the `php` container
+directly: that bypasses Traefik and TLS, so cookie `Secure`/domain
+behaviour no longer matches what a real browser sees — precisely the class
+of bug this setup is used to reproduce.
 
 ## Conventions
 

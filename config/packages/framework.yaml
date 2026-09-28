@@ -19,7 +19,18 @@ framework:
     # subdomain — without it, every cross-subdomain redirect target silently
     # collapses to "/" (see Symfony\Bundle\SecurityBundle\DependencyInjection\
     # Compiler\AddSessionDomainConstraintPass).
+    #
+    # `name` is deliberately *not* the PHP default (PHPSESSID): before
+    # cookie_domain was introduced the session cookie was host-scoped to
+    # app.<domain>, so any browser that used the app before that change ends up
+    # holding two same-named session cookies (app.<domain> + .<domain>). Both
+    # are sent on every request, oldest first, and PHP keeps the first
+    # occurrence — so the stale host-scoped one permanently shadows the real
+    # session: login succeeds and writes the token to the domain-scoped
+    # session, then the next request reads the stale empty one and bounces
+    # back to /login. A distinct name makes those leftovers inert.
     session:
+        name: KERESSESSID
         cookie_domain: '%env(SESSION_COOKIE_DOMAIN)%'
 
     #esi: true

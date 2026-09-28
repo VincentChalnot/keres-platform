@@ -35,7 +35,7 @@ if [ "$1" = 'frankenphp' ] || [ "$1" = 'php' ] || [ "$1" = 'bin/console' ]; then
 	# Or about an error in project initialization
 	php bin/console -V
 
-	if grep -q ^DATABASE_URL= .env; then
+	if [ -n "$DATABASE_URL" ]; then
 		echo 'Waiting for database to be ready...'
 		ATTEMPTS_LEFT_TO_REACH_DATABASE=60
 		until [ $ATTEMPTS_LEFT_TO_REACH_DATABASE -eq 0 ] || DATABASE_ERROR=$(php bin/console dbal:run-sql -q "SELECT 1" 2>&1); do
@@ -57,7 +57,10 @@ if [ "$1" = 'frankenphp' ] || [ "$1" = 'php' ] || [ "$1" = 'bin/console' ]; then
 			echo 'The database is now ready and reachable'
 		fi
 
-		if [ "$(find ./migrations -iname '*.php' -print -quit)" ]; then
+		# Dev containers bind-mount the repo (.:/app), so a branch switch can leave
+		# pending migrations for code that isn't checked out yet — never auto-apply
+		# them there; developers run doctrine:migrations:migrate by hand instead.
+		if [ "$APP_ENV" != 'dev' ] && [ "$(find ./migrations -iname '*.php' -print -quit)" ]; then
 			php bin/console doctrine:migrations:migrate --no-interaction --all-or-nothing
 		fi
 	fi
