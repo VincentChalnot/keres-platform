@@ -1,0 +1,18 @@
+{% extends 'email/_layout.html.twig' %}
+
+{% block title %}New {{ requestTypeLabel }} request{% endblock %}
+
+{% block content %}
+    <p style="margin:0 0 16px 0;">A user has submitted a new {{ requestTypeLabel }} request.</p>
+
+    <p style="margin:0 0 16px 0;">
+        <strong>User:</strong> {{ feedback.user.username ?? 'unknown' }} ({{ feedback.user.email ?? 'unknown' }})<br>
+        <strong>Submitted:</strong> {{ feedback.createdAt|date('Y-m-d H:i') }} UTC
+    </p>
+
+    <p style="margin:0 0 24px 0; white-space:pre-line;">{{ feedback.message }}</p>
+
+    <p style="margin:0;">
+        <a href="{{ reviewUrl }}" style="display:inline-block; background-color:#e19e5b; color:#1a1208; padding:12px 28px; border-radius:9999px; text-decoration:none; font-weight:bold;">Review in admin panel</a>
+    </p>
+{% endblock %}

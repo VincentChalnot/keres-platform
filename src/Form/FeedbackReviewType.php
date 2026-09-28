@@ -28,6 +28,8 @@ class FeedbackReviewType extends AbstractType
                     'Gameplay feedback' => FeedbackCategory::GAMEPLAY,
                     'Other' => FeedbackCategory::OTHER,
                     'Contact form' => FeedbackCategory::CONTACT,
+                    'Data export request' => FeedbackCategory::DATA_EXPORT_REQUEST,
+                    'Account deletion request' => FeedbackCategory::ACCOUNT_DELETION_REQUEST,
                 ],
             ])
             ->add('message', TextareaType::class, [

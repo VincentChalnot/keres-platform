@@ -250,4 +250,78 @@ clean, `bin/console lint:twig` clean, `bin/phpunit` 45/45 green (regression
 safety), and confirmed via Playwright that `/register`'s new link actually
 navigates to the real trust page.
 
-**Next action**: await Main's next task (T5).
+**Next action**: T5 (GDPR request actions) was next; see below.
+
+---
+
+## T5 — GDPR request actions
+**Status**: done. **Commits**: `keres-platform` `8f3dc78`, `keres-website`
+`96a1e87`.
+
+**Confirmed before starting** (per the task's own instruction): `User` has
+no `deletedAt`/anonymization field or logic anywhere — grepped
+`src/Entity/User.php` and the whole codebase for `deletedAt`/`anonymiz`;
+only `Game.deletedAt` exists (unrelated per-game soft-delete/archiving).
+Confirms this is a request-intake mechanism only, exactly as scoped.
+
+**What changed**: Two new `FeedbackCategory` cases
+(`DATA_EXPORT_REQUEST`/`ACCOUNT_DELETION_REQUEST`), wired through every
+existing place the codebase enumerates categories by hand
+(`FeedbackReviewType`'s admin dropdown, the datagrid category-badge colors,
+the datagrid category filter) — no migration needed, the column is a plain
+string with a PHP-side enum cast, not a native DB enum/constraint
+(confirmed via `doctrine:schema:update --dump-sql`, which showed only
+large pre-existing unrelated drift).
+
+`/settings/privacy` (`SettingsPrivacyAction` + `privacy.html.twig`) gained
+a new "Your data" box with two small forms (shared `GdprRequestType`: a
+disabled/unmapped email field pre-filled for display, an optional
+free-text "anything else we should know?" field), each posting to its own
+dedicated action (`SettingsPrivacyDataExportAction`,
+`SettingsPrivacyAccountDeletionAction` — matches the "one invokable action
+per file" convention). Each creates a `Feedback` row attributed to
+`$user` with a fixed, readable message body, flashes the confirmation
+copy ("request received... 30 days"), and calls a new
+`AdminNotificationMailer` service.
+
+`AdminNotificationMailer::sendGdprRequestNotification()` sends through
+the now-async `MailerInterface` (T1) to a new `ADMIN_NOTIFICATION_EMAIL`
+env var (blank by default in both `.env.example`s — the method explicitly
+no-ops rather than sending to an empty address, so a fresh install stays
+fully functional before an admin address is configured), using T2's shared
+email layout (new `templates/email/admin_gdpr_request.{html,txt}.twig`) —
+deliberately **without** ever passing `unsubscribe_url` (this is an
+operational alert, not a user notification). The email links directly to
+the specific `Feedback` row in the admin panel
+(`sidus_admin.Feedback.edit`).
+
+**Privacy policy wording check** (explicitly asked): tweaked
+`privacy_retention_text2` on `../keres-website`'s privacy policy from "If
+you delete your account..." to "When your account is deleted at your
+request..." (FR equivalent), since T5 confirms deletion is always a
+human-processed *request*, not self-service/instant — the original
+phrasing read as overpromising next to the "Your Rights" section's own
+30-day-request framing. Also extended `privacy_rights_text2` to mention
+the new in-app request buttons alongside the contact form (flagged as
+slightly beyond the strict ask, logged in DECISIONS.md).
+
+**Verified live**: `composer cs:check` clean, `bin/console lint:twig`
+clean, `bin/phpunit` 45/45 green. Via Playwright against
+`https://app.local.playkeres.com/`: dev-logged-in, submitted both request
+types from the real `/settings/privacy` UI, confirmed both flash
+confirmations render the exact "received... 30 days" copy. Confirmed via
+`psql` that both `Feedback` rows exist with the correct category, message,
+and `user_id`. Temporarily granted the test user `ROLE_ADMIN` (reverted
+immediately after) to confirm the admin datagrid renders both new
+categories with distinct badge colors and that the (disabled) category
+dropdown on the edit screen correctly shows "Data export request" as
+selected. Used the established temporary-DSN-and-admin-email-override
+pattern (restored immediately after) to confirm the admin notification
+email actually lands in Mailpit: correct subject ("New account deletion
+request"), T2 layout rendering correctly, a working deep link to the exact
+admin edit page, and — confirmed by reading the raw HTML — no unsubscribe
+line. On `../keres-website`: `hugo --environment production --minify --gc`
+clean (11 EN / 9 FR pages, unchanged), Playwright-confirmed the reworded
+privacy policy section renders correctly in English.
+
+**Next action**: await Main's next task (T6).

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Action\Settings;
 
 use App\Entity\User;
+use App\Form\GdprRequestType;
 use App\Form\PrivacySettingsType;
 use App\Repository\FriendshipRepository;
 use App\Service\UserPreferencesManager;
@@ -18,9 +19,16 @@ use Symfony\Component\Security\Http\Attribute\IsGranted;
 
 /**
  * `GET|POST /settings/privacy` - Settings -> Privacy: search visibility,
- * contact by email, and the blocked-users list (the only place it is
- * shown; 05-social.md sec 4). Unblocking goes through the JSON
- * `friend_unblock` route, wired in `lobby.ts`.
+ * contact by email, the blocked-users list (the only place it is shown;
+ * 05-social.md sec 4), and the two GDPR request forms (T5: data export,
+ * account deletion). Unblocking goes through the JSON `friend_unblock`
+ * route, wired in `lobby.ts`.
+ *
+ * The two GDPR forms are only *rendered* here - each posts to its own
+ * dedicated single-purpose action
+ * (`SettingsPrivacyDataExportAction`/`SettingsPrivacyAccountDeletionAction`)
+ * via an explicit `action` attribute on `form_start`, so this action never
+ * handles their submission.
  */
 #[AsController]
 class SettingsPrivacyAction extends AbstractController
@@ -54,11 +62,24 @@ class SettingsPrivacyAction extends AbstractController
             return $this->redirectToRoute('settings_privacy');
         }
 
+        $dataExportForm = $this->createForm(GdprRequestType::class, null, [
+            'action' => $this->generateUrl('settings_privacy_data_export'),
+            'user_email' => $user->getEmail(),
+            'submit_label' => 'Request data export',
+        ]);
+        $accountDeletionForm = $this->createForm(GdprRequestType::class, null, [
+            'action' => $this->generateUrl('settings_privacy_account_deletion'),
+            'user_email' => $user->getEmail(),
+            'submit_label' => 'Request account deletion',
+        ]);
+
         return [
             'section' => 'privacy',
             'form' => $form->createView(),
             'user' => $user,
             'blockedUsers' => $this->friendshipRepository->findBlockedByUser($user),
+            'dataExportForm' => $dataExportForm->createView(),
+            'accountDeletionForm' => $accountDeletionForm->createView(),
         ];
     }
 }

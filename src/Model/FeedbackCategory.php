@@ -11,4 +11,6 @@ enum FeedbackCategory: string
     case GAMEPLAY = 'gameplay';
     case OTHER = 'other';
     case CONTACT = 'contact';
+    case DATA_EXPORT_REQUEST = 'data_export_request';
+    case ACCOUNT_DELETION_REQUEST = 'account_deletion_request';
 }

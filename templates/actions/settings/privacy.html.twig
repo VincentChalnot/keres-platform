@@ -33,6 +33,29 @@
             <p class="has-text-grey">You haven't blocked anyone. You can block a player from their profile page.</p>
         {% endif %}
     </div>
+
+    <div class="box">
+        <h3 class="title is-5">Your data</h3>
+        <p class="has-text-grey mb-4">
+            Request a copy of your data, or request that your account be deleted. Both are handled
+            by a person, not automatically — we'll get back to you within 30 days.
+        </p>
+
+        {{ form_start(dataExportForm, {attr: {novalidate: 'novalidate', class: 'mb-5'}}) }}
+            <h4 class="title is-6">Export my data</h4>
+            {{ form_row(dataExportForm.email) }}
+            {{ form_row(dataExportForm.message) }}
+            {{ form_widget(dataExportForm.submit, {attr: {class: 'button is-rounded'}}) }}
+        {{ form_end(dataExportForm) }}
+
+        {{ form_start(accountDeletionForm, {attr: {novalidate: 'novalidate'}}) }}
+            <h4 class="title is-6">Delete my account</h4>
+            {{ form_row(accountDeletionForm.email) }}
+            {{ form_row(accountDeletionForm.message) }}
+            {{ form_widget(accountDeletionForm.submit, {attr: {class: 'button is-rounded is-danger is-outlined'}}) }}
+        {{ form_end(accountDeletionForm) }}
+    </div>
+
 {% endblock %}
 
 {% block end_javascripts %}

@@ -70,6 +70,10 @@ x-app-env: &app-env
   # bare SERVER_NAME (before it's shadowed with the app. subdomain above),
   # same derivation as STATIC_SITE_URL/SESSION_COOKIE_DOMAIN.
   MAILER_FROM_ADDRESS: ${MAILER_FROM_ADDRESS:-noreply@${SERVER_NAME:-local.playkeres.com}}
+  # Recipient for operational alerts (e.g. a GDPR data-export/account-deletion
+  # request landing in Settings -> Privacy, T5). Blank by default — the
+  # notification is skipped (not sent to an empty address) until configured.
+  ADMIN_NOTIFICATION_EMAIL: ${ADMIN_NOTIFICATION_EMAIL:-}
   CORS_ALLOW_ORIGIN: '${CORS_ALLOW_ORIGIN:-^https://(local\.playkeres\.com|playkeres\.com)$}'
   # Blank unless filled in .env — OIDC login for that provider simply stays
   # unavailable until configured. See .env.example for callback URL setup.

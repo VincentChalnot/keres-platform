@@ -61,6 +61,10 @@
 #                            noreply@SERVER_NAME (e.g. noreply@playkeres.com).
 #                            Must belong to a domain verified in the Scaleway
 #                            TEM project MAILER_DSN points at.
+#   ADMIN_NOTIFICATION_EMAIL Recipient for operational alerts (e.g. a GDPR
+#                            data-export/account-deletion request). Blank
+#                            by default — the notification is skipped until
+#                            configured.
 #   OIDC_{GOOGLE,FACEBOOK,DISCORD}_CLIENT_{ID,SECRET}
 #                            Blank by default — that provider's login stays
 #                            unavailable until configured.
@@ -102,6 +106,10 @@ x-app-env: &app-env
   # noreply@ the bare SERVER_NAME (e.g. noreply@playkeres.com) — same
   # derivation as STATIC_SITE_URL/SESSION_COOKIE_DOMAIN above.
   MAILER_FROM_ADDRESS: ${MAILER_FROM_ADDRESS:-noreply@${SERVER_NAME}}
+  # Recipient for operational alerts (e.g. a GDPR data-export/account-deletion
+  # request landing in Settings -> Privacy, T5). Blank by default — the
+  # notification is skipped (not sent to an empty address) until configured.
+  ADMIN_NOTIFICATION_EMAIL: ${ADMIN_NOTIFICATION_EMAIL:-}
   CORS_ALLOW_ORIGIN: '${CORS_ALLOW_ORIGIN:-^https://playkeres\.com$}'
   OIDC_GOOGLE_CLIENT_ID: ${OIDC_GOOGLE_CLIENT_ID:-}
   OIDC_GOOGLE_CLIENT_SECRET: ${OIDC_GOOGLE_CLIENT_SECRET:-}

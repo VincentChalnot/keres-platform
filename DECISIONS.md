@@ -67,3 +67,23 @@ Reversibility: trivial (placeholder swap once wording is settled).
 Decision: Asserted the claim as true.
 Rationale: Grepped both repos for any ad-network/analytics/tracking script (adsense, gtag, googletagmanager, doubleclick, facebook-pixel, hotjar, matomo, generic "analytics") before writing the page — zero matches (the one "analytics" hit in `AGENTS.md` refers to the internal `BoardPosition` ML-training tree, unrelated to third-party ad/analytics services). No ad network exists today, so the claim holds without qualification.
 Reversibility: n/a (factual verification, not a design choice).
+
+### T5 — Two dedicated single-purpose actions vs. one combined action for the GDPR forms
+Decision: `SettingsPrivacyDataExportAction`/`SettingsPrivacyAccountDeletionAction`, each `POST`-only, each rendered by `SettingsPrivacyAction` via a shared `GdprRequestType` with an explicit `action` URL option — `SettingsPrivacyAction` itself never handles their submission.
+Rationale: Matches the codebase's established "one invokable action per file" convention (`AGENTS.md`) rather than cramming three separate form-submission branches into one controller. The disabled/unmapped `email` field on `GdprRequestType` is purely a "you're submitting this as `<email>`" confirmation display — never read back on submit; the acting `$user` (from the security context) is always the authoritative source for who the request is from.
+Reversibility: trivial.
+
+### T5 — `ADMIN_NOTIFICATION_EMAIL` default: blank + no-op, not a derived address
+Decision: Blank by default in both `.env.example` files and both `compose.yaml`s (same "commented out, feature stays off until configured" pattern as `SENTRY_DSN`/`OIDC_*`), and `AdminNotificationMailer::sendGdprRequestNotification()` explicitly no-ops (logs at info level, returns) when the address is empty, rather than attempting `->to('')` and throwing.
+Rationale: Unlike `MAILER_FROM_ADDRESS`/`STATIC_SITE_URL` (legitimately derivable from `SERVER_NAME` — the domain the mail should look like it's from), there is no sensible *automatic* value for "the operator's personal inbox for GDPR alerts" that isn't either a fabricated-looking placeholder or an actual guess at a real address, and the brief explicitly said not to hardcode one. A silent no-op keeps the actual request-intake path (the part that matters — the `Feedback` row + confirmation flash) fully functional on a fresh install even before an admin address is configured, rather than 500ing on an unset var.
+Reversibility: trivial.
+
+### T5 — New `FeedbackCategory` cases wired through every existing category surface
+Decision: Added `DATA_EXPORT_REQUEST`/`ACCOUNT_DELETION_REQUEST` not just to the enum but to every place the codebase already enumerates categories by hand: `FeedbackReviewType`'s (disabled) admin dropdown, the datagrid category-badge color map, and the datagrid's category filter choices.
+Rationale: `FeedbackReviewType`'s category `ChoiceType` is `disabled => true` but still needs the current value present in its `choices` list to render the selected option correctly - leaving the two new cases out would have made the admin edit screen behave oddly (empty/blank category shown) for exactly the rows this task creates. No schema migration needed: `#[ORM\Column(type: Types::STRING, enumType: ...)]` is a plain-string column with a PHP-side cast, not a native Postgres enum type or CHECK constraint (confirmed via `doctrine:schema:update --dump-sql`, which showed a large pre-existing unrelated drift but nothing touching `feedback.category`).
+Reversibility: trivial.
+
+### T5 — Privacy policy wording check (asked explicitly in the brief)
+Decision: Made a small tweak. `privacy_retention_text2`: "If you delete your account, your data is erased..." → "When your account is deleted at your request, your data is erased..." (FR: "Si vous supprimez votre compte" → "Si votre compte est supprimé à votre demande"). Also extended `privacy_rights_text2` to mention the new self-service request buttons in Settings → Privacy as an additional path alongside the contact form (this second change goes slightly beyond what was strictly asked, since T5 itself is what makes that sentence more accurate/useful — flagging it here rather than treating it as silently in-scope).
+Rationale: The original phrasing read as if deletion were instant/self-service; T5 confirms it is always a *request* a human processes within 30 days (no `deletedAt`/anonymization code exists on `User` at all, confirmed by grep before starting). The "Vos droits"/"Your Rights" section already frames the 30-day process, so the retention section needed to match that framing rather than contradict it.
+Reversibility: trivial (wording only).

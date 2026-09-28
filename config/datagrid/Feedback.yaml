@@ -34,6 +34,8 @@ sidus_data_grid:
                                 Gameplay: gameplay
                                 Other: other
                                 Contact: contact
+                                Data export: data_export_request
+                                Account deletion: account_deletion_request
                     reviewed:
                         type: choice
                         form_options: { choices: { Reviewed: 1, Unreviewed: 0 } }

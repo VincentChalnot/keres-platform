@@ -1,0 +1,12 @@
+{% extends 'email/_layout.txt.twig' %}
+
+{% block content %}
+A user has submitted a new {{ requestTypeLabel }} request.
+
+User: {{ feedback.user.username ?? 'unknown' }} ({{ feedback.user.email ?? 'unknown' }})
+Submitted: {{ feedback.createdAt|date('Y-m-d H:i') }} UTC
+
+{{ feedback.message }}
+
+Review in admin panel: {{ reviewUrl }}
+{% endblock %}
