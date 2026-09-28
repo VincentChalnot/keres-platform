@@ -60,6 +60,8 @@
 #   OIDC_{GOOGLE,FACEBOOK,DISCORD}_CLIENT_{ID,SECRET}
 #                            Blank by default — that provider's login stays
 #                            unavailable until configured.
+#   SENTRY_DSN               Blank by default — error reporting stays
+#                            disabled until configured.
 
 name: keres
 
@@ -93,13 +95,14 @@ x-app-env: &app-env
   # not silently degrade to null://null).
   MAILER_DSN: ${MAILER_DSN}
   CORS_ALLOW_ORIGIN: '${CORS_ALLOW_ORIGIN:-^https://playkeres\.com$}'
-  # Blank unless set in .env — that provider's login stays unavailable.
   OIDC_GOOGLE_CLIENT_ID: ${OIDC_GOOGLE_CLIENT_ID:-}
   OIDC_GOOGLE_CLIENT_SECRET: ${OIDC_GOOGLE_CLIENT_SECRET:-}
   OIDC_FACEBOOK_CLIENT_ID: ${OIDC_FACEBOOK_CLIENT_ID:-}
   OIDC_FACEBOOK_CLIENT_SECRET: ${OIDC_FACEBOOK_CLIENT_SECRET:-}
   OIDC_DISCORD_CLIENT_ID: ${OIDC_DISCORD_CLIENT_ID:-}
   OIDC_DISCORD_CLIENT_SECRET: ${OIDC_DISCORD_CLIENT_SECRET:-}
+  # Blank by default — Sentry stays disabled until configured.
+  SENTRY_DSN: ${SENTRY_DSN:-}
 
 x-php-env: &php-env
   <<: *app-env
