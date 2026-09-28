@@ -13,11 +13,22 @@ framework:
             'App\Message\ProcessAiMoveMessage': async
             'App\Message\CheckClockExpiryMessage': async
             'App\Message\ExpireSeekMessage': async
+            # SendEmailMessage: without an explicit route, Symfony Mailer's
+            # message bus dispatch has no matching transport and the mail is
+            # handled synchronously in-process (blocking the HTTP request on
+            # SMTP/Scaleway). Routing it here means every ->send() call just
+            # persists a messenger_messages row and returns immediately; the
+            # php-worker service (messenger:consume async) delivers it.
+            'Symfony\Component\Mailer\Messenger\SendEmailMessage': async
 
-# when@test:
-#    framework:
-#        messenger:
-#            transports:
-#                # replace with your transport name here (e.g., my_transport: 'in-memory://')
-#                # For more Messenger testing tools, see https://github.com/zenstruck/messenger-test
-#                async: 'in-memory://'
+when@test:
+    framework:
+        messenger:
+            transports:
+                # Routing SendEmailMessage to `async` above means any kernel/functional
+                # test that exercises the real Mailer service now enqueues to that
+                # transport - without this override it would be the real doctrine
+                # DSN, requiring a live DB connection tests don't have. in-memory://
+                # keeps enqueueing (and its absence of a live DB requirement) a pure
+                # in-process no-op, same as the previous implicit-sync behaviour was.
+                async: 'in-memory://'

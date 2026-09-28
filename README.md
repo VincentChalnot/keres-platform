@@ -86,6 +86,15 @@ source — this repo does not vendor the engine. See `.env.example` for how to
 point at a different engine build, and `AGENTS.md` for the full dev workflow
 (PHP/TypeScript commands, code style, dev login bypass for browser testing).
 
+`docker compose up` also starts `php-worker` automatically (`restart:
+unless-stopped`, no separate command needed) — it runs
+`messenger:consume async` under Supervisor, processing AI moves, clock
+expiry, seek expiry, and outgoing email in the background so the HTTP
+request never blocks on SMTP or engine calls. Tail its logs with
+`docker compose logs -f php-worker`; failed jobs land in the `failed`
+transport (`SELECT * FROM messenger_messages WHERE queue_name = 'failed'`)
+and, in prod, are reported to Sentry automatically.
+
 To reproduce the production topology locally (static site + app on the same
 domain), also run [keres-website](https://github.com/VincentChalnot/keres-website)'s
 `compose.yaml` with the same `SERVER_NAME`.
