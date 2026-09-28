@@ -8,10 +8,12 @@ use App\Form\LostPasswordType;
 use App\Repository\UserRepository;
 use App\Service\UserMailer;
 use Doctrine\ORM\EntityManagerInterface;
+use Psr\Log\LoggerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpKernel\Attribute\AsController;
+use Symfony\Component\Mailer\Exception\TransportExceptionInterface;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 
@@ -31,6 +33,7 @@ class LostPasswordAction extends AbstractController
         private readonly EntityManagerInterface $entityManager,
         private readonly UserMailer $userMailer,
         private readonly UrlGeneratorInterface $urlGenerator,
+        private readonly LoggerInterface $logger,
     ) {
     }
 
@@ -54,7 +57,16 @@ class LostPasswordAction extends AbstractController
                 $this->entityManager->flush();
 
                 $resetUrl = $this->urlGenerator->generate('reset_password', ['token' => $plainToken], UrlGeneratorInterface::ABSOLUTE_URL);
-                $this->userMailer->sendResetPasswordMail($user, $resetUrl);
+
+                try {
+                    $this->userMailer->sendResetPasswordMail($user, $resetUrl);
+                } catch (TransportExceptionInterface $exception) {
+                    // The reset token is stored regardless; a mailer outage must not turn into a 500,
+                    // and it must not change the response we give below (see the comment there).
+                    $this->logger->error('Unable to send the lost-password reset email; the reset token was stored but the user was not notified.', [
+                        'exception' => $exception,
+                    ]);
+                }
             }
 
             // Do not disclose whether an account exists for this email:
