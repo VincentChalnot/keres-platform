@@ -27,6 +27,7 @@ class FeedbackReviewType extends AbstractType
                     'Suggestion' => FeedbackCategory::SUGGESTION,
                     'Gameplay feedback' => FeedbackCategory::GAMEPLAY,
                     'Other' => FeedbackCategory::OTHER,
+                    'Contact form' => FeedbackCategory::CONTACT,
                 ],
             ])
             ->add('message', TextareaType::class, [

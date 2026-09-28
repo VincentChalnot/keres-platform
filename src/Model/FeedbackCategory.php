@@ -10,4 +10,5 @@ enum FeedbackCategory: string
     case SUGGESTION = 'suggestion';
     case GAMEPLAY = 'gameplay';
     case OTHER = 'other';
+    case CONTACT = 'contact';
 }

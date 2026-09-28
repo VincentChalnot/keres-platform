@@ -33,6 +33,7 @@ sidus_data_grid:
                                 Suggestion: suggestion
                                 Gameplay: gameplay
                                 Other: other
+                                Contact: contact
                     reviewed:
                         type: choice
                         form_options: { choices: { Reviewed: 1, Unreviewed: 0 } }

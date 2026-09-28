@@ -4,12 +4,13 @@ declare(strict_types=1);
 
 namespace App\Action\Api;
 
+use App\Entity\Feedback;
+use App\Model\FeedbackCategory;
+use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\Attribute\AsController;
-use Symfony\Component\Mailer\MailerInterface;
-use Symfony\Component\Mime\Email;
 use Symfony\Component\RateLimiter\RateLimiterFactory;
 use Symfony\Component\Routing\Attribute\Route;
 
@@ -17,7 +18,7 @@ use Symfony\Component\Routing\Attribute\Route;
 readonly class ContactAction
 {
     public function __construct(
-        private MailerInterface $mailer,
+        private EntityManagerInterface $entityManager,
         private RateLimiterFactory $contactLimiterFactory,
     ) {
     }
@@ -53,19 +54,23 @@ readonly class ContactAction
             return new JsonResponse(['error' => 'rate limit exceeded'], Response::HTTP_TOO_MANY_REQUESTS);
         }
 
-        $email = (new Email())
-            ->from('no-reply@keres.fr')
-            ->to('contact@keres.fr')
-            ->replyTo($payload['email'])
-            ->subject('[Keres Contact] '.$payload['subject'])
-            ->text(\sprintf(
-                "Nom : %s\nE-mail : %s\n\nMessage :\n%s",
+        // The marketing site's contact form has no Keres account behind it,
+        // so submissions land as unattributed Feedback rows (category
+        // CONTACT, no user). Reviewers reply directly from the embedded
+        // name/e-mail, same as when this handed the payload to a mailer.
+        $feedback = new Feedback(
+            FeedbackCategory::CONTACT,
+            \sprintf(
+                "Nom : %s\nE-mail : %s\nSujet : %s\n\n%s",
                 $payload['name'],
                 $payload['email'],
+                $payload['subject'],
                 $payload['message'],
-            ));
+            ),
+        );
 
-        $this->mailer->send($email);
+        $this->entityManager->persist($feedback);
+        $this->entityManager->flush();
 
         return new JsonResponse(['success' => true], Response::HTTP_OK);
     }

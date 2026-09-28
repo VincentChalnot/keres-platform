@@ -28,13 +28,13 @@ class Feedback
     private \DateTimeImmutable $createdAt;
 
     #[ORM\ManyToOne]
-    #[ORM\JoinColumn(nullable: false)]
-    private User $user;
+    #[ORM\JoinColumn(nullable: true)]
+    private ?User $user;
 
     #[ORM\Column(type: Types::BOOLEAN)]
     private bool $reviewed = false;
 
-    public function __construct(FeedbackCategory $category, string $message, User $user)
+    public function __construct(FeedbackCategory $category, string $message, ?User $user = null)
     {
         $this->id = Uuid::v4();
         $this->category = $category;
@@ -63,7 +63,7 @@ class Feedback
         return $this->createdAt;
     }
 
-    public function getUser(): User
+    public function getUser(): ?User
     {
         return $this->user;
     }
