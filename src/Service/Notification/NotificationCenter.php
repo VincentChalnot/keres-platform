@@ -7,7 +7,6 @@ namespace App\Service\Notification;
 use App\Entity\Game;
 use App\Entity\Notification;
 use App\Entity\User;
-use App\Model\GameEndReason;
 use App\Model\Notification\NotificationPreferences;
 use App\Model\Notification\NotificationType;
 use App\Model\OpponentType;
@@ -15,13 +14,16 @@ use App\Model\PieceColor;
 use App\Model\TimeControlKind;
 use App\Repository\NotificationRepository;
 use App\Service\Game\GameUpdatePublisher;
+use App\Service\NotificationMailer;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\Clock\ClockInterface;
 
 /**
  * The single write path for in-app notifications (07-notifications.md sec
- * 7.2). In-app only for now: no Web Push, no email. `readonly`, no mutable
- * state, safe under FrankenPHP worker mode.
+ * 7.2), plus the T9 email channel for the three types it's enabled for by
+ * default (`NotificationMailer`, gated on
+ * `NotificationPreferences::isEmailEnabled()`). No Web Push yet.
+ * `readonly`, no mutable state, safe under FrankenPHP worker mode.
  *
  * Two entry styles, because callers differ in where they sit relative to
  * their transaction:
@@ -39,6 +41,7 @@ final readonly class NotificationCenter
         private NotificationRepository $notificationRepository,
         private NotificationFormatter $formatter,
         private GameUpdatePublisher $publisher,
+        private NotificationMailer $notificationMailer,
         private ClockInterface $clock,
     ) {
     }
@@ -91,6 +94,10 @@ final readonly class NotificationCenter
             'actor' => self::actorRef($opponent),
             'gameUuid' => $game->getUuid()->toRfc4122(),
         ], self::gameSubject($game));
+
+        if (NotificationPreferences::fromUser($seekOwner)->isEmailEnabled(NotificationType::SEEK_MATCHED)) {
+            $this->notificationMailer->sendSeekMatched($seekOwner, $game, $opponent);
+        }
     }
 
     /**
@@ -115,6 +122,10 @@ final readonly class NotificationCenter
                 'actor' => self::actorRef($mover),
                 'gameUuid' => $game->getUuid()->toRfc4122(),
             ], self::gameSubject($game));
+
+            if (NotificationPreferences::fromUser($user)->isEmailEnabled(NotificationType::YOUR_TURN)) {
+                $this->notificationMailer->sendYourTurn($user, $game, $mover);
+            }
         }
     }
 
@@ -122,6 +133,17 @@ final readonly class NotificationCenter
      * `GameLifecycleManager`, inside the finalising transaction (hence
      * `record()`). Multiplayer games only - an AI or hot-seat player saw
      * the end on their own screen. `$actor` (the resigner) is skipped.
+     *
+     * The GAME_FINISHED email is dispatched here too, not after the
+     * caller's flush: `$this->mailer->send()` (T1) enqueues
+     * `SendEmailMessage` through the Doctrine Messenger transport on the
+     * SAME connection as this ambient transaction, so the row is
+     * transactionally tied to it exactly like `CheckClockExpiryMessage`/
+     * `RecordAnalyticsEventMessage` already are elsewhere in this codebase
+     * (`04-matchmaking.md` sec 3.5, T6 DECISIONS.md) - a rollback here
+     * rolls the queued email back with it, no separate post-commit
+     * plumbing needed through `GameEngine`/`ClockAdjudicator`/
+     * `ResignGameAction`/`AbortGameAction`.
      */
     public function gameFinished(Game $game, ?PieceColor $actor = null): void
     {
@@ -137,12 +159,7 @@ final readonly class NotificationCenter
             }
 
             $opponent = $game->getPlayer($player->getColor()->opposite())->getUser();
-            $outcome = match (true) {
-                GameEndReason::ABORTED === $game->getEndReason() => 'aborted',
-                $game->isDraw() => 'draw',
-                $game->isWhiteWins() === (PieceColor::WHITE === $player->getColor()) => 'win',
-                default => 'loss',
-            };
+            $outcome = NotificationMailer::outcomeFor($game, $player->getColor());
 
             // A pending "your turn" for a finished game is stale noise.
             $this->notificationRepository->markAllRead($user, $this->clock->now(), self::gameSubject($game));
@@ -153,6 +170,10 @@ final readonly class NotificationCenter
                 'outcome' => $outcome,
                 'endReason' => strtolower($game->getEndReason()->name),
             ], self::gameSubject($game));
+
+            if (NotificationPreferences::fromUser($user)->isEmailEnabled(NotificationType::GAME_FINISHED)) {
+                $this->notificationMailer->sendGameFinished($user, $game);
+            }
         }
     }
 

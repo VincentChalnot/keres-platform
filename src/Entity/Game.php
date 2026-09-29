@@ -76,6 +76,9 @@ class Game
     #[ORM\Column(type: Types::DATETIMETZ_IMMUTABLE, nullable: true)]
     private ?\DateTimeImmutable $deadlineWarningSentAt = null;
 
+    #[ORM\Column(type: Types::DATETIMETZ_IMMUTABLE, nullable: true)]
+    private ?\DateTimeImmutable $lastYourTurnEmailAt = null;
+
     #[ORM\Column(type: Types::SMALLINT, nullable: true)]
     private ?int $drawOfferedByColorValue = null;
 
@@ -244,6 +247,22 @@ class Game
     public function markDeadlineWarningSent(\DateTimeImmutable $sentAt): void
     {
         $this->deadlineWarningSentAt = $sentAt;
+    }
+
+    public function getLastYourTurnEmailAt(): ?\DateTimeImmutable
+    {
+        return $this->lastYourTurnEmailAt;
+    }
+
+    /**
+     * `NotificationMailer::sendYourTurn()` only (T9). Written inside the
+     * same row-locked transaction as the "have we already emailed for this
+     * hour" check, so the check-then-write is atomic across concurrent
+     * moves/adjudications on the same game.
+     */
+    public function markYourTurnEmailSent(\DateTimeImmutable $sentAt): void
+    {
+        $this->lastYourTurnEmailAt = $sentAt;
     }
 
     public function getDrawOfferedByColor(): ?PieceColor

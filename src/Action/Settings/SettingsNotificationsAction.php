@@ -18,8 +18,9 @@ use Symfony\Component\Security\Http\Attribute\IsGranted;
 
 /**
  * `GET|POST /settings/notifications` - Settings -> Notifications: one
- * in-app toggle per notification type (07-notifications.md sec 8, in-app
- * only for now) and the newsletter subscription.
+ * in-app toggle and one email toggle per notification type
+ * (07-notifications.md sec 8, T9 added the email channel) and the
+ * newsletter subscription.
  */
 #[AsController]
 class SettingsNotificationsAction extends AbstractController
@@ -45,6 +46,7 @@ class SettingsNotificationsAction extends AbstractController
 
         $form = $this->createForm(NotificationSettingsType::class, [
             'inApp' => $notificationPreferences->inAppMap(),
+            'email' => $notificationPreferences->emailMap(),
             'newsletterOptIn' => $preferences->isNewsletterOptIn(),
         ]);
         $form->handleRequest($request);
@@ -52,7 +54,7 @@ class SettingsNotificationsAction extends AbstractController
         if ($form->isSubmitted() && $form->isValid()) {
             $data = $form->getData();
 
-            $notificationPreferences->withInApp($data['inApp'])->applyTo($user);
+            $notificationPreferences->withInApp($data['inApp'])->withEmail($data['email'])->applyTo($user);
             $preferences->setNewsletterOptIn((bool) $data['newsletterOptIn']);
             $preferences->touch();
             $this->entityManager->flush();

@@ -1,0 +1,19 @@
+{% extends 'email/_layout.txt.twig' %}
+
+{% block content %}
+Hello {{ recipient.username }},
+
+{% if outcome == 'win' %}
+You won your game!
+{%- elseif outcome == 'loss' %}
+You lost your game.
+{%- elseif outcome == 'draw' %}
+Your game ended in a draw.
+{%- elseif outcome == 'aborted' %}
+Your game was aborted before it really began - no result, no rating change.
+{%- else %}
+Your game has ended.
+{%- endif %}
+
+Review the game: {{ playUrl }}
+{% endblock %}

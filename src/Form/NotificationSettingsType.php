@@ -11,19 +11,25 @@ use Symfony\Component\Form\Extension\Core\Type\SubmitType;
 use Symfony\Component\Form\FormBuilderInterface;
 
 /**
- * Settings -> Notifications. One in-app toggle per `NotificationType` -
- * built from the enum, so a new type gets its toggle for free - plus the
- * newsletter subscription. Array-backed: `inApp` maps type values to
- * booleans for `NotificationPreferences::withInApp()`.
+ * Settings -> Notifications. One in-app toggle and one email toggle per
+ * `NotificationType` - built from the enum, so a new type gets both for
+ * free - plus the newsletter subscription. Array-backed: `inApp`/`email`
+ * map type values to booleans for `NotificationPreferences::withInApp()`/
+ * `withEmail()`.
  */
 class NotificationSettingsType extends AbstractType
 {
     public function buildForm(FormBuilderInterface $builder, array $options): void
     {
         $inApp = $builder->create('inApp', null, ['compound' => true, 'label' => false]);
+        $email = $builder->create('email', null, ['compound' => true, 'label' => false]);
 
         foreach (NotificationType::cases() as $type) {
             $inApp->add($type->value, CheckboxType::class, [
+                'label' => $type->label(),
+                'required' => false,
+            ]);
+            $email->add($type->value, CheckboxType::class, [
                 'label' => $type->label(),
                 'required' => false,
             ]);
@@ -31,6 +37,7 @@ class NotificationSettingsType extends AbstractType
 
         $builder
             ->add($inApp)
+            ->add($email)
             ->add('newsletterOptIn', CheckboxType::class, [
                 'label' => 'Subscribe to the newsletter',
                 'required' => false,

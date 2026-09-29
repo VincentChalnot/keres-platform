@@ -530,5 +530,75 @@ runs → one printed `Forfeited 1 game(s)`, the other `Forfeited 0 game(s)`;
 `white_wins = f` - white was to move), `move_deadline_at` cleared, still
 exactly 2 `game_move` rows.
 
-**Next action**: T9 (notification emails) is next.
+**Next action**: T9 (notification emails) was next; see below.
+
+---
+
+## T9 — Notification emails
+**Status**: done. **Commit**: `85ae1b3`.
+
+**What changed**: Email joins in-app as a second notification channel.
+`NotificationPreferences` gained `isEmailEnabled()`/`withEmail()`/
+`emailMap()`, mirroring the existing in-app trio exactly (only
+differences-from-default are persisted). `NotificationType::
+isEmailEnabledByDefault()`: `YOUR_TURN`/`GAME_FINISHED` on, the three
+social types (`FRIEND_REQUEST`/`FRIEND_ACCEPTED`/`SEEK_MATCHED`) off - an
+inbox row is free, an email is not.
+
+New `src/Service/NotificationMailer.php` (T2's shared layout, all three
+templates carry `unsubscribe_url` -> `/settings/notifications`):
+`sendYourTurn()`, `sendGameFinished()`, `sendSeekMatched()`. `YOUR_TURN` is
+rate-limited to one per *game* per hour via a new `game.
+last_your_turn_email_at` column, checked-and-written under a
+`PESSIMISTIC_WRITE` row lock in its own transaction (same shape as T8's
+sweep). `GAME_FINISHED`'s outcome text (`win`/`loss`/`draw`/`aborted`) is
+computed by a shared `NotificationMailer::outcomeFor()` static, used by
+both the email and refactored into `NotificationCenter::gameFinished()`'s
+own in-app payload so the two channels can never disagree.
+
+`NotificationCenter` calls the mailer right after each existing in-app
+call, gated on `isEmailEnabled()`: `seekMatched()`/`movePlayed()` are both
+already post-commit callers, so the mailer call is a plain synchronous
+call there. `gameFinished()` runs inside `GameLifecycleManager`'s own
+unflushed transaction - the email is dispatched there anyway, relying on
+the Messenger/Doctrine-transport transactional-outbox property already
+established for `CheckClockExpiryMessage`/`RecordAnalyticsEventMessage`
+(see DECISIONS.md for the full reasoning on why this doesn't need the
+brief's suggested post-commit plumbing through all four
+`GameLifecycleManager` call sites).
+
+Settings -> Notifications (`NotificationSettingsType`,
+`SettingsNotificationsAction`, `templates/actions/settings/
+notifications.html.twig`) gained a second "Email" toggle section, one row
+per `NotificationType`, built from the same enum loop as the in-app
+section - a new type gets both toggles for free. Added the requested
+static unsubscribe note under the section.
+
+**Verified live**: `composer cs:check` clean, `bin/phpunit` 45/45 green,
+`doctrine:schema:update --dump-sql` clean for the new column. Two dev
+users, an unlimited multiplayer game (`app:create-test-game`): white's
+move produced both the in-app `your_turn` row and the email for black
+(Mailpit, unsubscribe link present and correct), and the rate-limit column
+was written. Rate-limit suppression verified via a throwaway command
+(`keres-multiplayer-testing` skill's own precedent for testing something
+two live plies can't reliably reach) calling `sendYourTurn()` twice
+in a row: Mailpit's count moved by exactly one, not two - deleted after.
+An incidental game abort exercised `GAME_FINISHED` for both players
+(correct "aborted" outcome text in both channels) - proof the
+inside-the-transaction dispatch actually delivers, not just compiles.
+Settings page: fresh defaults matched the brief exactly (`your_turn`/
+`game_finished` checked, the three social types unchecked, in-app all
+checked); toggled `seek_matched` email on and `your_turn` email off,
+saved, confirmed the persisted JSON only stored the two deltas; a fresh
+seek pairing then emailed the seek owner (email now on) while a
+subsequent move produced the in-app row but no email for the same user
+(email now off) - both channels genuinely independent per-type per-user.
+All test users/games/seeks deleted after.
+
+Found and logged (not fixed, out of scope): `DevLoginAuthenticator` never
+clears the security `target_path`, so a stale one from earlier testing
+can hijack every subsequent `/dev/login` - see DECISIONS.md.
+
+**Next action**: awaiting the next task from Main.
+
 

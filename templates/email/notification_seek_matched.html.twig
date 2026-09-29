@@ -1,0 +1,13 @@
+{% extends 'email/_layout.html.twig' %}
+
+{% block title %}Your Keres seek was matched{% endblock %}
+
+{% block content %}
+    <p style="margin:0 0 16px 0;">Hello {{ recipient.username }},</p>
+
+    <p style="margin:0 0 16px 0;">{{ opponent.username }} accepted your seek - the game has started!</p>
+
+    <p style="margin:0;">
+        <a href="{{ playUrl }}" style="display:inline-block; background-color:#e19e5b; color:#1a1208; padding:12px 28px; border-radius:9999px; text-decoration:none; font-weight:bold;">Go to the game</a>
+    </p>
+{% endblock %}

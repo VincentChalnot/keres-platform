@@ -1,0 +1,25 @@
+{% extends 'email/_layout.html.twig' %}
+
+{% block title %}Your Keres game has ended{% endblock %}
+
+{% block content %}
+    <p style="margin:0 0 16px 0;">Hello {{ recipient.username }},</p>
+
+    <p style="margin:0 0 16px 0;">
+        {%- if outcome == 'win' -%}
+            You won your game!
+        {%- elseif outcome == 'loss' -%}
+            You lost your game.
+        {%- elseif outcome == 'draw' -%}
+            Your game ended in a draw.
+        {%- elseif outcome == 'aborted' -%}
+            Your game was aborted before it really began - no result, no rating change.
+        {%- else -%}
+            Your game has ended.
+        {%- endif -%}
+    </p>
+
+    <p style="margin:0;">
+        <a href="{{ playUrl }}" style="display:inline-block; background-color:#e19e5b; color:#1a1208; padding:12px 28px; border-radius:9999px; text-decoration:none; font-weight:bold;">Review the game</a>
+    </p>
+{% endblock %}

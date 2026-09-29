@@ -1,0 +1,9 @@
+{% extends 'email/_layout.txt.twig' %}
+
+{% block content %}
+Hello {{ recipient.username }},
+
+{{ opponent.username }} accepted your seek - the game has started!
+
+Go to the game: {{ playUrl }}
+{% endblock %}

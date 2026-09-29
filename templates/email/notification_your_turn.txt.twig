@@ -1,0 +1,9 @@
+{% extends 'email/_layout.txt.twig' %}
+
+{% block content %}
+Hello {{ recipient.username }},
+
+{{ mover.username }} just played a move. It's your turn!
+
+Play your move: {{ playUrl }}
+{% endblock %}

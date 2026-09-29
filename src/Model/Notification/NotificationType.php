@@ -34,6 +34,22 @@ enum NotificationType: string
     {
         return true;
     }
+
+    /**
+     * T9: email defaults, unlike in-app, are NOT all-on - an inbox row is
+     * free, an email is not. Only the two types where missing it costs a
+     * game (a forfeited correspondence move, a result you never learn
+     * about) default on; the social ones (already served well by the
+     * in-app inbox/bell) default off.
+     */
+    public function isEmailEnabledByDefault(): bool
+    {
+        return match ($this) {
+            self::YOUR_TURN, self::GAME_FINISHED => true,
+            self::FRIEND_REQUEST, self::FRIEND_ACCEPTED, self::SEEK_MATCHED => false,
+        };
+    }
+
     case FRIEND_REQUEST = 'friend_request';
     case FRIEND_ACCEPTED = 'friend_accepted';
     case SEEK_MATCHED = 'seek_matched';

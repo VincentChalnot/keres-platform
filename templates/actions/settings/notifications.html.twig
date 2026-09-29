@@ -14,6 +14,14 @@
         {% do form.inApp.setRendered %}
 
         <h3 class="title is-5 mt-5">Email</h3>
+        <p class="has-text-grey">Get an email for the same events, even when you're not on the site. Email me when:</p>
+        {% for child in form.email %}
+            {{ form_row(child) }}
+        {% endfor %}
+        {% do form.email.setRendered %}
+        <p class="has-text-grey is-size-7">You can also unsubscribe by clicking the link in any notification email.</p>
+
+        <h3 class="title is-5 mt-5">Newsletter</h3>
         {{ form_row(form.newsletterOptIn) }}
 
         <div class="field mt-5">
