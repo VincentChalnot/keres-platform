@@ -73,6 +73,9 @@ class Game
     #[ORM\Column(type: 'timestamptz_micro', nullable: true)]
     private ?\DateTimeImmutable $moveDeadlineAt = null;
 
+    #[ORM\Column(type: Types::DATETIMETZ_IMMUTABLE, nullable: true)]
+    private ?\DateTimeImmutable $deadlineWarningSentAt = null;
+
     #[ORM\Column(type: Types::SMALLINT, nullable: true)]
     private ?int $drawOfferedByColorValue = null;
 
@@ -224,6 +227,23 @@ class Game
     public function setMoveDeadlineAt(?\DateTimeImmutable $moveDeadlineAt): void
     {
         $this->moveDeadlineAt = $moveDeadlineAt;
+    }
+
+    public function getDeadlineWarningSentAt(): ?\DateTimeImmutable
+    {
+        return $this->deadlineWarningSentAt;
+    }
+
+    /**
+     * `SweepCorrespondenceDeadlinesCommand` only (T8). Compared against
+     * `clockTurnStartedAt`, not nulled on every move: a value older than
+     * the current move's anchor is exactly "no warning sent for this move
+     * yet", so a fresh move re-arms the check for free with no write on
+     * the hot move-submission path.
+     */
+    public function markDeadlineWarningSent(\DateTimeImmutable $sentAt): void
+    {
+        $this->deadlineWarningSentAt = $sentAt;
     }
 
     public function getDrawOfferedByColor(): ?PieceColor

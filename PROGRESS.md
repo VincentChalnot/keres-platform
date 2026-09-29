@@ -406,7 +406,7 @@ separately Playwright-verified - stated explicitly rather than
 improvising a two-tab seek-matching test for a collection-only task with
 no UI to confirm against.
 
-**Next action**: T7 complete; awaiting next task assignment.
+**Next action**: T7 (waitlist form) was next; see below.
 
 ---
 
@@ -475,3 +475,60 @@ showed "invalid or expired" and `psql` confirmed still exactly one
 temporary admin test account: the new row renders with a green "waitlist"
 badge and the "Waitlist" filter option works. All test rows (signup,
 feedback, admin test user) deleted after verification.
+
+**Next action**: T8 (correspondence time control) was next; see below.
+
+---
+
+## T8 — Correspondence time control (per-move deadline sweeper)
+**Status**: done. **Commit**: `keres-platform` (this commit, "T8:
+correspondence time control").
+
+**What changed**: Correspondence stays on the existing `TimeControl`
+embeddable / `TimeControlKind::CORRESPONDENCE` variant, but switches from
+whole-day to hour granularity: `days_per_move` renamed in place to
+`hours_per_move` on both `game` and `seek`
+(`migrations/Version20260929120000.php`, existing rows ×24 - pre-launch, no
+real data), `TimeControl::correspondence(int $hoursPerMove)`,
+`ClockManager` budgets in `3_600_000` ms/hour. Lobby: the "Correspondence"
+quick-pair preset is now `24h/move`, and the custom-seek "Time per move"
+dropdown offers 6/12/24/48/72 hours with 24h selected by default
+(`SeekCreateRequest` validates the same choice set). New
+`Game::$deadlineWarningSentAt` (nullable, same migration); `moveDeadlineAt`
+is the existing column, served by the existing `idx_game_move_deadline`
+partial index (`WHERE move_deadline_at IS NOT NULL AND game_over_at IS
+NULL`). New `SweepCorrespondenceDeadlinesCommand`
+(`app:correspondence:sweep-deadlines`), run every 60s by a new Supervisor
+program (`frankenphp/supervisor/correspondence-sweep.conf`, copied in both
+worker `Dockerfile` stages) with two independent, idempotent passes:
+(1) forfeit expired games via the existing
+`ClockAdjudicator::adjudicate()` (row-locked, so overlapping sweeps or a
+lazy adjudication elsewhere can't double-finalize); (2) warn the side to
+move once, 6h before the deadline
+(`MultiplayerLimits::CORRESPONDENCE_DEADLINE_WARNING_HOURS`), under its own
+`SELECT ... FOR UPDATE` - "already warned for this move" is
+`deadlineWarningSentAt >= clockTurnStartedAt`, so every new move re-arms the
+warning with no extra write on the move path. New
+`CorrespondenceMailer::sendDeadlineWarning()` (T2's shared email layout,
+`templates/email/correspondence_deadline_warning.{html,txt}.twig`).
+`SubmitMoveAction` no longer dispatches `CheckClockExpiryMessage` for
+CORRESPONDENCE (only REALTIME), so the delayed-message path and the
+sweeper never race. `docs/multiplayer/03-time-control.md` sec 9.3's
+`CorrespondenceNudgeMessage` design (never built) is superseded by the
+sweeper - noted in the command's docblock.
+
+**Verified live**: `composer cs:check` clean, `bin/phpunit` 45/45 green
+(no new unit tests - the sweep is a console command, verified live).
+Warning path (previous session, Playwright + Mailpit): the warning mail is
+sent once and a second sweep sends 0. Forfeit path: an expired game ends
+with `GameEndReason::TIMEOUT` (`end_reason_value = 3`). Concurrency: a
+2-ply game (`app:create-test-game` + two `playMove()`s via `?_as=`,
+then converted to CORRESPONDENCE 24h and `move_deadline_at` backdated 1h
+via `psql`) swept by two simultaneous `app:correspondence:sweep-deadlines`
+runs → one printed `Forfeited 1 game(s)`, the other `Forfeited 0 game(s)`;
+`psql` showed the game ended exactly once (`end_reason_value = 3`,
+`white_wins = f` - white was to move), `move_deadline_at` cleared, still
+exactly 2 `game_move` rows.
+
+**Next action**: T9 (notification emails) is next.
+

@@ -194,7 +194,7 @@ class Seek
         return $this->timeControl->getKind() === $other->timeControl->getKind()
             && $this->timeControl->getInitialSeconds() === $other->timeControl->getInitialSeconds()
             && $this->timeControl->getIncrementSeconds() === $other->timeControl->getIncrementSeconds()
-            && $this->timeControl->getDaysPerMove() === $other->timeControl->getDaysPerMove()
+            && $this->timeControl->getHoursPerMove() === $other->timeControl->getHoursPerMove()
             && $this->rated === $other->rated
             && $this->getColorPreference() === $other->getColorPreference()
             && $this->autoWiden === $other->autoWiden

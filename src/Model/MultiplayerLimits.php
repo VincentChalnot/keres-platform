@@ -36,6 +36,9 @@ final class MultiplayerLimits
     /** 04-matchmaking.md sec 4.2: the client heartbeat period in milliseconds; also the pairing-retry granularity. */
     public const int SEEK_HEARTBEAT_INTERVAL_MS = 10000;
 
+    /** T8: correspondence deadline sweep warning threshold, hours before moveDeadlineAt. */
+    public const int CORRESPONDENCE_DEADLINE_WARNING_HOURS = 6;
+
     /** 04-matchmaking.md sec 3.3: w(t) = min(WINDOW_MAX, WINDOW_BASE + WIDEN_PER_SECOND * t). */
     public const int QUICK_PAIR_WINDOW_BASE = 200;
 

@@ -124,7 +124,7 @@ class SeekRepository extends ServiceEntityRepository
             AND c.time_control_kind = :selfKindA
             AND c.initial_seconds   IS NOT DISTINCT FROM :selfInitialSeconds
             AND c.increment_seconds IS NOT DISTINCT FROM :selfIncrementSeconds
-            AND c.days_per_move     IS NOT DISTINCT FROM :selfDaysPerMove
+            AND c.hours_per_move    IS NOT DISTINCT FROM :selfHoursPerMove
             AND c.rated = :selfRated
             AND (:selfColorPreferenceA = 2 OR c.color_preference_value <> :selfColorPreferenceB)
             AND c.expires_at > now()
@@ -167,7 +167,7 @@ class SeekRepository extends ServiceEntityRepository
             'selfSpeedCategory' => $self->speedCategory,
             'selfInitialSeconds' => $self->initialSeconds,
             'selfIncrementSeconds' => $self->incrementSeconds,
-            'selfDaysPerMove' => $self->daysPerMove,
+            'selfHoursPerMove' => $self->hoursPerMove,
             'selfRated' => $self->rated,
             'selfColorPreferenceA' => $self->colorPreference->value,
             'selfColorPreferenceB' => $self->colorPreference->value,

@@ -35,7 +35,7 @@ class LobbyAction extends AbstractController
         'blitz' => ['label' => 'Blitz', 'kind' => 'realtime', 'initialMinutes' => 7, 'incrementSeconds' => 5],
         'rapid' => ['label' => 'Rapid', 'kind' => 'realtime', 'initialMinutes' => 20, 'incrementSeconds' => 10],
         'classical' => ['label' => 'Classical', 'kind' => 'realtime', 'initialMinutes' => 100, 'incrementSeconds' => 0],
-        'correspondence' => ['label' => 'Correspondence', 'kind' => 'correspondence', 'daysPerMove' => 1],
+        'correspondence' => ['label' => 'Correspondence', 'kind' => 'correspondence', 'hoursPerMove' => 24],
     ];
 
     /** Pre-selected on page load. */

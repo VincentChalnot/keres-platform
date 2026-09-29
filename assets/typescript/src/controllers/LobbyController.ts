@@ -211,7 +211,7 @@ export class LobbyController {
         }
 
         if ('correspondence' === timeControl.kind) {
-            return `${timeControl.daysPerMove} day${1 === timeControl.daysPerMove ? '' : 's'}/move`;
+            return `${timeControl.hoursPerMove}h/move`;
         }
 
         const clock = `${Math.round((timeControl.initialSeconds ?? 0) / 60)}+${timeControl.incrementSeconds ?? 0}`;
@@ -262,7 +262,7 @@ export class LobbyController {
         };
 
         const applyPreset = (button: HTMLButtonElement): void => {
-            const {kind, initialMinutes, incrementSeconds, daysPerMove} = button.dataset;
+            const {kind, initialMinutes, incrementSeconds, hoursPerMove} = button.dataset;
 
             if (kindSelect && kind) {
                 kindSelect.value = kind;
@@ -270,7 +270,7 @@ export class LobbyController {
 
             this.setFormValue(form, 'initialMinutes', initialMinutes);
             this.setFormValue(form, 'incrementSeconds', incrementSeconds);
-            this.setFormValue(form, 'daysPerMove', daysPerMove);
+            this.setFormValue(form, 'hoursPerMove', hoursPerMove);
             syncFields();
             markPreset(button);
         };
@@ -280,7 +280,7 @@ export class LobbyController {
             const data = new FormData(form);
 
             return presetButtons.find((button) => {
-                const {kind, initialMinutes, incrementSeconds, daysPerMove} = button.dataset;
+                const {kind, initialMinutes, incrementSeconds, hoursPerMove} = button.dataset;
 
                 if (kind !== data.get('kind')) {
                     return false;
@@ -288,7 +288,7 @@ export class LobbyController {
 
                 return 'realtime' === kind
                     ? initialMinutes === data.get('initialMinutes') && incrementSeconds === data.get('incrementSeconds')
-                    : daysPerMove === data.get('daysPerMove');
+                    : hoursPerMove === data.get('hoursPerMove');
             }) ?? null;
         };
 
@@ -339,7 +339,7 @@ export class LobbyController {
             kind,
             initialSeconds: 'realtime' === kind ? Math.round(Number(formData.get('initialMinutes')) * 60) : null,
             incrementSeconds: 'realtime' === kind ? Number(formData.get('incrementSeconds')) : null,
-            daysPerMove: 'correspondence' === kind ? Number(formData.get('daysPerMove')) : null,
+            hoursPerMove: 'correspondence' === kind ? Number(formData.get('hoursPerMove')) : null,
             // A disabled <select> is absent from FormData: unlimited is always casual.
             rated: 'true' === formData.get('rated'),
             colorPreference: String(formData.get('colorPreference') ?? 'random') as CustomSeekInput['colorPreference'],

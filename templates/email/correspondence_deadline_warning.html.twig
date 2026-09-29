@@ -1,0 +1,15 @@
+{% extends 'email/_layout.html.twig' %}
+
+{% block title %}Your Keres move is due soon{% endblock %}
+
+{% block content %}
+    <p style="margin:0 0 16px 0;">Hello {{ user.username }},</p>
+
+    <p style="margin:0 0 16px 0;">Your move in a correspondence game is due in less than 6 hours. If you run out of time, you'll forfeit the game.</p>
+
+    <p style="margin:0 0 24px 0;">
+        <a href="{{ playUrl }}" style="display:inline-block; background-color:#e19e5b; color:#1a1208; padding:12px 28px; border-radius:9999px; text-decoration:none; font-weight:bold;">Play your move</a>
+    </p>
+
+    <p style="margin:0;">You're receiving this because it's your turn in an ongoing correspondence game on Keres.</p>
+{% endblock %}

@@ -18,7 +18,7 @@ export interface TimeControlRef {
     kind: ClockKind;
     initialSeconds: number | null;
     incrementSeconds: number | null;
-    daysPerMove: number | null;
+    hoursPerMove: number | null;
     speed: string | null;
 }
 
@@ -72,7 +72,7 @@ export interface CustomSeekInput {
     kind: ClockKind;
     initialSeconds?: number | null;
     incrementSeconds?: number | null;
-    daysPerMove?: number | null;
+    hoursPerMove?: number | null;
     rated: boolean;
     colorPreference: ColorPreference;
     ratingMin?: number | null;

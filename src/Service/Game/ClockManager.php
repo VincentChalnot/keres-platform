@@ -152,7 +152,7 @@ final readonly class ClockManager
         return match ($timeControl->getKind()) {
             TimeControlKind::UNLIMITED => null,
             TimeControlKind::REALTIME => $timeControl->getInitialSeconds() * 1000,
-            TimeControlKind::CORRESPONDENCE => $timeControl->getDaysPerMove() * 86_400_000,
+            TimeControlKind::CORRESPONDENCE => $timeControl->getHoursPerMove() * 3_600_000,
         };
     }
 
@@ -163,7 +163,7 @@ final readonly class ClockManager
         return match ($timeControl->getKind()) {
             TimeControlKind::UNLIMITED => null,
             TimeControlKind::REALTIME => max(0, $remainingBefore - $chargedMs) + $timeControl->getIncrementSeconds() * 1000,
-            TimeControlKind::CORRESPONDENCE => $timeControl->getDaysPerMove() * 86_400_000,
+            TimeControlKind::CORRESPONDENCE => $timeControl->getHoursPerMove() * 3_600_000,
         };
     }
 

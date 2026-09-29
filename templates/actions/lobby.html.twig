@@ -32,14 +32,14 @@
                                                 data-initial-minutes="{{ preset.initialMinutes }}"
                                                 data-increment-seconds="{{ preset.incrementSeconds }}"
                                             {% else %}
-                                                data-days-per-move="{{ preset.daysPerMove }}"
+                                                data-hours-per-move="{{ preset.hoursPerMove }}"
                                             {% endif %}>
                                         <span>{{ preset.label }}</span>
                                         <span class="lobby-presets__value">
                                             {%- if preset.kind == 'realtime' -%}
                                                 {{ preset.initialMinutes }}+{{ preset.incrementSeconds }}
                                             {%- else -%}
-                                                {{ preset.daysPerMove }} day{{ preset.daysPerMove > 1 ? 's' }}
+                                                {{ preset.hoursPerMove }}h/move
                                             {%- endif -%}
                                         </span>
                                     </button>
@@ -81,13 +81,15 @@
                             </div>
                             <div class="column is-one-third" data-field="correspondence" hidden>
                                 <div class="field">
-                                    <label class="label" for="lobby-seek-days">Days per move</label>
+                                    <label class="label" for="lobby-seek-hours">Time per move</label>
                                     <div class="control">
                                         <div class="select is-fullwidth">
-                                            <select name="daysPerMove" id="lobby-seek-days">
-                                                <option value="1">1 day</option>
-                                                <option value="3">3 days</option>
-                                                <option value="7">7 days</option>
+                                            <select name="hoursPerMove" id="lobby-seek-hours">
+                                                <option value="6">6 hours</option>
+                                                <option value="12">12 hours</option>
+                                                <option value="24" selected>24 hours</option>
+                                                <option value="48">48 hours</option>
+                                                <option value="72">72 hours</option>
                                             </select>
                                         </div>
                                     </div>

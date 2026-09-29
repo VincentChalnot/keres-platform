@@ -144,7 +144,12 @@ readonly class SubmitMoveAction
         if (!$game->isGameOver()) {
             $deadline = $game->getMoveDeadlineAt();
 
-            if (null !== $deadline && TimeControlKind::UNLIMITED !== $game->getTimeControl()->getKind()) {
+            // T8: CORRESPONDENCE deadlines are enforced by the sweep
+            // command over game.moveDeadlineAt, not a per-move delayed
+            // message - a 6h-72h DelayStamp per move is exactly what that
+            // task's brief asked to avoid (docs/multiplayer/03-time-control.md
+            // sec 9.3's CorrespondenceNudgeMessage design was never built).
+            if (null !== $deadline && !\in_array($game->getTimeControl()->getKind(), [TimeControlKind::UNLIMITED, TimeControlKind::CORRESPONDENCE], true)) {
                 $this->dispatchClockExpiryCheck($game, $deadline);
             }
 

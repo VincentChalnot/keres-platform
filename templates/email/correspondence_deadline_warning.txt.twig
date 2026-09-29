@@ -1,0 +1,11 @@
+{% extends 'email/_layout.txt.twig' %}
+
+{% block content %}
+Hello {{ user.username }},
+
+Your move in a correspondence game is due in less than 6 hours. If you run out of time, you'll forfeit the game.
+
+Play your move: {{ playUrl }}
+
+You're receiving this because it's your turn in an ongoing correspondence game on Keres.
+{% endblock %}

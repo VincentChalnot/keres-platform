@@ -200,7 +200,9 @@ final readonly class SeekMatcher
     {
         $deadline = $game->getMoveDeadlineAt();
 
-        if (null === $deadline) {
+        // T8: correspondence deadlines are swept, not delayed-messaged - see
+        // the identical guard and rationale in SubmitMoveAction.
+        if (null === $deadline || TimeControlKind::CORRESPONDENCE === $game->getTimeControl()->getKind()) {
             return;
         }
 

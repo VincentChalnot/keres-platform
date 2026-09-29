@@ -116,15 +116,15 @@ readonly class CreateSeekAction
     private function resolveTimeControl(SeekCreateRequest $r): TimeControl|JsonResponse
     {
         $reason = match ($r->kind) {
-            'unlimited' => (null !== $r->initialSeconds || null !== $r->incrementSeconds || null !== $r->daysPerMove)
+            'unlimited' => (null !== $r->initialSeconds || null !== $r->incrementSeconds || null !== $r->hoursPerMove)
                 ? 'unlimited carries a time-control field' : null,
             'realtime' => match (true) {
                 null === $r->initialSeconds || null === $r->incrementSeconds => 'realtime requires initialSeconds and incrementSeconds',
-                null !== $r->daysPerMove => 'realtime carries daysPerMove',
+                null !== $r->hoursPerMove => 'realtime carries hoursPerMove',
                 default => null,
             },
             'correspondence' => match (true) {
-                null === $r->daysPerMove => 'correspondence requires daysPerMove',
+                null === $r->hoursPerMove => 'correspondence requires hoursPerMove',
                 null !== $r->initialSeconds || null !== $r->incrementSeconds => 'correspondence carries a realtime field',
                 default => null,
             },
@@ -138,7 +138,7 @@ readonly class CreateSeekAction
         return match ($r->kind) {
             'unlimited' => TimeControl::unlimited(),
             'realtime' => TimeControl::realtime($r->initialSeconds, $r->incrementSeconds),
-            default => TimeControl::correspondence($r->daysPerMove),
+            default => TimeControl::correspondence($r->hoursPerMove),
         };
     }
 }

@@ -23,8 +23,8 @@ class TimeControl
     #[ORM\Column(name: 'increment_seconds', type: Types::INTEGER, nullable: true)]
     private ?int $incrementSeconds = null;
 
-    #[ORM\Column(name: 'days_per_move', type: Types::INTEGER, nullable: true)]
-    private ?int $daysPerMove = null;
+    #[ORM\Column(name: 'hours_per_move', type: Types::INTEGER, nullable: true)]
+    private ?int $hoursPerMove = null;
 
     private function __construct()
     {
@@ -49,15 +49,15 @@ class TimeControl
         return $tc;
     }
 
-    public static function correspondence(int $daysPerMove): self
+    public static function correspondence(int $hoursPerMove): self
     {
-        if ($daysPerMove < 1) {
-            throw new \InvalidArgumentException('Correspondence needs at least one day per move.');
+        if ($hoursPerMove < 1) {
+            throw new \InvalidArgumentException('Correspondence needs at least one hour per move.');
         }
 
         $tc = new self();
         $tc->kindValue = TimeControlKind::CORRESPONDENCE->value;
-        $tc->daysPerMove = $daysPerMove;
+        $tc->hoursPerMove = $hoursPerMove;
 
         return $tc;
     }
@@ -77,9 +77,9 @@ class TimeControl
         return $this->incrementSeconds;
     }
 
-    public function getDaysPerMove(): ?int
+    public function getHoursPerMove(): ?int
     {
-        return $this->daysPerMove;
+        return $this->hoursPerMove;
     }
 
     /**

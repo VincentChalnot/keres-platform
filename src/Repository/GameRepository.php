@@ -8,6 +8,7 @@ use App\Entity\Game;
 use App\Entity\User;
 use App\Model\GameEndReason;
 use App\Model\OpponentType;
+use App\Model\TimeControlKind;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\ORM\QueryBuilder;
 use Doctrine\Persistence\ManagerRegistry;
@@ -230,5 +231,55 @@ class GameRepository extends ServiceEntityRepository
         }
 
         return $queryBuilder;
+    }
+
+    /**
+     * T8 sweep: in-progress correspondence games whose move deadline has
+     * already passed. Plain read, no lock - `ClockAdjudicator::adjudicate()`
+     * takes its own idempotent, row-locked forfeit decision per game.
+     *
+     * @return Game[]
+     */
+    public function findExpiredCorrespondenceGames(\DateTimeImmutable $now): array
+    {
+        return $this->createQueryBuilder('g')
+            ->addSelect('p', 'pu')
+            ->leftJoin('g.players', 'p')
+            ->leftJoin('p.user', 'pu')
+            ->andWhere('g.timeControl.kindValue = :kind')
+            ->andWhere('g.gameOverAt IS NULL')
+            ->andWhere('g.moveDeadlineAt IS NOT NULL')
+            ->andWhere('g.moveDeadlineAt <= :now')
+            ->setParameter('kind', TimeControlKind::CORRESPONDENCE->value)
+            ->setParameter('now', $now)
+            ->getQuery()
+            ->getResult();
+    }
+
+    /**
+     * T8 sweep: in-progress correspondence games entering the
+     * deadline-warning window that have not yet been warned for the
+     * *current* move - `deadlineWarningSentAt < clockTurnStartedAt` re-arms
+     * the check after every move without a write on the move path itself.
+     *
+     * @return Game[]
+     */
+    public function findCorrespondenceGamesNeedingDeadlineWarning(\DateTimeImmutable $now, \DateTimeImmutable $warningHorizon): array
+    {
+        return $this->createQueryBuilder('g')
+            ->addSelect('p', 'pu')
+            ->leftJoin('g.players', 'p')
+            ->leftJoin('p.user', 'pu')
+            ->andWhere('g.timeControl.kindValue = :kind')
+            ->andWhere('g.gameOverAt IS NULL')
+            ->andWhere('g.moveDeadlineAt IS NOT NULL')
+            ->andWhere('g.moveDeadlineAt > :now')
+            ->andWhere('g.moveDeadlineAt <= :warningHorizon')
+            ->andWhere('g.deadlineWarningSentAt IS NULL OR g.deadlineWarningSentAt < g.clockTurnStartedAt')
+            ->setParameter('kind', TimeControlKind::CORRESPONDENCE->value)
+            ->setParameter('now', $now)
+            ->setParameter('warningHorizon', $warningHorizon)
+            ->getQuery()
+            ->getResult();
     }
 }

@@ -167,7 +167,7 @@ final readonly class SeekPayloadBuilder
             'kind' => strtolower($timeControl->getKind()->name),
             'initialSeconds' => $timeControl->getInitialSeconds(),
             'incrementSeconds' => $timeControl->getIncrementSeconds(),
-            'daysPerMove' => $timeControl->getDaysPerMove(),
+            'hoursPerMove' => $timeControl->getHoursPerMove(),
             'speed' => null !== $timeControl->speedCategory() ? strtolower($timeControl->speedCategory()->name) : null,
         ];
     }
