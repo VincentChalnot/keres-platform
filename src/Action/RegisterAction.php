@@ -7,6 +7,7 @@ namespace App\Action;
 use App\Entity\User;
 use App\Form\RegisterType;
 use App\Repository\UserRepository;
+use App\Service\Analytics\AnalyticsRecorder;
 use App\Service\UserMailer;
 use App\Service\UsernameGenerator;
 use Doctrine\ORM\EntityManagerInterface;
@@ -41,6 +42,7 @@ class RegisterAction extends AbstractController
         private readonly UsernameGenerator $usernameGenerator,
         private readonly UserMailer $userMailer,
         private readonly UrlGeneratorInterface $urlGenerator,
+        private readonly AnalyticsRecorder $analyticsRecorder,
     ) {
     }
 
@@ -67,6 +69,7 @@ class RegisterAction extends AbstractController
                 $user->setPassword($this->passwordHasher->hashPassword($user, $form->get('password')->getData()));
                 $this->entityManager->persist($user);
                 $this->entityManager->flush();
+                $this->analyticsRecorder->accountCreated($user);
             }
 
             // Byte-identical either way - that's the whole point (sec 2.1).

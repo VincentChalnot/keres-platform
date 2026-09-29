@@ -8,6 +8,8 @@ use App\Entity\User;
 use App\Form\LocalGameType;
 use App\Model\ColorPreference;
 use App\Model\OpponentType;
+use App\Repository\GameRepository;
+use App\Service\Analytics\AnalyticsRecorder;
 use App\Service\GameFactory;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -28,6 +30,8 @@ class NewLocalGameAction extends AbstractController
     public function __construct(
         private readonly EntityManagerInterface $entityManager,
         private readonly GameFactory $gameFactory,
+        private readonly GameRepository $gameRepository,
+        private readonly AnalyticsRecorder $analyticsRecorder,
     ) {
     }
 
@@ -57,10 +61,17 @@ class NewLocalGameAction extends AbstractController
                 default => ColorPreference::RANDOM,
             };
 
+            $isFirstGame = 0 === $this->gameRepository->countForUser($user);
             $game = $this->gameFactory->createAiOrHotseatGame($user, $data['opponentType'], $colorPreference);
 
             $this->entityManager->persist($game);
             $this->entityManager->flush();
+
+            if ($isFirstGame) {
+                $this->analyticsRecorder->firstGameStarted($user, $game);
+            }
+
+            $this->analyticsRecorder->gameStarted($user, $game, $data['opponentType']);
 
             return $this->redirectToRoute('play', ['uuid' => $game->getUuid()]);
         }

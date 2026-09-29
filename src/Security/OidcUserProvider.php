@@ -8,6 +8,7 @@ use App\Entity\User;
 use App\Entity\UserAuth;
 use App\Repository\UserAuthRepository;
 use App\Repository\UserRepository;
+use App\Service\Analytics\AnalyticsRecorder;
 use App\Service\UsernameGenerator;
 use Doctrine\ORM\EntityManagerInterface;
 use Drenso\OidcBundle\Model\OidcTokens;
@@ -26,6 +27,7 @@ class OidcUserProvider implements OidcUserProviderInterface
         private readonly UserAuthRepository $userAuthRepository,
         private readonly EntityManagerInterface $entityManager,
         private readonly UsernameGenerator $usernameGenerator,
+        private readonly AnalyticsRecorder $analyticsRecorder,
     ) {
     }
 
@@ -49,8 +51,9 @@ class OidcUserProvider implements OidcUserProviderInterface
             $existingAuth->getUser()->setAvatarUrl($avatarUrl);
         } else {
             $user = $this->userRepository->findByEmail($email);
+            $isNewUser = null === $user;
 
-            if (null === $user) {
+            if ($isNewUser) {
                 $user = new User($email);
                 $user->setDisplayName($displayName);
                 $user->setAvatarUrl($avatarUrl);
@@ -66,6 +69,10 @@ class OidcUserProvider implements OidcUserProviderInterface
         }
 
         $this->entityManager->flush();
+
+        if ($isNewUser ?? false) {
+            $this->analyticsRecorder->accountCreated($user);
+        }
     }
 
     public static function resolveEmail(string $email, string $provider, string $sub, string $fallback = ''): string

@@ -242,9 +242,10 @@ of bug this setup is used to reproduce.
 - `Game` uses Doctrine optimistic locking (`@Version`) — be aware when updating
   `Game` outside of `GameEngine` (which handles the manual version increment)
 - Messenger: `ProcessAiMoveMessage`, `CheckClockExpiryMessage`, `ExpireSeekMessage`,
-  and `Symfony\Component\Mailer\Messenger\SendEmailMessage` route to the `async`
-  transport (`config/packages/messenger.yaml`), consumed by the `php-worker`
-  Compose service; everything else routes to `sync` (handled in-process)
+  `RecordAnalyticsEventMessage`, and `Symfony\Component\Mailer\Messenger\SendEmailMessage`
+  route to the `async` transport (`config/packages/messenger.yaml`), consumed
+  by the `php-worker` Compose service; everything else routes to `sync`
+  (handled in-process)
 
 ### TypeScript
 

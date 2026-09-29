@@ -13,6 +13,7 @@ framework:
             'App\Message\ProcessAiMoveMessage': async
             'App\Message\CheckClockExpiryMessage': async
             'App\Message\ExpireSeekMessage': async
+            'App\Message\RecordAnalyticsEventMessage': async
             # SendEmailMessage: without an explicit route, Symfony Mailer's
             # message bus dispatch has no matching transport and the mail is
             # handled synchronously in-process (blocking the HTTP request on

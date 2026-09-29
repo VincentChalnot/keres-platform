@@ -11,6 +11,7 @@ use App\Exception\StalePositionException;
 use App\Model\BoardMovesData;
 use App\Model\MoveData;
 use App\Model\PieceColor;
+use App\Service\Analytics\AnalyticsRecorder;
 use App\Service\Game\ClockManager;
 use App\Service\Game\GameLifecycleManager;
 use Doctrine\DBAL\LockMode;
@@ -24,6 +25,7 @@ readonly class GameEngine
         private EngineApi $engineApi,
         private ClockManager $clockManager,
         private GameLifecycleManager $gameLifecycleManager,
+        private AnalyticsRecorder $analyticsRecorder,
     ) {
     }
 
@@ -100,6 +102,12 @@ readonly class GameEngine
         if ($flagged) {
             throw new MoveFlaggedException();
         }
+
+        // T6: dispatched after the transaction has already committed - a
+        // rejected/stale move never reaches here (it throws above or from
+        // inside the transaction). Cheap, async (T1): no query, no join, no
+        // wait for a flush, even on this per-ply hot path.
+        $this->analyticsRecorder->movePlayed($game, $mover);
 
         return $boardMovesData;
     }

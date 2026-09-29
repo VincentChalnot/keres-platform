@@ -6,6 +6,7 @@ namespace App\Security;
 
 use App\Entity\User;
 use App\Repository\UserRepository;
+use App\Service\Analytics\AnalyticsRecorder;
 use App\Service\UsernameGenerator;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\HttpFoundation\RedirectResponse;
@@ -42,6 +43,7 @@ class DevLoginAuthenticator extends AbstractAuthenticator
         private readonly EntityManagerInterface $entityManager,
         private readonly RouterInterface $router,
         private readonly UsernameGenerator $usernameGenerator,
+        private readonly AnalyticsRecorder $analyticsRecorder,
         private readonly string $environment,
     ) {
     }
@@ -69,6 +71,7 @@ class DevLoginAuthenticator extends AbstractAuthenticator
                 $user->setUsername($this->usernameGenerator->generate($identifier, $identifier));
                 $this->entityManager->persist($user);
                 $this->entityManager->flush();
+                $this->analyticsRecorder->accountCreated($user);
             }
 
             return $user;

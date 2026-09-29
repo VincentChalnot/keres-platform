@@ -324,4 +324,86 @@ line. On `../keres-website`: `hugo --environment production --minify --gc`
 clean (11 EN / 9 FR pages, unchanged), Playwright-confirmed the reworded
 privacy policy section renders correctly in English.
 
-**Next action**: await Main's next task (T6).
+**Next action**: T6 (instrumentation) was next; see below.
+
+---
+
+## T6 — Instrumentation (append-only event log)
+**Status**: done. **Commit**: `ba21924`.
+
+**Confirmed before starting** (per the task's own instructions): grepped for
+`GameEndReason::ABANDONMENT` (unused anywhere - no presence/disconnect
+tracker exists) and for any `Challenge`/`Invite` entity/action/route
+(none exist - `05-social.md` only mentions it as planned). Both findings
+directly shaped the design below.
+
+**What changed**: New `analytics_event` table
+(`migrations/Version20260928224500.php`, `src/Entity/AnalyticsEvent.php`) -
+`BIGSERIAL` id, `type` (new `AnalyticsEventType` string enum, 8 cases),
+`occurred_at`, a nullable managed `user` relation (set via
+`EntityManagerInterface::getReference()` in the handler - no SELECT), a
+nullable raw-value `game` UUID column (deliberately *not* a managed
+relation - never a join/lock on the hot move-submission path), and a
+denormalised `payload` JSON column (`Notification::payload`'s precedent,
+cited in the docblock).
+
+Write path: a new `RecordAnalyticsEventMessage` routed to `async`
+(messenger.yaml - T1's worker delivers it) + `RecordAnalyticsEventHandler`.
+A new `AnalyticsRecorder` facade service (same "one place, consistent
+shape" reasoning as `NotificationCenter`) gives every call site a single
+cheap typed method call - no query, no join, no wait for a flush, even
+from the hottest call site.
+
+**Six real call sites instrumented**:
+- `ACCOUNT_CREATED`: `RegisterAction`, `OidcUserProvider`,
+  `DevLoginAuthenticator` (the three paths the brief named). A fourth
+  `new User(...)` site found during research, `DevUserSwitchListener`
+  (dev-only `?_as=` impersonation shim), was deliberately **not**
+  instrumented (see DECISIONS.md).
+- `FIRST_GAME_STARTED` / `GAME_STARTED`: `NewLocalGameAction` (AI/hot-seat)
+  and `SeekMatcher::tryPair()` (real matchmaking pairing - checked for
+  *both* paired users independently). New `GameRepository::countForUser()`
+  for the first-game check (a plain count, fine per the brief - low
+  frequency). `GameFactory` itself untouched (never persists); the CLI-only
+  `CreateTestGameCommand` deliberately left uninstrumented.
+- `MOVE_PLAYED`: `GameEngine::applyMove()`, after its transaction commits,
+  only on a real (non-flagged) move - the one true funnel point for both
+  human and AI moves (`aiMove()` calls into the same method). The hot path
+  this whole design is built around.
+- `GAME_FINISHED` / `GAME_ABANDONED`: all four `GameLifecycleManager`
+  methods (`finaliseEngineResult`/`resign`/`finaliseTimeout` →
+  `GAME_FINISHED` with `reason`/`whiteWins`/`draw` read straight off `Game`
+  post-`finish()`; `finaliseAbort` → `GAME_ABANDONED`, mapped there rather
+  than to the unused `GameEndReason::ABANDONMENT` - see DECISIONS.md).
+
+**Two deferred, no fabricated call site**: `INVITE_SENT`/`INVITE_ACCEPTED`
+enum cases exist now so T11 doesn't touch this infrastructure again, but
+nothing dispatches them - there is no invite/challenge mechanism anywhere
+in the codebase to hook into yet. No file existed to anchor a `// TODO`
+comment in truthfully; noted here and in DECISIONS.md instead: **T11 should
+dispatch `AnalyticsEventType::INVITE_SENT`/`INVITE_ACCEPTED` via
+`AnalyticsRecorder` from wherever it creates/accepts the invite/challenge
+row.**
+
+**Verified**: `composer cs:check` clean, `bin/console cache:clear` (DI
+wiring), `bin/phpunit` 45/45 green, `doctrine:schema:update --dump-sql`
+showed nothing touching `analytics_event` (only large pre-existing
+unrelated drift) - confirms the entity mapping matches the migration
+exactly. No dashboard/report UI was built - there is deliberately nothing
+to click for this task, so verification was entirely write-path: played a
+real game end-to-end through the browser as a freshly `/register`-ed user
+(dev-login re-auth, then `/play/new` → AI game → two real moves each side
+→ resign) and read `analytics_event` via `psql` after each step. Got
+exactly the expected sequence, in order: `account_created` →
+`first_game_started` + `game_started` (`{"opponentType":"AI","aiLevel":null}`)
+→ four `move_played` rows alternating `WHITE`/`BLACK` (one per ply, human
+and AI moves both captured) → `game_finished`
+(`{"reason":"RESIGNATION","whiteWins":false,"draw":false}` - correct, the
+human/White side resigned). The multiplayer `SeekMatcher` path is
+implemented and code-reviewed (identical pattern to the AI path, plus the
+strictly-post-commit placement described in DECISIONS.md) but **not**
+separately Playwright-verified - stated explicitly rather than
+improvising a two-tab seek-matching test for a collection-only task with
+no UI to confirm against.
+
+**Next action**: await Main's next task (T7).

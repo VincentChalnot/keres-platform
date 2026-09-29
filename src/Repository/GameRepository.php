@@ -148,6 +148,22 @@ class GameRepository extends ServiceEntityRepository
     }
 
     /**
+     * T6 instrumentation: has this user ever started a game before, any
+     * status/type? Called once per game creation (low-frequency, not the
+     * hot move-submission path), so a plain count is fine here.
+     */
+    public function countForUser(User $user): int
+    {
+        return (int) $this->createQueryBuilder('g')
+            ->select('COUNT(DISTINCT g.id)')
+            ->join('g.players', 'p')
+            ->andWhere('p.user = :user')
+            ->setParameter('user', $user)
+            ->getQuery()
+            ->getSingleScalarResult();
+    }
+
+    /**
      * Win/lose/draw distribution for the user's finished games. Hot-seat
      * games are excluded from the win/lose split (the user holds both
      * `GamePlayer` rows, so a naive colour comparison would double-count

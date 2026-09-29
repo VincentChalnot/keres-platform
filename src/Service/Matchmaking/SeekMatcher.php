@@ -10,8 +10,11 @@ use App\Entity\Seek;
 use App\Message\CheckClockExpiryMessage;
 use App\Model\Matchmaking\PairOutcome;
 use App\Model\Matchmaking\SelfSeekParams;
+use App\Model\OpponentType;
 use App\Model\TimeControlKind;
+use App\Repository\GameRepository;
 use App\Repository\SeekRepository;
+use App\Service\Analytics\AnalyticsRecorder;
 use App\Service\Game\ClockManager;
 use App\Service\Game\GameStatePayloadBuilder;
 use App\Service\Game\GameUpdatePublisher;
@@ -38,6 +41,7 @@ final readonly class SeekMatcher
         private Connection $connection,
         private EntityManagerInterface $entityManager,
         private SeekRepository $seekRepository,
+        private GameRepository $gameRepository,
         private GameFactory $gameFactory,
         private GameEngine $gameEngine,
         private ClockManager $clockManager,
@@ -48,6 +52,7 @@ final readonly class SeekMatcher
         private SeekPayloadBuilder $seekPayloadBuilder,
         private LoggerInterface $logger,
         private NotificationCenter $notificationCenter,
+        private AnalyticsRecorder $analyticsRecorder,
     ) {
     }
 
@@ -132,6 +137,11 @@ final readonly class SeekMatcher
                 throw new \LogicException('Locked seek row has no corresponding entity.');
             }
 
+            // Read before creation - T6 "first game started" is a count of games
+            // that already existed, and this new one isn't persisted yet either way.
+            $isFirstGameSelf = 0 === $this->gameRepository->countForUser($selfSeek->getUser());
+            $isFirstGameCandidate = 0 === $this->gameRepository->countForUser($candidateSeek->getUser());
+
             $game = $this->gameFactory->createFromSeeks($selfSeek, $candidateSeek);
             $this->entityManager->persist($game);
             $this->entityManager->flush();
@@ -158,6 +168,19 @@ final readonly class SeekMatcher
 
             // Step 7: publish, strictly post-commit.
             $this->publishMatch($game, $selfSeek->getUuid(), $candidateSeek->getUuid());
+
+            // T6: same "strictly post-commit" placement as publish/notify above -
+            // a rolled-back pairing attempt must never produce an analytics row.
+            if ($isFirstGameSelf) {
+                $this->analyticsRecorder->firstGameStarted($selfSeek->getUser(), $game);
+            }
+
+            if ($isFirstGameCandidate) {
+                $this->analyticsRecorder->firstGameStarted($candidateSeek->getUser(), $game);
+            }
+
+            $this->analyticsRecorder->gameStarted($selfSeek->getUser(), $game, OpponentType::MULTIPLAYER);
+            $this->analyticsRecorder->gameStarted($candidateSeek->getUser(), $game, OpponentType::MULTIPLAYER);
 
             // The acting side learns about the game from its own response;
             // the candidate seek's owner may be on another page entirely.
