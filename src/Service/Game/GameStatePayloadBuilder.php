@@ -54,6 +54,7 @@ final readonly class GameStatePayloadBuilder
             'draw' => $game->isDraw(),
             'clock' => $this->buildClock($game),
             'rating' => $this->buildRating($game),
+            'aiLevel' => $game->getAiLevel(),
             'serverTime' => (int) (new \DateTimeImmutable())->format('Uu'),
         ];
     }

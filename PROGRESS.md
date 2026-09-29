@@ -599,6 +599,69 @@ Found and logged (not fixed, out of scope): `DevLoginAuthenticator` never
 clears the security `target_path`, so a stale one from earlier testing
 can hijack every subsequent `/dev/login` - see DECISIONS.md.
 
-**Next action**: awaiting the next task from Main.
+**Next action**: T10 (AI level piping) was next; see below.
 
+---
+
+## T10 — AI level piping
+**Status**: done. **Commit**: `b7d50aa`.
+
+**What changed**: `docs/PROTOCOL.md` (`../keres`) confirms
+`/engine-move-game/:level` (1-10, `SearchConfig::for_level`, `400` outside
+range - the API doesn't clamp) alongside the existing unleveled route.
+New `game.ai_level` column (nullable SMALLINT, null for HOTSEAT/
+MULTIPLAYER, range enforced at the form layer like every other
+range-limited field in this schema - no DB CHECK constraint).
+
+`EngineApi::aiMove(MovesData, int $level = 1)` now always calls
+`engine-move-game/{$level}` (see DECISIONS.md for why the bare-endpoint
+fallback the brief suggested isn't reachable/needed after this task).
+`GameEngine::aiMove()` passes `$game->getAiLevel() ?? 1`.
+`ProcessAiMoveMessage`/`ProcessAiMoveHandler` needed **no changes at
+all** - the handler already loads the full `Game` entity before calling
+`GameEngine::aiMove()`, so the level is available for free at handler
+time, exactly as the brief hoped.
+
+`LocalGameType` gained an always-visible `aiLevel` `ChoiceType` (1-10,
+default 1 - the weakest, per the brief), threaded through
+`GameFactory::createAiOrHotseatGame()` (new optional 5th param, null for
+HOTSEAT) and `Game`'s constructor (new optional 5th param, the other two
+`GameFactory` construction sites - multiplayer - pass nothing, unaffected).
+`NewLocalGameAction` passes the resolved level (null unless
+`OpponentType::AI`) to both `GameFactory` and
+`AnalyticsRecorder::gameStarted()`'s pre-existing `?int $aiLevel = null`
+parameter - T6 had already reserved this exact slot with a docblock
+anticipating T10 by name, so `AnalyticsRecorder` itself needed zero
+changes.
+
+Display: `GameStatePayloadBuilder::build()` gained `'aiLevel' =>
+$game->getAiLevel()` (single shared builder, so every consumer -
+`PlayAction`'s bootstrap, `SubmitMoveAction`, `ProcessAiMoveHandler`,
+`ClockAdjudicator` - carries it for free). `GameAPI.ts`'s
+`GameStatePayload` interface and `parsePayload()` gained the matching
+field (also threaded through `LocalGameAPI.ts`'s guest-game payload
+builder, `aiLevel: null`, to keep `npm run type-check` green). Server-side,
+`templates/actions/_play_board.html.twig` renders an unobtrusive "vs AI
+(level N)" line (only when `isAi` and a level is actually set - guest
+games never pass one, so the line simply doesn't render there).
+
+Guest (anonymous, no-account) AI games are explicitly out of scope - see
+DECISIONS.md.
+
+**Verified live**: `composer cs:check` clean, `bin/phpunit` 45/45,
+`npm run type-check` clean, `doctrine:schema:update` clean for the new
+column. Two real AI games via Playwright (level 5, then the default
+level 1): both persisted the correct `ai_level`, the play page rendered
+"vs AI (level 5)"/"vs AI (level 1)", the bootstrap JSON carried the
+matching `aiLevel`, and the `game_started` analytics row carried
+`{"opponentType":"AI","aiLevel":5}`/`{"opponentType":"AI","aiLevel":1}`.
+Confirmed the actual outbound URL via a temporary `error_log()` in
+`EngineApi::callApi()` (removed after): `http://backend:3000/
+engine-move-game/5` and `.../engine-move-game/1` respectively, both
+moves landing successfully. Hit and resolved a real environment issue
+along the way - the locally cached `backend:latest` image 404'd on the
+leveled route until `docker compose pull backend` fetched a newer image
+under the same tag (see DECISIONS.md) - not a platform-code bug.
+
+**Next action**: awaiting the next task from Main.
 

@@ -40,6 +40,12 @@ class LocalGameType extends AbstractType
                 ],
                 'data' => OpponentType::AI, // Default selection
             ])
+            ->add('aiLevel', ChoiceType::class, [
+                'label' => 'Difficulty',
+                'help' => 'Only applies against the AI. 1 is weakest, 10 is full strength.',
+                'choices' => array_combine(range(1, 10), range(1, 10)),
+                'data' => 1, // T10: default is the weakest level.
+            ])
             ->add('submit', SubmitType::class, [
                 'label' => 'Start Game',
                 'attr' => ['class' => 'button is-primary'],

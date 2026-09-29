@@ -30,6 +30,15 @@
                         </div>
 
                         <div class="field">
+                            {{ form_label(form.aiLevel, null, {label_attr: {class: 'label'}}) }}
+                            <div class="control">
+                                {{ form_widget(form.aiLevel) }}
+                            </div>
+                            {{ form_help(form.aiLevel) }}
+                            {{ form_errors(form.aiLevel) }}
+                        </div>
+
+                        <div class="field">
                             <div class="control">
                                 {{ form_widget(form.submit, {attr: {class: 'button is-rounded is-primary'}}) }}
                             </div>

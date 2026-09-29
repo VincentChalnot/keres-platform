@@ -46,6 +46,10 @@ class Game
     #[ORM\Column(type: Types::INTEGER)]
     private int $opponentTypeValue;
 
+    /** T10: 1 (weakest) .. 10 (full strength), matching the engine's `/engine-move-game/:level` scale. Null for HOTSEAT/MULTIPLAYER games. */
+    #[ORM\Column(type: Types::SMALLINT, nullable: true)]
+    private ?int $aiLevel = null;
+
     #[ORM\Embedded(class: TimeControl::class, columnPrefix: false)]
     private TimeControl $timeControl;
 
@@ -122,7 +126,7 @@ class Game
     #[ORM\OrderBy(['id' => 'ASC'])]
     private Collection $gameMoves;
 
-    public function __construct(User $createdBy, OpponentType $opponentType, TimeControl $timeControl, bool $rated)
+    public function __construct(User $createdBy, OpponentType $opponentType, TimeControl $timeControl, bool $rated, ?int $aiLevel = null)
     {
         $this->uuid = Uuid::v4();
         $this->createdAt = new \DateTimeImmutable();
@@ -130,6 +134,7 @@ class Game
         $this->players = new ArrayCollection();
         $this->createdBy = $createdBy;
         $this->opponentTypeValue = $opponentType->value;
+        $this->aiLevel = $aiLevel;
         $this->timeControl = $timeControl;
         $this->rated = $rated;
         $this->speedCategoryValue = $timeControl->speedCategory()?->value;
@@ -160,6 +165,11 @@ class Game
         $this->opponentTypeValue = $opponentType->value;
 
         return $this;
+    }
+
+    public function getAiLevel(): ?int
+    {
+        return $this->aiLevel;
     }
 
     public function getTimeControl(): TimeControl

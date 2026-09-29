@@ -21,11 +21,15 @@ final class GameFactory
     ) {
     }
 
-    /** AI/hot-seat games are always casual (D1/D3): unlimited, unrated. */
-    public function createAiOrHotseatGame(User $creator, OpponentType $opponentType, ColorPreference $colorPreference): Game
+    /**
+     * AI/hot-seat games are always casual (D1/D3): unlimited, unrated.
+     * `$aiLevel` (1-10, T10) is only ever passed for `OpponentType::AI` -
+     * callers pass null for HOTSEAT, where it is meaningless.
+     */
+    public function createAiOrHotseatGame(User $creator, OpponentType $opponentType, ColorPreference $colorPreference, ?int $aiLevel = null): Game
     {
         $creatorColor = $this->resolveColor($colorPreference, ColorPreference::RANDOM);
-        $game = new Game($creator, $opponentType, TimeControl::unlimited(), false);
+        $game = new Game($creator, $opponentType, TimeControl::unlimited(), false, OpponentType::AI === $opponentType ? $aiLevel : null);
         new GamePlayer($game, $creatorColor, $creator);
 
         if (OpponentType::AI === $opponentType) {

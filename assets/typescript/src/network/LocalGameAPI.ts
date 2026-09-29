@@ -197,6 +197,7 @@ export class LocalGameAPI extends GameAPI {
             whiteWins: board.whiteWins,
             draw: board.draw,
             clock: null,
+            aiLevel: null,
             serverTime: Date.now() * 1000,
         };
     }

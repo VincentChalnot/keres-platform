@@ -123,7 +123,7 @@ readonly class GameEngine
         $movesData = $game->getMovesData();
 
         // Get AI move
-        $aiMoveData = $this->engineApi->aiMove($movesData);
+        $aiMoveData = $this->engineApi->aiMove($movesData, $game->getAiLevel() ?? 1);
 
         // Apply AI move
         return $this->applyMove($game, $aiMoveData, $receivedAtMicros);

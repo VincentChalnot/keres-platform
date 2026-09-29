@@ -16,6 +16,7 @@ export interface GameStatePayload {
     whiteWins: boolean;
     draw: boolean;
     clock: ClockState | null;
+    aiLevel: number | null;
     serverTime: number;
 }
 
@@ -115,7 +116,7 @@ export class GameAPI {
  * GameStatePayload, decoding the base64 board and overriding the board's
  * binary flags with the authoritative JSON verdict.
      */
-    parsePayload(data: {board?: string; moves?: number[]; status?: string; endReason?: string; result?: string | null; gameOver?: boolean; whiteWins?: boolean; draw?: boolean; clock?: ClockState | null; serverTime?: number}): GameStatePayload {
+    parsePayload(data: {board?: string; moves?: number[]; status?: string; endReason?: string; result?: string | null; gameOver?: boolean; whiteWins?: boolean; draw?: boolean; clock?: ClockState | null; aiLevel?: number | null; serverTime?: number}): GameStatePayload {
         const boardBase64 = data.board ?? '';
         const binaryString = atob(boardBase64);
         const bytes = new Uint8Array(binaryString.length);
@@ -146,6 +147,7 @@ export class GameAPI {
             whiteWins: data.whiteWins ?? board.whiteWins,
             draw: data.draw ?? board.draw,
             clock: data.clock ?? null,
+            aiLevel: data.aiLevel ?? null,
             serverTime: data.serverTime ?? 0,
         };
     }

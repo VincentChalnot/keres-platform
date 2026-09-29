@@ -25,12 +25,21 @@ readonly class EngineApi
         return new BoardData($boardData);
     }
 
-    public function aiMove(MovesData $movesData): MoveData
+    /**
+     * `$level` (1-10, `docs/PROTOCOL.md`'s `/engine-move-game/:level` scale)
+     * always has a value by the time this is called (T10:
+     * `GameEngine::aiMove()` passes `$game->getAiLevel() ?? 1`) - the
+     * default here exists only for a caller that genuinely cannot know the
+     * level, of which there are none left after T10.
+     */
+    public function aiMove(MovesData $movesData, int $level = 1): MoveData
     {
+        $endpoint = 'engine-move-game/'.$level;
+
         try {
-            $moveData = $this->callApi('engine-move-game', $movesData->toBinary(), $this->aiBackendApiUrl);
+            $moveData = $this->callApi($endpoint, $movesData->toBinary(), $this->aiBackendApiUrl);
         } catch (\RuntimeException) {
-            $moveData = $this->callApi('engine-move-game', $movesData->toBinary());
+            $moveData = $this->callApi($endpoint, $movesData->toBinary());
         }
 
         return new MoveData($moveData);

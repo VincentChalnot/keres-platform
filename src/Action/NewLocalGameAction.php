@@ -61,8 +61,10 @@ class NewLocalGameAction extends AbstractController
                 default => ColorPreference::RANDOM,
             };
 
+            $aiLevel = OpponentType::AI === $data['opponentType'] ? $data['aiLevel'] : null;
+
             $isFirstGame = 0 === $this->gameRepository->countForUser($user);
-            $game = $this->gameFactory->createAiOrHotseatGame($user, $data['opponentType'], $colorPreference);
+            $game = $this->gameFactory->createAiOrHotseatGame($user, $data['opponentType'], $colorPreference, $aiLevel);
 
             $this->entityManager->persist($game);
             $this->entityManager->flush();
@@ -71,7 +73,7 @@ class NewLocalGameAction extends AbstractController
                 $this->analyticsRecorder->firstGameStarted($user, $game);
             }
 
-            $this->analyticsRecorder->gameStarted($user, $game, $data['opponentType']);
+            $this->analyticsRecorder->gameStarted($user, $game, $data['opponentType'], $aiLevel);
 
             return $this->redirectToRoute('play', ['uuid' => $game->getUuid()]);
         }
