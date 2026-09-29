@@ -53,3 +53,7 @@ framework:
             policy: 'token_bucket'
             limit: 20
             rate: { interval: '1 minute', amount: 30 }
+        waitlist_signup:            # $waitlistSignupLimiter, keyed on client IP (T7)
+            policy: 'sliding_window'
+            limit: 3
+            interval: '1 hour'

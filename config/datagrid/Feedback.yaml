@@ -36,6 +36,7 @@ sidus_data_grid:
                                 Contact: contact
                                 Data export: data_export_request
                                 Account deletion: account_deletion_request
+                                Waitlist: waitlist
                     reviewed:
                         type: choice
                         form_options: { choices: { Reviewed: 1, Unreviewed: 0 } }

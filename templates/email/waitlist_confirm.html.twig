@@ -1,0 +1,15 @@
+{% extends 'email/_layout.html.twig' %}
+
+{% block title %}Confirm your Keres waitlist spot{% endblock %}
+
+{% block content %}
+    <p style="margin:0 0 16px 0;">Hello{{ signup.name ? ' ' ~ signup.name : '' }},</p>
+
+    <p style="margin:0 0 16px 0;">Thanks for your interest in the Keres physical edition! Please confirm this email address to secure your spot on the waitlist.</p>
+
+    <p style="margin:0 0 24px 0;">
+        <a href="{{ confirmUrl }}" style="display:inline-block; background-color:#e19e5b; color:#1a1208; padding:12px 28px; border-radius:9999px; text-decoration:none; font-weight:bold;">Confirm my spot</a>
+    </p>
+
+    <p style="margin:0;">This link expires in 7 days. If you did not sign up for the waitlist, you can safely ignore this email.</p>
+{% endblock %}

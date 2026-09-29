@@ -13,4 +13,5 @@ enum FeedbackCategory: string
     case CONTACT = 'contact';
     case DATA_EXPORT_REQUEST = 'data_export_request';
     case ACCOUNT_DELETION_REQUEST = 'account_deletion_request';
+    case WAITLIST = 'waitlist';
 }

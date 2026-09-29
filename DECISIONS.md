@@ -112,3 +112,38 @@ Reversibility: trivial (placement only, no behavioral difference either way give
 Decision: Defined both enum cases now (so T11 doesn't touch `AnalyticsEventType`/the message/handler again) but added no `// TODO(T11): ...` code comment anywhere, since no invite/challenge file exists yet to anchor one in.
 Rationale: Confirmed via repo-wide search (per the brief's own instruction to check `05-social.md` and the actual code first) that no `Challenge`/`Invite` entity, action, route, repository, or voter exists anywhere - only doc mentions and an unused `Game.rematchOfferedByColor` column. A comment dropped into an unrelated file on the vague theory that "invites will probably live near here" would likely just be wrong and stale by the time T11 actually lands. Recorded here and in `PROGRESS.md` instead: T11 should dispatch `AnalyticsRecorder`-style calls for `AnalyticsEventType::INVITE_SENT`/`INVITE_ACCEPTED` from wherever it ends up creating/accepting the invite/challenge row.
 Reversibility: n/a (documentation-only choice).
+
+### T7 — New `WaitlistSignup` entity instead of extending `Feedback` directly
+Decision: Double opt-in state (unconfirmed email, token hash, expiry) lives entirely in a new `waitlist_signup` table. The canonical `Feedback(WAITLIST, ...)` row is only created inside `WaitlistConfirmAction`, at the moment a valid token is clicked - never at submission time.
+Rationale: The brief requires double opt-in before anything reaches the admin review queue. `Feedback` has no notion of "pending"/"unverified" state and adding one would pollute a generic model used by three unrelated categories (contact, GDPR requests, now waitlist) with fields only this category needs (token hash, expiry). A second click on an already-confirmed link is rejected by `WaitlistSignupRepository::findByValidTokenHash()`'s `confirmedAt IS NULL` guard, so a replayed/shared confirmation URL cannot create a duplicate `Feedback` row - verified live (see below).
+Reversibility: moderate (a real schema + two new files), but fully additive - no existing table/entity touched.
+
+### T7 — New `WaitlistMailer` instead of extending/reusing `UserMailer`
+Decision: Duplicated `UserMailer::send()`'s try/catch/redact-on-failure pattern (from PHP-SYMFONY-3) into a new `WaitlistMailer` rather than generalizing `UserMailer` to accept an email string.
+Rationale: `UserMailer` is hard-typed to a `User $user` (`->to($user->getEmail())`) throughout; a waitlist signup has no `User` row at all. Only two call sites share this pattern so far (T2's `reset_password`/`account_exists` mails via `UserMailer`, and this one) - extracting a shared base class now would be premature abstraction for a ~10-line try/catch.
+Reversibility: easy to consolidate later if a third emailless-recipient mailer appears.
+
+### T7 — Confirmation link TTL: 7 days, not `LostPasswordAction`'s 1 hour
+Decision: `WaitlistSignup::expiresAt` is set to `+7 days` from submission, checked the same way (`repository query > :now`) as the password-reset token.
+Rationale: A password-reset link is a security control (short-lived on purpose, to limit account-takeover exposure if the email is intercepted). A waitlist confirmation is a low-stakes "prove you own this inbox" step with no account/security implication - a week gives a real visitor realistic time to check their email without meaningfully increasing risk (worst case of a stale unconfirmed row: it never becomes a `Feedback` entry at all, since expired tokens are simply rejected).
+Reversibility: trivial (one constant).
+
+### T7 — Reused `LostPasswordAction`/`ResetPasswordAction`'s exact token scheme
+Decision: `bin2hex(random_bytes(32))` plain token embedded in the confirmation URL; `hash('sha256', $token)` is the only thing ever stored/queried against.
+Rationale: Explicitly directed by the brief ("look at how password reset tokens work and follow the same pattern") rather than inventing a signed-URL/JWT scheme for what is functionally the same "prove receipt of this email" problem already solved once in this codebase.
+Reversibility: n/a (matches existing precedent, no reason to deviate).
+
+### T7 — Dedicated `POST /api/waitlist` action, not folded into `/api/contact`
+Decision: New `WaitlistSignupAction` / `waitlist_signup` rate limiter, entirely separate from `ContactAction`/`contact_limiter`.
+Rationale: Field sets differ (contact requires name+email+subject+message; waitlist requires only email, with name/note optional) and the double-opt-in step - the entire point of this task - has no contact-form equivalent. Folding them would mean branching contact's 4-required-field validation loop around an optional-fields case, plus threading a "send confirmation email instead of creating Feedback directly" branch through a form handler that otherwise never emails anyone. The brief allowed a new endpoint when genuinely different.
+Reversibility: moderate (route removal), but no shared code was bent to accommodate this, so no follow-on cost either way.
+
+### T7 — `collector.md` "Pre-order"/45€ language did not match this task's no-payment scope
+Decision: On `keres-website`, reframed the existing homepage "Collector's Edition" block (`content/{en,fr}/blocks/collector.md`) from "Pre-order the physical edition" / "Précommandez..." with a dead `url: "#"` button, to "A physical edition is in the works. Join the waitlist..." with the button now pointing at the new `/physical-edition/`/`/edition-physique/` page. Also removed the hardcoded `<p class="text-2xl font-bold">45€</p>` price line from `layouts/index.html`'s collector section entirely (not replaced with different text).
+Rationale: This block already existed as a dead, unlinked pre-order stub - clearly the intended integration point for this task (same board images, same "Collector's Edition" framing) but its purchase-implying copy and a hardcoded price directly contradict this task's explicit "no payment/store/stock logic" scope, exactly the same class of pre-existing-content/new-scope mismatch as T3's CGV→CGU fix. Removing the price rather than relabeling it avoids implying any commitment to a specific number before a real pricing/store decision is made.
+Reversibility: trivial (copy + one deleted line).
+
+### T7 — Fixed a pre-existing `keres-website` dev-server bug blocking live verification: Hugo's `--appendPort` default
+Decision: Added `--appendPort=false` to the `hugo server` command in `keres-website/compose.yaml`.
+Rationale: While live-testing the new waitlist form's cross-origin POST, the browser's fetch failed with a genuine CORS error. Root cause: Hugo's `server` subcommand appends its own `--port` to `.Site.BaseURL` by default unless told not to, turning every `layouts/partials/platform-url.html`-derived link (Play, Login, Contact, and now Waitlist) into `https://app.<domain>:80/...` - a URL Traefik has no matching HTTPS router for, so the request genuinely fails, not just an ugly link. This predates T7 (the partial and all three existing consumers are untouched) but had apparently never been exercised via a real browser fetch() in this dev environment before - only via server-rendered platform Twig pages, which don't go through Hugo's BaseURL at all. Fixing it was necessary to actually prove T7's live double opt-in flow, and incidentally fixes the same latent bug for Play/Login/Contact.
+Reversibility: trivial (one flag, dev-only compose file, no production/CI config touched - production `hugo --environment production` builds never run a server and were never affected).

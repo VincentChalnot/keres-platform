@@ -1,0 +1,11 @@
+{% extends 'email/_layout.txt.twig' %}
+
+{% block content %}
+Hello{{ signup.name ? ' ' ~ signup.name : '' }},
+
+Thanks for your interest in the Keres physical edition! Please confirm this email address to secure your spot on the waitlist.
+
+Confirm my spot: {{ confirmUrl }}
+
+This link expires in 7 days. If you did not sign up for the waitlist, you can safely ignore this email.
+{% endblock %}

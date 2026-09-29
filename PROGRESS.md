@@ -406,4 +406,72 @@ separately Playwright-verified - stated explicitly rather than
 improvising a two-tab seek-matching test for a collection-only task with
 no UI to confirm against.
 
-**Next action**: await Main's next task (T7).
+**Next action**: T7 complete; awaiting next task assignment.
+
+---
+
+## T7 — Waitlist form (physical edition)
+**Status**: done. **Commits**: `keres-platform` `831bbad`,
+`keres-website` `19d39d7`.
+
+**What changed (keres-platform)**: Double opt-in signup flow, entirely
+separate from `Feedback` until confirmed (see DECISIONS.md). New
+`waitlist_signup` table (`migrations/Version20260929080000.php`,
+`src/Entity/WaitlistSignup.php`) - email, optional name/note, `tokenHash`/
+`expiresAt`/`confirmedAt`, same token scheme as `LostPasswordAction`/
+`ResetPasswordAction` (`bin2hex(random_bytes(32))` in the URL,
+`hash('sha256', ...)` stored). New `POST /api/waitlist`
+(`WaitlistSignupAction`, rate-limited via a new `waitlist_signup` limiter,
+honeypot + required-email check, matches `ContactAction`'s shape) creates a
+pending `WaitlistSignup` and sends a confirmation mail via a new
+`WaitlistMailer` (T2's shared email layout, no unsubscribe link, 7-day
+expiry stated in the copy). New `GET /waitlist/confirm`
+(`WaitlistConfirmAction`) validates the token (`confirmedAt IS NULL` +
+not-expired), marks the signup confirmed, and only then creates the
+`Feedback(WAITLIST, "<email> (<name>)\n\n<note>")` row the admin panel
+actually reviews - a replayed/shared confirmation link finds no matching
+row the second time and shows the same "invalid or expired" state, with no
+duplicate `Feedback` row. `FeedbackCategory::WAITLIST` wired through the
+admin review dropdown, datagrid badge color (`success`/green), and datagrid
+category filter, same as T5's two new categories.
+
+**What changed (keres-website)**: New `/physical-edition/`
+(`/edition-physique/` in French) page reusing `real_board_full.webp`,
+with the waitlist form (email required, name/note optional) posting
+cross-origin to `{platform-url}/api/waitlist`, mirroring
+`layouts/contact/single.html`'s exact JS pattern (honeypot, status div,
+i18n-driven copy/messages). The pre-existing, previously dead-linked
+homepage "Collector's Edition" block (`content/{en,fr}/blocks/collector.md`)
+was reframed from "Pre-order..." (button `url: "#"`) to "Join the
+waitlist..." pointing at the new page, and the hardcoded `45€` price line
+in `layouts/index.html` was removed - both were leftover
+purchase/pre-order framing that contradicted this task's explicit
+no-payment/no-store scope (see DECISIONS.md, same class of fix as T3's
+CGV→CGU rename).
+
+**Incidental fix**: found and fixed a pre-existing `keres-website` dev-only
+bug while live-testing the new cross-origin form - Hugo's `server`
+subcommand appends its own `--port` to `.Site.BaseURL` by default, which
+broke every `platform-url.html`-derived link (Play/Login/Contact, and now
+Waitlist) in the local dev stack specifically (not production, which never
+runs `hugo server` - see DECISIONS.md). Added `--appendPort=false` to
+`compose.yaml`.
+
+**Verified live**: `composer cs:check` clean, `bin/phpunit` 45/45 green,
+`doctrine:schema:update --dump-sql` clean for `waitlist_signup` (confirmed
+the entity's `#[ORM\Index]` matches the migration exactly), `lint:twig`
+clean, `debug:router` shows both new routes. Hugo `--environment
+production --minify --gc` builds clean (12 EN / 10 FR pages, +1 each).
+Full double opt-in flow via Playwright + temporary
+`MAILER_DSN=smtp://mailer:1025` override (restored after): submitted the
+real cross-origin form from `/physical-edition/` → confirmed via `psql` a
+`waitlist_signup` row with `confirmed_at` still null → confirmation mail
+arrived in Mailpit with a working `/waitlist/confirm?token=...` link →
+clicked it → landing page showed "You're on the list!" → `psql` confirmed
+`confirmed_at` set and exactly one `Feedback(category='waitlist')` row with
+the composed message → clicked the same link again → landing page correctly
+showed "invalid or expired" and `psql` confirmed still exactly one
+`Feedback` row (no duplicate). Also checked `/admin/feedback/` as a
+temporary admin test account: the new row renders with a green "waitlist"
+badge and the "Waitlist" filter option works. All test rows (signup,
+feedback, admin test user) deleted after verification.

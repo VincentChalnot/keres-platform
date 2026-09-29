@@ -42,3 +42,5 @@ sidus_template:
             template: 'actions/notifications.html.twig'
         friends:
             template: 'actions/friends.html.twig'
+        waitlist_confirm:
+            template: 'actions/waitlist_confirm.html.twig'

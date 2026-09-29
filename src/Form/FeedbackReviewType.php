@@ -30,6 +30,7 @@ class FeedbackReviewType extends AbstractType
                     'Contact form' => FeedbackCategory::CONTACT,
                     'Data export request' => FeedbackCategory::DATA_EXPORT_REQUEST,
                     'Account deletion request' => FeedbackCategory::ACCOUNT_DELETION_REQUEST,
+                    'Waitlist signup' => FeedbackCategory::WAITLIST,
                 ],
             ])
             ->add('message', TextareaType::class, [
