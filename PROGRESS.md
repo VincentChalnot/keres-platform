@@ -663,5 +663,63 @@ along the way - the locally cached `backend:latest` image 404'd on the
 leveled route until `docker compose pull backend` fetched a newer image
 under the same tag (see DECISIONS.md) - not a platform-code bug.
 
+**Next action**: T11 (invite a friend) is next.
+
+---
+
+## T12 — Nav/styling unification
+**Status**: done. **Commit**: TBD (see final commit SHA reported to Main).
+
+**Scope reduction honored** (per the orchestrator's mid-run descope): the
+original ask - a stylesheet shared between this repo (Bulma) and
+`../keres-website` (Tailwind) - was explicitly dropped. Did **not**
+migrate away from Bulma, add a CSS framework, or touch any template/HTML.
+Change is confined to `assets/app.scss` only.
+
+**Investigated first**: compared `assets/app.scss`'s Bulma override block
+against `../keres-website/tailwind.config.js`'s `theme.extend.colors.keres`
+palette and `layouts/partials/navbar.html`/`footer.html`. Found the two
+are already almost fully aligned from earlier tasks (T2's email-layout
+work pulled the same palette into this repo) - `$primary`/`$dark`/`$light`
+Bulma overrides, the `$keres-*` SCSS variables, the Carolingia/RomanSerif
+webfonts, and the whole `.site-navbar` block (sticky, `rgba($keres-bg,
+0.7)` + `backdrop-filter: blur`, `border-bottom: 1px solid $keres-dark`,
+transparent navbar-item hover to `$keres-primary`) are already a near-exact
+port of the marketing nav's Tailwind classes (`bg-keres-bg/70
+backdrop-blur border-b border-keres-dark`, same hover-to-primary pattern).
+Every button across the app templates already uses `button is-primary
+is-rounded`, matching the marketing site's pill-shaped gold CTAs.
+
+**What changed**: the one concrete, visible gap found by live comparison
+(not by re-reading source) - Bulma's `$link` SASS variable was never
+overridden, so it stayed at Bulma's default blue. `$link` isn't just used
+by `.button.is-link`/`.tag.is-link` (unused anywhere in this codebase,
+grepped) - Bulma also derives `$input-focus-border-color`/
+`$input-focus-box-shadow-color` from it by default, so every text
+input/select/textarea across the app (settings forms, login, lobby, new
+game, feedback) showed a bright blue focus ring that clashed with the
+gold/dark brand palette used everywhere else, including on the marketing
+site (which has no such element - Tailwind forms have no default focus
+color, so this was purely a Bulma-default artifact, not something the
+platform was ever matching intentionally). Added `$link: #e19e5b`
+(same value as `$primary`, one accent color for the whole app, matching
+the marketing site which also only defines a single `keres.primary`) to
+the `@use 'bulma/sass' with (...)` block in `assets/app.scss`.
+
+**Verified live**: `docker compose exec node npm run build` clean, `npm
+run type-check` clean (expected - no `.ts` files touched). Via Playwright
+against `https://app.local.playkeres.com/`: screenshotted `/dashboard`
+and `/lobby` before/after - navbar, buttons, and typography were already
+visually consistent with `https://local.playkeres.com/`'s marketing home
+(compared side by side). Focused the "Display name" field on
+`/settings/profile`: before the change, a clearly blue focus border/box
+shadow; after, a gold border matching the brand accent, with no other
+visual regression on that page. `composer cs:check` clean. `bin/phpunit`
+45/45 green.
+
+**Cleanup**: deleted the `t12-check@example.com` dev-login test user
+(and its `user_preferences` row) created for verification, via
+`bin/console dbal:run-sql` against the dev database.
+
 **Next action**: awaiting the next task from Main.
 
