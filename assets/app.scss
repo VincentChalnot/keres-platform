@@ -790,7 +790,10 @@ footer.footer {
 .lobby-presets {
     flex-wrap: wrap;
 
-    .button {
+    .button.button.button {
+        // Bulma toggles the border width between states (0/1px, focus ring);
+        // our padding overrides don't compensate, so pin it to avoid layout shifts.
+        --bulma-button-border-width: 1px;
         flex-direction: column;
         height: auto;
         min-width: 7.5rem;
@@ -798,6 +801,11 @@ footer.footer {
         padding-bottom: 0.45em;
         line-height: 1.2;
     }
+}
+
+// Unselected presets: subtle background on hover (same tint as other lobby rows).
+.lobby-presets .button.is-outlined:hover {
+    background-color: rgba(255, 255, 255, 0.08);
 }
 
 // The selected preset keeps its accent while hovered/focused.
