@@ -44,6 +44,7 @@ export class LobbyController {
     init(): void {
         this.hydrateFromBootstrap();
         this.wireSeekForm();
+        this.wireInviteButton();
         this.seekClient.connect(
             (event) => this.handleSeekEvent(event),
             () => void this.refetch(),
@@ -327,15 +328,11 @@ export class LobbyController {
         }
     }
 
-    private async submitSeek(form: HTMLFormElement): Promise<void> {
-        if (!form.reportValidity()) {
-            return;
-        }
-
+    private buildSeekInputFromForm(form: HTMLFormElement): CustomSeekInput {
         const formData = new FormData(form);
         const kind = String(formData.get('kind') ?? 'realtime') as CustomSeekInput['kind'];
 
-        const input: CustomSeekInput = {
+        return {
             kind,
             initialSeconds: 'realtime' === kind ? Math.round(Number(formData.get('initialMinutes')) * 60) : null,
             incrementSeconds: 'realtime' === kind ? Number(formData.get('incrementSeconds')) : null,
@@ -344,6 +341,14 @@ export class LobbyController {
             rated: 'true' === formData.get('rated'),
             colorPreference: String(formData.get('colorPreference') ?? 'random') as CustomSeekInput['colorPreference'],
         };
+    }
+
+    private async submitSeek(form: HTMLFormElement): Promise<void> {
+        if (!form.reportValidity()) {
+            return;
+        }
+
+        const input = this.buildSeekInputFromForm(form);
 
         try {
             const result = await this.api.createSeek(input);
@@ -360,6 +365,45 @@ export class LobbyController {
             this.syncHeartbeat();
         } catch (error) {
             this.reportError('Could not post seek', error);
+        }
+    }
+
+    /**
+     * "Invite a friend" reuses the same "New seek" form fields
+     * (`buildSeekInputFromForm`) but posts to a different endpoint that
+     * writes a private, token-gated seek instead of a public one - see
+     * `CreateInviteAction`. No matchmaking pool involvement, so there is no
+     * `matched`/heartbeat bookkeeping here, just the shareable link.
+     */
+    private wireInviteButton(): void {
+        const form = document.getElementById('lobby-seek-form') as HTMLFormElement | null;
+        const button = document.getElementById('lobby-invite-btn');
+
+        if (!form || !button) {
+            return;
+        }
+
+        button.addEventListener('click', () => void this.submitInvite(form));
+    }
+
+    private async submitInvite(form: HTMLFormElement): Promise<void> {
+        if (!form.reportValidity()) {
+            return;
+        }
+
+        const input = this.buildSeekInputFromForm(form);
+
+        try {
+            const result = await this.api.createInvite(input);
+
+            try {
+                await navigator.clipboard.writeText(result.url);
+                await alertModal(`Invite link copied to your clipboard:\n${result.url}`, 'Invite a friend');
+            } catch {
+                await alertModal(`Share this link with your friend:\n${result.url}`, 'Invite a friend');
+            }
+        } catch (error) {
+            this.reportError('Could not create invite', error);
         }
     }
 

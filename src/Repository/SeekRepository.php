@@ -57,6 +57,7 @@ class SeekRepository extends ServiceEntityRepository
             ->addSelect('u')
             ->join('s.user', 'u')
             ->andWhere('s.statusValue = 0')
+            ->andWhere('s.inviteOnly = false')
             ->andWhere('s.expiresAt > :now')
             ->andWhere('s.lastHeartbeatAt > :staleThreshold')
             ->setParameter('now', $now)
@@ -153,6 +154,7 @@ class SeekRepository extends ServiceEntityRepository
                           OR (b.requester_id = c.user_id   AND b.addressee_id = :selfUserId) )
                 )
             AND (:restrictToUuid = '' OR c.uuid::text = :restrictToUuid)
+            AND (NOT c.invite_only OR c.uuid::text = :restrictToUuid)
             SQL;
     }
 

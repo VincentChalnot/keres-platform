@@ -88,19 +88,22 @@ final readonly class SeekCreationService
         bool $autoWiden,
         ?int $ratingMin,
         ?int $ratingMax,
+        bool $inviteOnly = false,
     ): SeekCreationResult {
         $now = $this->clock->now();
-        $ttl = TimeControlKind::CORRESPONDENCE === $timeControl->getKind()
-            ? MultiplayerLimits::CHALLENGE_TTL_SECONDS
-            : MultiplayerLimits::SEEK_TTL_SECONDS;
+        $ttl = match (true) {
+            $inviteOnly => MultiplayerLimits::INVITE_TTL_SECONDS,
+            TimeControlKind::CORRESPONDENCE === $timeControl->getKind() => MultiplayerLimits::CHALLENGE_TTL_SECONDS,
+            default => MultiplayerLimits::SEEK_TTL_SECONDS,
+        };
 
         try {
-            $result = $this->insertOrReplace($user, $timeControl, $rated, $colorPreference, $autoWiden, $ratingMin, $ratingMax, $now, $ttl);
+            $result = $this->insertOrReplace($user, $timeControl, $rated, $colorPreference, $autoWiden, $ratingMin, $ratingMax, $now, $ttl, $inviteOnly);
         } catch (UniqueConstraintViolationException) {
             // sec 6.2: two concurrent first-ever creates both saw zero rows and locked
             // nothing; the loser's INSERT hit `seek_one_open_per_user`. One retry now
             // finds the winner's row and takes the dedupe/replace branch.
-            $result = $this->insertOrReplace($user, $timeControl, $rated, $colorPreference, $autoWiden, $ratingMin, $ratingMax, $now, $ttl);
+            $result = $this->insertOrReplace($user, $timeControl, $rated, $colorPreference, $autoWiden, $ratingMin, $ratingMax, $now, $ttl, $inviteOnly);
         }
 
         if (null !== $result->replacedSeekUuid) {
@@ -131,9 +134,10 @@ final readonly class SeekCreationService
         ?int $ratingMax,
         \DateTimeImmutable $now,
         int $ttl,
+        bool $inviteOnly,
     ): SeekCreationResult {
         return $this->entityManager->wrapInTransaction(
-            function (EntityManagerInterface $em) use ($user, $timeControl, $rated, $colorPreference, $autoWiden, $ratingMin, $ratingMax, $now, $ttl): SeekCreationResult {
+            function (EntityManagerInterface $em) use ($user, $timeControl, $rated, $colorPreference, $autoWiden, $ratingMin, $ratingMax, $now, $ttl, $inviteOnly): SeekCreationResult {
                 $existing = $this->seekRepository->findOpenForUserForUpdate($user);
                 $category = $timeControl->speedCategory();
                 // 04-matchmaking.md sec 4 / 06-rating.md sec 4.3: server-side, frozen at
@@ -154,6 +158,7 @@ final readonly class SeekCreationService
                     $ttl,
                     $ratingMin,
                     $ratingMax,
+                    $inviteOnly,
                 );
 
                 if (null !== $existing && $existing->hasSameParameters($candidate)) {

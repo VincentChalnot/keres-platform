@@ -43,6 +43,11 @@ security:
         - { path: ^/preferences, roles: ROLE_USER }
         - { path: ^/dashboard, roles: ROLE_USER }
         - { path: ^/games, roles: ROLE_USER }
+        # T11: ROLE_USER here is what makes the login-redirect-and-come-back
+        # flow free - the `main` firewall's entry point already saves this
+        # exact URL as target_path for an anonymous visitor and restores it
+        # post-login (see InviteAcceptAction's docblock).
+        - { path: ^/invite, roles: ROLE_USER }
 
 when@test:
     security:

@@ -721,5 +721,83 @@ visual regression on that page. `composer cs:check` clean. `bin/phpunit`
 (and its `user_preferences` row) created for verification, via
 `bin/console dbal:run-sql` against the dev database.
 
-**Next action**: awaiting the next task from Main.
+**Next action**: T12 (nav/styling unification) was next; see below.
 
+---
+
+## T11 — Invite a friend
+
+**Status**: done. **Commit**: `keres-platform` `86e8bf2`.
+
+Ran concurrently with T12 in the same checkout (separate worker sessions,
+disjoint file sets by design - see DECISIONS.md). Investigated first:
+reused the existing Seek/matchmaking system wholesale rather than building
+a parallel invite concept. An "Invite a friend" link is a `Seek` with a new
+`inviteOnly` boolean column (migration `Version20260929180000.php`), posted
+via a new `POST /lobby/invites` (`CreateInviteAction`) that calls
+`SeekCreationService::insertOrReplaceSeek()` - the insert/dedupe/replace
+write path only, never `create()`, since an invite must never enter the
+public pairing pool. `CreateSeekAction`'s own time-control validation logic
+was extracted into a new `TimeControlRequestResolver` service so both
+endpoints share the exact same coherence check instead of duplicating it
+(pre-existing behaviour unchanged, confirmed via `bin/phpunit`).
+
+No separate token/hash column: the `Seek`'s own unguessable v4 UUID
+doubles as the shareable link's token - see DECISIONS.md for why this
+differs from T7's hashed-token pattern. `GET /invite/{uuid}`
+(`InviteAcceptAction`) mirrors `AcceptSeekAction`'s checks (self-accept,
+blocked, expired, open) adapted for a GET+redirect: self-invite, blocked,
+rate-limited, and expired/already-accepted each render a dedicated state on
+`invite_accept.html.twig`; a genuine accept calls
+`SeekMatcher::attemptPair()` against the target seek's mirrored color
+preference and redirects straight to `/play/{uuid}`. Single-use falls out
+of `Seek`'s own OPEN -> MATCHED transition - no separate "consumed" flag
+needed.
+
+Auth-flow preservation needed zero new plumbing: `/invite/{uuid}` is
+`ROLE_USER`-gated via a new `access_control` entry, and the `main`
+firewall's existing entry point (`MultiProviderOidcAuthenticator::start()`)
+already saves the originally-requested URL as `target_path` before sending
+an anonymous visitor to log in; `DevLoginAuthenticator` (dev) and the OIDC
+authenticator (prod) both already restore it on success. Confirmed this
+live (see below) rather than trusting the docblock claim.
+
+UI: the lobby's "New seek" form gained a second button, "Invite a friend",
+reusing the exact same field values (`LobbyController.ts`'s
+`buildSeekInputFromForm()`, extracted from `submitSeek()` for reuse) but
+posting to `/lobby/invites` instead and copying the returned URL to the
+clipboard (falling back to a plain `alertModal()` display if clipboard
+access is denied) instead of joining the matchmaking pool.
+
+**Verified live** against `https://app.local.playkeres.com/` via direct
+HTTP calls (real sessions, separate cookie jars per identity - no browser
+tool available in this environment for this phase, unlike earlier
+Playwright-verified tasks; see DECISIONS.md):
+- Created a realtime invite as `t11-a`; opening it as `t11-a` itself showed
+  "This is your own invite" (no pairing).
+- An anonymous request to the invite URL redirected to `/login`; logging in
+  as a fresh identity (`t11-d`'s dev-login) immediately afterward redirected
+  back to the exact original invite URL, confirming `target_path`
+  preservation end-to-end.
+- Accepting as `t11-c` redirected to `/play/{uuid}`; `psql` confirmed a real
+  `Game` row pairing `t11-a` (white) and `t11-c` (black).
+- Reopening the same link afterward - both as the original acceptor and as
+  an unrelated third identity - correctly showed "no longer available"
+  (`SELECT status_value` stayed `MATCHED`, no second game created, no 500).
+- A separate correspondence invite with `expires_at` backdated before
+  `created_at` (not before Postgres's own `now()` - see DECISIONS.md)
+  correctly hit the distinct TTL-expiry branch: "no longer available" shown
+  while `status_value` stayed `OPEN` (0), proving the accept action checks
+  expiry live rather than relying on a sweep to flip status first.
+
+`composer cs:check` clean (0/240). `bin/phpunit` 45/45 green, no
+regressions. `npm run type-check` clean. `doctrine:schema:update --dump-sql`
+showed only pre-existing, unrelated drift (friendship indexes,
+`messenger_messages` identity column, `user_rating`/`game` index
+cosmetics - none touch `seek`/`invite_only`); not investigated further as
+out of scope for this task, logged in DECISIONS.md. All test users
+(`t11-a/c/d@example.com`, plus a stray pre-existing `t11-alice@example.com`
+row from an earlier, interrupted verification attempt) and their
+games/seeks/analytics/preferences rows deleted after verification.
+
+**Next action**: T13 (unified games template) is next.

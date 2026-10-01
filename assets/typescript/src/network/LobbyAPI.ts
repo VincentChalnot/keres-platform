@@ -1,6 +1,7 @@
 import {
     CustomSeekInput,
     HeartbeatResult,
+    InviteCreateResult,
     SeekCreateResult,
     SeekListing,
 } from '../models/seek';
@@ -96,6 +97,10 @@ export class LobbyAPI {
 
     createSeek(input: CustomSeekInput): Promise<SeekCreateResult> {
         return request<SeekCreateResult>('/lobby/seeks', 'POST', input);
+    }
+
+    createInvite(input: CustomSeekInput): Promise<InviteCreateResult> {
+        return request<InviteCreateResult>('/lobby/invites', 'POST', input);
     }
 
     heartbeatSeek(uuid: string): Promise<HeartbeatResult> {

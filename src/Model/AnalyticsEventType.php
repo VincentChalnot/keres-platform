@@ -7,11 +7,8 @@ namespace App\Model;
 /**
  * T6: append-only collection only, no dashboards/aggregation UI.
  *
- * INVITE_SENT/INVITE_ACCEPTED have no live trigger yet - the invite/
- * challenge mechanism itself doesn't exist in the codebase yet (confirmed:
- * no Challenge/Invite entity, action, route, or repository anywhere;
- * 05-social.md only mentions it as planned). Defined now so a later task
- * doesn't have to touch this infrastructure again.
+ * INVITE_SENT/INVITE_ACCEPTED are recorded by T11's invite flow
+ * (`CreateInviteAction`, `InviteAcceptAction`).
  */
 enum AnalyticsEventType: string
 {

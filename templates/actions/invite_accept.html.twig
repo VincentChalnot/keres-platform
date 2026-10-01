@@ -1,0 +1,36 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Game invite{% endblock %}
+
+{% block body %}
+    <section class="section">
+        <div class="container">
+            <div class="columns is-centered">
+                <div class="column is-half">
+                    <div class="box">
+                        {% if state == 'self_invite' %}
+                            <h3 class="title">This is your own invite</h3>
+                            <p class="subtitle">Share this link with a friend instead - you can't accept your own invite.</p>
+                        {% elseif state == 'blocked' %}
+                            <h3 class="title">This invite is unavailable</h3>
+                            <p class="subtitle">You can't accept an invite from this user.</p>
+                        {% elseif state == 'rate_limited' %}
+                            <h3 class="title">Too many attempts</h3>
+                            <p class="subtitle">Please wait a moment and reload this page to try again.</p>
+                        {% elseif state == 'expired' %}
+                            <h3 class="title">This invite is no longer available</h3>
+                            <p class="subtitle">It may have expired or already been accepted. Ask for a fresh link.</p>
+                        {% else %}
+                            <h3 class="title">Invite not found</h3>
+                            <p class="subtitle">This invite link is invalid.</p>
+                        {% endif %}
+
+                        <p class="mt-3">
+                            <a href="{{ path('lobby') }}">Back to the lobby</a>
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+{% endblock %}

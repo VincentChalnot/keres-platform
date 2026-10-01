@@ -10,39 +10,45 @@ use App\Model\ApiErrorCode;
 use App\Model\ColorPreference;
 use App\Model\Request\SeekCreateRequest;
 use App\Model\TimeControlKind;
+use App\Service\Analytics\AnalyticsRecorder;
 use App\Service\Matchmaking\SeekCreationService;
-use App\Service\Matchmaking\SeekPayloadBuilder;
 use App\Service\Matchmaking\TimeControlRequestResolver;
 use Symfony\Bundle\SecurityBundle\Security;
-use Symfony\Component\Clock\ClockInterface;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpKernel\Attribute\AsController;
 use Symfony\Component\RateLimiter\RateLimiterFactory;
 use Symfony\Component\Routing\Attribute\Route;
+use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
 
 /**
- * `POST /lobby/seeks` - the custom-seek front door (04-matchmaking.md sec
- * 1.1/9.2), and the only one the lobby's "New seek" panel posts to - its
- * format presets just fill the form in. Every real seek row, whether from
- * here or `AcceptSeekAction`, is built by `SeekCreationService`.
+ * T11: `POST /lobby/invites` - "Invite a friend". Reuses the lobby's own
+ * "New seek" form fields (`SeekCreateRequest`, the same shape and the same
+ * `TimeControlRequestResolver` validation `CreateSeekAction` uses) but
+ * writes an invite-only `Seek` instead of a public one:
+ * `SeekCreationService::insertOrReplaceSeek()` (the insert/dedupe/replace
+ * write path only - never `create()`, which would immediately attempt to
+ * pair the inviter against the whole public pool, defeating the point of
+ * inviting one specific person) with `inviteOnly: true`. No rating window,
+ * no auto-widen - meaningless for a token-gated 1:1 invite. The response
+ * carries the shareable `/invite/{uuid}` URL for the caller to copy.
  */
 #[AsController]
-readonly class CreateSeekAction
+readonly class CreateInviteAction
 {
     public function __construct(
         private Security $security,
         private ValidatorInterface $validator,
         private SeekCreationService $seekCreationService,
-        private SeekPayloadBuilder $seekPayloadBuilder,
         private TimeControlRequestResolver $timeControlRequestResolver,
-        private ClockInterface $clock,
+        private UrlGeneratorInterface $urlGenerator,
         private RateLimiterFactory $seekCreateLimiter,
+        private AnalyticsRecorder $analyticsRecorder,
     ) {
     }
 
-    #[Route(path: '/lobby/seeks', name: 'lobby_seek_create', methods: ['POST'])]
+    #[Route(path: '/lobby/invites', name: 'lobby_invite_create', methods: ['POST'])]
     public function __invoke(Request $request): JsonResponse
     {
         $user = $this->security->getUser();
@@ -78,38 +84,27 @@ readonly class CreateSeekAction
             return ApiResponse::error(ApiErrorCode::UNRATED_TIME_CONTROL, '"unlimited" games cannot be rated.');
         }
 
-        if ($seekRequest->autoWiden && (null !== $seekRequest->ratingMin || null !== $seekRequest->ratingMax)) {
-            return ApiResponse::error(ApiErrorCode::VALIDATION_FAILED, 'autoWiden is mutually exclusive with an explicit rating window.', [
-                'violations' => [['field' => 'autoWiden', 'constraint' => 'mutually_exclusive', 'message' => 'Cannot combine autoWiden with ratingMin/ratingMax.']],
-            ]);
-        }
-
-        if (null !== $seekRequest->ratingMin && null !== $seekRequest->ratingMax && $seekRequest->ratingMin > $seekRequest->ratingMax) {
-            return ApiResponse::error(ApiErrorCode::VALIDATION_FAILED, 'ratingMin must be <= ratingMax.', [
-                'violations' => [['field' => 'ratingMin', 'constraint' => 'range_ordered', 'message' => 'ratingMin must be less than or equal to ratingMax.']],
-            ]);
-        }
-
         $colorPreference = match ($seekRequest->colorPreference) {
             'white' => ColorPreference::WHITE,
             'black' => ColorPreference::BLACK,
             default => ColorPreference::RANDOM,
         };
 
-        $outcome = $this->seekCreationService->create(
+        $result = $this->seekCreationService->insertOrReplaceSeek(
             $user,
             $timeControl,
             $seekRequest->rated,
             $colorPreference,
-            $seekRequest->autoWiden,
-            $seekRequest->ratingMin,
-            $seekRequest->ratingMax,
+            false,
+            null,
+            null,
+            true,
         );
 
-        return ApiResponse::ok([
-            'seek' => $this->seekPayloadBuilder->buildSummary($outcome->seek, $user, $this->clock->now()),
-            'matched' => null !== $outcome->matchedGame ? ['gameUuid' => $outcome->matchedGame->getUuid()->toRfc4122()] : null,
-            'deduped' => $outcome->deduped,
-        ]);
+        $this->analyticsRecorder->inviteSent($user, $result->seek);
+
+        $url = $this->urlGenerator->generate('invite_accept', ['uuid' => $result->seek->getUuid()->toRfc4122()], UrlGeneratorInterface::ABSOLUTE_URL);
+
+        return ApiResponse::ok(['url' => $url]);
     }
 }

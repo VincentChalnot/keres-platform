@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Service\Analytics;
 
 use App\Entity\Game;
+use App\Entity\Seek;
 use App\Entity\User;
 use App\Message\RecordAnalyticsEventMessage;
 use App\Model\AnalyticsEventType;
@@ -69,6 +70,21 @@ final readonly class AnalyticsRecorder
     public function gameAbandoned(Game $game): void
     {
         $this->dispatch(AnalyticsEventType::GAME_ABANDONED, game: $game->getUuid());
+    }
+
+    /** `$seek` is the invite-only Seek whose uuid is the shareable link token. */
+    public function inviteSent(User $inviter, Seek $seek): void
+    {
+        $this->dispatch(AnalyticsEventType::INVITE_SENT, userId: $inviter->getId(), payload: [
+            'seek' => $seek->getUuid()->toRfc4122(),
+        ]);
+    }
+
+    public function inviteAccepted(User $acceptor, Seek $seek, Game $game): void
+    {
+        $this->dispatch(AnalyticsEventType::INVITE_ACCEPTED, userId: $acceptor->getId(), game: $game->getUuid(), payload: [
+            'seek' => $seek->getUuid()->toRfc4122(),
+        ]);
     }
 
     /** @param array<string, mixed> $payload */

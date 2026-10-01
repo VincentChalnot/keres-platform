@@ -19,6 +19,16 @@ use Symfony\Component\Uid\Uuid;
  * only writer of `status`/`matchedGame` past construction, and it writes
  * them through raw DBAL, not this entity (sec 3.5) - the getters here exist
  * for listing/serialisation, not for the pairing transaction itself.
+ *
+ * T11: `inviteOnly` marks a seek created by "Invite a friend" - the seek's
+ * own unguessable `uuid` doubles as the shareable link's token (no separate
+ * token field: v4 UUIDs are already unguessable, and a *hashed* token would
+ * have nothing to recover the plain value from on a repeat "create invite"
+ * click - see DECISIONS.md). An invite-only seek is excluded from
+ * `findOpenForListing()` and from the anonymous pool scan
+ * (`SeekRepository::candidateWhereClause()`) - it is only ever matchable
+ * via the exact `restrictTo` accept-by-uuid path, the same one
+ * `AcceptSeekAction` already uses for the lobby's "Play" button.
  */
 #[ORM\Entity(repositoryClass: SeekRepository::class)]
 #[ORM\Table(name: 'seek')]
@@ -63,6 +73,9 @@ class Seek
     #[ORM\Column(type: Types::SMALLINT)]
     private int $statusValue = 0;
 
+    #[ORM\Column(type: Types::BOOLEAN)]
+    private bool $inviteOnly = false;
+
     #[ORM\Column(type: Types::DATETIMETZ_IMMUTABLE)]
     private \DateTimeImmutable $createdAt;
 
@@ -87,6 +100,7 @@ class Seek
         int $ttlSeconds,
         ?int $ratingMin = null,
         ?int $ratingMax = null,
+        bool $inviteOnly = false,
     ) {
         $this->uuid = Uuid::v4();
         $this->user = $user;
@@ -98,6 +112,7 @@ class Seek
         $this->ratingSnapshot = $ratingSnapshot;
         $this->ratingMin = $ratingMin;
         $this->ratingMax = $ratingMax;
+        $this->inviteOnly = $inviteOnly;
         $this->createdAt = $now;
         $this->expiresAt = $now->modify(\sprintf('+%d seconds', $ttlSeconds));
         $this->lastHeartbeatAt = $now;
@@ -188,6 +203,11 @@ class Seek
         return $this->expiresAt <= $now;
     }
 
+    public function isInviteOnly(): bool
+    {
+        return $this->inviteOnly;
+    }
+
     /** True iff `$other` is the same (kind, initial, increment, days, rated) tuple - the create-time dedupe check (sec 6.2). */
     public function hasSameParameters(self $other): bool
     {
@@ -199,7 +219,10 @@ class Seek
             && $this->getColorPreference() === $other->getColorPreference()
             && $this->autoWiden === $other->autoWiden
             && $this->ratingMin === $other->ratingMin
-            && $this->ratingMax === $other->ratingMax;
+            && $this->ratingMax === $other->ratingMax
+            // T11: an invite and a public seek never dedupe against each other,
+            // even with an identical tuple - they are different commitments.
+            && $this->inviteOnly === $other->inviteOnly;
     }
 
     /** Owner-only, one-shot (sec 2). Anything else touching `status`/`matchedGame` is `SeekMatcher`'s raw-DBAL job. */

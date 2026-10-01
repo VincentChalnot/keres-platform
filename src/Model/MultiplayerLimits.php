@@ -30,6 +30,9 @@ final class MultiplayerLimits
     /** 04-matchmaking.md sec 1.3/9 open question 5: correspondence seeks reuse this (no dedicated constant yet). */
     public const int CHALLENGE_TTL_SECONDS = 86400;
 
+    /** T11: how long an "Invite a friend" link stays open - a dedicated constant rather than reusing CHALLENGE_TTL_SECONDS, so the two can be tuned independently later. */
+    public const int INVITE_TTL_SECONDS = 86400;
+
     /** 04-matchmaking.md sec 4.2: a seek drops out of the pool/listing after this many seconds of silence. */
     public const int SEEK_STALE_AFTER_SECONDS = 25;
 

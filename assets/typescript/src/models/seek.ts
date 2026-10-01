@@ -68,6 +68,10 @@ export interface HeartbeatResult {
     widenedTo: {min: number; max: number} | null;
 }
 
+export interface InviteCreateResult {
+    url: string;
+}
+
 export interface CustomSeekInput {
     kind: ClockKind;
     initialSeconds?: number | null;
