@@ -876,4 +876,67 @@ a pure Twig/PHP-service task). No migration - `GameListRow`/
 (`t13-a/b/c@example.com`) and their games/seeks/analytics rows deleted
 after verification.
 
-**Next action**: T14 (lobby redesign) is next.
+**Next action**: T13 (unified games template) was next; see below.
+
+---
+
+## T14 — Lobby redesign
+
+**Status**: done. **Commit**: `keres-platform` `b495dc7`.
+
+`/lobby` split into two branches (`LobbyAction`, unchanged structurally):
+anonymous visitors and signed-in players. Rebuilt both per the brief.
+
+Anonymous (`actions/play_welcome.html.twig`): a hero panel - title,
+subtitle, Google/Discord/email sign-in and "Create an account" as the
+prominent, filled CTAs, a `public/images/gameplay-preview.webp`
+illustration - with "Play the AI or hot-seat without an account" kept
+below a `<hr>`, visually secondary (outlined, small), exactly the
+hierarchy the brief asks for. Below the hero: a static announcements list
+(two hardcoded items - "static content is fine" per the brief) and a new
+"Recently finished games" feed using T13's unified row component.
+
+Signed-in (`actions/lobby.html.twig`): unchanged seek-posting panel and
+open-seeks table; the "Your games (N)" link-only button became an inline
+list of up to 5 ongoing games via the same T13 component, with a "View
+all N" link appearing only when there are more than that. No hero panel
+added here - "encouraging account creation" doesn't apply to an already
+signed-in visitor, and the existing seek-posting panel already is this
+page's primary action for that audience.
+
+New `GameRepository::findRecentPubliclyFinishedGames()` backs the
+anonymous feed: multiplayer, finished, newest-first. Deliberately
+finished-only, matching the brief's "games in progress stay visible only
+to their participants" - but scoped to *this new feed*, not a change to
+`GameVoter::VIEW` or `ProfilePageAction`'s existing, explicitly documented
+contract (sec 4.3) that a multiplayer game is publicly viewable at any
+point in its lifetime. See DECISIONS.md for why that distinction matters
+and wasn't widened into a platform-wide tightening.
+
+The public feed's rows are framed from the game's creator
+(`game_list_row(game, game.createdBy, false)`) - there is no logged-in
+viewer to anchor on, and the creator is always a real `User` for a
+multiplayer game, so the presenter's existing `$subject` contract needed
+no changes.
+
+**Verified live** against `https://app.local.playkeres.com/`:
+- Anonymous `/lobby`: hero renders with the illustration, both OIDC
+  buttons, "Create an account", and the de-emphasized guest-play button;
+  the public feed rendered 3 real pre-existing finished multiplayer games
+  from the dev database (not test data - opponent names, correct
+  win/loss results, "View" button) with no errors; one of those `/play/
+  {uuid}` links loaded 200 for a fully anonymous request, confirming nothing
+  in this task broke existing public spectating.
+- Signed-in `/lobby` for a fresh account: "No games in progress." before
+  any game exists; after creating a real AI game via `/play/new`, the same
+  page immediately showed it inline ("AI (level 3)", "Your turn",
+  "Resume"), confirming the T13 component renders correctly in this third
+  call site too (dashboard, `/games`, profile, and now the lobby).
+
+`composer cs:check` clean (0/243). `bin/phpunit` 45/45 green. `npm run
+type-check` clean. `npm run build` succeeded (production asset build
+exercised since this task touches templates served to all visitors). No
+migration. Test user and game deleted after verification.
+
+**Next action**: all fourteen tasks are now done; only the final
+`REPORT.md` remains.

@@ -41,6 +41,22 @@ class LobbyAction extends AbstractController
     /** Pre-selected on page load. */
     private const string DEFAULT_PRESET = 'rapid';
 
+    /**
+     * T14: static for now ("static content is fine" per the brief) -
+     * revisit with a real content source if announcements ever need to
+     * be editable without a deploy.
+     */
+    private const array ANNOUNCEMENTS = [
+        ['title' => 'Keres v1.0 is here', 'body' => 'Correspondence games, invites, and AI opponents at every level are now live.'],
+        ['title' => 'Play without an account', 'body' => 'Try the AI or a local hot-seat game instantly - no sign-up required.'],
+    ];
+
+    /** How many public finished games the anonymous entry point shows. */
+    private const int PUBLIC_GAMES_LIMIT = 5;
+
+    /** How many of the viewer's own games are shown inline before "view all". */
+    private const int OWN_GAMES_LIMIT = 5;
+
     public function __construct(
         private readonly SeekRepository $seekRepository,
         private readonly SeekPayloadBuilder $seekPayloadBuilder,
@@ -55,18 +71,23 @@ class LobbyAction extends AbstractController
         $user = $this->getUser();
 
         if (!$user instanceof User) {
-            return $this->render('actions/play_welcome.html.twig');
+            return $this->render('actions/play_welcome.html.twig', [
+                'announcements' => self::ANNOUNCEMENTS,
+                'publicGames' => $this->gameRepository->findRecentPubliclyFinishedGames(self::PUBLIC_GAMES_LIMIT),
+            ]);
         }
 
         $now = $this->clock->now();
         $seeks = $this->seekRepository->findOpenForListing($now);
         $listing = $this->seekPayloadBuilder->buildListing($seeks, $user, \count($seeks), $now);
+        $ongoingGames = $this->gameRepository->findOngoingForUser($user);
 
         return [
             'presets' => self::PRESETS,
             'defaultPreset' => self::DEFAULT_PRESET,
             'seeksBootstrap' => $this->seekPayloadBuilder->encode($listing),
-            'ongoingGames' => $this->gameRepository->findOngoingForUser($user),
+            'ongoingGames' => \array_slice($ongoingGames, 0, self::OWN_GAMES_LIMIT),
+            'ongoingGamesCount' => \count($ongoingGames),
         ];
     }
 }

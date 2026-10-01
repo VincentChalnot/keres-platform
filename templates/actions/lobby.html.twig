@@ -156,8 +156,18 @@
                 <div class="box">
                     <h3 class="title is-5">Prefer a computer or a local opponent?</h3>
                     <a href="{{ path('new_local_game') }}" class="button is-rounded is-outlined is-light">Play AI or hot-seat</a>
-                    {% if ongoingGames|length > 0 %}
-                        <a href="{{ path('game_list') }}" class="button is-rounded is-outlined is-light">Your games ({{ ongoingGames|length }})</a>
+                </div>
+
+                <div class="box">
+                    <h3 class="title is-5">Your games</h3>
+                    {% for game in ongoingGames %}
+                        {# @var game \App\Entity\Game #}
+                        {% include 'actions/_game_row.html.twig' with {row: game_list_row(game, app.user, true), isSelf: true} %}
+                    {% else %}
+                        <p class="has-text-grey">No games in progress.</p>
+                    {% endfor %}
+                    {% if ongoingGamesCount > ongoingGames|length %}
+                        <p><a href="{{ path('game_list') }}">View all {{ ongoingGamesCount }} games in progress &rarr;</a></p>
                     {% endif %}
                 </div>
             </div>

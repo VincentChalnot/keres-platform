@@ -282,4 +282,31 @@ class GameRepository extends ServiceEntityRepository
             ->getQuery()
             ->getResult();
     }
+
+    /**
+     * T14: the anonymous/public `/lobby` entry point's games feed.
+     * Finished only, never in-progress - a game in progress stays visible
+     * only to its own participants (`GameVoter::VIEW` is unaffected by
+     * this task: a multiplayer game is still viewable mid-game by anyone
+     * holding its URL, per the existing contract cited on
+     * `ProfilePageAction`; this query only decides what this one public
+     * feed advertises, not what `/play/{uuid}` itself allows).
+     *
+     * @return Game[]
+     */
+    public function findRecentPubliclyFinishedGames(int $limit): array
+    {
+        return $this->createQueryBuilder('g')
+            ->addSelect('p', 'pu')
+            ->leftJoin('g.players', 'p')
+            ->leftJoin('p.user', 'pu')
+            ->andWhere('g.opponentTypeValue = :opponentType')
+            ->andWhere('g.deletedAt IS NULL')
+            ->andWhere('g.gameOverAt IS NOT NULL')
+            ->setParameter('opponentType', OpponentType::MULTIPLAYER->value)
+            ->orderBy('g.gameOverAt', 'DESC')
+            ->setMaxResults($limit)
+            ->getQuery()
+            ->getResult();
+    }
 }
