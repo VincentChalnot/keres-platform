@@ -2,35 +2,7 @@
     <h3 class="title is-5">Games in progress</h3>
     {% for game in recentGames %}
         {# @var game \App\Entity\Game #}
-        {% set opponent = game.getOpponentOf(app.user) %}
-        {% set isHotseat = game.opponentType == enum('App\\Model\\OpponentType').HOTSEAT %}
-        <div class="dashboard-widget__row mb-3">
-            <a href="{{ path('play', {uuid: game.uuid}) }}" class="button is-rounded is-primary is-small is-pulled-right">Resume</a>
-            <p>
-                <strong>
-                    {%- if opponent -%}
-                        vs {{ opponent.displayName ?? opponent.username }}
-                    {%- elseif game.opponentType == enum('App\\Model\\OpponentType').AI -%}
-                        vs AI
-                    {%- else -%}
-                        Hot-seat game
-                    {%- endif -%}
-                </strong>
-                &middot;
-                {% if isHotseat %}
-                    <span class="tag is-rounded is-primary is-light">{{ game.whiteTurn ? 'White' : 'Black' }} to move</span>
-                {% elseif game.isTurnOf(app.user) %}
-                    <span class="tag is-rounded is-primary">Your turn</span>
-                {% else %}
-                    <span class="tag is-rounded is-dark">Their turn</span>
-                {% endif %}
-            </p>
-            {% if game.lastMoveAt %}
-                <p class="has-text-grey">Last move: {{ game.lastMoveAt|date('Y-m-d H:i') }}</p>
-            {% else %}
-                <p class="has-text-grey">Started: {{ game.createdAt|date('Y-m-d H:i') }}</p>
-            {% endif %}
-        </div>
+        {% include 'actions/_game_row.html.twig' with {row: game_list_row(game, app.user, true), isSelf: true} %}
     {% else %}
         <p class="has-text-grey">No games in progress.</p>
     {% endfor %}

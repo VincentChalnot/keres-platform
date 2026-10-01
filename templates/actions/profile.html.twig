@@ -114,45 +114,7 @@
 
                 {% for game in games %}
                     {# @var game \App\Entity\Game #}
-                    {% set subjectColors = game.getColorsForUser(subject) %}
-                    {% set myColor = subjectColors[0] is defined ? subjectColors[0] : null %}
-                    {% set opponentPlayer = null %}
-                    {% for p in game.players %}
-                        {% if opponentPlayer is null and p.color != myColor %}
-                            {% set opponentPlayer = p %}
-                        {% endif %}
-                    {% endfor %}
-                    <div class="box mb-4">
-                        <a href="{{ path('play', {uuid: game.uuid}) }}" class="button is-rounded is-primary is-pulled-right">
-                            {{ game.gameOver ? 'View' : 'Watch' }}
-                        </a>
-                        <p><strong>{{ isSelf ? 'You played' : (subject.displayName ?? subject.username) ~ ' played' }}:</strong> {{ myColor and myColor.name == 'WHITE' ? 'White' : 'Black' }}</p>
-                        <p><strong>Opponent:</strong>
-                            {% if opponentPlayer is null or opponentPlayer.user is null %}
-                                AI
-                            {% elseif opponentPlayer.user == subject %}
-                                Themselves (hot-seat)
-                            {% else %}
-                                <a href="{{ path('profile', {username: opponentPlayer.user.username}) }}">{{ opponentPlayer.user.displayName ?? opponentPlayer.user.username }}</a>
-                            {% endif %}
-                        </p>
-                        <p><strong>Created:</strong> {{ game.createdAt|date('Y-m-d H:i') }}</p>
-                        {% if game.gameOver %}
-                            <p><strong>Result:</strong>
-                                {% if game.endReason == enum('App\\Model\\GameEndReason').ABORTED %}
-                                    Aborted
-                                {% elseif game.draw %}
-                                    Draw
-                                {% elseif game.whiteWins %}
-                                    White wins
-                                {% else %}
-                                    Black wins
-                                {% endif %}
-                            </p>
-                        {% else %}
-                            <p><strong>Next to play:</strong> {{ game.whiteTurn ? 'White' : 'Black' }}</p>
-                        {% endif %}
-                    </div>
+                    {% include 'actions/_game_row.html.twig' with {row: game_list_row(game, subject, isSelf), isSelf: isSelf} %}
                 {% else %}
                     <p class="has-text-grey">No games to show{{ isSelf ? '' : ' yet' }}.</p>
                 {% endfor %}

@@ -800,4 +800,80 @@ out of scope for this task, logged in DECISIONS.md. All test users
 row from an earlier, interrupted verification attempt) and their
 games/seeks/analytics/preferences rows deleted after verification.
 
-**Next action**: T13 (unified games template) is next.
+**Next action**: T11 (invite a friend) was next; see below.
+
+---
+
+## T13 — Unified games template
+
+**Status**: done. **Commit**: `keres-platform` `d3aaca2`.
+
+Found three divergent per-template implementations of "render a list of
+games": the dashboard's "Games in progress" widget
+(`actions/dashboard/_recent_games.html.twig`), the full `/games` page
+(`actions/game_list.html.twig`, tabbed in-progress/finished), and a
+profile's "Recent games" section (`actions/profile.html.twig`) - each with
+its own copy of the opponent-naming/turn/result Twig logic, each slightly
+different (e.g. only the profile page handled "spectating a third party's
+hot-seat game" correctly). Replaced all three with one path: a
+`GameListPresenter` service builds a `GameListRow` DTO from a `Game` plus
+a `$subject`/`$isSelf` pair, exposed to Twig as `game_list_row()`
+(`App\Twig\GameListExtension`, same shape as the existing
+`unread_notification_count()`), rendered by one new partial,
+`actions/_game_row.html.twig`. All three call sites now do nothing but
+loop and `{% include %}` it.
+
+`$subject`/`$isSelf` (rather than always using the logged-in viewer)
+exists because the profile page's "Recent games" list is told from the
+*profile owner's* perspective even when a stranger is looking at it - the
+dashboard and `/games` just happen to always pass the viewer as the
+subject with `isSelf = true`. A spectator (`isSelf = false`) never sees
+"Your turn"; they get "Next to play: White/Black" instead, exactly the
+wording the profile page already used pre-T13, now shared instead of
+duplicated.
+
+Added a genuinely new piece - "time remaining" was not shown anywhere
+before this task. Correspondence games read `Game::getMoveDeadlineAt()`
+directly; realtime games compute the side-to-move's live remaining time
+from `GamePlayer::getClockMsRemaining()` minus elapsed-since-anchor, using
+the same `format('Uu')` microsecond-timestamp technique
+`ClockManager::chargeAndSwap()` already uses internally (read-only here -
+nothing outside `ClockManager` ever writes a clock column,
+03-time-control.md sec 2.4). Unlimited games show no time-remaining label.
+
+**Verified live** against `https://app.local.playkeres.com/` via `curl`
+(no browser tool available - see T11's DECISIONS.md entry): created a real
+AI game and a real matched multiplayer game between two dev-login
+identities, then confirmed, byte-for-byte in the response HTML:
+- Dashboard and `/games`, viewed as the game's own participant: opponent
+  named correctly ("AI (level 5)" / the human opponent's email), "Your
+  turn" tag, "Resume" button, realtime game showing a live "9m left".
+- The same multiplayer game on the *opponent's* profile page, viewed by an
+  unrelated third dev-login identity: "Next to play: White" (not "Your
+  turn" - correct spectator framing), opponent named relative to the
+  profile's subject rather than the viewer, "Watch" button instead of
+  "Resume", clock countdown still shown.
+- The AI game correctly does *not* appear on a non-owner's profile at all
+  (pre-existing `queryProfileGamesForUser()` participant-only filter for
+  AI/hot-seat games, untouched by this task).
+- Empty states ("No games in progress." / "No games to show yet.") render
+  with no errors on a fresh account, before any game existed.
+
+Needed a real `Origin` header on the `curl` POSTs that create test games/
+seeks - this stack's CSRF protection (`SameOriginCsrfTokenManager`,
+`config/packages/csrf.yaml`) validates same-origin headers rather than a
+session-bound token value for the `submit`/`authenticate`/`logout` token
+ids, so a bare `curl -d` with no `Origin`/`Referer` silently fails
+validation with no visible error (the local-game and lobby-seek templates
+never render form-level, only field-level, errors) - not a bug, just a
+gap in this task's own curl-based test setup, worth remembering for any
+future POST-via-curl verification in this repo.
+
+`composer cs:check` clean (0/243). `bin/phpunit` 45/45 green, no
+regressions. `npm run type-check` clean (no `.ts` files touched - this was
+a pure Twig/PHP-service task). No migration - `GameListRow`/
+`GameListPresenter` are plain, non-Doctrine classes. All test users
+(`t13-a/b/c@example.com`) and their games/seeks/analytics rows deleted
+after verification.
+
+**Next action**: T14 (lobby redesign) is next.

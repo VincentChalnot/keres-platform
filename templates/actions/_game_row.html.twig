@@ -1,0 +1,24 @@
+{# T13: the one games-list row markup, fed a `GameListRow` (see
+   `App\Model\GameListRow`, built by `game_list_row()`). Used by the
+   dashboard widget, `/games`, and a profile's game history - never
+   duplicated. @var row \App\Model\GameListRow #}
+<div class="box game-row mb-4">
+    <a href="{{ path('play', {uuid: row.uuid}) }}" class="button is-rounded is-primary is-small is-pulled-right">
+        {{ row.isGameOver ? 'View' : (isSelf ? 'Resume' : 'Watch') }}
+    </a>
+    <p>
+        <strong>{{ row.opponentLabel }}</strong>
+        {% if row.turnLabel %}
+            &middot; <span class="tag is-rounded {{ row.turnLabel == 'Your turn' ? 'is-primary' : 'is-dark' }}">{{ row.turnLabel }}</span>
+        {% endif %}
+        {% if row.resultLabel %}
+            &middot; <span class="tag is-rounded is-light">{{ row.resultLabel }}</span>
+        {% endif %}
+        {% if row.timeRemainingLabel %}
+            &middot; <span class="has-text-grey">{{ row.timeRemainingLabel }}</span>
+        {% endif %}
+    </p>
+    <p class="has-text-grey">
+        {{ row.isGameOver ? 'Finished' : 'Last move' }}: {{ row.lastActivityAt|date('Y-m-d H:i') }}
+    </p>
+</div>

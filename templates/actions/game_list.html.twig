@@ -20,46 +20,7 @@
 
             {% for game in games %}
                 {# @var game \App\Entity\Game #}
-                {% set myColors = game.getColorsForUser(app.user) %}
-                <div class="box mb-4">
-                    <a href="{{ path('play', {uuid: game.uuid}) }}" class="button is-rounded is-primary is-pulled-right">
-                        {{ game.gameOver ? 'View' : 'Resume' }}
-                    </a>
-                    <p><strong>You play:</strong> {{ myColors[0] is defined and myColors[0].name == 'WHITE' ? 'White' : 'Black' }}</p>
-                    <p><strong>Opponent:</strong>
-                        {% if game.opponentType == enum('App\\Model\\OpponentType').AI %}
-                            AI
-                        {% elseif game.opponentType == enum('App\\Model\\OpponentType').HOTSEAT %}
-                            Hot Seat
-                        {% else %}
-                            {% set opponent = game.getOpponentOf(app.user) %}
-                            {{ opponent ? (opponent.displayName ?? opponent.username) : 'Multiplayer' }}
-                        {% endif %}
-                    </p>
-                    <p><strong>Created:</strong> {{ game.createdAt|date('Y-m-d H:i') }}</p>
-                    {% if game.lastMoveAt %}
-                        <p><strong>Last Move:</strong> {{ game.lastMoveAt|date('Y-m-d H:i') }}</p>
-                    {% endif %}
-                    {% if game.gameOver %}
-                        <p><strong>Result:</strong>
-                            {% if game.endReason == enum('App\\Model\\GameEndReason').ABORTED %}
-                                Aborted
-                            {% elseif game.draw %}
-                                Draw
-                            {% elseif game.whiteWins %}
-                                White wins
-                            {% else %}
-                                Black wins
-                            {% endif %}
-                        </p>
-                    {% else %}
-                        {% if game.opponentType == enum('App\\Model\\OpponentType').HOTSEAT %}
-                            <p><strong>Next to play:</strong> {{ game.whiteTurn ? 'White' : 'Black' }}</p>
-                        {% else %}
-                            <p><strong>Turn:</strong> {{ game.isTurnOf(app.user) ? 'Your turn' : 'Their turn' }}</p>
-                        {% endif %}
-                    {% endif %}
-                </div>
+                {% include 'actions/_game_row.html.twig' with {row: game_list_row(game, app.user, true), isSelf: true} %}
             {% else %}
                 <p>No games {{ status == 'finished' ? 'finished' : 'in progress' }}.</p>
             {% endfor %}
