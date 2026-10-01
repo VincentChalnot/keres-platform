@@ -238,3 +238,13 @@ Reversibility: moderate (widening the feed to include in-progress games later is
 Decision: The "hero panel encouraging account creation and starting a game" was built only for the anonymous branch of `/lobby`; the signed-in branch keeps its existing seek-posting panel as the page's primary content, now with an inline T13 games list added.
 Rationale: "account creation" is meaningless to an already-authenticated visitor, and "starting a game" for that audience already *is* the New Seek panel plus the "Play AI or hot-seat" button - duplicating a marketing hero above functionality the visitor is actively using would push the real controls below the fold for no benefit.
 Reversibility: trivial (purely additive if a future task wants a signed-in hero too).
+
+### T4 — Fifth trust commitment: AGPL-3.0, objective trigger, self-executing grant (operator-approved)
+Decision: The platform code is to be released under AGPL-3.0 if Keres is abandoned, defined as either (a) an announced shutdown (grant effective no later than the shutdown date) or (b) playkeres.com unreachable for 90 consecutive days with no announced return. The grant is written into `LICENSE` now as a conditional clause, so it takes effect without any action from the copyright holder. Covers code only: no trademark rights (name, logo), no user data.
+Rationale: the engine is already GPL-3.0, so the pledge only needs to cover the platform; GPL-3.0 §13 permits combining with AGPL-3.0, and AGPL closes the network-service gap a revived hosted fork would otherwise exploit. Both triggers are checkable by anyone; "no commits for N months" was rejected because a finished, stable product would trip it. A self-executing clause covers the case a bare promise cannot (the author unable, not just unwilling, to act). Proposed by the agent, approved by the operator after the run; the operator was advised to have the conditional-grant wording reviewed by a lawyer.
+Reversibility: hard (an irrevocable conditional licence grant on public code; changing it after publication would undermine the pledge itself).
+
+### T11 — Invite analytics wired after the fact
+Decision: `AnalyticsRecorder::inviteSent()` / `inviteAccepted()` are called from `CreateInviteAction` (after the invite-only Seek is written) and `InviteAcceptAction` (only after a successful pairing, so replays/expired/self-invites record nothing). Payload carries the Seek uuid; `inviteAccepted` also carries the resulting game.
+Rationale: T6 reserved both event types for this feature and T11 originally shipped without dispatching them; caught while writing the final report and folded back into the T11 commit.
+Reversibility: trivial.
