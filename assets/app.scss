@@ -803,6 +803,12 @@ footer.footer {
     }
 }
 
+// Bulma's plain `.tag.is-light` (the "light" palette colour) renders white text
+// on the cream background; force the dark brand colour for contrast.
+.tag:not(body).is-light {
+    color: $keres-dark;
+}
+
 // Unselected presets: subtle background on hover (same tint as other lobby rows).
 .lobby-presets .button.is-outlined:hover {
     background-color: rgba(255, 255, 255, 0.08);
