@@ -849,7 +849,7 @@ Handler:
 `sendToUser` calls `queueNotification()` per row with the per-type options of
 §6.5, then walks `flush()` -- one `MessageSentReport` per request -- applying the
 §5.6 table to each. The whole loop runs in the worker container (supervisor,
-`messenger:consume async --time-limit=60 --memory-limit=128M`, `numprocs=2` --
+`messenger:consume async --time-limit=60 --memory-limit=128M --quiet`, `numprocs=2` --
 `frankenphp/supervisor/messenger-worker.conf:1-4`), never in a web request.
 
 ### 6.4 Payload budget: send an ID, not content

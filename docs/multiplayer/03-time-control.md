@@ -1009,7 +1009,7 @@ Two consumers under supervisor, recycled every 60 s
 (`frankenphp/supervisor/messenger-worker.conf:2-4`):
 
 ```
-command=php /app/bin/console messenger:consume async --time-limit=60 --memory-limit=128M
+command=php /app/bin/console messenger:consume async --time-limit=60 --memory-limit=128M --quiet
 numprocs=2 ; autostart=true ; autorestart=true ; startsecs=0
 ```
 

@@ -84,7 +84,11 @@ class SweepCorrespondenceDeadlinesCommand extends Command
             }
         }
 
-        $io->writeln(\sprintf('Forfeited %d game(s), warned %d game(s).', $forfeited, $warned));
+        // Silent when idle: this runs every 60 s from the worker's shell loop,
+        // and a "0 and 0" line per minute buries everything else in `docker logs`.
+        if ($forfeited > 0 || $warned > 0) {
+            $io->writeln(\sprintf('Forfeited %d game(s), warned %d game(s).', $forfeited, $warned));
+        }
 
         return Command::SUCCESS;
     }

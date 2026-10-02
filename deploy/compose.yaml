@@ -134,10 +134,19 @@ x-php-env: &php-env
   # network's CIDR if desired (docker network inspect proxy).
   TRUSTED_PROXIES: "${TRUSTED_PROXIES:-172.16.0.0/12,::/0}"
 
+# Docker's default json-file driver never rotates: without these limits a
+# container's log grows until the disk is full. 5 x 10 MB per service.
+x-logging: &default-logging
+  driver: json-file
+  options:
+    max-size: "10m"
+    max-file: "5"
+
 services:
   php:
     image: ghcr.io/vincentchalnot/keres-platform/php:${IMAGES_TAG:-latest}
     restart: unless-stopped
+    logging: *default-logging
     env_file: .env
     environment:
       <<: *php-env
@@ -181,6 +190,7 @@ services:
   php-worker:
     image: ghcr.io/vincentchalnot/keres-platform/php-worker:${IMAGES_TAG:-latest}
     restart: unless-stopped
+    logging: *default-logging
     env_file: .env
     environment:
       <<: *app-env
@@ -199,12 +209,14 @@ services:
   backend:
     image: ghcr.io/vincentchalnot/keres/backend:${BACKEND_IMAGE_TAG:-latest}
     restart: unless-stopped
+    logging: *default-logging
     environment:
       - RUST_LOG=info
 
   database:
     image: postgres:${POSTGRES_VERSION:-16}-alpine
     restart: unless-stopped
+    logging: *default-logging
     environment:
       POSTGRES_DB: ${POSTGRES_DB}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
