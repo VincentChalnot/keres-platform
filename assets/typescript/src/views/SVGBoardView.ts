@@ -95,7 +95,7 @@ export default class SVGBoardView implements IBoardView {
         this.container = container;
         await this.injectBoardCSS();
         this.svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-        this.svg.setAttribute('viewBox', `${-COORD_WIDTH} -${TOP_MARGIN} ${BOARD_WIDTH + COORD_WIDTH} ${BOARD_HEIGHT + COORD_HEIGHT + TOP_MARGIN}`);
+        this.applyViewBox();
         this.svg.style.cursor = 'pointer';
 
         // Inline the sprite sheet symbols/defs directly into the SVG
@@ -890,11 +890,22 @@ export default class SVGBoardView implements IBoardView {
 
     setCoordinatesVisible(visible: boolean): void {
         this.coordsVisible = visible;
-        if (visible) {
-            this.svg.setAttribute('viewBox', `${-COORD_WIDTH} -${TOP_MARGIN} ${BOARD_WIDTH + COORD_WIDTH} ${BOARD_HEIGHT + COORD_HEIGHT + TOP_MARGIN}`);
-        } else {
-            this.svg.setAttribute('viewBox', `0 -${TOP_MARGIN} ${BOARD_WIDTH} ${BOARD_HEIGHT + TOP_MARGIN}`);
-        }
+        this.applyViewBox();
+    }
+
+    /**
+     * Sets the SVG viewBox and publishes its aspect ratio as `--board-aspect` on
+     * the game container: CSS sizes the board from it (fit to the viewport
+     * height) and click/drag hit-testing needs the SVG element to match the
+     * viewBox exactly - no letterboxing.
+     */
+    private applyViewBox(): void {
+        const x = this.coordsVisible ? -COORD_WIDTH : 0;
+        const width = BOARD_WIDTH + (this.coordsVisible ? COORD_WIDTH : 0);
+        const height = BOARD_HEIGHT + (this.coordsVisible ? COORD_HEIGHT : 0) + TOP_MARGIN;
+        this.svg.setAttribute('viewBox', `${x} -${TOP_MARGIN} ${width} ${height}`);
+        const host = this.container.closest<HTMLElement>('.game-container') ?? this.container;
+        host.style.setProperty('--board-aspect', (width / height).toString());
     }
 
     dispose(): void {

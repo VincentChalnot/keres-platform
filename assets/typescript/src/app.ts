@@ -8,6 +8,7 @@ import {ClockState} from './network/MercureClient';
 import {decodeMoveListFromBase64, algebraicToPos, posToAlgebraic} from './utils/boardUtils';
 import {computeMaterialDiff, renderMaterialHTML} from './models/materialDiff';
 import {alertModal, confirmModal} from './utils/modal';
+import {PageFullscreen} from './utils/pageFullscreen';
 
 const OPPONENT_TYPE_AI = 0;
 const OPPONENT_TYPE_HOTSEAT = 1;
@@ -355,6 +356,7 @@ class KeresGame {
         this.nextMoveBtn.addEventListener('click', () => this.handleNextMove());
         this.toggleThreatsBtn.addEventListener('click', () => this.handleToggleThreats());
         this.toggleCoordsBtn.addEventListener('click', () => this.handleToggleCoords());
+        new PageFullscreen(document.getElementById('toggle-fullscreen-btn') as HTMLButtonElement);
 
         // Custom event for unstack modal
         window.addEventListener('showUnstackModal', () => {

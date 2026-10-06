@@ -46,6 +46,8 @@ $keres-bg: #010101;
     --light-color: #{$keres-light};
     --dark-color: #{$keres-dark};
     --spacing: 1rem;
+    // Height of the sticky .site-navbar (see below); the board is sized to the space left under it.
+    --site-navbar-height: 4rem;
 }
 
 html {
@@ -109,6 +111,9 @@ li { margin-bottom: 8px; }
 // ─── Top navigation bar ───────────────────────────────────────────────────────
 
 .site-navbar {
+    // Bulma's navbar height variable: pins the bar to --site-navbar-height (including its 1px bottom border) instead of whatever its content measures.
+    --bulma-navbar-height: calc(var(--site-navbar-height) - 1px);
+
     position: sticky;
     top: 0;
     z-index: 100;
@@ -521,9 +526,66 @@ footer.footer {
 }
 
 .game-container {
+    // `--board-aspect` (viewBox width / height) is published by SVGBoardView and
+    // changes when the coordinate labels are toggled; this default only covers
+    // the layout before the script has run.
+    --board-aspect: 1.2252;
+    // Below this width (CSS px) the board stops shrinking to fit the viewport
+    // height. Browser zoom shrinks the viewport in CSS px, so without a floor
+    // a board that always fits the viewport would look identical at every zoom
+    // level; with it, zooming in past this point enlarges the board and the
+    // page scrolls instead.
+    --board-min-width: 320px;
+    // The sticky navbar covers the top of the viewport.
+    --board-max-height: calc(100dvh - var(--site-navbar-height));
+
     max-width: 1200px;
     margin: auto;
     padding: 1rem;
+}
+
+// The board is never wider than its container nor taller than the visible
+// viewport. The SVG must keep exactly the viewBox aspect ratio (hit-testing
+// maps client coordinates onto the viewBox), so the size is derived from the
+// height limit rather than clamped with max-height.
+#board-container {
+    width: min(100%, max(var(--board-min-width), calc(var(--board-max-height) * var(--board-aspect))));
+    margin-inline: auto;
+
+    svg {
+        display: block;
+        width: 100%;
+        height: auto;
+    }
+}
+
+// ─── Page fullscreen (toggle-fullscreen-btn) ──────────────────────────────────
+// Toggled on <html> by PageFullscreen.ts. Hides the site chrome and puts the
+// board first, fitted to the viewport (black bars left/right in landscape);
+// everything else (clocks, status, buttons, history) stacks below it, out of
+// view until scrolled to.
+
+html.is-game-fullscreen {
+    --site-navbar-height: 0px;
+
+    .site-navbar,
+    .footer {
+        display: none;
+    }
+
+    .game-container {
+        --board-max-height: calc(100dvh - 1rem);
+
+        display: flex;
+        flex-direction: column;
+        max-width: none;
+        padding: 0.5rem;
+
+        > #board-container {
+            order: -1;
+            flex: none;
+        }
+    }
 }
 
 // Game over: desaturate the board and fully disable pointer interaction
@@ -533,6 +595,30 @@ footer.footer {
 #board-container.game-over svg {
     filter: saturate(0.35) brightness(0.85);
     pointer-events: none;
+}
+
+// A finished game gets a translucent "GAME OVER" stamped over the board (the
+// status banner can be out of view, e.g. in fullscreen). A pseudo-element
+// keeps it out of the SVG view's DOM; cqw sizes the text to the board width.
+#board-container.game-over {
+    position: relative;
+    container-type: inline-size;
+
+    &::after {
+        content: 'GAME OVER';
+        position: absolute;
+        inset: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 8cqw;
+        font-weight: 800;
+        letter-spacing: 0.15em;
+        color: rgba(255, 255, 255, 0.55);
+        text-shadow: 0 0 0.15em rgba(0, 0, 0, 0.6);
+        pointer-events: none;
+        margin-top: -1.6cqw;
+    }
 }
 
 .move-history {
