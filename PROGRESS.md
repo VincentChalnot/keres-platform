@@ -198,9 +198,7 @@ the real, newly-written page.
 
 **Decisions logged**: CGU rename rationale, EN-full-translation-vs-stub
 call, the IONOS address verification path (two-source first-party
-corroboration, not a single clean page load — see DECISIONS.md), and an
-observation (not acted on) that pre-existing "keres.fr" domain mentions
-elsewhere on the legal notice page are stale but out of scope for this task.
+corroboration, not a single clean page load — see DECISIONS.md).
 
 **Next action**: T4 (trust pledge page) was next; see below.
 
