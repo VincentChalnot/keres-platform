@@ -46,6 +46,11 @@ x-app-env: &app-env
   # against the same SERVER_NAME. Override to point at prod or elsewhere.
   STATIC_SITE_URL: ${STATIC_SITE_URL:-https://${SERVER_NAME:-local.playkeres.com}}
   SESSION_COOKIE_DOMAIN: ${SERVER_NAME:-local.playkeres.com}
+  # Distinct from prod's KERESSESSID: prod's cookie (Domain=playkeres.com) is
+  # also sent to app.local.playkeres.com and, being older, shadows the dev
+  # session — login then "succeeds" but bounces back to /login. See
+  # config/packages/framework.yaml.
+  SESSION_COOKIE_NAME: KERESDEVSESSID
   # Symfony no longer loads .env files (symfony/dotenv was removed — every
   # value the app needs is a real container env var, sourced from this file
   # and/or the root .env via env_file below). Dev gets safe working defaults;

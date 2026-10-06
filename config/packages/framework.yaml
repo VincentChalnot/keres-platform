@@ -3,6 +3,10 @@ parameters:
     # Default to empty string = trust no proxy (safe for dev where Caddy is the edge).
     # Prod sets TRUSTED_PROXIES to the docker network CIDR Traefik uses to reach us.
     env(TRUSTED_PROXIES): ''
+    # Prod keeps the default. Any environment whose SESSION_COOKIE_DOMAIN is a
+    # subdomain of another one's (dev: local.playkeres.com under prod:
+    # playkeres.com) MUST set a different name - see the session block below.
+    env(SESSION_COOKIE_NAME): KERESSESSID
 
 framework:
     secret: '%env(APP_SECRET)%'
@@ -29,8 +33,17 @@ framework:
     # session: login succeeds and writes the token to the domain-scoped
     # session, then the next request reads the stale empty one and bounces
     # back to /login. A distinct name makes those leftovers inert.
+    #
+    # The same collision happens across *different* domains for any two
+    # deployments where one cookie domain is a parent of the other: prod
+    # (Domain=playkeres.com) is also sent to dev (app.local.playkeres.com,
+    # Domain=local.playkeres.com). The browser sends the older one first, PHP
+    # keeps the first occurrence, so the prod ID shadows the dev session and a
+    # successful login silently bounces back to /login until the cookie is
+    # deleted. Hence a per-environment name (SESSION_COOKIE_NAME); the other
+    # environment's cookie is then simply ignored.
     session:
-        name: KERESSESSID
+        name: '%env(SESSION_COOKIE_NAME)%'
         cookie_domain: '%env(SESSION_COOKIE_DOMAIN)%'
 
     #esi: true
