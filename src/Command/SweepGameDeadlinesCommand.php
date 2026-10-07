@@ -20,29 +20,29 @@ use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Style\SymfonyStyle;
 
 /**
- * T8: the correspondence deadline sweeper. Run once a minute by supervisor
- * (`frankenphp/supervisor/correspondence-sweep.conf`), not a per-move
- * delayed Messenger message - unlike `CheckClockExpiryMessage`, a
- * correspondence deadline can be up to 72h out, and the brief for this
- * task explicitly calls for a live-computed sweep over `game.moveDeadlineAt`
- * instead (`docs/multiplayer/03-time-control.md` sec 9.3's
- * `CorrespondenceNudgeMessage` design was never built and is superseded by
- * this for CORRESPONDENCE; REALTIME keeps the existing delayed-message
- * path unchanged).
+ * The durable backstop for every game clock. Run once a minute by supervisor
+ * (`frankenphp/supervisor/deadline-sweep.conf`). The delayed
+ * `CheckClockExpiryMessage` (precise) and the lazy/claim-timeout paths (on
+ * demand) normally resolve a flag first; this command resolves whatever
+ * they miss - a crashed worker or bot process, a lost/failed message, a game
+ * nobody is watching - so no game can sit "in progress" past its deadline.
+ * It is also the only mechanism for CORRESPONDENCE, whose 6h-72h deadlines
+ * are too far out for a per-move DelayStamp.
  *
  * Two independent, idempotent passes:
- * 1. Forfeit any correspondence game whose deadline has passed, via the
- *    same `ClockAdjudicator::adjudicate()` every other adjudication path
- *    already uses (idempotent, row-locked - safe if this command overlaps
- *    itself or a lazy adjudicate() elsewhere).
- * 2. Warn the side to move once, 6 hours before a deadline they have not
- *    yet been warned about *for the current move* - re-armed after every
- *    move by comparing against `clockTurnStartedAt`, no write needed on
- *    the move path itself. Guarded by its own row lock so two overlapping
- *    sweeps can never send the warning twice.
+ * 1. Adjudicate any game, of any time-control kind, whose deadline has
+ *    passed, via the same `ClockAdjudicator::adjudicate()` every other
+ *    adjudication path already uses (idempotent, row-locked - safe if this
+ *    command overlaps itself or a lazy adjudicate() elsewhere). A flag past
+ *    ply 1 is a timeout; an expired first-two-plies clamp is an abort.
+ * 2. Warn the side to move in a correspondence game once, 6 hours before a
+ *    deadline they have not yet been warned about *for the current move* -
+ *    re-armed after every move by comparing against `clockTurnStartedAt`, no
+ *    write needed on the move path itself. Guarded by its own row lock so
+ *    two overlapping sweeps can never send the warning twice.
  */
-#[AsCommand(name: 'app:correspondence:sweep-deadlines', description: 'Forfeit expired correspondence games and send the 6-hour deadline warning')]
-class SweepCorrespondenceDeadlinesCommand extends Command
+#[AsCommand(name: 'app:games:sweep-deadlines', description: 'Adjudicate games whose clock has expired and send the correspondence 6-hour deadline warning')]
+class SweepGameDeadlinesCommand extends Command
 {
     public function __construct(
         private readonly GameRepository $gameRepository,
@@ -61,7 +61,7 @@ class SweepCorrespondenceDeadlinesCommand extends Command
 
         $forfeited = 0;
 
-        foreach ($this->gameRepository->findExpiredCorrespondenceGames($now) as $game) {
+        foreach ($this->gameRepository->findExpiredClockGames($now) as $game) {
             try {
                 if ($this->clockAdjudicator->adjudicate($game)) {
                     ++$forfeited;

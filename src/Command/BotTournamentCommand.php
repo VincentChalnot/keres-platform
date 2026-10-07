@@ -7,6 +7,7 @@ namespace App\Command;
 use App\Message\PlayBotGameMessage;
 use App\Model\TimeControl;
 use App\Service\BotTournament\BotAccounts;
+use App\Service\BotTournament\BotGamePlayer;
 use App\Service\BotTournament\BotTournamentReport;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
@@ -34,6 +35,7 @@ class BotTournamentCommand extends Command
     public function __construct(
         private readonly BotAccounts $botAccounts,
         private readonly BotTournamentReport $report,
+        private readonly BotGamePlayer $botGamePlayer,
         private readonly MessageBusInterface $messageBus,
     ) {
         parent::__construct();
@@ -113,6 +115,17 @@ class BotTournamentCommand extends Command
             $io->error(\sprintf('%d tournament games are still queued or being played; enqueueing again now would duplicate them. Wait for them to finish, or use --force.', $queued));
 
             return Command::FAILURE;
+        }
+
+        // Nothing queued or in flight, so an unfinished bot game belongs to a
+        // process that died (memory fatal, kill): abort it rather than let its
+        // clock flag it into a rated result nobody played.
+        if (0 === $queued) {
+            $aborted = $this->botGamePlayer->abortDanglingGames();
+
+            if ($aborted > 0) {
+                $io->note(\sprintf('Aborted %d dangling bot game(s) left by an interrupted run.', $aborted));
+            }
         }
 
         // Random order so Glicko's sequential updates are not biased by

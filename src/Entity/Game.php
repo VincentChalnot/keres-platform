@@ -248,7 +248,7 @@ class Game
     }
 
     /**
-     * `SweepCorrespondenceDeadlinesCommand` only (T8). Compared against
+     * `SweepGameDeadlinesCommand` only (T8). Compared against
      * `clockTurnStartedAt`, not nulled on every move: a value older than
      * the current move's anchor is exactly "no warning sent for this move
      * yet", so a fresh move re-arms the check for free with no write on

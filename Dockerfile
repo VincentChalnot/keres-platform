@@ -122,7 +122,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 
 COPY --link frankenphp/supervisor/supervisord.conf /etc/supervisor/supervisord.conf
 COPY --link frankenphp/supervisor/messenger-worker.conf /etc/supervisor/conf.d/messenger-worker.conf
-COPY --link frankenphp/supervisor/correspondence-sweep.conf /etc/supervisor/conf.d/correspondence-sweep.conf
+COPY --link frankenphp/supervisor/deadline-sweep.conf /etc/supervisor/conf.d/deadline-sweep.conf
 
 WORKDIR /tmp
 
@@ -133,7 +133,7 @@ CMD ["/usr/bin/supervisord", "-c", "/etc/supervisor/supervisord.conf"]
 # No HTTP server runs in this image (supervisord replaces frankenphp as PID 1),
 # so the base image's curl :2019/metrics healthcheck is meaningless here.
 # supervisorctl exits non-zero if any managed program (the messenger:consume
-# workers, or the correspondence-sweep loop) isn't RUNNING — requires the
+# workers, or the deadline-sweep loop) isn't RUNNING — requires the
 # RPC socket declared in supervisord.conf.
 HEALTHCHECK --start-period=10s --interval=30s --timeout=5s --retries=3 \
 	CMD supervisorctl status all
@@ -147,7 +147,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 
 COPY --link frankenphp/supervisor/supervisord.conf /etc/supervisor/supervisord.conf
 COPY --link frankenphp/supervisor/messenger-worker.conf /etc/supervisor/conf.d/messenger-worker.conf
-COPY --link frankenphp/supervisor/correspondence-sweep.conf /etc/supervisor/conf.d/correspondence-sweep.conf
+COPY --link frankenphp/supervisor/deadline-sweep.conf /etc/supervisor/conf.d/deadline-sweep.conf
 
 WORKDIR /tmp
 
@@ -158,7 +158,7 @@ CMD ["/usr/bin/supervisord", "-c", "/etc/supervisor/supervisord.conf"]
 # No HTTP server runs in this image (supervisord replaces frankenphp as PID 1),
 # so the base image's curl :2019/metrics healthcheck is meaningless here.
 # supervisorctl exits non-zero if any managed program (the messenger:consume
-# workers, or the correspondence-sweep loop) isn't RUNNING — requires the
+# workers, or the deadline-sweep loop) isn't RUNNING — requires the
 # RPC socket declared in supervisord.conf.
 HEALTHCHECK --start-period=10s --interval=30s --timeout=5s --retries=3 \
 	CMD supervisorctl status all

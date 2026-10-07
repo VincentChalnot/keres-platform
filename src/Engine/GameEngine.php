@@ -8,14 +8,18 @@ use App\Entity\Game;
 use App\Exception\GameAlreadyFinishedException;
 use App\Exception\MoveFlaggedException;
 use App\Exception\StalePositionException;
+use App\Message\CheckClockExpiryMessage;
 use App\Model\BoardMovesData;
 use App\Model\MoveData;
 use App\Model\PieceColor;
+use App\Model\TimeControlKind;
 use App\Service\Analytics\AnalyticsRecorder;
 use App\Service\Game\ClockManager;
 use App\Service\Game\GameLifecycleManager;
 use Doctrine\DBAL\LockMode;
 use Doctrine\ORM\EntityManagerInterface;
+use Symfony\Component\Messenger\MessageBusInterface;
+use Symfony\Component\Messenger\Stamp\DelayStamp;
 
 readonly class GameEngine
 {
@@ -26,6 +30,7 @@ readonly class GameEngine
         private ClockManager $clockManager,
         private GameLifecycleManager $gameLifecycleManager,
         private AnalyticsRecorder $analyticsRecorder,
+        private MessageBusInterface $messageBus,
     ) {
     }
 
@@ -103,6 +108,13 @@ readonly class GameEngine
             throw new MoveFlaggedException();
         }
 
+        // 03-time-control.md sec 4.1 step 21, after commit (a message must not
+        // be consumable before the state it checks is visible). Here rather
+        // than in each caller so every move path - human, AI reply, bot game -
+        // arms its flag check; the deadline sweep is the backstop if this
+        // dispatch is lost to a crash.
+        $this->armClockExpiryCheck($game);
+
         // T6: dispatched after the transaction has already committed - a
         // rejected/stale move never reaches here (it throws above or from
         // inside the transaction). Cheap, async (T1): no query, no join, no
@@ -127,5 +139,25 @@ readonly class GameEngine
 
         // Apply AI move
         return $this->applyMove($game, $aiMoveData, $receivedAtMicros);
+    }
+
+    /**
+     * CORRESPONDENCE deadlines (6h-72h out) belong to the sweep command, not
+     * a per-move DelayStamp. Everything else with a live deadline is checked
+     * at `deadline + grace`; an UNLIMITED game only carries one for its first
+     * two plies (the abort clamp). The sweep is the backstop if this is lost.
+     */
+    private function armClockExpiryCheck(Game $game): void
+    {
+        $deadline = $game->getMoveDeadlineAt();
+
+        if (null === $deadline || $game->isGameOver() || TimeControlKind::CORRESPONDENCE === $game->getTimeControl()->getKind()) {
+            return;
+        }
+
+        $this->messageBus->dispatch(
+            new CheckClockExpiryMessage($game->getUuid()->toRfc4122(), $game->getGameMoves()->count(), (int) $deadline->format('Uu')),
+            [new DelayStamp($this->clockManager->expiryCheckDelayMs($deadline))],
+        );
     }
 }

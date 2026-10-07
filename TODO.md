@@ -45,7 +45,7 @@ Facts that shape the design:
       Previously unbounded. Verified with `docker compose config`.
 - [x] `messenger-worker.conf`: `--quiet` (drops the 10-line banner per restart).
 - [x] `supervisord.conf`: `loglevel=warn` (drops spawned / RUNNING / exited lines).
-- [x] `SweepCorrespondenceDeadlinesCommand`: print the summary only when
+- [x] `SweepGameDeadlinesCommand` (ex-`SweepCorrespondenceDeadlinesCommand`): print the summary only when
       something was forfeited or warned.
 - Not done on purpose: the `CRIT Server 'unix_http_server' running without any
   HTTP authentication` line (once per container start). The socket is `chmod 0700`

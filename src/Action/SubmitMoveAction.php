@@ -10,16 +10,13 @@ use App\Entity\User;
 use App\Exception\GameAlreadyFinishedException;
 use App\Exception\MoveFlaggedException;
 use App\Exception\StalePositionException;
-use App\Message\CheckClockExpiryMessage;
 use App\Message\ProcessAiMoveMessage;
 use App\Model\MoveData;
 use App\Model\OpponentType;
 use App\Model\PieceColor;
-use App\Model\TimeControlKind;
 use App\Repository\GameRepository;
 use App\Security\Voter\GameVoter;
 use App\Service\Game\ClockAdjudicator;
-use App\Service\Game\ClockManager;
 use App\Service\Game\GameStatePayloadBuilder;
 use App\Service\Game\GameUpdatePublisher;
 use App\Service\Notification\NotificationCenter;
@@ -32,7 +29,6 @@ use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\Attribute\AsController;
 use Symfony\Component\HttpKernel\EventListener\AbstractSessionListener;
 use Symfony\Component\Messenger\MessageBusInterface;
-use Symfony\Component\Messenger\Stamp\DelayStamp;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Uid\Uuid;
 
@@ -47,7 +43,6 @@ readonly class SubmitMoveAction
         private GameStatePayloadBuilder $payloadBuilder,
         private GameUpdatePublisher $publisher,
         private ClockAdjudicator $clockAdjudicator,
-        private ClockManager $clockManager,
         private NotificationCenter $notificationCenter,
     ) {
     }
@@ -141,26 +136,13 @@ readonly class SubmitMoveAction
             $this->notificationCenter->movePlayed($game, $user);
         }
 
-        if (!$game->isGameOver()) {
-            $deadline = $game->getMoveDeadlineAt();
-
-            // T8: CORRESPONDENCE deadlines are enforced by the sweep
-            // command over game.moveDeadlineAt, not a per-move delayed
-            // message - a 6h-72h DelayStamp per move is exactly what that
-            // task's brief asked to avoid (docs/multiplayer/03-time-control.md
-            // sec 9.3's CorrespondenceNudgeMessage design was never built).
-            if (null !== $deadline && !\in_array($game->getTimeControl()->getKind(), [TimeControlKind::UNLIMITED, TimeControlKind::CORRESPONDENCE], true)) {
-                $this->dispatchClockExpiryCheck($game, $deadline);
-            }
-
-            if (OpponentType::AI === $game->getOpponentType()) {
-                $this->messageBus->dispatch(
-                    new ProcessAiMoveMessage(
-                        $uuid,
-                        $game->getGameMoves()->count(),
-                    )
-                );
-            }
+        if (!$game->isGameOver() && OpponentType::AI === $game->getOpponentType()) {
+            $this->messageBus->dispatch(
+                new ProcessAiMoveMessage(
+                    $uuid,
+                    $game->getGameMoves()->count(),
+                )
+            );
         }
 
         return new JsonResponse(
@@ -169,18 +151,6 @@ readonly class SubmitMoveAction
             [
                 AbstractSessionListener::NO_AUTO_CACHE_CONTROL_HEADER => true,
             ]
-        );
-    }
-
-    /** Even an UNLIMITED game carries a deadline for its first two plies (the abort clamp). */
-    private function dispatchClockExpiryCheck(Game $game, \DateTimeImmutable $deadline): void
-    {
-        $deadlineMicros = (int) $deadline->format('Uu');
-        $delayMs = $this->clockManager->expiryCheckDelayMs($deadline);
-
-        $this->messageBus->dispatch(
-            new CheckClockExpiryMessage($game->getUuid()->toRfc4122(), $game->getGameMoves()->count(), $deadlineMicros),
-            [new DelayStamp($delayMs)]
         );
     }
 

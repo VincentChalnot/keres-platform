@@ -14,6 +14,8 @@ use App\Model\TimeControl;
 use App\Service\Game\ClockManager;
 use App\Service\Game\GameLifecycleManager;
 use App\Service\GameFactory;
+use Doctrine\DBAL\ArrayParameterType;
+use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\LockMode;
 use Doctrine\ORM\EntityManagerInterface;
 
@@ -32,6 +34,7 @@ class BotGamePlayer
         private readonly ClockManager $clockManager,
         private readonly GameLifecycleManager $gameLifecycleManager,
         private readonly EntityManagerInterface $entityManager,
+        private readonly Connection $connection,
     ) {
     }
 
@@ -79,32 +82,70 @@ class BotGamePlayer
         return $game;
     }
 
+    /**
+     * Aborts every unfinished game between two bot accounts. Only safe while
+     * no tournament game is being played (the command checks the queue is
+     * empty first): a game left over from a killed process (memory fatal,
+     * SIGKILL - nothing runs `catch`/`finally` there) would otherwise sit
+     * "ongoing" until its clock flags it as a rated result nobody played.
+     *
+     * @return int number of games aborted
+     */
+    public function abortDanglingGames(): int
+    {
+        $uuids = $this->connection->fetchFirstColumn(
+            'SELECT g.uuid
+               FROM game g
+               JOIN game_player wp ON wp.game_id = g.id AND wp.color_value = 0
+               JOIN game_player bp ON bp.game_id = g.id AND bp.color_value = 1
+              WHERE g.game_over_at IS NULL
+                AND g.deleted_at IS NULL
+                AND wp.user_id IN (:ids) AND bp.user_id IN (:ids)',
+            ['ids' => array_values($this->botAccounts->allIds())],
+            ['ids' => ArrayParameterType::STRING],
+        );
+
+        foreach ($uuids as $uuid) {
+            $this->abortByUuid((string) $uuid);
+        }
+
+        return \count($uuids);
+    }
+
     /** Best effort: never let cleanup mask the original error. */
     private function abortQuietly(Game $game): void
     {
         try {
-            if (!$this->entityManager->isOpen()) {
+            $this->abortByUuid($game->getUuid()->toRfc4122());
+        } catch (\Throwable) {
+        }
+    }
+
+    private function abortByUuid(string $uuid): void
+    {
+        if (!$this->entityManager->isOpen()) {
+            return;
+        }
+
+        $this->entityManager->clear();
+        $fresh = $this->entityManager->getRepository(Game::class)->findOneBy(['uuid' => $uuid]);
+
+        if (!$fresh instanceof Game || $fresh->isGameOver()) {
+            return;
+        }
+
+        $this->entityManager->wrapInTransaction(function (EntityManagerInterface $em) use ($fresh): void {
+            $em->find(Game::class, $fresh->getId(), LockMode::PESSIMISTIC_WRITE);
+
+            if ($fresh->isGameOver()) {
                 return;
             }
 
-            $uuid = $game->getUuid()->toRfc4122();
-            $this->entityManager->clear();
-            $fresh = $this->entityManager->getRepository(Game::class)->findOneBy(['uuid' => $uuid]);
+            $this->clockManager->stop($fresh, $this->clockManager->nowMicros());
+            $this->gameLifecycleManager->finaliseAbort($fresh);
+            $em->flush();
+        });
 
-            if ($fresh instanceof Game && !$fresh->isGameOver()) {
-                $this->entityManager->wrapInTransaction(function (EntityManagerInterface $em) use ($fresh): void {
-                    $em->find(Game::class, $fresh->getId(), LockMode::PESSIMISTIC_WRITE);
-
-                    if ($fresh->isGameOver()) {
-                        return;
-                    }
-
-                    $this->clockManager->stop($fresh, $this->clockManager->nowMicros());
-                    $this->gameLifecycleManager->finaliseAbort($fresh);
-                    $em->flush();
-                });
-            }
-        } catch (\Throwable) {
-        }
+        $this->entityManager->clear();
     }
 }

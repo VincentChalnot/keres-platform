@@ -349,11 +349,13 @@ POST /play/{uuid}/move
  --- after commit -----------------------------------------------------------
 19. payload := GameStatePayloadBuilder::build(game)
 20. GameUpdatePublisher::publishGameState(payload)              # topic game/{uuid}
-21. still ongoing and kind !== UNLIMITED:
+21. still ongoing, moveDeadlineAt !== null and kind !== CORRESPONDENCE
+    (an UNLIMITED game carries a deadline only for its first two plies):
        dispatch CheckClockExpiryMessage(uuid, gameMoves.count(), moveDeadlineAt)
                 DelayStamp(max(0, moveDeadlineAt + (L+G)*1000 - nowMicros()) / 1000)
+       # lives in GameEngine::applyMove, so human moves, AI replies and bot games all get it
     kind === CORRESPONDENCE:
-       dispatch CorrespondenceNudgeMessage(uuid, gameMoves.count()) with its DelayStamp (§9.3)
+       nothing per move: the deadline sweep (§5.2d) owns it
     opponent is the engine:
        dispatch ProcessAiMoveMessage(uuid, gameMoves.count())    # unchanged
 22. return 200 with the payload from step 19
@@ -379,11 +381,11 @@ POST /play/{uuid}/move
 | Engine unreachable at step 7 | `EngineApi` throws `\RuntimeException` (`src/Engine/EngineApi.php:53-55`). No transaction, no clock write, anchor untouched -> `502`. Nothing is charged, but the retry is charged from the same `t_a`, so a slow engine still costs the mover real time. A bounded engine timeout is the mitigation; `10-delivery-plan.md` carries it. |
 | `lock_timeout` at step 10 | `LockWaitTimeoutException` -> rollback, `409 concurrent_move` + `details.state`. Nothing charged. |
 | Crash between 18 and 20 | Committed but unannounced. The opponent resyncs on their next event or `GET /play/{uuid}/state`; the `seq` guard makes a late arrival harmless. |
-| Crash between 20 and 21 | Published but no timer. Covered by §5.2b and §5.2c. |
+| Crash between 20 and 21 | Published but no timer. Covered by §5.2b, §5.2c and the sweep §5.2d. |
 
 ---
 
-## 5. Flag adjudication — three paths, one method
+## 5. Flag adjudication — four paths, one method
 
 ### 5.1 The method
 
@@ -431,13 +433,14 @@ adjudicate(game):
 exactly `0` however late the adjudicator ran. **The recorded outcome is
 independent of discovery time.** That single line is what makes §10.5 true.
 
-### 5.2 The three callers
+### 5.2 The four callers
 
 | # | Caller | When | Purpose |
 |---|---|---|---|
 | a | `CheckClockExpiryHandler` | `DelayStamp` to `moveDeadlineAt + L + G`; ~1 s accuracy with §10.2's DSN tuning | The live flag-fall moment: the result appears without anyone clicking. |
 | b | `adjudicate()` on read | Every authenticated `GET /play/{uuid}`, `GET /play/{uuid}/state`, and step 5 of the move transaction. Zero extra queries in the common case. | The safety net: worker down, message in `failed`, deadline passed unobserved. |
 | c | `POST /play/{uuid}/claim-timeout` | Explicit, `GAME_PARTICIPATE` | The player-facing escape hatch. `false` -> `409 clock_not_expired` + `details.state`, so the client resyncs its countdown instead of arguing. |
+| d | `app:games:sweep-deadlines` (`frankenphp/supervisor/deadline-sweep.conf`) | Every 60 s, over every game with `gameOverAt IS NULL AND moveDeadlineAt <= now`, any kind, oldest first, 100 per run | The durable backstop: no live client and no surviving message needed. Resolves what (a)-(c) miss - a crashed worker or bot process, a lost or `failed` message, a game nobody opens - and is the only mechanism for CORRESPONDENCE. A game can therefore never stay `ongoing` more than about a minute past `moveDeadlineAt + L + G`. |
 
 Path (b) runs for **authenticated participants only**, never anonymous
 spectators: `GAME_VIEW` is public (`00-overview.md` §4.3), and letting an

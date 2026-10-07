@@ -234,24 +234,29 @@ class GameRepository extends ServiceEntityRepository
     }
 
     /**
-     * T8 sweep: in-progress correspondence games whose move deadline has
-     * already passed. Plain read, no lock - `ClockAdjudicator::adjudicate()`
-     * takes its own idempotent, row-locked forfeit decision per game.
+     * Sweep: in-progress games, of any time-control kind, whose move deadline
+     * (a real clock, or the first-two-plies abort clamp) has already passed,
+     * oldest first. The durable backstop behind the delayed
+     * `CheckClockExpiryMessage` and the lazy/claim paths - it needs no live
+     * client and no surviving message. Plain read, no lock:
+     * `ClockAdjudicator::adjudicate()` takes its own idempotent, row-locked
+     * decision per game (and applies the grace).
+     *
+     * Bounded so a large backlog (first run after a long outage) cannot
+     * exhaust the CLI memory limit; the sweep runs every minute and simply
+     * drains the rest on the following runs.
      *
      * @return Game[]
      */
-    public function findExpiredCorrespondenceGames(\DateTimeImmutable $now): array
+    public function findExpiredClockGames(\DateTimeImmutable $now, int $limit = 100): array
     {
         return $this->createQueryBuilder('g')
-            ->addSelect('p', 'pu')
-            ->leftJoin('g.players', 'p')
-            ->leftJoin('p.user', 'pu')
-            ->andWhere('g.timeControl.kindValue = :kind')
             ->andWhere('g.gameOverAt IS NULL')
             ->andWhere('g.moveDeadlineAt IS NOT NULL')
             ->andWhere('g.moveDeadlineAt <= :now')
-            ->setParameter('kind', TimeControlKind::CORRESPONDENCE->value)
             ->setParameter('now', $now)
+            ->orderBy('g.moveDeadlineAt', 'ASC')
+            ->setMaxResults($limit)
             ->getQuery()
             ->getResult();
     }
