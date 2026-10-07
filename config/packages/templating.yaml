@@ -16,6 +16,8 @@ sidus_template:
             template: 'admin/dashboard.html.twig'
         admin_opening_explorer:
             template: 'admin/opening_explorer.html.twig'
+        admin_bot_tournament:
+            template: 'admin/bot_tournament.html.twig'
         'sidus_admin.User.read':
             template: 'admin/actions/user_read.html.twig'
         register:

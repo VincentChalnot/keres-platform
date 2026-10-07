@@ -69,6 +69,14 @@ services:
         tags:
             - { name: 'kernel.reset', method: 'reset' }
 
+    # Custom sidus/filter-bundle filter type (autoconfigured into the
+    # `sidus.filter_type` registry via FilterTypeInterface); the bundle's own
+    # types are wired the same way with (name, formType) constructor arguments.
+    App\Service\Admin\GamePlayerFilterType:
+        arguments:
+            - game_player
+            - 'Symfony\Component\Form\Extension\Core\Type\TextType'
+
     # Mercure Authorization: not autowired by the Mercure bundle as a standalone
     # service. Register it here so MercureAuthorizationListener can inject it
     # to mint/clear the subscriber-JWT cookie.

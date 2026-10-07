@@ -1,0 +1,89 @@
+sidus_data_grid:
+    configurations:
+        Game:
+            columns:
+                id:
+                    label: '#'
+                    property_path: 'game.id'
+                    template: 'admin/datagrid/game_link.html.twig'
+                players:
+                    template: 'admin/datagrid/game_players.html.twig'
+                opponentTypeValue:
+                    label: 'Mode'
+                    template: 'admin/datagrid/game_mode.html.twig'
+                timeControl:
+                    label: 'Time control'
+                    template: 'admin/datagrid/game_time_control.html.twig'
+                speedCategoryValue:
+                    label: 'Speed'
+                    template: 'admin/datagrid/game_speed.html.twig'
+                rated:
+                    property_path: 'game.rated'
+                    template: 'admin/datagrid/game_rated.html.twig'
+                movesCount:
+                    label: 'Moves'
+                endReasonValue:
+                    label: 'Result'
+                    template: 'admin/datagrid/game_result.html.twig'
+                createdAt:
+                    property_path: 'game.createdAt'
+                gameOverAt:
+                    label: 'Ended'
+                    property_path: 'game.gameOverAt'
+            query_handler:
+                provider: doctrine
+                options:
+                    entity: App\Entity\Game
+                sortable: [id, opponentTypeValue, speedCategoryValue, rated, endReasonValue, createdAt, gameOverAt]
+                default_sort:
+                    createdAt: DESC
+                filters:
+                    player:
+                        type: game_player
+                        label: 'Player (username, email or name)'
+                    opponentTypeValue:
+                        type: choice
+                        label: 'Mode'
+                        form_options:
+                            choices:
+                                'Versus engine': 0
+                                'Hot-seat': 1
+                                'Multiplayer': 2
+                    aiLevel:
+                        type: choice
+                        label: 'Engine level'
+                        form_options:
+                            choices: { 1: 1, 2: 2, 3: 3, 4: 4, 5: 5, 6: 6, 7: 7, 8: 8, 9: 9, 10: 10 }
+                    speedCategoryValue:
+                        type: choice
+                        label: 'Speed'
+                        form_options:
+                            choices:
+                                Bullet: 0
+                                Blitz: 1
+                                Rapid: 2
+                                Classical: 3
+                                Correspondence: 4
+                    rated:
+                        type: choice
+                        form_options: { choices: { Rated: 1, Casual: 0 } }
+                    endReasonValue:
+                        type: choice
+                        label: 'Result'
+                        form_options:
+                            choices:
+                                'Not finished': 0
+                                'Engine verdict': 1
+                                Resignation: 2
+                                Timeout: 3
+                                Abandonment: 4
+                                'Draw agreed': 5
+                                Aborted: 6
+                    createdAt:
+                        type: date_range
+                    gameOverAt:
+                        type: date_range
+                        label: 'Ended'
+                    deletedAt:
+                        type: not_null
+                        label: 'Deleted by a player only'

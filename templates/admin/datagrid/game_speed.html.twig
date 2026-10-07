@@ -1,0 +1,2 @@
+{% set speed = result.game.speedCategory %}
+{% if speed %}{{ speed.name|lower|capitalize }}{% else %}<span class="has-text-grey">—</span>{% endif %}

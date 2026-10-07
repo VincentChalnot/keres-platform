@@ -1,0 +1,8 @@
+{% set tc = result.game.timeControl %}
+{% if tc.kind.name == 'REALTIME' %}
+    {{ (tc.initialSeconds // 60) }}+{{ tc.incrementSeconds }}{% if tc.initialSeconds % 60 %} <span class="has-text-grey">({{ tc.initialSeconds }}s)</span>{% endif %}
+{% elseif tc.kind.name == 'CORRESPONDENCE' %}
+    {{ tc.hoursPerMove }}h / move
+{% else %}
+    <span class="has-text-grey">Unlimited</span>
+{% endif %}

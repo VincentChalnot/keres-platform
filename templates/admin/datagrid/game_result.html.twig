@@ -1,0 +1,16 @@
+{% set game = result.game %}
+{% set reason = game.endReason.name %}
+{% if not game.gameOver %}
+    <span class="tag is-info">{{ result.movesCount > 0 ? 'In progress' : 'Not started' }}</span>
+{% elseif reason == 'ABORTED' %}
+    <span class="tag is-light">Aborted</span>
+{% else %}
+    {% if game.draw %}
+        <span class="tag is-light">½-½</span>
+    {% elseif game.whiteWins %}
+        <span class="tag is-success is-light">1-0</span>
+    {% else %}
+        <span class="tag is-success is-light">0-1</span>
+    {% endif %}
+    <span class="has-text-grey is-size-7">{{ {NONE: '', ENGINE: 'engine', RESIGNATION: 'resignation', TIMEOUT: 'timeout', ABANDONMENT: 'abandonment', DRAW_AGREED: 'draw agreed'}[reason]|default('') }}</span>
+{% endif %}

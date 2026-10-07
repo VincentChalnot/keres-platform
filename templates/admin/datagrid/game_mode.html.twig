@@ -1,0 +1,2 @@
+{% set game = result.game %}
+{{ {AI: 'Versus engine', HOTSEAT: 'Hot-seat', MULTIPLAYER: 'Multiplayer'}[game.opponentType.name] }}

@@ -1,0 +1,17 @@
+sidus_admin:
+    configurations:
+        Game:
+            entity: App\Entity\Game
+            controller_pattern:
+                - 'Sidus\AdminBundle\Action\{{Action}}Action'
+            template_pattern:
+                - 'admin/actions/{{action}}.{{format}}.twig'
+                - '@SidusAdmin/Action/{{action}}.{{format}}.twig'
+            prefix: /admin/games
+            actions:
+                list:
+                    path: /
+                    defaults:
+                        _controller: App\Action\Admin\GameListAction
+            options:
+                icon: chess-pawn

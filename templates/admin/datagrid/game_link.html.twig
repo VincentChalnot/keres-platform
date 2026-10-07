@@ -1,0 +1,5 @@
+{% set game = result.game %}
+<a href="{{ path('play', {uuid: game.uuid}) }}" class="has-text-weight-semibold" title="{{ game.uuid }}" target="_blank" rel="noopener">{{ game.id }}</a>
+{% if game.deletedAt %}
+    <span class="tag is-danger is-light" title="Deleted by a player on {{ game.deletedAt|date('Y-m-d H:i') }}">Deleted</span>
+{% endif %}

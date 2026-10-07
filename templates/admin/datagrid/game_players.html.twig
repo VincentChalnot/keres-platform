@@ -1,0 +1,16 @@
+{% macro side(userId, username, aiLevel) %}
+    {% if userId %}
+        <a href="{{ admin_path('User', 'read', {id: userId}) }}">{{ username }}</a>
+    {% else %}
+        <span class="has-text-grey">Engine{{ aiLevel ? ' L' ~ aiLevel : '' }}</span>
+    {% endif %}
+{% endmacro %}
+{% import _self as m %}
+{% set game = result.game %}
+<span class="is-flex is-align-items-center" style="gap: .4rem; white-space: nowrap;">
+    <span class="tag is-white" style="border: 1px solid #b5b5b5;">W</span>
+    {{ m.side(result.whiteUserId, result.whiteUsername, game.aiLevel) }}
+    <span class="has-text-grey-light">vs</span>
+    <span class="tag is-dark">B</span>
+    {{ m.side(result.blackUserId, result.blackUsername, game.aiLevel) }}
+</span>

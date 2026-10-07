@@ -1,0 +1,97 @@
+{% extends 'admin/base.html.twig' %}
+
+{% block admin_title %}Bot tournament{% endblock %}
+
+{% block container %}
+    <h2 class="title is-4">Bot tournament</h2>
+
+    <div class="columns mb-5">
+        <div class="column is-3">
+            <div class="box has-text-centered">
+                <p class="heading">Queued (incl. running)</p>
+                <p class="title">{{ report.queued ?? 'n/a' }}</p>
+            </div>
+        </div>
+        <div class="column is-3">
+            <div class="box has-text-centered">
+                <p class="heading">Games in progress</p>
+                <p class="title">{{ report.ongoing }}</p>
+            </div>
+        </div>
+    </div>
+
+    {% if report.standings is empty %}
+        <div class="notification is-light has-text-centered has-text-grey">
+            No bot accounts yet. Run <code>bin/console app:bot-tournament</code> to queue a tournament.
+        </div>
+    {% else %}
+        <h3 class="title is-5">Standings</h3>
+        <div class="table-container mb-5">
+            <table class="table is-fullwidth is-hoverable">
+                <thead>
+                    <tr>
+                        <th>Level</th>
+                        <th>Games</th>
+                        <th>W</th>
+                        <th>D</th>
+                        <th>L</th>
+                        <th>Score</th>
+                        {% for category in report.categories %}
+                            <th>Glicko-2 ({{ category }})</th>
+                        {% endfor %}
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for row in report.standings %}
+                        <tr>
+                            <td>L{{ row.level }}</td>
+                            <td>{{ row.games }}</td>
+                            <td>{{ row.wins }}</td>
+                            <td>{{ row.draws }}</td>
+                            <td>{{ row.losses }}</td>
+                            <td>{{ row.score is null ? '-' : row.score|number_format(1) ~ '%' }}</td>
+                            {% for category in report.categories %}
+                                {% set rating = row.ratings[category] ?? null %}
+                                <td>{{ rating is null ? '-' : rating.rating ~ ' ± ' ~ rating.deviation }}</td>
+                            {% endfor %}
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <h3 class="title is-5">Head-to-head</h3>
+        <p class="subtitle is-6">Row's score % against column (games played)</p>
+        <div class="table-container">
+            <table class="table is-fullwidth is-hoverable">
+                <thead>
+                    <tr>
+                        <th>vs</th>
+                        {% for opp in report.levels %}
+                            <th>L{{ opp }}</th>
+                        {% endfor %}
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for me in report.levels %}
+                        <tr>
+                            <th>L{{ me }}</th>
+                            {% for opp in report.levels %}
+                                {% set cell = report.matrix[me][opp] ?? null %}
+                                <td>
+                                    {%- if me == opp -%}
+                                        ·
+                                    {%- elseif cell is null -%}
+                                        -
+                                    {%- else -%}
+                                        {{ (100 * cell.score / cell.games)|number_format(0) }}% ({{ cell.games }})
+                                    {%- endif -%}
+                                </td>
+                            {% endfor %}
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    {% endif %}
+{% endblock %}
