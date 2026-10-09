@@ -126,7 +126,7 @@
                             </div>
                         </div>
 
-                        <div class="field is-grouped">
+                        <div class="field is-grouped is-grouped-multiline">
                             <div class="control">
                                 <button type="submit" class="button is-primary is-rounded">{{ 'lobby.new_seek.post'|trans }}</button>
                             </div>
@@ -140,6 +140,7 @@
 
                 <div class="box">
                     <h3 class="title is-5">{{ 'lobby.open_seeks.title'|trans }} <span class="has-text-grey-light" id="lobby-pool-size"></span></h3>
+                    <div class="table-container">
                     <table class="table is-fullwidth" id="lobby-seek-table">
                         <thead>
                         <tr>
@@ -152,6 +153,7 @@
                         </thead>
                         <tbody id="lobby-seek-table-body"></tbody>
                     </table>
+                    </div>
                 </div>
 
                 <div class="box">

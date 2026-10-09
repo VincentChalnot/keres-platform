@@ -52,7 +52,7 @@
             <h4 class="title is-6">{{ 'privacy.data.deletion_title'|trans }}</h4>
             {{ form_row(accountDeletionForm.email) }}
             {{ form_row(accountDeletionForm.message) }}
-            {{ form_widget(accountDeletionForm.submit, {attr: {class: 'button is-rounded is-danger is-outlined'}}) }}
+            {{ form_widget(accountDeletionForm.submit, {attr: {class: 'button is-rounded is-danger is-outlined', style: 'height: auto; max-width: 100%; white-space: normal; text-align: center;'}}) }}
         {{ form_end(accountDeletionForm) }}
     </div>
 
