@@ -1,0 +1,6 @@
+# Validation messages of our own constraints (Symfony's built-in ones ship their own fr translations).
+# ICU: `{{ limit }}` placeholders of built-in constraints are written `{limit}` here.
+profile:
+    username:
+        blank: Please enter a username.
+        format: Usernames are 3-32 characters long and may only contain letters, numbers, underscores and hyphens.

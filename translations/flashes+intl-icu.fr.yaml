@@ -1,0 +1,3 @@
+# Flash messages (addFlash). Translated when raised, in the locale of the request that raises them.
+flash:
+    profile_saved: Profil enregistré.

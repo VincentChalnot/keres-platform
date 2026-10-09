@@ -1,0 +1,18 @@
+{#
+    Language switcher (GET /locale/{locale}, see SwitchLocaleAction). `variant`:
+    'navbar' = compact codes (anonymous visitors, next to Login), 'footer' = full names.
+    The language names are endonyms (navigation domain, identical in every locale) so each
+    one stays readable whatever the current language is.
+#}
+{% set current_locale = app.request.locale %}
+<span class="language-switcher language-switcher--{{ variant|default('footer') }}" role="group" aria-label="{{ 'language.switcher_label'|trans({}, 'navigation') }}">
+    {% for code in enabled_locales() %}
+        {% set name = ('language.' ~ code)|trans({}, 'navigation') %}
+        {% set label = variant|default('footer') == 'navbar' ? code|upper : name %}
+        {% if code == current_locale %}
+            <span class="language-switcher__item is-current" lang="{{ code }}" aria-current="true" title="{{ name }}">{{ label }}</span>
+        {% else %}
+            <a class="language-switcher__item" href="{{ path('locale_switch', {locale: code, redirect: app.request.requestUri}) }}" lang="{{ code }}" hreflang="{{ code }}" title="{{ name }}">{{ label }}</a>
+        {% endif %}
+    {% endfor %}
+</span>

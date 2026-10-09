@@ -1,0 +1,50 @@
+// Language switcher (templates/_language_switcher.html.twig): "EN | FR" next to
+// Login in the navbar for anonymous visitors, full language names in the footer.
+// Colours are inherited so it follows whatever surface it sits on.
+
+.language-switcher {
+    display: inline-flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: center;
+    gap: 0.25rem;
+    font-size: 0.85rem;
+}
+
+.language-switcher__item {
+    padding: 0.1rem 0.55rem;
+    border: 1px solid transparent;
+    border-radius: 999px;
+    color: inherit;
+    line-height: 1.5;
+    opacity: 0.75;
+    text-decoration: none;
+
+    &:hover {
+        opacity: 1;
+        text-decoration: none;
+    }
+
+    &.is-current {
+        border-color: currentColor;
+        font-weight: 700;
+        opacity: 1;
+    }
+}
+
+.language-switcher--navbar {
+    font-size: 0.8rem;
+    letter-spacing: 0.04em;
+    margin-right: 0.5rem;
+
+    // The mobile menu stacks its rows: align the codes with the other rows.
+    @media screen and (max-width: 1023px) {
+        justify-content: flex-start;
+        margin: 0;
+        padding: 0.5rem 1rem;
+    }
+}
+
+.language-switcher--footer {
+    margin-bottom: 0.75rem;
+}

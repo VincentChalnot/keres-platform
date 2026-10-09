@@ -31,9 +31,6 @@ class UserPreferences
     #[ORM\Column(type: Types::STRING, length: 255, nullable: true)]
     private ?string $lastName = null;
 
-    #[ORM\Column(type: Types::STRING, length: 8, nullable: true)]
-    private ?string $locale = null;
-
     #[ORM\Column(type: Types::STRING, length: 2, nullable: true)]
     private ?string $country = null;
 
@@ -94,16 +91,6 @@ class UserPreferences
     public function setLastName(?string $lastName): void
     {
         $this->lastName = $lastName;
-    }
-
-    public function getLocale(): ?string
-    {
-        return $this->locale;
-    }
-
-    public function setLocale(?string $locale): void
-    {
-        $this->locale = $locale;
     }
 
     public function getCountry(): ?string

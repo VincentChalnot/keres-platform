@@ -45,6 +45,14 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\Column(type: Types::STRING, length: 1024, nullable: true)]
     private ?string $avatarUrl = null;
 
+    /**
+     * Interface language chosen by the user (one of `framework.enabled_locales`),
+     * NULL = none chosen yet: the request locale then follows the language
+     * cookie / Accept-Language (see App\Service\Locale\LocaleResolver).
+     */
+    #[ORM\Column(type: Types::STRING, length: 8, nullable: true)]
+    private ?string $locale = null;
+
     /** @var string[] */
     #[ORM\Column(type: Types::JSON)]
     private array $roles = ['ROLE_USER'];
@@ -230,6 +238,16 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     public function setRoles(array $roles): void
     {
         $this->roles = $roles;
+    }
+
+    public function getLocale(): ?string
+    {
+        return $this->locale;
+    }
+
+    public function setLocale(?string $locale): void
+    {
+        $this->locale = $locale;
     }
 
     public function getCreatedAt(): \DateTimeImmutable

@@ -6,6 +6,7 @@ namespace App\Action\Settings;
 
 use App\Entity\User;
 use App\Form\ProfileSettingsType;
+use App\Service\Locale\LocaleResolver;
 use App\Service\UsernameGenerator;
 use App\Service\UserPreferencesManager;
 use Doctrine\DBAL\Exception\UniqueConstraintViolationException;
@@ -20,11 +21,14 @@ use Symfony\Component\HttpKernel\Attribute\AsController;
 use Symfony\Component\RateLimiter\RateLimiterFactory;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
+use Symfony\Component\Translation\LocaleSwitcher;
+use Symfony\Contracts\Translation\TranslatorInterface;
 
 /**
  * `GET|POST /settings/profile` - Settings -> Profile (05-social.md sec
  * 9.2). Identity (`User`: username, display name) and personal details
- * (`UserPreferences`: names, language, country) in one form. The username
+ * (`UserPreferences`: names, country) and the interface language
+ * (`User::$locale`, empty = follow the browser) in one form. The username
  * may change once every `MultiplayerLimits::USERNAME_CHANGE_INTERVAL`
  * (sec 1.6); a pure case change is always free.
  */
@@ -37,6 +41,9 @@ class SettingsProfileAction extends AbstractController
         private readonly EntityManagerInterface $entityManager,
         private readonly ClockInterface $clock,
         private readonly RateLimiterFactory $usernameChangeLimiter,
+        private readonly LocaleResolver $localeResolver,
+        private readonly LocaleSwitcher $localeSwitcher,
+        private readonly TranslatorInterface $translator,
     ) {
     }
 
@@ -58,7 +65,7 @@ class SettingsProfileAction extends AbstractController
             'firstName' => $preferences->getFirstName(),
             'lastName' => $preferences->getLastName(),
             'email' => $user->getEmail(),
-            'locale' => $preferences->getLocale(),
+            'locale' => $user->getLocale(),
             'country' => $preferences->getCountry(),
         ]);
         $form->handleRequest($request);
@@ -69,10 +76,15 @@ class SettingsProfileAction extends AbstractController
             $user->setDisplayName($data['displayName'] ?: null);
             $preferences->setFirstName($data['firstName'] ?: null);
             $preferences->setLastName($data['lastName'] ?: null);
-            $preferences->setLocale($data['locale'] ?: null);
             $preferences->setCountry($data['country'] ?: null);
             $preferences->touch();
+            $user->setLocale($data['locale'] ?: null);
             $this->entityManager->flush();
+
+            // The rest of this request (flash, re-rendered form) already speaks the new language.
+            $locale = $user->getLocale() ?? $this->localeResolver->resolveFromBrowser($request);
+            $request->setLocale($locale);
+            $this->localeSwitcher->setLocale($locale);
 
             $newUsername = $data['username'];
 
@@ -80,9 +92,16 @@ class SettingsProfileAction extends AbstractController
                 return $this->renderSettings($form, $user);
             }
 
-            $this->addFlash('success', 'Profile saved.');
+            $this->addFlash('success', $this->translator->trans('flash.profile_saved', [], 'flashes'));
 
-            return $this->redirectToRoute('settings_profile');
+            $response = $this->redirectToRoute('settings_profile');
+
+            if (null === $user->getLocale()) {
+                // Back to following the browser: forget the switcher's cookie.
+                $response->headers->clearCookie(LocaleResolver::COOKIE_NAME);
+            }
+
+            return $response;
         }
 
         return $this->renderSettings($form, $user);

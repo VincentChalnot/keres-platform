@@ -1,0 +1,12 @@
+# Form labels, placeholders, help texts and choices (forms use translation_domain: forms).
+profile_settings:
+    username: Nom d’utilisateur
+    display_name: Nom affiché
+    first_name: Prénom
+    last_name: Nom
+    email: Adresse e-mail
+    locale: Langue
+    locale_auto: Automatique (suivre mon navigateur)
+    country: Pays
+    country_none: Non précisé
+    submit: Enregistrer les modifications

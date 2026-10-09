@@ -37,10 +37,12 @@
         "symfony/runtime": "7.4.*",
         "symfony/scaleway-mailer": "7.4.*",
         "symfony/security-bundle": "^7.4.14",
+        "symfony/translation": "7.4.*",
         "symfony/twig-bundle": "7.4.*",
         "symfony/uid": "7.4.*",
         "symfony/validator": "7.4.*",
-        "symfony/yaml": "7.4.*"
+        "symfony/yaml": "7.4.*",
+        "twig/intl-extra": "^3.30"
     },
     "config": {
         "allow-plugins": {

@@ -1,0 +1,36 @@
+# Site chrome: top navigation bar, notification bell, footer, language switcher.
+meta:
+    default_title: The Art of Abstract Play
+brand:
+    home_label: Keres home
+nav:
+    main_label: Main navigation
+    toggle_menu: Toggle navigation menu
+    dashboard: Dashboard
+    friends: Friends
+    rules: Rules
+    play: Play
+    settings: Settings
+    login: Login
+    logout: Logout
+notifications:
+    title: Notifications
+    bell_label: '{count, plural, =0 {Notifications} other {Notifications (# unread)}}'
+    mark_all_read: Mark all as read
+    loading: Loading…
+    see_all: See all notifications
+confirm_modal:
+    title: Confirm
+    confirm: Confirm
+    cancel: Cancel
+footer:
+    legal_notice: Legal notice
+    terms: Terms of use
+    privacy: Privacy policy
+    contact: Contact
+    feedback: Feedback
+language:
+    switcher_label: Language
+    # Endonyms: the same in every locale file, so each language is readable from any other.
+    en: English
+    fr: Français

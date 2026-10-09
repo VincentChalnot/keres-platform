@@ -1,5 +1,12 @@
 framework:
+    # `en` is both the default and the fallback: any key missing from another
+    # catalogue is served in English (tests/Unit/Translation checks the
+    # catalogues stay in step). Adding a language: see "Internationalisation"
+    # in AGENTS.md (enabled_locales here + one file per domain + the
+    # `language.<code>` endonym in the navigation domain).
     default_locale: en
+    enabled_locales: ['en', 'fr']
     translator:
         default_path: '%kernel.project_dir%/translations'
+        fallbacks: ['en']
         providers:
