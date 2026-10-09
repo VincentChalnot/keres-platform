@@ -215,7 +215,7 @@ class AdminStatsRepository
      * Immediate child moves of a board position, annotated with a global
      * popularity count (number of GameMove rows referencing each Move).
      *
-     * @return array<int, array{moveData: string, toBoardPositionId: int, toBoardPositionData: string, popularity: int}>
+     * @return array<int, array{moveId: int, moveData: string, toBoardPositionId: int, toBoardPositionData: string, popularity: int, evaluation: int|null}>
      */
     public function getChildMoves(int $positionId): array
     {
@@ -235,6 +235,8 @@ class AdminStatsRepository
             $move = $row[0];
             $toBoardPosition = $move->getToBoardPosition();
             $result[] = [
+                'moveId' => (int) $move->getId(),
+                'evaluation' => $move->getEvaluation(),
                 'moveData' => base64_encode($move->getMoveData()->data),
                 'toBoardPositionId' => (int) $row['toPositionId'],
                 'toBoardPositionData' => base64_encode($toBoardPosition->getBoardPositionData()),

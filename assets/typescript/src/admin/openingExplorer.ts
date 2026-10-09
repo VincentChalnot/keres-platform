@@ -1,8 +1,12 @@
 import {decodePotentialMove, posToAlgebraic} from '../utils/boardUtils';
 import SVGBoardView from '../views/SVGBoardView';
 import {GameState} from '../models/GameState';
+import {formatEvaluation} from '../views/EvalBar';
 
 interface OpeningChild {
+    moveId: number;
+    /** Engine evaluation after this move (White's point of view, engine units); null = not computed yet. */
+    evaluation: number | null;
     moveData: string; // base64, 2 bytes — opaque wire format, see boardUtils
     toBoardPositionId: number;
     toBoardPositionData: string; // base64, 81 bytes (square layout only, no flags)
@@ -65,6 +69,37 @@ async function fetchTree(positionId: number): Promise<OpeningChild[]> {
     return data.children;
 }
 
+function evaluationTag(evaluation: number | null): string {
+    return null === evaluation ? '\u2026' : formatEvaluation(evaluation);
+}
+
+const EVALUATION_POLL_MS = 3000;
+const EVALUATION_POLL_ATTEMPTS = 100;
+
+/**
+ * Edges the backfill command has not reached yet are queued for the
+ * evaluation worker by the first request; this asks again until the worker
+ * has stored the verdict (or gives up), so the tree never waits on the engine.
+ */
+function watchEvaluation(moveId: number, onEvaluation: (evaluation: number) => void, attempt = 0): void {
+    void (async () => {
+        try {
+            const res = await fetch(`/admin/api/move-evaluation?move=${moveId}`);
+            if (!res.ok) {
+                return;
+            }
+            const body = (await res.json()) as {evaluation: number | null; pending: boolean};
+            if (null !== body.evaluation) {
+                onEvaluation(body.evaluation);
+            } else if (body.pending && attempt < EVALUATION_POLL_ATTEMPTS) {
+                setTimeout(() => watchEvaluation(moveId, onEvaluation, attempt + 1), EVALUATION_POLL_MS);
+            }
+        } catch (error) {
+            console.error('Evaluation failed:', error);
+        }
+    })();
+}
+
 async function fetchStats(positionId: number, ply: number): Promise<StatsResponse | null> {
     const res = await fetch(`/admin/api/opening-stats?position=${positionId}&ply=${ply}`);
     if (!res.ok) {
@@ -87,6 +122,7 @@ export async function initOpeningExplorer(): Promise<void> {
 
     const boardContainer = document.getElementById('opening-debug-board');
     const statsContainer = document.getElementById('opening-stats');
+    const evalContainer = document.getElementById('opening-eval');
 
     let boardView: SVGBoardView | null = null;
     if (boardContainer) {
@@ -122,6 +158,15 @@ export async function initOpeningExplorer(): Promise<void> {
         `;
     }
 
+    function renderEvaluation(evaluation: number | null): void {
+        if (!evalContainer) {
+            return;
+        }
+        evalContainer.textContent = null === evaluation
+            ? 'Engine evaluation: computing\u2026'
+            : `Engine evaluation: ${formatEvaluation(evaluation)} (White\'s point of view)`;
+    }
+
     function renderChildren(container: HTMLElement, children: OpeningChild[], depth: number): void {
         container.innerHTML = '';
         if (0 === children.length) {
@@ -143,6 +188,19 @@ export async function initOpeningExplorer(): Promise<void> {
         link.textContent = `${moveLabel(child.moveData)} (${child.popularity})`;
         li.appendChild(link);
 
+        const evalTag = document.createElement('span');
+        evalTag.className = 'tag is-light ml-2';
+        evalTag.title = 'Engine evaluation (level 10), White\'s point of view';
+        evalTag.textContent = evaluationTag(child.evaluation);
+        li.appendChild(evalTag);
+
+        if (null === child.evaluation) {
+            watchEvaluation(child.moveId, (evaluation) => {
+                child.evaluation = evaluation;
+                evalTag.textContent = evaluationTag(evaluation);
+            });
+        }
+
         const childList = document.createElement('ul');
         childList.className = 'pl-4';
         childList.style.display = 'none';
@@ -154,6 +212,7 @@ export async function initOpeningExplorer(): Promise<void> {
             event.preventDefault();
             void (async () => {
                 await showPosition(child.toBoardPositionData);
+                renderEvaluation(child.evaluation);
 
                 if (depth >= MAX_TREE_DEPTH) {
                     // Leaf reached: fetch aggregate outcome stats plus one
