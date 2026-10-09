@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="refresh" content="30">
-    <title>Keres - Temporarily Unavailable</title>
+    <title>Keres - Temporarily unavailable / Temporairement indisponible</title>
     <style>
         html, body {
             margin: 0;
@@ -47,8 +47,10 @@
 <body>
 <main>
     <h1>Keres</h1>
-    <p>We're temporarily unable to serve this page. Our team has been notified — please try again in a moment.</p>
-    <p><a href="/">Retry</a></p>
+    <!-- Static file served on 5xx without PHP: no locale detection possible, so both languages are shown. -->
+    <p lang="en">We’re temporarily unable to serve this page. Our team has been notified — please try again in a moment.</p>
+    <p lang="fr">Cette page est momentanément indisponible. Notre équipe a été prévenue — veuillez réessayer dans un instant.</p>
+    <p><a href="/">Retry / Réessayer</a></p>
 </main>
 </body>
 </html>

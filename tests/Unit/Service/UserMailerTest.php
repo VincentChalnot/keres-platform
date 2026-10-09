@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace App\Tests\Unit\Service;
 
 use App\Entity\User;
+use App\Service\Locale\EmailLocale;
+use App\Service\Locale\LocaleResolver;
 use App\Service\UserMailer;
 use App\Tests\TestDouble\RecordingLogger;
 use PHPUnit\Framework\TestCase;
@@ -14,6 +16,7 @@ use Symfony\Component\Mailer\Exception\HttpTransportException;
 use Symfony\Component\Mailer\Exception\TransportException;
 use Symfony\Component\Mailer\Exception\TransportExceptionInterface;
 use Symfony\Component\Mailer\MailerInterface;
+use Symfony\Contracts\Translation\TranslatorInterface;
 
 /**
  * Covers the observability added around PHP-SYMFONY-3 (Sentry): a Scaleway
@@ -32,7 +35,7 @@ final class UserMailerTest extends TestCase
         $mailer->expects(self::once())->method('send');
 
         $logger = new RecordingLogger();
-        $userMailer = new UserMailer($mailer, $logger, self::FROM_ADDRESS);
+        $userMailer = $this->createUserMailer($mailer, $logger);
 
         $userMailer->sendResetPasswordMail(new User('victim@example.com'), 'https://app.example.test/reset?token=abc');
 
@@ -58,7 +61,7 @@ final class UserMailerTest extends TestCase
         $mailer->method('send')->willThrowException($exception);
 
         $logger = new RecordingLogger();
-        $userMailer = new UserMailer($mailer, $logger, self::FROM_ADDRESS);
+        $userMailer = $this->createUserMailer($mailer, $logger);
 
         $caught = null;
 
@@ -89,7 +92,7 @@ final class UserMailerTest extends TestCase
         $mailer->method('send')->willThrowException($exception);
 
         $logger = new RecordingLogger();
-        $userMailer = new UserMailer($mailer, $logger, self::FROM_ADDRESS);
+        $userMailer = $this->createUserMailer($mailer, $logger);
 
         $caught = null;
 
@@ -101,5 +104,19 @@ final class UserMailerTest extends TestCase
         self::assertNotNull($caught);
         self::assertCount(1, $logger->records);
         self::assertArrayNotHasKey('response_body', $logger->records[0]['context']);
+    }
+
+    private function createUserMailer(MailerInterface $mailer, RecordingLogger $logger): UserMailer
+    {
+        $translator = $this->createStub(TranslatorInterface::class);
+        $translator->method('getLocale')->willReturn('en');
+
+        return new UserMailer(
+            $mailer,
+            $logger,
+            self::FROM_ADDRESS,
+            new EmailLocale(new LocaleResolver(['en', 'fr'], 'en'), $translator, 'en'),
+            $translator,
+        );
     }
 }

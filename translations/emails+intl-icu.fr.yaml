@@ -1,0 +1,44 @@
+layout:
+    unmonitored: "Cette adresse n’est pas surveillée et ne peut pas recevoir de réponses."
+    need_help: "Besoin d’aide ?"
+    contact_us: "Contactez-nous"
+    contact_line: "Besoin d’aide ? Contactez-nous : {url}"
+    unsubscribe_reason: "Vous recevez ce message en raison de vos paramètres de notification Keres."
+    manage_preferences: "Gérer les préférences d’e-mail"
+    link_line: "{label} : {url}"
+greeting:
+    named: "Bonjour {name},"
+    anonymous: "Bonjour,"
+account_exists:
+    subject: "Quelqu’un a tenté de créer un compte avec votre adresse e-mail"
+    intro: "Quelqu’un vient de tenter de créer un compte Keres avec votre adresse e-mail. Aucun compte n’a été créé, car vous en avez déjà un."
+    advice: "Si c’était vous et que vous aviez simplement oublié avoir déjà un compte, vous pouvez vous connecter directement, ou réinitialiser votre mot de passe si vous ne vous en souvenez plus :"
+    button: "Réinitialiser mon mot de passe"
+    ignore: "Si vous n’avez pas tenté de vous inscrire, vous pouvez ignorer ce message en toute sécurité — aucune action n’est nécessaire et votre compte reste inchangé."
+correspondence_deadline_warning:
+    subject: "Votre coup arrive bientôt à échéance sur Keres"
+    body: "Votre coup dans une partie par correspondance est attendu dans moins de 6 heures. Si vous dépassez le temps imparti, vous perdrez la partie."
+    button: "Jouer mon coup"
+    reason: "Vous recevez ce message car c’est à vous de jouer dans une partie par correspondance en cours sur Keres."
+notification_game_finished:
+    subject: "Votre partie Keres est terminée"
+    outcome: "{outcome, select, win {Vous avez gagné votre partie !} loss {Vous avez perdu votre partie.} draw {Votre partie s’est soldée par une nulle.} aborted {Votre partie a été annulée avant même de commencer - aucun résultat, aucun changement de classement.} other {Votre partie est terminée.}}"
+    button: "Revoir la partie"
+notification_seek_matched:
+    subject: "Votre proposition Keres a été acceptée — la partie commence"
+    body: "{opponent} a accepté votre proposition de partie - la partie a commencé !"
+    button: "Aller à la partie"
+notification_your_turn:
+    subject: "À vous de jouer dans votre partie Keres"
+    body: "{mover} vient de jouer un coup. À vous de jouer !"
+    button: "Jouer mon coup"
+reset_password:
+    subject: "Réinitialisation de votre mot de passe Keres"
+    intro: "Nous avons reçu une demande de réinitialisation du mot de passe de votre compte Keres."
+    button: "Choisir un nouveau mot de passe"
+    expiry: "Ce lien expire dans 1 heure. Si vous n’avez pas demandé de réinitialisation, vous pouvez ignorer ce message en toute sécurité."
+waitlist_confirm:
+    subject: "Confirmez votre place sur la liste d’attente de l’édition physique de Keres"
+    intro: "Merci de votre intérêt pour l’édition physique de Keres ! Veuillez confirmer cette adresse e-mail pour réserver votre place sur la liste d’attente."
+    button: "Confirmer ma place"
+    expiry: "Ce lien expire dans 7 jours. Si vous ne vous êtes pas inscrit(e) sur la liste d’attente, vous pouvez ignorer ce message en toute sécurité."

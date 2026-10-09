@@ -927,7 +927,9 @@ html.is-game-fullscreen {
     container-type: inline-size;
 
     &::after {
-        content: 'GAME OVER';
+        // Translated text of the page (`data-game-over-label`, set in _play_board.html.twig), upper-cased here.
+        content: attr(data-game-over-label);
+        text-transform: uppercase;
         position: absolute;
         inset: 0;
         display: flex;

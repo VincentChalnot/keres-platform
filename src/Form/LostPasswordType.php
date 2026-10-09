@@ -8,6 +8,7 @@ use Symfony\Component\Form\AbstractType;
 use Symfony\Component\Form\Extension\Core\Type\EmailType;
 use Symfony\Component\Form\Extension\Core\Type\SubmitType;
 use Symfony\Component\Form\FormBuilderInterface;
+use Symfony\Component\OptionsResolver\OptionsResolver;
 
 class LostPasswordType extends AbstractType
 {
@@ -15,10 +16,15 @@ class LostPasswordType extends AbstractType
     {
         $builder
             ->add('email', EmailType::class, [
-                'label' => 'Email address',
+                'label' => 'lost_password.email',
             ])
             ->add('submit', SubmitType::class, [
-                'label' => 'Send reset link',
+                'label' => 'lost_password.submit',
             ]);
+    }
+
+    public function configureOptions(OptionsResolver $resolver): void
+    {
+        $resolver->setDefault('translation_domain', 'forms');
     }
 }

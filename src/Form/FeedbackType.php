@@ -20,35 +20,35 @@ class FeedbackType extends AbstractType
     {
         $builder
             ->add('category', ChoiceType::class, [
-                'label' => 'Category',
+                'label' => 'feedback.category',
                 'choices' => [
-                    'Bug report' => FeedbackCategory::BUG,
-                    'Suggestion' => FeedbackCategory::SUGGESTION,
-                    'Gameplay feedback' => FeedbackCategory::GAMEPLAY,
-                    'Other' => FeedbackCategory::OTHER,
+                    'feedback.category_bug' => FeedbackCategory::BUG,
+                    'feedback.category_suggestion' => FeedbackCategory::SUGGESTION,
+                    'feedback.category_gameplay' => FeedbackCategory::GAMEPLAY,
+                    'feedback.category_other' => FeedbackCategory::OTHER,
                 ],
                 'constraints' => [
-                    new NotBlank(message: 'Please select a category.'),
+                    new NotBlank(message: 'feedback.category_blank'),
                 ],
             ])
             ->add('message', TextareaType::class, [
-                'label' => 'Your feedback',
+                'label' => 'feedback.message',
                 'constraints' => [
-                    new NotBlank(message: 'Please enter your feedback.'),
-                    new Length(min: 10, max: 5000, minMessage: 'Your feedback must be at least {{ limit }} characters.'),
+                    new NotBlank(message: 'feedback.message_blank'),
+                    new Length(min: 10, max: 5000, minMessage: 'feedback.message_too_short'),
                 ],
                 'attr' => [
                     'rows' => 6,
-                    'placeholder' => 'Describe your feedback, bug, or suggestion...',
+                    'placeholder' => 'feedback.message_placeholder',
                 ],
             ])
             ->add('submit', SubmitType::class, [
-                'label' => 'Send feedback',
+                'label' => 'feedback.submit',
             ]);
     }
 
     public function configureOptions(OptionsResolver $resolver): void
     {
-        $resolver->setDefaults([]);
+        $resolver->setDefaults(['translation_domain' => 'forms']);
     }
 }

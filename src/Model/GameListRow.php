@@ -17,7 +17,7 @@ final readonly class GameListRow
         public string $uuid,
         /** Who plays and which options the game has - the same header as the game page, rendered compact. */
         public GameHeader $header,
-        /** Null exactly when `$isGameOver` is true - see `$resultLabel`. */
+        /** Display text in the viewer's locale (built at render time, never stored). Null exactly when `$isGameOver` is true - see `$resultLabel`. */
         public ?string $turnLabel,
         /** Null exactly when `$isGameOver` is false - see `$turnLabel`. */
         public ?string $resultLabel,
@@ -25,6 +25,8 @@ final readonly class GameListRow
         public ?string $timeRemainingLabel,
         public \DateTimeImmutable $lastActivityAt,
         public bool $isGameOver,
+        /** True when the turn tag is "your turn" (subject's own, non hot-seat, game in progress): styles the tag. */
+        public bool $isSubjectTurn = false,
     ) {
     }
 }

@@ -212,6 +212,11 @@ final readonly class NotificationCenter
     {
         $now = $this->clock->now();
 
+        // `data` carries the stored type + payload, not rendered text: the
+        // text depends on the viewer's locale (which this push, outside any
+        // request, can't know reliably), so the bell re-fetches the list
+        // (`GET /notifications`) and the server renders it in the viewer's
+        // locale (`NotificationFormatter`).
         // Same `UserEventPayload` envelope as the friend events
         // (02-realtime.md sec 4.2), so one `user/{uuid}` subscriber reads both.
         $this->publisher->publishUserEvent($recipient->getId()->toRfc4122(), $this->formatter->encode([
@@ -220,7 +225,10 @@ final readonly class NotificationCenter
             'notificationUuid' => $notification->getUuid()->toRfc4122(),
             'createdAt' => (int) $notification->getCreatedAt()->format('Uu'),
             'unreadCount' => $this->notificationRepository->countUnread($recipient),
-            'data' => $this->formatter->format($notification),
+            'data' => [
+                'type' => $notification->getType()->value,
+                'payload' => $notification->getPayload(),
+            ],
             'serverTime' => (int) $now->format('Uu'),
         ]));
     }

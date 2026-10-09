@@ -14,6 +14,7 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpKernel\Attribute\AsController;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
+use Symfony\Contracts\Translation\TranslatorInterface;
 
 /** `GET|POST /settings/board` - Settings -> Board & gameplay. */
 #[AsController]
@@ -22,6 +23,7 @@ class SettingsBoardAction extends AbstractController
     public function __construct(
         private readonly UserPreferencesManager $userPreferencesManager,
         private readonly EntityManagerInterface $entityManager,
+        private readonly TranslatorInterface $translator,
     ) {
     }
 
@@ -42,7 +44,7 @@ class SettingsBoardAction extends AbstractController
         if ($form->isSubmitted() && $form->isValid()) {
             $preferences->touch();
             $this->entityManager->flush();
-            $this->addFlash('success', 'Board settings saved.');
+            $this->addFlash('success', $this->translator->trans('flash.board_saved', [], 'flashes'));
 
             return $this->redirectToRoute('settings_board');
         }

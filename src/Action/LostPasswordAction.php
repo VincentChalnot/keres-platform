@@ -16,6 +16,7 @@ use Symfony\Component\HttpKernel\Attribute\AsController;
 use Symfony\Component\Mailer\Exception\TransportExceptionInterface;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
+use Symfony\Contracts\Translation\TranslatorInterface;
 
 /**
  * Adapted from SidusUserBundle\Action\LostPasswordAction: replaces
@@ -34,6 +35,7 @@ class LostPasswordAction extends AbstractController
         private readonly UserMailer $userMailer,
         private readonly UrlGeneratorInterface $urlGenerator,
         private readonly LoggerInterface $logger,
+        private readonly TranslatorInterface $translator,
     ) {
     }
 
@@ -71,7 +73,7 @@ class LostPasswordAction extends AbstractController
 
             // Do not disclose whether an account exists for this email:
             // always show the same generic confirmation.
-            $this->addFlash('success', 'If an account exists for that email, a reset link has been sent.');
+            $this->addFlash('success', $this->translator->trans('flash.lost_password_sent', [], 'flashes'));
 
             return $this->redirectToRoute('login');
         }

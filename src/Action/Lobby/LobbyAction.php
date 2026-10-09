@@ -13,6 +13,7 @@ use Symfony\Component\Clock\ClockInterface;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\Attribute\AsController;
 use Symfony\Component\Routing\Attribute\Route;
+use Symfony\Contracts\Translation\TranslatorInterface;
 
 /**
  * `GET /lobby` (04-matchmaking.md sec 9.2) - the multiplayer front door.
@@ -25,31 +26,21 @@ use Symfony\Component\Routing\Attribute\Route;
 class LobbyAction extends AbstractController
 {
     /**
-     * One preset per format. They only fill the "New seek" form in - the
+     * One preset per format; `label` is a `game`-domain translation key. They only fill the "New seek" form in - the
      * posted values are whatever the form holds, validated by
      * `CreateSeekAction`. Keres games run 35-60 full moves, hence clocks
      * far longer than their chess namesakes (see `TimeControl::speedCategory()`).
      */
     public const array PRESETS = [
-        'bullet' => ['label' => 'Bullet', 'kind' => 'realtime', 'initialMinutes' => 3, 'incrementSeconds' => 2],
-        'blitz' => ['label' => 'Blitz', 'kind' => 'realtime', 'initialMinutes' => 7, 'incrementSeconds' => 5],
-        'rapid' => ['label' => 'Rapid', 'kind' => 'realtime', 'initialMinutes' => 20, 'incrementSeconds' => 10],
-        'classical' => ['label' => 'Classical', 'kind' => 'realtime', 'initialMinutes' => 100, 'incrementSeconds' => 0],
-        'correspondence' => ['label' => 'Correspondence', 'kind' => 'correspondence', 'hoursPerMove' => 24],
+        'bullet' => ['label' => 'speed.bullet', 'kind' => 'realtime', 'initialMinutes' => 3, 'incrementSeconds' => 2],
+        'blitz' => ['label' => 'speed.blitz', 'kind' => 'realtime', 'initialMinutes' => 7, 'incrementSeconds' => 5],
+        'rapid' => ['label' => 'speed.rapid', 'kind' => 'realtime', 'initialMinutes' => 20, 'incrementSeconds' => 10],
+        'classical' => ['label' => 'speed.classical', 'kind' => 'realtime', 'initialMinutes' => 100, 'incrementSeconds' => 0],
+        'correspondence' => ['label' => 'speed.correspondence', 'kind' => 'correspondence', 'hoursPerMove' => 24],
     ];
 
     /** Pre-selected on page load. */
     private const string DEFAULT_PRESET = 'rapid';
-
-    /**
-     * T14: static for now ("static content is fine" per the brief) -
-     * revisit with a real content source if announcements ever need to
-     * be editable without a deploy.
-     */
-    private const array ANNOUNCEMENTS = [
-        ['title' => 'Keres v1.0 is here', 'body' => 'Correspondence games, invites, and AI opponents at every level are now live.'],
-        ['title' => 'Play without an account', 'body' => 'Try the AI or a local hot-seat game instantly - no sign-up required.'],
-    ];
 
     /** How many public finished games the anonymous entry point shows. */
     private const int PUBLIC_GAMES_LIMIT = 5;
@@ -62,6 +53,7 @@ class LobbyAction extends AbstractController
         private readonly SeekPayloadBuilder $seekPayloadBuilder,
         private readonly GameRepository $gameRepository,
         private readonly ClockInterface $clock,
+        private readonly TranslatorInterface $translator,
     ) {
     }
 
@@ -75,7 +67,7 @@ class LobbyAction extends AbstractController
             $this->gameRepository->preloadForListing($publicGames);
 
             return $this->render('actions/play_welcome.html.twig', [
-                'announcements' => self::ANNOUNCEMENTS,
+                'announcements' => $this->announcements(),
                 'publicGames' => $publicGames,
             ]);
         }
@@ -93,6 +85,27 @@ class LobbyAction extends AbstractController
             'seeksBootstrap' => $this->seekPayloadBuilder->encode($listing),
             'ongoingGames' => $shownGames,
             'ongoingGamesCount' => \count($ongoingGames),
+        ];
+    }
+
+    /**
+     * T14: static for now ("static content is fine" per the brief) - the texts
+     * live in the `game` translation catalogue; revisit with a real content
+     * source if announcements ever need to be editable without a deploy.
+     *
+     * @return list<array{title: string, body: string}>
+     */
+    private function announcements(): array
+    {
+        return [
+            [
+                'title' => $this->translator->trans('welcome.announcements.v1.title', [], 'game'),
+                'body' => $this->translator->trans('welcome.announcements.v1.body', [], 'game'),
+            ],
+            [
+                'title' => $this->translator->trans('welcome.announcements.no_account.title', [], 'game'),
+                'body' => $this->translator->trans('welcome.announcements.no_account.body', [], 'game'),
+            ],
         ];
     }
 }

@@ -1,6 +1,7 @@
+{% trans_default_domain 'pages' %}
 {% if sent %}
     <div class="notification is-success">
-        <strong>Thank you for your feedback!</strong> We review every submission.
+        <strong>{{ 'feedback.thanks'|trans }}</strong> {{ 'feedback.thanks_detail'|trans }}
     </div>
 {% else %}
     {{ form_start(form, {attr: {novalidate: 'novalidate', class: 'box', id: 'feedback-form'}}) }}

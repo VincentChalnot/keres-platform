@@ -1,11 +1,13 @@
 {% extends 'email/_layout.txt.twig' %}
 
+{% trans_default_domain 'emails' %}
+
 {% block content %}
-Hello {{ user.username }},
+{{ 'greeting.named'|trans({name: user.username}) }}
 
-Your move in a correspondence game is due in less than 6 hours. If you run out of time, you'll forfeit the game.
+{{ 'correspondence_deadline_warning.body'|trans }}
 
-Play your move: {{ playUrl }}
+{{ 'layout.link_line'|trans({label: 'correspondence_deadline_warning.button'|trans, url: playUrl}) }}
 
-You're receiving this because it's your turn in an ongoing correspondence game on Keres.
+{{ 'correspondence_deadline_warning.reason'|trans }}
 {% endblock %}

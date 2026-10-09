@@ -1,0 +1,27 @@
+login:
+    title: Connexion
+    subtitle: Choisissez votre mode de connexion
+    google: Se connecter avec Google
+    discord: Se connecter avec Discord
+    email_subtitle: Se connecter avec une adresse e-mail et un mot de passe
+    email: Adresse e-mail
+    password: Mot de passe
+    submit: Se connecter
+    forgot_password: Mot de passe oublié ?
+    no_account: 'Pas encore de compte ? <a href="{url}">Créez-en un</a>.'
+    dev_title: Connexion de développement (sans OIDC)
+    dev_placeholder: quelquun@example.com
+    dev_submit: Se connecter en tant que
+lost_password:
+    title: Mot de passe oublié ?
+    subtitle: Nous vous enverrons par e-mail un lien pour le réinitialiser.
+    back_to_login: Retour à la connexion
+register:
+    title: Créer un compte
+    subtitle: Inscrivez-vous avec une adresse e-mail et un mot de passe
+    trust_notice: 'Avant de vous inscrire, lisez <a href="{url}">nos engagements envers vous</a>.'
+    have_account: 'Vous avez déjà un compte ? <a href="{url}">Connectez-vous</a>.'
+reset_password:
+    title: Réinitialiser votre mot de passe
+    subtitle: Choisissez un nouveau mot de passe pour {email}
+    back_to_login: Retour à la connexion

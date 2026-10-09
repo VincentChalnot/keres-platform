@@ -10,6 +10,7 @@ use Symfony\Component\Form\Extension\Core\Type\PasswordType;
 use Symfony\Component\Form\Extension\Core\Type\RepeatedType;
 use Symfony\Component\Form\Extension\Core\Type\SubmitType;
 use Symfony\Component\Form\FormBuilderInterface;
+use Symfony\Component\OptionsResolver\OptionsResolver;
 use Symfony\Component\Validator\Constraints\Length;
 use Symfony\Component\Validator\Constraints\NotBlank;
 
@@ -27,24 +28,29 @@ class RegisterType extends AbstractType
     {
         $builder
             ->add('email', EmailType::class, [
-                'label' => 'Email address',
+                'label' => 'register.email',
                 'constraints' => [
-                    new NotBlank(message: 'Please enter your email address.'),
+                    new NotBlank(message: 'register.email_blank'),
                 ],
             ])
             ->add('password', RepeatedType::class, [
                 'type' => PasswordType::class,
-                'invalid_message' => 'The passwords don\'t match.',
+                'invalid_message' => 'password.mismatch',
                 'required' => true,
-                'first_options' => ['label' => 'Password'],
-                'second_options' => ['label' => 'Repeat password'],
+                'first_options' => ['label' => 'register.password'],
+                'second_options' => ['label' => 'register.password_repeat'],
                 'constraints' => [
                     new NotBlank(),
-                    new Length(min: self::PASSWORD_MIN_LENGTH, minMessage: 'Your password must be at least {{ limit }} characters.'),
+                    new Length(min: self::PASSWORD_MIN_LENGTH, minMessage: 'password.too_short'),
                 ],
             ])
             ->add('submit', SubmitType::class, [
-                'label' => 'Create account',
+                'label' => 'register.submit',
             ]);
+    }
+
+    public function configureOptions(OptionsResolver $resolver): void
+    {
+        $resolver->setDefault('translation_domain', 'forms');
     }
 }

@@ -1,0 +1,50 @@
+# Friends page and public profile page (templates/actions/friends.html.twig, profile.html.twig).
+friends:
+    page_title: Amis
+    title: Amis
+    search:
+        title: Trouver des joueurs
+        placeholder: Rechercher par nom d’utilisateur (3 caractères minimum)
+    incoming_title: Demandes reçues
+    outgoing_title: Demandes envoyées
+    accepted_title: Vos amis
+    blocked_note: 'Les joueurs bloqués se gèrent dans {link}.'
+    blocked_note_link: Paramètres → Confidentialité
+profile:
+    online: En ligne
+    member_since: 'Membre depuis {date}'
+    edit: Modifier le profil
+    action:
+        add_friend: Ajouter en ami
+        request_sent: Demande envoyée
+        accept: Accepter
+        decline: Refuser
+        unfriend: Retirer des amis
+        block: Bloquer
+        unblock: Débloquer
+    ratings:
+        title: Classements
+        category: Catégorie
+        rating: Classement
+        games: Parties
+        provisional_hint: 'Provisoire : pas encore assez de parties jouées pour un classement établi'
+        categories:
+            bullet: Bullet
+            blitz: Blitz
+            rapid: Rapide
+            classical: Classique
+            correspondence: Correspondance
+    record:
+        title: Bilan
+        wins: Victoires
+        losses: Défaites
+        draws: Nulles
+    games:
+        title: Parties récentes
+        empty_self: Aucune partie à afficher.
+        empty_other: Aucune partie à afficher pour le moment.
+    pagination:
+        label: pagination
+        previous: Précédent
+        next: Suivant
+        page_of: 'Page {page} sur {total}'

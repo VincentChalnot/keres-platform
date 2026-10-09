@@ -51,7 +51,10 @@ settings toggle, bell and inbox need no change.
 
 - `notify()` — for post-commit callers: persist, flush, then publish a
   `UserEventPayload` frame (`"event": "notification"`, `notificationUuid`,
-  `unreadCount`, `data` = the formatted row) on `user/{uuid}`.
+  `unreadCount`, `data` = `{type, payload}` of the stored row - *not* rendered
+  text: the wording depends on the viewer's locale, so the bell re-fetches
+  `GET /notifications/list` and `NotificationFormatter` renders it for the
+  viewer) on `user/{uuid}`.
 - `record()` — for callers inside a transaction they flush themselves
   (`GameLifecycleManager`): persist only, no frame, since a frame published
   before commit could be read before the row exists. The bell's periodic

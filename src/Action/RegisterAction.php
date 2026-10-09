@@ -18,6 +18,7 @@ use Symfony\Component\HttpKernel\Attribute\AsController;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
+use Symfony\Contracts\Translation\TranslatorInterface;
 
 /**
  * Self-service email/password account creation (see App\Form\RegisterType).
@@ -33,8 +34,6 @@ use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 #[AsController]
 class RegisterAction extends AbstractController
 {
-    private const string GENERIC_SUCCESS_MESSAGE = 'Check your email to finish setting up your account.';
-
     public function __construct(
         private readonly UserRepository $userRepository,
         private readonly EntityManagerInterface $entityManager,
@@ -43,6 +42,7 @@ class RegisterAction extends AbstractController
         private readonly UserMailer $userMailer,
         private readonly UrlGeneratorInterface $urlGenerator,
         private readonly AnalyticsRecorder $analyticsRecorder,
+        private readonly TranslatorInterface $translator,
     ) {
     }
 
@@ -73,7 +73,7 @@ class RegisterAction extends AbstractController
             }
 
             // Byte-identical either way - that's the whole point (sec 2.1).
-            $this->addFlash('success', self::GENERIC_SUCCESS_MESSAGE);
+            $this->addFlash('success', $this->translator->trans('flash.register_check_email', [], 'flashes'));
 
             return $this->redirectToRoute('login');
         }

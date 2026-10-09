@@ -1,41 +1,42 @@
 {% extends 'base.html.twig' %}
+{% trans_default_domain 'game' %}
 
-{% block title %}Play Keres online{% endblock %}
+{% block title %}{{ 'welcome.page_title'|trans }}{% endblock %}
 
 {% block body %}
     <section class="section lobby-hero">
         <div class="container">
             <div class="columns is-vcentered">
                 <div class="column is-7">
-                    <h1 class="title is-1">Play Keres online</h1>
-                    <p class="subtitle is-4">Sign in to find opponents, play rated games, and keep your history.</p>
+                    <h1 class="title is-1">{{ 'welcome.heading'|trans }}</h1>
+                    <p class="subtitle is-4">{{ 'welcome.subtitle'|trans }}</p>
 
                     <div class="buttons">
                         <a href="{{ path('oidc_login', {provider: 'google'}) }}" class="button is-rounded is-primary is-medium">
                             <span class="icon"><i class="fa-brands fa-google" aria-hidden="true"></i></span>
-                            <span>Continue with Google</span>
+                            <span>{{ 'welcome.continue_google'|trans }}</span>
                         </a>
                         <a href="{{ path('oidc_login', {provider: 'discord'}) }}" class="button is-rounded is-primary is-medium">
                             <span class="icon"><i class="fa-brands fa-discord" aria-hidden="true"></i></span>
-                            <span>Continue with Discord</span>
+                            <span>{{ 'welcome.continue_discord'|trans }}</span>
                         </a>
                     </div>
                     <div class="buttons">
-                        <a href="{{ path('register') }}" class="button is-rounded is-primary is-outlined">Create an account</a>
-                        <a href="{{ path('login') }}" class="button is-rounded is-text">Sign in</a>
+                        <a href="{{ path('register') }}" class="button is-rounded is-primary is-outlined">{{ 'welcome.create_account'|trans }}</a>
+                        <a href="{{ path('login') }}" class="button is-rounded is-text">{{ 'welcome.sign_in'|trans }}</a>
                     </div>
 
                     <hr>
 
-                    <p class="mb-3 has-text-grey">Just want to try it?</p>
+                    <p class="mb-3 has-text-grey">{{ 'welcome.try_it'|trans }}</p>
                     <a href="{{ path('new_local_game') }}" class="button is-rounded is-outlined is-light is-small">
                         <span class="icon"><i class="fa-solid fa-chess-board" aria-hidden="true"></i></span>
-                        <span>Play the AI or hot-seat without an account</span>
+                        <span>{{ 'welcome.try_button'|trans }}</span>
                     </a>
-                    <p class="help mt-2">Guest games live in this browser only: they aren't rated or saved to an account.</p>
+                    <p class="help mt-2">{{ 'welcome.guest_help'|trans }}</p>
                 </div>
                 <div class="column is-5 has-text-centered">
-                    <img src="{{ asset('images/gameplay-preview.webp') }}" alt="A Keres game in progress" class="lobby-hero__image">
+                    <img src="{{ asset('images/gameplay-preview.webp') }}" alt="{{ 'welcome.image_alt'|trans }}" class="lobby-hero__image">
                 </div>
             </div>
         </div>
@@ -45,7 +46,7 @@
         <div class="container">
             <div class="columns">
                 <div class="column is-5">
-                    <h2 class="title is-4">Announcements</h2>
+                    <h2 class="title is-4">{{ 'welcome.announcements.title'|trans }}</h2>
                     {% for announcement in announcements %}
                         <div class="box mb-4">
                             <p class="title is-6">{{ announcement.title }}</p>
@@ -54,12 +55,12 @@
                     {% endfor %}
                 </div>
                 <div class="column is-7">
-                    <h2 class="title is-4">Recently finished games</h2>
+                    <h2 class="title is-4">{{ 'welcome.recent_games.title'|trans }}</h2>
                     {% for game in publicGames %}
                         {# @var game \App\Entity\Game #}
                         {% include 'actions/_game_row.html.twig' with {row: public_game_list_row(game), isSelf: false} %}
                     {% else %}
-                        <p class="has-text-grey">No finished games to show yet.</p>
+                        <p class="has-text-grey">{{ 'welcome.recent_games.empty'|trans }}</p>
                     {% endfor %}
                 </div>
             </div>

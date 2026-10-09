@@ -4,3 +4,20 @@ profile:
     username:
         blank: Please enter a username.
         format: Usernames are 3-32 characters long and may only contain letters, numbers, underscores and hyphens.
+        cooldown: You can only change your username once every 12 months. Next change available on {date}.
+        cooldown_later: You can only change your username once every 12 months. Next change available at a later date.
+        too_many_attempts: Too many attempts, try again later.
+        reserved: That username is reserved.
+        taken: That username is already taken.
+        just_taken: That username was just taken.
+password:
+    mismatch: The passwords don’t match.
+    too_short: Your password must be at least {limit} characters.
+register:
+    email_blank: Please enter your email address.
+feedback:
+    category_blank: Please select a category.
+    message_blank: Please enter your feedback.
+    message_too_short: Your feedback must be at least {limit} characters.
+gdpr:
+    message_too_long: Please keep this under {limit} characters.

@@ -1,17 +1,19 @@
 {% extends 'email/_layout.html.twig' %}
 
-{% block title %}Someone tried to create an account with your email{% endblock %}
+{% trans_default_domain 'emails' %}
+
+{% block title %}{{ 'account_exists.subject'|trans }}{% endblock %}
 
 {% block content %}
-    <p style="margin:0 0 16px 0;">Hello {{ user.displayName ?? user.email }},</p>
+    <p style="margin:0 0 16px 0;">{{ 'greeting.named'|trans({name: user.displayName ?? user.email}) }}</p>
 
-    <p style="margin:0 0 16px 0;">Someone just tried to create a new Keres account using your email address. No new account was created, because you already have one.</p>
+    <p style="margin:0 0 16px 0;">{{ 'account_exists.intro'|trans }}</p>
 
-    <p style="margin:0 0 16px 0;">If this was you and you'd simply forgotten you already had an account, you can log in directly, or reset your password if you don't remember it:</p>
+    <p style="margin:0 0 16px 0;">{{ 'account_exists.advice'|trans }}</p>
 
     <p style="margin:0 0 24px 0;">
-        <a href="{{ lostPasswordUrl }}" style="display:inline-block; background-color:#e19e5b; color:#1a1208; padding:12px 28px; border-radius:9999px; text-decoration:none; font-weight:bold;">Reset your password</a>
+        <a href="{{ lostPasswordUrl }}" style="display:inline-block; background-color:#e19e5b; color:#1a1208; padding:12px 28px; border-radius:9999px; text-decoration:none; font-weight:bold;">{{ 'account_exists.button'|trans }}</a>
     </p>
 
-    <p style="margin:0;">If you did not try to register, you can safely ignore this email — no action is needed and your account is unchanged.</p>
+    <p style="margin:0;">{{ 'account_exists.ignore'|trans }}</p>
 {% endblock %}

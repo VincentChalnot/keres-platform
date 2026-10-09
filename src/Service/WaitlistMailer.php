@@ -5,11 +5,13 @@ declare(strict_types=1);
 namespace App\Service;
 
 use App\Entity\WaitlistSignup;
+use App\Service\Locale\EmailLocale;
 use Psr\Log\LoggerInterface;
 use Symfony\Bridge\Twig\Mime\TemplatedEmail;
 use Symfony\Component\Mailer\Exception\HttpTransportException;
 use Symfony\Component\Mailer\Exception\TransportExceptionInterface;
 use Symfony\Component\Mailer\MailerInterface;
+use Symfony\Contracts\Translation\TranslatorInterface;
 
 /**
  * T7: a waitlist signup has no `User` account behind it, so this can't
@@ -17,6 +19,12 @@ use Symfony\Component\Mailer\MailerInterface;
  * try/catch-and-redact shape as `UserMailer::send()` (PHP-SYMFONY-3) -
  * duplicated rather than shared, since there are only two occurrences so
  * far; worth extracting to a common base if a third mailer needs it.
+ *
+ * Locale: with no account there is no saved preference, so the mail is
+ * written in the locale of the request that queues it
+ * (`EmailLocale::forCurrentRequest()`, the visitor's language), pinned on the
+ * message with `TemplatedEmail::locale()` so the async worker (default
+ * locale) renders it the same way, and used for the subject translated here.
  */
 class WaitlistMailer
 {
@@ -24,15 +32,19 @@ class WaitlistMailer
         private readonly MailerInterface $mailer,
         private readonly LoggerInterface $logger,
         private readonly string $mailerFromAddress,
+        private readonly EmailLocale $emailLocale,
+        private readonly TranslatorInterface $translator,
     ) {
     }
 
     public function sendConfirmationMail(WaitlistSignup $signup, string $confirmUrl): void
     {
+        $locale = $this->emailLocale->forCurrentRequest();
         $email = (new TemplatedEmail())
             ->from($this->mailerFromAddress)
             ->to($signup->getEmail())
-            ->subject('Confirm your spot on the Keres physical edition waitlist')
+            ->locale($locale)
+            ->subject($this->translator->trans('waitlist_confirm.subject', [], 'emails', $locale))
             ->htmlTemplate('email/waitlist_confirm.html.twig')
             ->textTemplate('email/waitlist_confirm.txt.twig')
             ->context([

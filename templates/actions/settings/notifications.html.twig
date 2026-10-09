@@ -1,27 +1,28 @@
 {% extends 'actions/settings/_layout.html.twig' %}
+{% trans_default_domain 'settings' %}
 
-{% block title %}Notifications - Settings{% endblock %}
+{% block title %}{{ 'page_title'|trans({section: 'nav.notifications'|trans}) }}{% endblock %}
 
 {% block settings_content %}
     {{ form_start(form, {attr: {novalidate: 'novalidate', class: 'box'}}) }}
-        <h2 class="title is-4">Notifications</h2>
+        <h2 class="title is-4">{{ 'notifications.title'|trans }}</h2>
 
-        <h3 class="title is-5 mt-4">In-app notifications</h3>
-        <p class="has-text-grey">Choose what shows up under the <span class="icon"><i class="fa-solid fa-bell" aria-hidden="true"></i></span> bell. Notify me when:</p>
+        <h3 class="title is-5 mt-4">{{ 'notifications.in_app.title'|trans }}</h3>
+        <p class="has-text-grey"><span class="icon"><i class="fa-solid fa-bell" aria-hidden="true"></i></span> {{ 'notifications.in_app.intro'|trans }}</p>
         {% for child in form.inApp %}
             {{ form_row(child) }}
         {% endfor %}
         {% do form.inApp.setRendered %}
 
-        <h3 class="title is-5 mt-5">Email</h3>
-        <p class="has-text-grey">Get an email for the same events, even when you're not on the site. Email me when:</p>
+        <h3 class="title is-5 mt-5">{{ 'notifications.email.title'|trans }}</h3>
+        <p class="has-text-grey">{{ 'notifications.email.intro'|trans }}</p>
         {% for child in form.email %}
             {{ form_row(child) }}
         {% endfor %}
         {% do form.email.setRendered %}
-        <p class="has-text-grey is-size-7">You can also unsubscribe by clicking the link in any notification email.</p>
+        <p class="has-text-grey is-size-7">{{ 'notifications.email.unsubscribe'|trans }}</p>
 
-        <h3 class="title is-5 mt-5">Newsletter</h3>
+        <h3 class="title is-5 mt-5">{{ 'notifications.newsletter.title'|trans }}</h3>
         {{ form_row(form.newsletterOptIn) }}
 
         <div class="field mt-5">

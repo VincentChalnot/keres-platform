@@ -1,0 +1,44 @@
+layout:
+    unmonitored: "This address is unmonitored and cannot receive replies."
+    need_help: "Need help?"
+    contact_us: "Contact us"
+    contact_line: "Need help? Contact us: {url}"
+    unsubscribe_reason: "You’re receiving this because of your Keres notification settings."
+    manage_preferences: "Manage email preferences"
+    link_line: "{label}: {url}"
+greeting:
+    named: "Hello {name},"
+    anonymous: "Hello,"
+account_exists:
+    subject: "Someone tried to create an account with your email"
+    intro: "Someone just tried to create a new Keres account using your email address. No new account was created, because you already have one."
+    advice: "If this was you and you’d simply forgotten you already had an account, you can log in directly, or reset your password if you don’t remember it:"
+    button: "Reset your password"
+    ignore: "If you did not try to register, you can safely ignore this email — no action is needed and your account is unchanged."
+correspondence_deadline_warning:
+    subject: "Your Keres move is due soon"
+    body: "Your move in a correspondence game is due in less than 6 hours. If you run out of time, you’ll forfeit the game."
+    button: "Play your move"
+    reason: "You’re receiving this because it’s your turn in an ongoing correspondence game on Keres."
+notification_game_finished:
+    subject: "Your Keres game has ended"
+    outcome: "{outcome, select, win {You won your game!} loss {You lost your game.} draw {Your game ended in a draw.} aborted {Your game was aborted before it really began - no result, no rating change.} other {Your game has ended.}}"
+    button: "Review the game"
+notification_seek_matched:
+    subject: "Your Keres seek was matched — game started"
+    body: "{opponent} accepted your seek - the game has started!"
+    button: "Go to the game"
+notification_your_turn:
+    subject: "It’s your turn in your Keres game"
+    body: "{mover} just played a move. It’s your turn!"
+    button: "Play your move"
+reset_password:
+    subject: "Reset your Keres password"
+    intro: "We received a request to reset the password for your Keres account."
+    button: "Choose a new password"
+    expiry: "This link expires in 1 hour. If you did not request a password reset, you can safely ignore this email."
+waitlist_confirm:
+    subject: "Confirm your spot on the Keres physical edition waitlist"
+    intro: "Thanks for your interest in the Keres physical edition! Please confirm this email address to secure your spot on the waitlist."
+    button: "Confirm my spot"
+    expiry: "This link expires in 7 days. If you did not sign up for the waitlist, you can safely ignore this email."

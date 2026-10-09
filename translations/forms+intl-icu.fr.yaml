@@ -10,3 +10,42 @@ profile_settings:
     country: Pays
     country_none: Non précisé
     submit: Enregistrer les modifications
+    locale_help: Choisissez la langue de l’interface. « Automatique » suit la langue de votre navigateur.
+common:
+    save_changes: Enregistrer les modifications
+board_settings:
+    show_coordinates: Afficher les coordonnées du plateau
+    show_threats: Mettre en évidence les menaces de l’adversaire au survol
+notification_settings:
+    newsletter: Je m’abonne à la newsletter
+privacy_settings:
+    searchable: Apparaître dans la recherche de joueurs
+    allow_contact: Autoriser les autres joueurs qui connaissent mon e-mail à me contacter
+feedback:
+    category: Catégorie
+    category_bug: Signalement de bug
+    category_suggestion: Suggestion
+    category_gameplay: Retour sur le jeu
+    category_other: Autre
+    message: Votre avis
+    message_placeholder: Décrivez votre avis, le bug rencontré ou votre suggestion…
+    submit: Envoyer mon avis
+gdpr:
+    email: E-mail de votre compte
+    message: Autre chose à nous signaler ? (facultatif)
+    message_placeholder: Précisions supplémentaires (facultatif)…
+    submit: Envoyer la demande
+    submit_export: Demander l’export de mes données
+    submit_deletion: Demander la suppression de mon compte
+lost_password:
+    email: Adresse e-mail
+    submit: Envoyer le lien de réinitialisation
+register:
+    email: Adresse e-mail
+    password: Mot de passe
+    password_repeat: Répétez le mot de passe
+    submit: Créer mon compte
+reset_password:
+    password: Nouveau mot de passe
+    password_repeat: Répétez le nouveau mot de passe
+    submit: Définir le nouveau mot de passe

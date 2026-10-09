@@ -1,19 +1,20 @@
 {% extends 'base.html.twig' %}
+{% trans_default_domain 'game' %}
 
-{% block title %}Your Games - Keres{% endblock %}
+{% block title %}{{ 'game_list.page_title'|trans }}{% endblock %}
 
 {% block body %}
     <section class="section">
         <div class="container">
-            <h1 class="title">Your games</h1>
+            <h1 class="title">{{ 'game_list.heading'|trans }}</h1>
 
             <div class="tabs">
                 <ul>
                     <li class="{{ status == 'in_progress' ? 'is-active' }}">
-                        <a href="{{ path('game_list', {status: 'in_progress'}) }}">In progress</a>
+                        <a href="{{ path('game_list', {status: 'in_progress'}) }}">{{ 'game_list.tab.in_progress'|trans }}</a>
                     </li>
                     <li class="{{ status == 'finished' ? 'is-active' }}">
-                        <a href="{{ path('game_list', {status: 'finished'}) }}">Finished</a>
+                        <a href="{{ path('game_list', {status: 'finished'}) }}">{{ 'game_list.tab.finished'|trans }}</a>
                     </li>
                 </ul>
             </div>
@@ -22,22 +23,22 @@
                 {# @var game \App\Entity\Game #}
                 {% include 'actions/_game_row.html.twig' with {row: game_list_row(game, app.user, true), isSelf: true} %}
             {% else %}
-                <p>No games {{ status == 'finished' ? 'finished' : 'in progress' }}.</p>
+                <p>{{ status == 'finished' ? 'game_list.empty.finished'|trans : 'game_list.empty.in_progress'|trans }}</p>
             {% endfor %}
 
             {% if games.haveToPaginate %}
-                <nav class="pagination" role="navigation" aria-label="pagination">
+                <nav class="pagination" role="navigation" aria-label="{{ 'game_list.pagination.label'|trans }}">
                     {% if games.hasPreviousPage %}
-                        <a class="pagination-previous" href="{{ path('game_list', {status: status, page: games.previousPage}) }}">Previous</a>
+                        <a class="pagination-previous" href="{{ path('game_list', {status: status, page: games.previousPage}) }}">{{ 'game_list.pagination.previous'|trans }}</a>
                     {% else %}
-                        <a class="pagination-previous" disabled>Previous</a>
+                        <a class="pagination-previous" disabled>{{ 'game_list.pagination.previous'|trans }}</a>
                     {% endif %}
                     {% if games.hasNextPage %}
-                        <a class="pagination-next" href="{{ path('game_list', {status: status, page: games.nextPage}) }}">Next</a>
+                        <a class="pagination-next" href="{{ path('game_list', {status: status, page: games.nextPage}) }}">{{ 'game_list.pagination.next'|trans }}</a>
                     {% else %}
-                        <a class="pagination-next" disabled>Next</a>
+                        <a class="pagination-next" disabled>{{ 'game_list.pagination.next'|trans }}</a>
                     {% endif %}
-                    <span class="pagination-list ml-3">Page {{ games.currentPage }} of {{ games.nbPages }}</span>
+                    <span class="pagination-list ml-3">{{ 'game_list.pagination.page'|trans({current: games.currentPage, total: games.nbPages}) }}</span>
                 </nav>
             {% endif %}
         </div>

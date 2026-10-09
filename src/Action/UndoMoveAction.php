@@ -15,6 +15,7 @@ use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\Attribute\AsController;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Uid\Uuid;
+use Symfony\Contracts\Translation\TranslatorInterface;
 
 #[AsController]
 readonly class UndoMoveAction
@@ -23,6 +24,7 @@ readonly class UndoMoveAction
         private GameRepository $gameRepository,
         private EntityManagerInterface $entityManager,
         private Security $security,
+        private TranslatorInterface $translator,
     ) {
     }
 
@@ -38,21 +40,21 @@ readonly class UndoMoveAction
         if (!$game) {
             return new JsonResponse([
                 'success' => false,
-                'error' => 'Game not found',
+                'error' => $this->translator->trans('api_error.game_not_found', [], 'game'),
             ], Response::HTTP_NOT_FOUND);
         }
 
         if (!$this->security->isGranted(GameVoter::PARTICIPATE, $game)) {
             return new JsonResponse([
                 'success' => false,
-                'error' => 'Access denied',
+                'error' => $this->translator->trans('api_error.access_denied', [], 'game'),
             ], Response::HTTP_FORBIDDEN);
         }
 
         if ($game->getGameMoves()->isEmpty()) {
             return new JsonResponse([
                 'success' => false,
-                'error' => 'No moves to undo',
+                'error' => $this->translator->trans('api_error.no_moves_to_undo', [], 'game'),
             ], Response::HTTP_BAD_REQUEST);
         }
 
@@ -61,7 +63,7 @@ readonly class UndoMoveAction
             // games; a multiplayer game must never be reopened (invariant 5).
             return new JsonResponse([
                 'success' => false,
-                'error' => 'Undo is not available in multiplayer games',
+                'error' => $this->translator->trans('api_error.undo_unavailable_multiplayer', [], 'game'),
             ], Response::HTTP_FORBIDDEN);
         }
 

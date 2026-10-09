@@ -1,10 +1,11 @@
 {% extends 'actions/settings/_layout.html.twig' %}
+{% trans_default_domain 'settings' %}
 
-{% block title %}Profile - Settings{% endblock %}
+{% block title %}{{ 'page_title'|trans({section: 'nav.profile'|trans}) }}{% endblock %}
 
 {% block settings_content %}
     {{ form_start(form, {attr: {novalidate: 'novalidate', class: 'box'}}) }}
-        <h2 class="title is-4">Profile</h2>
+        <h2 class="title is-4">{{ 'profile.title'|trans }}</h2>
         {{ form_errors(form) }}
 
         <div class="field">
@@ -13,9 +14,9 @@
                 {{ form_widget(form.username, {attr: {class: 'input'}}) }}
             </div>
             {% if canChangeUsername %}
-                <p class="help">You can change your username once every 12 months. After this change, the next one will be available on {{ 'now'|date_modify('+12 months')|date('Y-m-d') }}.</p>
+                <p class="help">{{ 'profile.username_can_change'|trans({date: 'now'|date_modify('+12 months')|format_date('long')}) }}</p>
             {% else %}
-                <p class="help">Next change available on {{ nextUsernameChangeAt|date('Y-m-d') }}. Until then you can only change its capitalisation.</p>
+                <p class="help">{{ 'profile.username_locked'|trans({date: nextUsernameChangeAt|format_date('long')}) }}</p>
             {% endif %}
             {{ form_errors(form.username) }}
         </div>
@@ -25,7 +26,7 @@
             <div class="control">
                 {{ form_widget(form.displayName, {attr: {class: 'input'}}) }}
             </div>
-            <p class="help">Shown instead of your username where space allows.</p>
+            <p class="help">{{ 'profile.display_name_help'|trans }}</p>
             {{ form_errors(form.displayName) }}
         </div>
 
@@ -55,7 +56,7 @@
             <div class="control">
                 {{ form_widget(form.email, {attr: {class: 'input'}}) }}
             </div>
-            <p class="help">Your sign-in email. It can't be changed here.</p>
+            <p class="help">{{ 'profile.email_help'|trans }}</p>
         </div>
 
         <div class="columns">
@@ -65,6 +66,7 @@
                     <div class="control">
                         {{ form_widget(form.locale, {fullwidth: true}) }}
                     </div>
+                    <p class="help">{{ 'profile_settings.locale_help'|trans({}, 'forms') }}</p>
                     {{ form_errors(form.locale) }}
                 </div>
             </div>

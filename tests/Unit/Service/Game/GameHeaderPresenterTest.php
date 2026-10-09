@@ -13,6 +13,8 @@ use App\Model\PieceColor;
 use App\Model\TimeControl;
 use App\Service\Game\GameHeaderPresenter;
 use PHPUnit\Framework\TestCase;
+use Symfony\Component\Translation\Loader\YamlFileLoader;
+use Symfony\Component\Translation\Translator;
 
 final class GameHeaderPresenterTest extends TestCase
 {
@@ -23,7 +25,7 @@ final class GameHeaderPresenterTest extends TestCase
         new GamePlayer($game, PieceColor::WHITE, $human);
         new GamePlayer($game, PieceColor::BLACK, null);
 
-        $header = (new GameHeaderPresenter())->present($game, $human);
+        $header = $this->presenter()->present($game, $human);
 
         self::assertSame('alice', $header->white->label);
         self::assertSame('human', $header->white->kind);
@@ -38,7 +40,7 @@ final class GameHeaderPresenterTest extends TestCase
         $human = $this->user('human@example.com', 'alice');
         $game = $this->multiplayer($human, $bot);
 
-        $header = (new GameHeaderPresenter())->present($game, null);
+        $header = $this->presenter()->present($game, null);
 
         self::assertSame('Keres Bot (level 4)', $header->black->label);
         self::assertSame('bot', $header->black->kind);
@@ -52,7 +54,7 @@ final class GameHeaderPresenterTest extends TestCase
         $white = $this->user('white@example.com', 'alice');
         $black = $this->user('black@example.com', 'bob');
 
-        $header = (new GameHeaderPresenter())->present($this->multiplayer($white, $black), null, $white);
+        $header = $this->presenter()->present($this->multiplayer($white, $black), null, $white);
 
         self::assertSame('alice', $header->white->label);
         self::assertSame('Player', $header->black->label);
@@ -64,7 +66,7 @@ final class GameHeaderPresenterTest extends TestCase
         $white = $this->user('white@example.com', 'alice');
         $black = $this->user('black@example.com', 'bob');
 
-        $header = (new GameHeaderPresenter())->present($this->multiplayer($white, $black), $white);
+        $header = $this->presenter()->present($this->multiplayer($white, $black), $white);
 
         self::assertSame('alice', $header->white->username);
         self::assertSame('bob', $header->black->label);
@@ -78,7 +80,7 @@ final class GameHeaderPresenterTest extends TestCase
         new GamePlayer($game, PieceColor::WHITE, $white);
         new GamePlayer($game, PieceColor::BLACK, $black);
 
-        $labels = array_map(static fn (GameHeaderBadge $badge): string => $badge->label, (new GameHeaderPresenter())->present($game, $white)->badges);
+        $labels = array_map(static fn (GameHeaderBadge $badge): string => $badge->label, $this->presenter()->present($game, $white)->badges);
 
         self::assertSame(['Rated', '5+3', 'Blitz'], $labels);
 
@@ -86,9 +88,18 @@ final class GameHeaderPresenterTest extends TestCase
         new GamePlayer($casual, PieceColor::WHITE, $white);
         new GamePlayer($casual, PieceColor::BLACK, null);
 
-        $labels = array_map(static fn (GameHeaderBadge $badge): string => $badge->label, (new GameHeaderPresenter())->present($casual, $white)->badges);
+        $labels = array_map(static fn (GameHeaderBadge $badge): string => $badge->label, $this->presenter()->present($casual, $white)->badges);
 
         self::assertSame(['Casual', 'Unlimited', 'Live evaluation'], $labels);
+    }
+
+    private function presenter(): GameHeaderPresenter
+    {
+        $translator = new Translator('en');
+        $translator->addLoader('yaml', new YamlFileLoader());
+        $translator->addResource('yaml', \dirname(__DIR__, 4).'/translations/game+intl-icu.en.yaml', 'en', 'game+intl-icu');
+
+        return new GameHeaderPresenter($translator);
     }
 
     private function multiplayer(User $white, User $black): Game

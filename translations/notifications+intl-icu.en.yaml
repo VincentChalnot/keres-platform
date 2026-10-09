@@ -1,0 +1,31 @@
+# Notification inbox page + the text of each notification (rendered by NotificationFormatter at display time).
+page:
+    title: Notifications
+    mark_all_read: Mark all as read
+    mark_read: Mark as read
+    empty: No notifications yet. You’ll hear about friend requests, accepted seeks, moves in your correspondence games and finished games here.
+    preferences_link: Choose which notifications you get →
+    pagination:
+        label: pagination
+        previous: Previous
+        next: Next
+        page_of: 'Page {page} of {total}'
+text:
+    someone: Someone
+    friend_request: '{actor} sent you a friend request.'
+    friend_accepted: '{actor} is now your friend.'
+    seek_matched: '{actor} accepted your seek. Your game has started.'
+    your_turn: '{actor} played a move. It’s your turn.'
+    game_finished:
+        win: 'You won against {opponent}{reason, select, resignation { by resignation} timeout { on time} abandonment { by abandonment} draw_agreed { by agreement} other {}}.'
+        loss: 'You lost against {opponent}{reason, select, resignation { by resignation} timeout { on time} abandonment { by abandonment} draw_agreed { by agreement} other {}}.'
+        draw: 'Your game against {opponent} ended in a draw{reason, select, resignation { by resignation} timeout { on time} abandonment { by abandonment} draw_agreed { by agreement} other {}}.'
+        aborted: 'Your game against {opponent} was aborted.'
+        ended: 'Your game against {opponent} has ended.'
+# Labels of the per-type toggles in Settings -> Notifications (NotificationType::labelKey()).
+settings_type:
+    friend_request: Someone sends me a friend request
+    friend_accepted: Someone accepts my friend request
+    seek_matched: Someone accepts my seek and a game starts
+    your_turn: My opponent plays a move in a correspondence or unlimited game
+    game_finished: One of my games ends

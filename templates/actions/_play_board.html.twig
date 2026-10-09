@@ -7,6 +7,7 @@
       gameHeader (?\App\Model\GameHeader - players + option badges; undefined for guest games),
       liveEvaluation (bool, optional - the evaluation bar was requested at creation; unrated games only)
 #}
+{% trans_default_domain 'game' %}
     <div class="game-container"
          id="game-container"
          data-opponent-type="{{ opponentType }}">
@@ -23,7 +24,7 @@
             <div class="player-clock" id="clock-top"><span class="player-clock__time">--:--</span></div>
         </div>
         <div class="board-with-eval" id="board-with-eval">
-        <div class="eval-bar" id="eval-bar" hidden aria-label="Engine evaluation" role="img">
+        <div class="eval-bar" id="eval-bar" hidden aria-label="{{ 'play.board.eval_bar'|trans }}" role="img">
             <div class="eval-bar__white" id="eval-bar-white"></div>
             <span class="eval-bar__label" id="eval-bar-label"></span>
         </div>
@@ -36,43 +37,44 @@
              data-guest="{{ guest ? 'true' : 'false' }}"
              data-show-coordinates="{{ showCoordinates ?? true ? 'true' : 'false' }}"
              data-show-threats="{{ showThreats ?? true ? 'true' : 'false' }}"
-             data-live-evaluation="{{ liveEvaluation ?? false ? 'true' : 'false' }}"></div>
+             data-live-evaluation="{{ liveEvaluation ?? false ? 'true' : 'false' }}"
+             data-game-over-label="{{ 'play.board.game_over'|trans }}"></div>
         </div>
         <div class="player-info-row" id="player-info-bottom">
             <div class="material-bar" id="material-bottom"></div>
             <div class="player-clock" id="clock-bottom"><span class="player-clock__time">--:--</span></div>
         </div>
 
-        <div class="notification game-status-banner is-muted" id="game-status-banner" role="status" aria-live="polite">Loading…</div>
+        <div class="notification game-status-banner is-muted" id="game-status-banner" role="status" aria-live="polite">{{ 'play.board.loading'|trans }}</div>
 
         <div class="buttons mt-3">
             {% if isAi %}
-                <button class="button is-rounded is-outlined is-light" id="switch-sides-btn">Switch Sides</button>
+                <button class="button is-rounded is-outlined is-light" id="switch-sides-btn">{{ 'play.board.switch_sides'|trans }}</button>
             {% endif %}
-            <button class="button is-rounded is-outlined is-light" id="toggle-threats-btn">Hide Threats</button>
-            <button class="button is-rounded is-outlined is-light" id="toggle-coords-btn">Hide Coords</button>
-            <button class="button is-rounded is-outlined is-light" id="toggle-fullscreen-btn">Fullscreen</button>
-            <button class="button is-rounded is-light" id="undo-btn">Undo</button>
+            <button class="button is-rounded is-outlined is-light" id="toggle-threats-btn">{{ 'play.board.hide_threats'|trans }}</button>
+            <button class="button is-rounded is-outlined is-light" id="toggle-coords-btn">{{ 'play.board.hide_coords'|trans }}</button>
+            <button class="button is-rounded is-outlined is-light" id="toggle-fullscreen-btn">{{ 'play.board.fullscreen'|trans }}</button>
+            <button class="button is-rounded is-light" id="undo-btn">{{ 'play.board.undo'|trans }}</button>
             {% if not gameOver %}
-                <button type="button" class="button is-rounded is-danger" id="resign-btn">Resign</button>
+                <button type="button" class="button is-rounded is-danger" id="resign-btn">{{ 'play.board.resign'|trans }}</button>
             {% endif %}
             {% if app.user %}
-                <button type="button" class="button is-rounded is-outlined is-light" id="feedback-btn">Feedback</button>
+                <button type="button" class="button is-rounded is-outlined is-light" id="feedback-btn">{{ 'play.board.feedback'|trans }}</button>
             {% endif %}
         </div>
         <div class="move-history">
-            <label class="label">Move History</label>
+            <label class="label">{{ 'play.board.history.title'|trans }}</label>
             <div class="buttons">
-                <button class="button is-rounded is-small is-outlined is-light" id="prev-move-btn" title="Previous Move">◄ Prev</button>
-                <button class="button is-rounded is-small is-outlined is-light" id="next-move-btn" title="Next Move">Next ►</button>
+                <button class="button is-rounded is-small is-outlined is-light" id="prev-move-btn" title="{{ 'play.board.history.previous_title'|trans }}">{{ 'play.board.history.previous'|trans }}</button>
+                <button class="button is-rounded is-small is-outlined is-light" id="next-move-btn" title="{{ 'play.board.history.next_title'|trans }}">{{ 'play.board.history.next'|trans }}</button>
             </div>
             <div id="move-history-display" class="move-history-box">
                 <table class="table is-fullwidth move-history-table">
                     <thead>
                     <tr>
                         <th>#</th>
-                        <th>White</th>
-                        <th>Black</th>
+                        <th>{{ 'color.white'|trans }}</th>
+                        <th>{{ 'color.black'|trans }}</th>
                     </tr>
                     </thead>
                     <tbody id="move-history-body">
@@ -86,15 +88,15 @@
         <div class="modal-background"></div>
         <div class="modal-card">
             <header class="modal-card-head">
-                <p class="modal-card-title" id="unstack-modal-title">Choose your move</p>
+                <p class="modal-card-title" id="unstack-modal-title">{{ 'play.board.unstack_modal.title'|trans }}</p>
             </header>
             <section class="modal-card-body">
-                <p id="unstack-modal-text">You are moving a stacked piece. Do you want to move the full stack or only the top piece?</p>
+                <p id="unstack-modal-text">{{ 'play.board.unstack_modal.text'|trans }}</p>
             </section>
             <footer class="modal-card-foot is-flex-wrap-wrap" style="gap: 0.5rem;">
-                <button class="button is-primary" id="move-stack">Move Full Stack</button>
-                <button class="button" id="move-unstack">Move Top Piece</button>
-                <button class="button is-hidden" id="select-instead">Select this piece</button>
+                <button class="button is-primary" id="move-stack">{{ 'play.board.unstack_modal.move_stack'|trans }}</button>
+                <button class="button" id="move-unstack">{{ 'play.board.unstack_modal.move_unstack'|trans }}</button>
+                <button class="button is-hidden" id="select-instead">{{ 'play.board.unstack_modal.select_instead'|trans }}</button>
             </footer>
         </div>
     </div>
@@ -103,11 +105,11 @@
         <div class="modal-background"></div>
         <div class="modal-card">
             <header class="modal-card-head">
-                <p class="modal-card-title">Feedback</p>
-                <button class="delete" aria-label="close" id="feedback-modal-close"></button>
+                <p class="modal-card-title">{{ 'play.board.feedback_modal.title'|trans }}</p>
+                <button class="delete" aria-label="{{ 'play.board.feedback_modal.close'|trans }}" id="feedback-modal-close"></button>
             </header>
             <section class="modal-card-body" id="feedback-modal-body">
-                <progress class="progress is-small is-primary" max="100">Loading</progress>
+                <progress class="progress is-small is-primary" max="100">{{ 'play.board.feedback_modal.loading'|trans }}</progress>
             </section>
         </div>
     </div>

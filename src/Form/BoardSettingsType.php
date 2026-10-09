@@ -18,15 +18,15 @@ class BoardSettingsType extends AbstractType
     {
         $builder
             ->add('showBoardCoordinates', CheckboxType::class, [
-                'label' => 'Show board coordinates',
+                'label' => 'board_settings.show_coordinates',
                 'required' => false,
             ])
             ->add('showOpponentThreatsOnHover', CheckboxType::class, [
-                'label' => 'Highlight opponent threats on hover',
+                'label' => 'board_settings.show_threats',
                 'required' => false,
             ])
             ->add('submit', SubmitType::class, [
-                'label' => 'Save changes',
+                'label' => 'common.save_changes',
             ]);
     }
 
@@ -34,6 +34,7 @@ class BoardSettingsType extends AbstractType
     {
         $resolver->setDefaults([
             'data_class' => UserPreferences::class,
+            'translation_domain' => 'forms',
         ]);
     }
 }

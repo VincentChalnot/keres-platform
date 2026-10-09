@@ -18,15 +18,15 @@ class PrivacySettingsType extends AbstractType
     {
         $builder
             ->add('searchableByOtherUsers', CheckboxType::class, [
-                'label' => 'Appear in player search',
+                'label' => 'privacy_settings.searchable',
                 'required' => false,
             ])
             ->add('allowContactByEmail', CheckboxType::class, [
-                'label' => 'Allow other players who know my email to contact me',
+                'label' => 'privacy_settings.allow_contact',
                 'required' => false,
             ])
             ->add('submit', SubmitType::class, [
-                'label' => 'Save changes',
+                'label' => 'common.save_changes',
             ]);
     }
 
@@ -34,6 +34,7 @@ class PrivacySettingsType extends AbstractType
     {
         $resolver->setDefaults([
             'data_class' => UserPreferences::class,
+            'translation_domain' => 'forms',
         ]);
     }
 }

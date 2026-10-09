@@ -1,6 +1,7 @@
 {% extends 'base.html.twig' %}
+{% trans_default_domain 'game' %}
 
-{% block title %}New Local Game - Keres{% endblock %}
+{% block title %}{{ 'new_local_game.page_title'|trans }}{% endblock %}
 
 {% block body %}
     <section class="section">
@@ -8,8 +9,8 @@
             <div class="columns is-centered">
                 <div class="column is-half">
                     <div class="box">
-                        <h3 class="title">Play AI or hot-seat</h3>
-                        <p class="subtitle">Want to play another person online instead? Head to the <a href="{{ path('lobby') }}">lobby</a>.</p>
+                        <h3 class="title">{{ 'new_local_game.title'|trans }}</h3>
+                        <p class="subtitle">{{ 'new_local_game.subtitle.before'|trans }} <a href="{{ path('lobby') }}">{{ 'new_local_game.subtitle.link'|trans }}</a>{{ 'new_local_game.subtitle.after'|trans }}</p>
 
                         {{ form_start(form) }}
 
@@ -61,7 +62,7 @@
 
                         <div class="field is-grouped is-grouped-right">
                             <div class="control">
-                                <a href="{{ path('lobby') }}" class="button is-rounded">Back</a>
+                                <a href="{{ path('lobby') }}" class="button is-rounded">{{ 'new_local_game.back'|trans }}</a>
                             </div>
                             <div class="control">
                                 {{ form_widget(form.submit, {attr: {class: 'button is-rounded is-primary'}}) }}

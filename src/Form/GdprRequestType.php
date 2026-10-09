@@ -26,20 +26,20 @@ class GdprRequestType extends AbstractType
     {
         $builder
             ->add('email', TextType::class, [
-                'label' => 'Your account email',
+                'label' => 'gdpr.email',
                 'disabled' => true,
                 'mapped' => false,
                 'data' => $options['user_email'],
             ])
             ->add('message', TextareaType::class, [
-                'label' => 'Anything else we should know? (optional)',
+                'label' => 'gdpr.message',
                 'required' => false,
                 'constraints' => [
-                    new Length(max: 2000, maxMessage: 'Please keep this under {{ limit }} characters.'),
+                    new Length(max: 2000, maxMessage: 'gdpr.message_too_long'),
                 ],
                 'attr' => [
                     'rows' => 3,
-                    'placeholder' => 'Optional additional context...',
+                    'placeholder' => 'gdpr.message_placeholder',
                 ],
             ])
             ->add('submit', SubmitType::class, [
@@ -51,7 +51,8 @@ class GdprRequestType extends AbstractType
     {
         $resolver->setDefaults([
             'user_email' => '',
-            'submit_label' => 'Submit request',
+            'submit_label' => 'gdpr.submit',
+            'translation_domain' => 'forms',
         ]);
         $resolver->setRequired(['user_email', 'submit_label']);
         $resolver->setAllowedTypes('user_email', 'string');

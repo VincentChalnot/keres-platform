@@ -1,0 +1,47 @@
+title: Settings
+nav:
+    label: Settings sections
+    profile: Profile
+    board: Board & gameplay
+    notifications: Notifications
+    privacy: Privacy
+    connections: Connected accounts
+page_title: '{section} - Settings'
+profile:
+    title: Profile
+    username_can_change: You can change your username once every 12 months. After this change, the next one will be available on {date}.
+    username_locked: Next change available on {date}. Until then you can only change its capitalisation.
+    display_name_help: Shown instead of your username where space allows.
+    email_help: Your sign-in email. It can’t be changed here.
+board:
+    title: Board & gameplay
+    intro: How the board opens in your games. You can still toggle both from the game page.
+notifications:
+    title: Notifications
+    in_app:
+        title: In-app notifications
+        intro: Choose what shows up in your notification bell. Notify me when:
+    email:
+        title: Email
+        intro: Get an email for the same events, even when you’re not on the site. Email me when:
+        unsubscribe: You can also unsubscribe by clicking the link in any notification email.
+    newsletter:
+        title: Newsletter
+privacy:
+    title: Privacy
+    blocked:
+        title: Blocked users
+        unblock: Unblock
+        empty: You haven’t blocked anyone. You can block a player from their profile page.
+    data:
+        title: Your data
+        intro: Request a copy of your data, or request that your account be deleted. Both are handled by a person, not automatically — we’ll get back to you within 30 days.
+        export_title: Export my data
+        deletion_title: Delete my account
+connections:
+    title: Connected accounts
+    intro: The providers you can sign in with.
+    linked: Linked
+    not_linked: Not linked
+    password_too: You can also sign in with your email and password.
+    auto_link: Signing in with another provider that uses the same email links it to this account automatically.

@@ -1,0 +1,31 @@
+# Notification inbox page + the text of each notification (rendered by NotificationFormatter at display time).
+page:
+    title: Notifications
+    mark_all_read: Tout marquer comme lu
+    mark_read: Marquer comme lu
+    empty: Aucune notification pour le moment. Vous serez informé ici des demandes d’ami, des propositions acceptées, des coups joués dans vos parties par correspondance et des parties terminées.
+    preferences_link: Choisir les notifications que vous recevez →
+    pagination:
+        label: pagination
+        previous: Précédent
+        next: Suivant
+        page_of: 'Page {page} sur {total}'
+text:
+    someone: Quelqu’un
+    friend_request: '{actor} vous a envoyé une demande d’ami.'
+    friend_accepted: '{actor} fait désormais partie de vos amis.'
+    seek_matched: '{actor} a accepté votre proposition. Votre partie a commencé.'
+    your_turn: '{actor} a joué un coup. À vous de jouer.'
+    game_finished:
+        win: 'Vous avez gagné contre {opponent}{reason, select, resignation { par abandon} timeout { au temps} abandonment { par désertion} draw_agreed { par accord mutuel} other {}}.'
+        loss: 'Vous avez perdu contre {opponent}{reason, select, resignation { par abandon} timeout { au temps} abandonment { par désertion} draw_agreed { par accord mutuel} other {}}.'
+        draw: 'Votre partie contre {opponent} s’est terminée par une nulle{reason, select, resignation { par abandon} timeout { au temps} abandonment { par désertion} draw_agreed { par accord mutuel} other {}}.'
+        aborted: 'Votre partie contre {opponent} a été annulée.'
+        ended: 'Votre partie contre {opponent} est terminée.'
+# Labels of the per-type toggles in Settings -> Notifications (NotificationType::labelKey()).
+settings_type:
+    friend_request: Quelqu’un m’envoie une demande d’ami
+    friend_accepted: Quelqu’un accepte ma demande d’ami
+    seek_matched: Quelqu’un accepte ma proposition et une partie commence
+    your_turn: Mon adversaire joue un coup dans une partie par correspondance ou sans limite de temps
+    game_finished: Une de mes parties se termine

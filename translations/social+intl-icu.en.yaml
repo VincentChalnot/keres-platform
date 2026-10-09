@@ -1,0 +1,50 @@
+# Friends page and public profile page (templates/actions/friends.html.twig, profile.html.twig).
+friends:
+    page_title: Friends
+    title: Friends
+    search:
+        title: Find players
+        placeholder: Search by username (3+ characters)
+    incoming_title: Received requests
+    outgoing_title: Sent requests
+    accepted_title: Your friends
+    blocked_note: 'Blocked players are managed in {link}.'
+    blocked_note_link: Settings → Privacy
+profile:
+    online: Online
+    member_since: 'Member since {date}'
+    edit: Edit profile
+    action:
+        add_friend: Add friend
+        request_sent: Request sent
+        accept: Accept
+        decline: Decline
+        unfriend: Unfriend
+        block: Block
+        unblock: Unblock
+    ratings:
+        title: Ratings
+        category: Category
+        rating: Rating
+        games: Games
+        provisional_hint: 'Provisional: fewer than the established-rating floor of games played'
+        categories:
+            bullet: Bullet
+            blitz: Blitz
+            rapid: Rapid
+            classical: Classical
+            correspondence: Correspondence
+    record:
+        title: Record
+        wins: Wins
+        losses: Losses
+        draws: Draws
+    games:
+        title: Recent games
+        empty_self: No games to show.
+        empty_other: No games to show yet.
+    pagination:
+        label: pagination
+        previous: Previous
+        next: Next
+        page_of: 'Page {page} of {total}'

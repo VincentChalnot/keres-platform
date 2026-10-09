@@ -2,13 +2,14 @@
  # _layout.html.twig. See that file for the unsubscribe_url contract - only
  # non-critical mail should ever pass it.
  #}
+{% trans_default_domain 'emails' %}
 {% block content %}{% endblock %}
 
 --
-This address is unmonitored and cannot receive replies.
-Need help? Contact us: {{ static_site_url }}/contact
+{{ 'layout.unmonitored'|trans }}
+{{ 'layout.contact_line'|trans({url: static_site_url ~ '/contact'}) }}
 {%- if unsubscribe_url is defined and unsubscribe_url %}
 
-You're receiving this because of your Keres notification settings.
-Manage email preferences: {{ unsubscribe_url }}
+{{ 'layout.unsubscribe_reason'|trans }}
+{{ 'layout.link_line'|trans({label: 'layout.manage_preferences'|trans, url: unsubscribe_url}) }}
 {%- endif %}

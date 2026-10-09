@@ -1,14 +1,15 @@
 {% extends 'base.html.twig' %}
+{% trans_default_domain 'pages' %}
 
-{% block title %}Feedback{% endblock %}
+{% block title %}{{ 'feedback.page_title'|trans }}{% endblock %}
 
 {% block body %}
 <main class="section">
     <div class="container">
         <div class="columns is-centered">
             <div class="column is-7">
-                <h1 class="title">Alpha Feedback</h1>
-                <p class="subtitle">Help us improve Keres! Report bugs, suggest features, or share your gameplay experience.</p>
+                <h1 class="title">{{ 'feedback.title'|trans }}</h1>
+                <p class="subtitle">{{ 'feedback.subtitle'|trans }}</p>
 
                 {% include 'actions/_feedback_form.html.twig' with {form: form, sent: sent} %}
             </div>

@@ -6,12 +6,14 @@ namespace App\Service;
 
 use App\Entity\Game;
 use App\Entity\User;
+use App\Service\Locale\EmailLocale;
 use Psr\Log\LoggerInterface;
 use Symfony\Bridge\Twig\Mime\TemplatedEmail;
 use Symfony\Component\Mailer\Exception\HttpTransportException;
 use Symfony\Component\Mailer\Exception\TransportExceptionInterface;
 use Symfony\Component\Mailer\MailerInterface;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
+use Symfony\Contracts\Translation\TranslatorInterface;
 
 /**
  * T8: the correspondence deadline sweep's warning email. `UserMailer` is
@@ -22,6 +24,11 @@ use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
  * from a console command (no HTTP request), so URL generation relies on
  * `framework.router.default_uri` (config/packages/routing.yaml), same as
  * `NotificationFormatter`.
+ *
+ * Locale: written in the recipient's saved locale (`EmailLocale::forUser()`,
+ * default locale if none/unsupported) - there is no request here - pinned on
+ * the message with `TemplatedEmail::locale()` and used for the subject
+ * translated here.
  */
 class CorrespondenceMailer
 {
@@ -30,6 +37,8 @@ class CorrespondenceMailer
         private readonly LoggerInterface $logger,
         private readonly string $mailerFromAddress,
         private readonly UrlGeneratorInterface $urlGenerator,
+        private readonly EmailLocale $emailLocale,
+        private readonly TranslatorInterface $translator,
     ) {
     }
 
@@ -41,10 +50,12 @@ class CorrespondenceMailer
             UrlGeneratorInterface::ABSOLUTE_URL,
         );
 
+        $locale = $this->emailLocale->forUser($user);
         $email = (new TemplatedEmail())
             ->from($this->mailerFromAddress)
             ->to($user->getEmail())
-            ->subject('Your Keres move is due soon')
+            ->locale($locale)
+            ->subject($this->translator->trans('correspondence_deadline_warning.subject', [], 'emails', $locale))
             ->htmlTemplate('email/correspondence_deadline_warning.html.twig')
             ->textTemplate('email/correspondence_deadline_warning.txt.twig')
             ->context([

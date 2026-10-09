@@ -1,20 +1,21 @@
 {% extends 'base.html.twig' %}
+{% trans_default_domain 'pages' %}
 
 {% set error_titles = {
-    403: 'Access Denied',
-    404: 'Page Not Found',
-    500: 'Something Went Wrong',
-    503: 'Service Unavailable',
+    403: 'error.403.title'|trans,
+    404: 'error.404.title'|trans,
+    500: 'error.500.title'|trans,
+    503: 'error.503.title'|trans,
 } %}
 
 {% set error_messages = {
-    403: "You don't have permission to view this page.",
-    404: "The page you're looking for doesn't exist, or may have been moved.",
-    500: 'An unexpected error occurred on our end. Please try again in a moment.',
-    503: "We're temporarily unable to handle your request. Please try again shortly.",
+    403: 'error.403.message'|trans,
+    404: 'error.404.message'|trans,
+    500: 'error.500.message'|trans,
+    503: 'error.503.message'|trans,
 }%}
 
-{% set error_title = error_titles[status_code] ?? ('Error ' ~ status_code) %}
+{% set error_title = error_titles[status_code] ?? 'error.generic_title'|trans({code: status_code}) %}
 {% set error_message = error_messages[status_code] ?? status_text %}
 
 {% block title %}{{ error_title }} - Keres{% endblock %}
@@ -27,9 +28,9 @@
             <p class="error-page__message">{{ error_message }}</p>
             <div class="buttons is-centered">
                 {% if app.user %}
-                    <a href="{{ path('lobby') }}" class="button is-primary is-rounded">Back to your games</a>
+                    <a href="{{ path('lobby') }}" class="button is-primary is-rounded">{{ 'error.back_to_games'|trans }}</a>
                 {% else %}
-                    <a href="{{ static_site_url }}/" class="button is-primary is-rounded">Back to home</a>
+                    <a href="{{ static_site_url }}/" class="button is-primary is-rounded">{{ 'error.back_to_home'|trans }}</a>
                 {% endif %}
             </div>
         </div>

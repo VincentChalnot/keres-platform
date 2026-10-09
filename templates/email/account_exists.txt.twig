@@ -1,13 +1,15 @@
 {% extends 'email/_layout.txt.twig' %}
 
+{% trans_default_domain 'emails' %}
+
 {% block content %}
-Hello {{ user.displayName ?? user.email }},
+{{ 'greeting.named'|trans({name: user.displayName ?? user.email}) }}
 
-Someone just tried to create a new Keres account using your email address. No new account was created, because you already have one.
+{{ 'account_exists.intro'|trans }}
 
-If this was you and you'd simply forgotten you already had an account, you can log in directly, or reset your password if you don't remember it:
+{{ 'account_exists.advice'|trans }}
 
-Reset your password: {{ lostPasswordUrl }}
+{{ 'layout.link_line'|trans({label: 'account_exists.button'|trans, url: lostPasswordUrl}) }}
 
-If you did not try to register, you can safely ignore this email — no action is needed and your account is unchanged.
+{{ 'account_exists.ignore'|trans }}
 {% endblock %}

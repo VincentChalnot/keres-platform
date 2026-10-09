@@ -15,6 +15,7 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpKernel\Attribute\AsController;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
+use Symfony\Contracts\Translation\TranslatorInterface;
 
 /**
  * `GET|POST /settings/notifications` - Settings -> Notifications: one
@@ -28,6 +29,7 @@ class SettingsNotificationsAction extends AbstractController
     public function __construct(
         private readonly UserPreferencesManager $userPreferencesManager,
         private readonly EntityManagerInterface $entityManager,
+        private readonly TranslatorInterface $translator,
     ) {
     }
 
@@ -58,7 +60,7 @@ class SettingsNotificationsAction extends AbstractController
             $preferences->setNewsletterOptIn((bool) $data['newsletterOptIn']);
             $preferences->touch();
             $this->entityManager->flush();
-            $this->addFlash('success', 'Notification settings saved.');
+            $this->addFlash('success', $this->translator->trans('flash.notifications_saved', [], 'flashes'));
 
             return $this->redirectToRoute('settings_notifications');
         }

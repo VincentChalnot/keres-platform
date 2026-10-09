@@ -1,28 +1,29 @@
+{% trans_default_domain 'game' %}
 <div class="box dashboard-widget">
-    <h3 class="title is-5">Your stats</h3>
+    <h3 class="title is-5">{{ 'dashboard.stats.title'|trans }}</h3>
     <div class="level is-mobile">
         <div class="level-item has-text-centered">
             <div>
-                <p class="heading">Wins</p>
+                <p class="heading">{{ 'dashboard.stats.wins'|trans }}</p>
                 <p class="title">{{ stats.wins }}</p>
             </div>
         </div>
         <div class="level-item has-text-centered">
             <div>
-                <p class="heading">Losses</p>
+                <p class="heading">{{ 'dashboard.stats.losses'|trans }}</p>
                 <p class="title">{{ stats.losses }}</p>
             </div>
         </div>
         <div class="level-item has-text-centered">
             <div>
-                <p class="heading">Draws</p>
+                <p class="heading">{{ 'dashboard.stats.draws'|trans }}</p>
                 <p class="title">{{ stats.draws }}</p>
             </div>
         </div>
     </div>
     {% if winRate is not null %}
-        <p class="has-text-centered">Win rate: <strong>{{ winRate }}%</strong> over {{ totalFinished }} finished game{{ totalFinished > 1 ? 's' : '' }}</p>
+        <p class="has-text-centered">{{ 'dashboard.stats.win_rate_label'|trans }} <strong>{{ 'dashboard.stats.win_rate_value'|trans({rate: winRate}) }}</strong> {{ 'dashboard.stats.win_rate_basis'|trans({count: totalFinished}) }}</p>
     {% else %}
-        <p class="has-text-centered has-text-grey">No finished games yet.</p>
+        <p class="has-text-centered has-text-grey">{{ 'dashboard.stats.empty'|trans }}</p>
     {% endif %}
 </div>

@@ -15,8 +15,9 @@
  # security mail (password reset, account-exists notice) must never set it:
  # there is nothing to "unsubscribe" from, and offering to would be misleading.
  #}
+{% trans_default_domain 'emails' %}
 <!DOCTYPE html>
-<html lang="en">
+<html lang="{{ app.locale }}">
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -41,13 +42,13 @@
                 <tr>
                     <td style="background-color:#f8f0e6; padding:0 32px 28px 32px; border-radius:0 0 8px 8px; color:#8a7a63; font-size:12px; line-height:1.6; border-top:1px solid #e1c499;">
                         <p style="margin:20px 0 0 0;">
-                            This address is unmonitored and cannot receive replies.
-                            Need help? <a href="{{ static_site_url }}/contact" style="color:#8a7a63; text-decoration:underline;">Contact us</a>.
+                            {{ 'layout.unmonitored'|trans }}
+                            {{ 'layout.need_help'|trans }} <a href="{{ static_site_url }}/contact" style="color:#8a7a63; text-decoration:underline;">{{ 'layout.contact_us'|trans }}</a>.
                         </p>
                         {% if unsubscribe_url is defined and unsubscribe_url %}
                             <p style="margin:8px 0 0 0;">
-                                You're receiving this because of your Keres notification settings.
-                                <a href="{{ unsubscribe_url }}" style="color:#8a7a63; text-decoration:underline;">Manage email preferences</a>.
+                                {{ 'layout.unsubscribe_reason'|trans }}
+                                <a href="{{ unsubscribe_url }}" style="color:#8a7a63; text-decoration:underline;">{{ 'layout.manage_preferences'|trans }}</a>.
                             </p>
                         {% endif %}
                         <p style="margin:8px 0 0 0;">&copy; Keres</p>

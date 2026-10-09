@@ -1,9 +1,11 @@
 {% extends 'email/_layout.txt.twig' %}
 
+{% trans_default_domain 'emails' %}
+
 {% block content %}
-Hello {{ recipient.username }},
+{{ 'greeting.named'|trans({name: recipient.username}) }}
 
-{{ mover.username }} just played a move. It's your turn!
+{{ 'notification_your_turn.body'|trans({mover: mover.username}) }}
 
-Play your move: {{ playUrl }}
+{{ 'layout.link_line'|trans({label: 'notification_your_turn.button'|trans, url: playUrl}) }}
 {% endblock %}

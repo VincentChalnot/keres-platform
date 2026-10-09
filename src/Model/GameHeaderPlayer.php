@@ -6,13 +6,14 @@ namespace App\Model;
 
 /**
  * One seat of the game-page header (`GameHeaderPresenter`): who plays it,
- * as already-resolved display text - the template never decides identity.
+ * as already-resolved display text (translated into the viewer's locale by
+ * the presenter) - the template never decides identity.
  */
 final readonly class GameHeaderPlayer
 {
     public function __construct(
         public PieceColor $color,
-        /** What to show: a username, "Keres Bot (level 3)", "AI (level 3)", "Player"... */
+        /** What to show: a username, "Keres Bot (level 3)", the translated "AI (level 3)", "Player"... */
         public string $label,
         /** `ai` (engine opponent), `bot` (tournament bot account), `human`, or `anonymous` (identity withheld from the viewer). */
         public string $kind,

@@ -10,23 +10,18 @@ namespace App\Model\Notification;
  * `user/{uuid}` frame, the JSON list), so renaming a case's value is a
  * data migration.
  *
- * Adding a type: add a case here with its `label()`, then one arm in
- * `NotificationFormatter::format()` and one call to
- * `NotificationCenter::notify()` where the event happens. The settings
- * toggle, the inbox and the bell pick it up without further changes.
+ * Adding a type: add a case here, its `settings_type.<value>` key in the
+ * `notifications` translation domain (en + fr), then one arm in
+ * `NotificationFormatter::format()` (with its own `text.*` keys) and one
+ * call to `NotificationCenter::notify()` where the event happens. The
+ * settings toggle, the inbox and the bell pick it up without further changes.
  */
 enum NotificationType: string
 {
-    /** Shown next to the toggle in Settings -> Notifications. */
-    public function label(): string
+    /** Translation key (domain `notifications`) of the label shown next to the toggle in Settings -> Notifications. */
+    public function labelKey(): string
     {
-        return match ($this) {
-            self::FRIEND_REQUEST => 'Someone sends me a friend request',
-            self::FRIEND_ACCEPTED => 'Someone accepts my friend request',
-            self::SEEK_MATCHED => 'Someone accepts my seek and a game starts',
-            self::YOUR_TURN => 'My opponent plays a move in a correspondence or unlimited game',
-            self::GAME_FINISHED => 'One of my games ends',
-        };
+        return 'settings_type.'.$this->value;
     }
 
     /** Default for a user who never touched the toggle (sec 8.2). Every in-app type is on: an inbox row costs nothing. */

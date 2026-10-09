@@ -1,13 +1,15 @@
 {% extends 'email/_layout.html.twig' %}
 
-{% block title %}It's your turn in your Keres game{% endblock %}
+{% trans_default_domain 'emails' %}
+
+{% block title %}{{ 'notification_your_turn.subject'|trans }}{% endblock %}
 
 {% block content %}
-    <p style="margin:0 0 16px 0;">Hello {{ recipient.username }},</p>
+    <p style="margin:0 0 16px 0;">{{ 'greeting.named'|trans({name: recipient.username}) }}</p>
 
-    <p style="margin:0 0 16px 0;">{{ mover.username }} just played a move. It's your turn!</p>
+    <p style="margin:0 0 16px 0;">{{ 'notification_your_turn.body'|trans({mover: mover.username}) }}</p>
 
     <p style="margin:0;">
-        <a href="{{ playUrl }}" style="display:inline-block; background-color:#e19e5b; color:#1a1208; padding:12px 28px; border-radius:9999px; text-decoration:none; font-weight:bold;">Play your move</a>
+        <a href="{{ playUrl }}" style="display:inline-block; background-color:#e19e5b; color:#1a1208; padding:12px 28px; border-radius:9999px; text-decoration:none; font-weight:bold;">{{ 'notification_your_turn.button'|trans }}</a>
     </p>
 {% endblock %}

@@ -1,3 +1,15 @@
 # Flash messages (addFlash). Translated when raised, in the locale of the request that raises them.
 flash:
     profile_saved: Profile saved.
+    board_saved: Board settings saved.
+    privacy_saved: Privacy settings saved.
+    notifications_saved: Notification settings saved.
+    deletion_requested: Your account deletion request has been received. We will get back to you within 30 days.
+    export_requested: Your data export request has been received. We will get back to you within 30 days.
+    request_failed: We could not submit your request. Please try again.
+    register_check_email: Check your email to finish setting up your account.
+    lost_password_sent: If an account exists for that email, a reset link has been sent.
+    already_logged_in: You are already logged in.
+    reset_missing_token: Missing reset token.
+    reset_invalid: This reset link is invalid or has expired.
+    password_reset: Your password has been reset — you can now log in.

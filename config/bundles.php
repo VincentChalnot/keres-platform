@@ -15,4 +15,5 @@ return [
     Sidus\DataGridBundle\SidusDataGridBundle::class => ['all' => true],
     Sidus\AdminBundle\SidusAdminBundle::class => ['all' => true],
     Sentry\SentryBundle\SentryBundle::class => ['prod' => true],
+    Twig\Extra\TwigExtraBundle\TwigExtraBundle::class => ['all' => true],
 ];

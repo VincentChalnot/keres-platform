@@ -8,6 +8,7 @@ use App\Entity\Game;
 use App\Entity\User;
 use App\Model\GameEndReason;
 use App\Model\PieceColor;
+use App\Service\Locale\EmailLocale;
 use Doctrine\DBAL\LockMode;
 use Doctrine\ORM\EntityManagerInterface;
 use Psr\Log\LoggerInterface;
@@ -17,6 +18,7 @@ use Symfony\Component\Mailer\Exception\HttpTransportException;
 use Symfony\Component\Mailer\Exception\TransportExceptionInterface;
 use Symfony\Component\Mailer\MailerInterface;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
+use Symfony\Contracts\Translation\TranslatorInterface;
 
 /**
  * T9: email for the three notification types enabled for email by default
@@ -26,6 +28,12 @@ use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
  * shape as `UserMailer::send()` (PHP-SYMFONY-3). Every mail carries
  * `unsubscribe_url` -> `/settings/notifications` (T2's layout hook) - none
  * of these three are transactional/security mail.
+ *
+ * Locale: each mail is written in the recipient's saved locale
+ * (`EmailLocale::forUser()`, default locale if none/unsupported), pinned on
+ * the message with `TemplatedEmail::locale()` (the body renderer switches the
+ * translator to it) and used for the subject translated here - never the
+ * locale of the request that triggered the notification (the opponent's).
  */
 class NotificationMailer
 {
@@ -36,6 +44,8 @@ class NotificationMailer
         private readonly UrlGeneratorInterface $urlGenerator,
         private readonly EntityManagerInterface $entityManager,
         private readonly ClockInterface $clock,
+        private readonly EmailLocale $emailLocale,
+        private readonly TranslatorInterface $translator,
     ) {
     }
 
@@ -74,10 +84,12 @@ class NotificationMailer
             return;
         }
 
+        $locale = $this->emailLocale->forUser($recipient);
         $email = (new TemplatedEmail())
             ->from($this->mailerFromAddress)
             ->to($recipient->getEmail())
-            ->subject("It's your turn in your Keres game")
+            ->locale($locale)
+            ->subject($this->translator->trans('notification_your_turn.subject', [], 'emails', $locale))
             ->htmlTemplate('email/notification_your_turn.html.twig')
             ->textTemplate('email/notification_your_turn.txt.twig')
             ->context([
@@ -96,10 +108,12 @@ class NotificationMailer
         $colors = $game->getColorsForUser($recipient);
         $outcome = self::outcomeFor($game, $colors[0] ?? null);
 
+        $locale = $this->emailLocale->forUser($recipient);
         $email = (new TemplatedEmail())
             ->from($this->mailerFromAddress)
             ->to($recipient->getEmail())
-            ->subject('Your Keres game has ended')
+            ->locale($locale)
+            ->subject($this->translator->trans('notification_game_finished.subject', [], 'emails', $locale))
             ->htmlTemplate('email/notification_game_finished.html.twig')
             ->textTemplate('email/notification_game_finished.txt.twig')
             ->context([
@@ -116,10 +130,12 @@ class NotificationMailer
     /** No rate limit - fires at most once per seek (a seek is consumed exactly once, invariant 12). */
     public function sendSeekMatched(User $recipient, Game $game, User $opponent): void
     {
+        $locale = $this->emailLocale->forUser($recipient);
         $email = (new TemplatedEmail())
             ->from($this->mailerFromAddress)
             ->to($recipient->getEmail())
-            ->subject('Your Keres seek was matched — game started')
+            ->locale($locale)
+            ->subject($this->translator->trans('notification_seek_matched.subject', [], 'emails', $locale))
             ->htmlTemplate('email/notification_seek_matched.html.twig')
             ->textTemplate('email/notification_seek_matched.txt.twig')
             ->context([

@@ -1,4 +1,5 @@
 {% extends 'base.html.twig' %}
+{% trans_default_domain 'social' %}
 
 {% block title %}{{ subject.displayName ?? subject.username }} (@{{ subject.username }}){% endblock %}
 
@@ -23,34 +24,34 @@
                             <h1 class="title mb-1">
                                 {{ subject.displayName ?? subject.username }}
                                 {% if online %}
-                                    <span class="tag is-success is-rounded ml-2">Online</span>
+                                    <span class="tag is-success is-rounded ml-2">{{ 'profile.online'|trans }}</span>
                                 {% endif %}
                             </h1>
                             <p class="subtitle is-6 has-text-grey">
-                                @{{ subject.username }} &middot; Member since {{ subject.createdAt|date('F Y') }}
+                                @{{ subject.username }} &middot; {{ 'profile.member_since'|trans({date: subject.createdAt|format_date(pattern: 'LLLL y')}) }}
                             </p>
                         </div>
                         <div class="column is-narrow buttons">
                             {% if isSelf %}
-                                <a href="{{ path('settings_profile') }}" class="button is-rounded is-light">Edit profile</a>
+                                <a href="{{ path('settings_profile') }}" class="button is-rounded is-light">{{ 'profile.edit'|trans }}</a>
                             {% endif %}
 
                             {% if not isSelf and relationship is not null %}
                                 {% if relationship.value == 'none' %}
-                                    <button type="button" class="button is-rounded is-primary" data-action="friend-request">Add friend</button>
+                                    <button type="button" class="button is-rounded is-primary" data-action="friend-request">{{ 'profile.action.add_friend'|trans }}</button>
                                 {% elseif relationship.value == 'pending_out' %}
-                                    <span class="tag is-light is-rounded">Request sent</span>
+                                    <span class="tag is-light is-rounded">{{ 'profile.action.request_sent'|trans }}</span>
                                 {% elseif relationship.value == 'pending_in' %}
-                                    <button type="button" class="button is-rounded is-primary" data-action="friend-accept">Accept</button>
-                                    <button type="button" class="button is-rounded is-light" data-action="friend-decline">Decline</button>
+                                    <button type="button" class="button is-rounded is-primary" data-action="friend-accept">{{ 'profile.action.accept'|trans }}</button>
+                                    <button type="button" class="button is-rounded is-light" data-action="friend-decline">{{ 'profile.action.decline'|trans }}</button>
                                 {% elseif relationship.value == 'friends' %}
-                                    <button type="button" class="button is-rounded is-light" data-action="friend-remove">Unfriend</button>
+                                    <button type="button" class="button is-rounded is-light" data-action="friend-remove">{{ 'profile.action.unfriend'|trans }}</button>
                                 {% endif %}
 
                                 {% if relationship.value == 'blocked_by_me' %}
-                                    <button type="button" class="button is-rounded is-light" data-action="friend-unblock">Unblock</button>
+                                    <button type="button" class="button is-rounded is-light" data-action="friend-unblock">{{ 'profile.action.unblock'|trans }}</button>
                                 {% else %}
-                                    <button type="button" class="button is-rounded is-danger is-light" data-action="friend-block">Block</button>
+                                    <button type="button" class="button is-rounded is-danger is-light" data-action="friend-block">{{ 'profile.action.block'|trans }}</button>
                                 {% endif %}
                             {% endif %}
                         </div>
@@ -60,23 +61,23 @@
                 <div class="columns is-multiline">
                     <div class="column is-half">
                         <div class="box">
-                            <h3 class="title is-5">Ratings</h3>
+                            <h3 class="title is-5">{{ 'profile.ratings.title'|trans }}</h3>
                             <table class="table is-fullwidth">
                                 <thead>
                                 <tr>
-                                    <th>Category</th>
-                                    <th>Rating</th>
-                                    <th>Games</th>
+                                    <th>{{ 'profile.ratings.category'|trans }}</th>
+                                    <th>{{ 'profile.ratings.rating'|trans }}</th>
+                                    <th>{{ 'profile.ratings.games'|trans }}</th>
                                 </tr>
                                 </thead>
                                 <tbody>
                                 {% for category, rating in ratings %}
                                     <tr>
-                                        <td>{{ category|capitalize }}</td>
+                                        <td>{{ ('profile.ratings.categories.' ~ category)|trans }}</td>
                                         <td class="{{ rating.provisional ? 'has-text-grey' : '' }}">
-                                            {{ rating.rating }}{% if rating.provisional %}<span title="Provisional - fewer than the established-rating floor of games played">?</span>{% endif %}
+                                            {{ rating.rating|format_number }}{% if rating.provisional %}<span title="{{ 'profile.ratings.provisional_hint'|trans }}">?</span>{% endif %}
                                         </td>
-                                        <td>{{ rating.games }}</td>
+                                        <td>{{ rating.games|format_number }}</td>
                                     </tr>
                                 {% endfor %}
                                 </tbody>
@@ -85,24 +86,24 @@
                     </div>
                     <div class="column is-half">
                         <div class="box">
-                            <h3 class="title is-5">Record</h3>
+                            <h3 class="title is-5">{{ 'profile.record.title'|trans }}</h3>
                             <div class="level is-mobile">
                                 <div class="level-item has-text-centered">
                                     <div>
-                                        <p class="heading">Wins</p>
-                                        <p class="title">{{ stats.wins }}</p>
+                                        <p class="heading">{{ 'profile.record.wins'|trans }}</p>
+                                        <p class="title">{{ stats.wins|format_number }}</p>
                                     </div>
                                 </div>
                                 <div class="level-item has-text-centered">
                                     <div>
-                                        <p class="heading">Losses</p>
-                                        <p class="title">{{ stats.losses }}</p>
+                                        <p class="heading">{{ 'profile.record.losses'|trans }}</p>
+                                        <p class="title">{{ stats.losses|format_number }}</p>
                                     </div>
                                 </div>
                                 <div class="level-item has-text-centered">
                                     <div>
-                                        <p class="heading">Draws</p>
-                                        <p class="title">{{ stats.draws }}</p>
+                                        <p class="heading">{{ 'profile.record.draws'|trans }}</p>
+                                        <p class="title">{{ stats.draws|format_number }}</p>
                                     </div>
                                 </div>
                             </div>
@@ -110,28 +111,28 @@
                     </div>
                 </div>
 
-                <h2 class="title is-4">Recent games</h2>
+                <h2 class="title is-4">{{ 'profile.games.title'|trans }}</h2>
 
                 {% for game in games %}
                     {# @var game \App\Entity\Game #}
                     {% include 'actions/_game_row.html.twig' with {row: game_list_row(game, subject, isSelf, app.user), isSelf: isSelf} %}
                 {% else %}
-                    <p class="has-text-grey">No games to show{{ isSelf ? '' : ' yet' }}.</p>
+                    <p class="has-text-grey">{{ (isSelf ? 'profile.games.empty_self' : 'profile.games.empty_other')|trans }}</p>
                 {% endfor %}
 
                 {% if games.haveToPaginate %}
-                    <nav class="pagination" role="navigation" aria-label="pagination">
+                    <nav class="pagination" role="navigation" aria-label="{{ 'profile.pagination.label'|trans }}">
                         {% if games.hasPreviousPage %}
-                            <a class="pagination-previous" href="{{ path('profile', {username: subject.username, page: games.previousPage}) }}">Previous</a>
+                            <a class="pagination-previous" href="{{ path('profile', {username: subject.username, page: games.previousPage}) }}">{{ 'profile.pagination.previous'|trans }}</a>
                         {% else %}
-                            <a class="pagination-previous" disabled>Previous</a>
+                            <a class="pagination-previous" disabled>{{ 'profile.pagination.previous'|trans }}</a>
                         {% endif %}
                         {% if games.hasNextPage %}
-                            <a class="pagination-next" href="{{ path('profile', {username: subject.username, page: games.nextPage}) }}">Next</a>
+                            <a class="pagination-next" href="{{ path('profile', {username: subject.username, page: games.nextPage}) }}">{{ 'profile.pagination.next'|trans }}</a>
                         {% else %}
-                            <a class="pagination-next" disabled>Next</a>
+                            <a class="pagination-next" disabled>{{ 'profile.pagination.next'|trans }}</a>
                         {% endif %}
-                        <span class="pagination-list ml-3">Page {{ games.currentPage }} of {{ games.nbPages }}</span>
+                        <span class="pagination-list ml-3">{{ 'profile.pagination.page_of'|trans({page: games.currentPage, total: games.nbPages}) }}</span>
                     </nav>
                 {% endif %}
             </div>

@@ -1,7 +1,8 @@
 {# The players and option badges above the board, or (compact: true) at the top of a games-list card. @var header \App\Model\GameHeader #}
-{% macro seat(player, letter, tagClass) %}
+{% trans_default_domain 'game' %}
+{% macro seat(player, isWhite, tagClass) %}
     <span class="game-header__seat">
-        <span class="tag {{ tagClass }}" title="{{ letter == 'W' ? 'White' : 'Black' }}">{{ letter }}</span>
+        <span class="tag {{ tagClass }}" title="{{ isWhite ? 'color.white'|trans : 'color.black'|trans }}">{{ isWhite ? 'color.white_initial'|trans : 'color.black_initial'|trans }}</span>
         {% if player.username %}
             <a href="{{ path('profile', {username: player.username}) }}" class="game-header__name">{{ player.label }}</a>
         {% else %}
@@ -12,9 +13,9 @@
 {% import _self as m %}
 <div class="game-header{{ compact ?? false ? ' game-header--compact' }}"{{ compact ?? false ? '' : ' id="game-header"' }}>
     <div class="game-header__players">
-        {{ m.seat(header.white, 'W', 'is-white') }}
-        <span class="has-text-grey-light">vs</span>
-        {{ m.seat(header.black, 'B', 'is-dark') }}
+        {{ m.seat(header.white, true, 'is-white') }}
+        <span class="has-text-grey-light">{{ 'header.versus'|trans }}</span>
+        {{ m.seat(header.black, false, 'is-dark') }}
     </div>
     <div class="tags game-header__badges{{ compact ?? false ? ' are-small' }}">
         {% for badge in header.badges %}

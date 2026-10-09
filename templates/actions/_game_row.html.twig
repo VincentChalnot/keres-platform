@@ -3,12 +3,13 @@
    dashboard widget, `/games`, the lobby and a profile's game history - never
    duplicated. The players and option badges are the game page's own header
    partial, compact. @var row \App\Model\GameListRow #}
+{% trans_default_domain 'game' %}
 <div class="box game-row mb-4">
     <div class="game-row__body">
         {% include 'actions/_game_header.html.twig' with {header: row.header, compact: true} only %}
         <p class="game-row__status">
             {% if row.turnLabel %}
-                <span class="tag is-rounded {{ row.turnLabel == 'Your turn' ? 'is-primary' : 'is-dark' }}">{{ row.turnLabel }}</span>
+                <span class="tag is-rounded {{ row.isSubjectTurn ? 'is-primary' : 'is-dark' }}">{{ row.turnLabel }}</span>
             {% endif %}
             {% if row.resultLabel %}
                 <span class="tag is-rounded is-light">{{ row.resultLabel }}</span>
@@ -16,10 +17,11 @@
             {% if row.timeRemainingLabel %}
                 <span class="has-text-grey">{{ row.timeRemainingLabel }}</span>
             {% endif %}
-            <span class="has-text-grey">{{ row.isGameOver ? 'Finished' : 'Last move' }}: {{ row.lastActivityAt|date('Y-m-d H:i') }}</span>
+            {% set activityDate = row.lastActivityAt|format_datetime('medium', 'short') %}
+            <span class="has-text-grey">{{ row.isGameOver ? 'game_row.finished'|trans({date: activityDate}) : 'game_row.last_move'|trans({date: activityDate}) }}</span>
         </p>
     </div>
     <a href="{{ path('play', {uuid: row.uuid}) }}" class="button is-rounded is-primary is-small game-row__action">
-        {{ row.isGameOver ? 'View' : (isSelf ? 'Resume' : 'Watch') }}
+        {{ row.isGameOver ? 'game_row.action.view'|trans : (isSelf ? 'game_row.action.resume'|trans : 'game_row.action.watch'|trans) }}
     </a>
 </div>

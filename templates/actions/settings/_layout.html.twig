@@ -1,26 +1,27 @@
 {% extends 'base.html.twig' %}
+{% trans_default_domain 'settings' %}
 
 {#
     Settings shell: vertical section nav on the left, one section per page.
     Each section template sets `section` (from its action) and fills `settings_content`.
 #}
 {% set settings_sections = [
-    {key: 'profile', route: 'settings_profile', label: 'Profile', icon: 'fa-id-card'},
-    {key: 'board', route: 'settings_board', label: 'Board & gameplay', icon: 'fa-chess-board'},
-    {key: 'notifications', route: 'settings_notifications', label: 'Notifications', icon: 'fa-bell'},
-    {key: 'privacy', route: 'settings_privacy', label: 'Privacy', icon: 'fa-user-shield'},
-    {key: 'connections', route: 'settings_connections', label: 'Connected accounts', icon: 'fa-link'},
+    {key: 'profile', route: 'settings_profile', label: 'nav.profile'|trans, icon: 'fa-id-card'},
+    {key: 'board', route: 'settings_board', label: 'nav.board'|trans, icon: 'fa-chess-board'},
+    {key: 'notifications', route: 'settings_notifications', label: 'nav.notifications'|trans, icon: 'fa-bell'},
+    {key: 'privacy', route: 'settings_privacy', label: 'nav.privacy'|trans, icon: 'fa-user-shield'},
+    {key: 'connections', route: 'settings_connections', label: 'nav.connections'|trans, icon: 'fa-link'},
 ] %}
 
-{% block title %}Settings{% endblock %}
+{% block title %}{{ 'title'|trans }}{% endblock %}
 
 {% block body %}
 <main class="section">
     <div class="container">
-        <h1 class="title">Settings</h1>
+        <h1 class="title">{{ 'title'|trans }}</h1>
         <div class="columns settings">
             <div class="column is-3">
-                <aside class="menu settings-nav" aria-label="Settings sections">
+                <aside class="menu settings-nav" aria-label="{{ 'nav.label'|trans }}">
                     <ul class="menu-list">
                         {% for item in settings_sections %}
                             <li>

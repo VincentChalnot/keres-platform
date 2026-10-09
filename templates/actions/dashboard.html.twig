@@ -1,11 +1,12 @@
 {% extends 'base.html.twig' %}
+{% trans_default_domain 'game' %}
 
-{% block title %}Dashboard{% endblock %}
+{% block title %}{{ 'dashboard.page_title'|trans }}{% endblock %}
 
 {% block body %}
 <main class="section">
     <div class="container">
-        <h1 class="title">Welcome back{{ app.user.displayName ? ', ' ~ app.user.displayName : '' }}</h1>
+        <h1 class="title">{{ app.user.displayName ? 'dashboard.welcome_named'|trans({name: app.user.displayName}) : 'dashboard.welcome'|trans }}</h1>
 
         <div class="columns is-multiline dashboard-widgets">
             <div class="column is-half">

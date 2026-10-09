@@ -16,6 +16,7 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpKernel\Attribute\AsController;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
+use Symfony\Contracts\Translation\TranslatorInterface;
 
 /**
  * `GET|POST /settings/privacy` - Settings -> Privacy: search visibility,
@@ -37,6 +38,7 @@ class SettingsPrivacyAction extends AbstractController
         private readonly UserPreferencesManager $userPreferencesManager,
         private readonly FriendshipRepository $friendshipRepository,
         private readonly EntityManagerInterface $entityManager,
+        private readonly TranslatorInterface $translator,
     ) {
     }
 
@@ -57,7 +59,7 @@ class SettingsPrivacyAction extends AbstractController
         if ($form->isSubmitted() && $form->isValid()) {
             $preferences->touch();
             $this->entityManager->flush();
-            $this->addFlash('success', 'Privacy settings saved.');
+            $this->addFlash('success', $this->translator->trans('flash.privacy_saved', [], 'flashes'));
 
             return $this->redirectToRoute('settings_privacy');
         }
@@ -65,12 +67,12 @@ class SettingsPrivacyAction extends AbstractController
         $dataExportForm = $this->createForm(GdprRequestType::class, null, [
             'action' => $this->generateUrl('settings_privacy_data_export'),
             'user_email' => $user->getEmail(),
-            'submit_label' => 'Request data export',
+            'submit_label' => 'gdpr.submit_export',
         ]);
         $accountDeletionForm = $this->createForm(GdprRequestType::class, null, [
             'action' => $this->generateUrl('settings_privacy_account_deletion'),
             'user_email' => $user->getEmail(),
-            'submit_label' => 'Request account deletion',
+            'submit_label' => 'gdpr.submit_deletion',
         ]);
 
         return [

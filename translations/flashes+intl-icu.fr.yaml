@@ -1,3 +1,15 @@
 # Flash messages (addFlash). Translated when raised, in the locale of the request that raises them.
 flash:
     profile_saved: Profil enregistré.
+    board_saved: Paramètres du plateau enregistrés.
+    privacy_saved: Paramètres de confidentialité enregistrés.
+    notifications_saved: Paramètres de notification enregistrés.
+    deletion_requested: Votre demande de suppression de compte a bien été reçue. Nous reviendrons vers vous sous 30 jours.
+    export_requested: Votre demande d’export de données a bien été reçue. Nous reviendrons vers vous sous 30 jours.
+    request_failed: Nous n’avons pas pu envoyer votre demande. Veuillez réessayer.
+    register_check_email: Consultez votre boîte mail pour finaliser la création de votre compte.
+    lost_password_sent: Si un compte existe pour cette adresse e-mail, un lien de réinitialisation vient d’être envoyé.
+    already_logged_in: Vous êtes déjà connecté.
+    reset_missing_token: Jeton de réinitialisation manquant.
+    reset_invalid: Ce lien de réinitialisation est invalide ou a expiré.
+    password_reset: Votre mot de passe a été réinitialisé — vous pouvez maintenant vous connecter.

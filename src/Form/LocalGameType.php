@@ -25,42 +25,43 @@ class LocalGameType extends AbstractType
     {
         $builder
             ->add('playerSide', ChoiceType::class, [
-                'label' => 'Side to play',
+                'label' => 'new_local_game.form.player_side',
                 'choices' => [
-                    'White' => 'white',
-                    'Black' => 'black',
-                    'Random' => 'random',
+                    'color.white' => 'white',
+                    'color.black' => 'black',
+                    'color.random' => 'random',
                 ],
                 'data' => 'random', // Default selection
             ])
             ->add('opponentType', ChoiceType::class, [
-                'label' => 'Opponent',
+                'label' => 'new_local_game.form.opponent',
                 'choices' => [
-                    'AI' => OpponentType::AI,
-                    'Hot-seat (2 players)' => OpponentType::HOTSEAT,
+                    'new_local_game.form.opponent_ai' => OpponentType::AI,
+                    'new_local_game.form.opponent_hotseat' => OpponentType::HOTSEAT,
                 ],
                 'data' => OpponentType::AI, // Default selection
             ])
             ->add('aiLevel', ChoiceType::class, [
-                'label' => 'Difficulty',
-                'help' => 'Only applies against the AI. 1 is weakest, 10 is full strength.',
+                'label' => 'new_local_game.form.ai_level',
+                'help' => 'new_local_game.form.ai_level_help',
+                'choice_translation_domain' => false,
                 'choices' => array_combine(range(1, 10), range(1, 10)),
                 'data' => 1, // T10: default is the weakest level.
             ])
             ->add('liveEvaluation', CheckboxType::class, [
-                'label' => 'Live evaluation bar',
-                'help' => 'Shows the engine\'s assessment of the position next to the board, like chess.com. Casual games only.',
+                'label' => 'new_local_game.form.live_evaluation',
+                'help' => 'new_local_game.form.live_evaluation_help',
                 'required' => false,
                 'data' => false,
             ])
             ->add('submit', SubmitType::class, [
-                'label' => 'Start Game',
+                'label' => 'new_local_game.form.submit',
                 'attr' => ['class' => 'button is-primary'],
             ]);
     }
 
     public function configureOptions(OptionsResolver $resolver): void
     {
-        $resolver->setDefaults([]);
+        $resolver->setDefault('translation_domain', 'game');
     }
 }

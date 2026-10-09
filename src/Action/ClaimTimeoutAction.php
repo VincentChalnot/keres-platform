@@ -15,6 +15,7 @@ use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\Attribute\AsController;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Uid\Uuid;
+use Symfony\Contracts\Translation\TranslatorInterface;
 
 /**
  * The player-facing escape hatch for path (c) of flag adjudication
@@ -31,6 +32,7 @@ readonly class ClaimTimeoutAction
         private ClockAdjudicator $clockAdjudicator,
         private GameStatePayloadBuilder $payloadBuilder,
         private GameEngine $gameEngine,
+        private TranslatorInterface $translator,
     ) {
     }
 
@@ -44,11 +46,11 @@ readonly class ClaimTimeoutAction
         $game = $this->gameRepository->findByUuid(Uuid::fromString($uuid));
 
         if (!$game) {
-            return new JsonResponse(['error' => 'Game not found'], Response::HTTP_NOT_FOUND);
+            return new JsonResponse(['error' => $this->translator->trans('api_error.game_not_found', [], 'game')], Response::HTTP_NOT_FOUND);
         }
 
         if (!$this->security->isGranted(GameVoter::PARTICIPATE, $game)) {
-            return new JsonResponse(['error' => 'Access denied'], Response::HTTP_FORBIDDEN);
+            return new JsonResponse(['error' => $this->translator->trans('api_error.access_denied', [], 'game')], Response::HTTP_FORBIDDEN);
         }
 
         $this->clockAdjudicator->adjudicate($game);
@@ -60,7 +62,11 @@ readonly class ClaimTimeoutAction
         }
 
         return new JsonResponse(
-            ['error' => 'clock_not_expired', 'state' => $payload],
+            [
+                'error' => $this->translator->trans('api_error.clock_not_expired', [], 'game'),
+                'code' => 'clock_not_expired',
+                'state' => $payload,
+            ],
             Response::HTTP_CONFLICT
         );
     }

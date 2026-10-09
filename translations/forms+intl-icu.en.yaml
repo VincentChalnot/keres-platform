@@ -10,3 +10,42 @@ profile_settings:
     country: Country
     country_none: Not specified
     submit: Save changes
+    locale_help: Choose the language of the interface. “Automatic” follows your browser’s language.
+common:
+    save_changes: Save changes
+board_settings:
+    show_coordinates: Show board coordinates
+    show_threats: Highlight opponent threats on hover
+notification_settings:
+    newsletter: Subscribe to the newsletter
+privacy_settings:
+    searchable: Appear in player search
+    allow_contact: Allow other players who know my email to contact me
+feedback:
+    category: Category
+    category_bug: Bug report
+    category_suggestion: Suggestion
+    category_gameplay: Gameplay feedback
+    category_other: Other
+    message: Your feedback
+    message_placeholder: Describe your feedback, bug, or suggestion…
+    submit: Send feedback
+gdpr:
+    email: Your account email
+    message: Anything else we should know? (optional)
+    message_placeholder: Optional additional context…
+    submit: Submit request
+    submit_export: Request data export
+    submit_deletion: Request account deletion
+lost_password:
+    email: Email address
+    submit: Send reset link
+register:
+    email: Email address
+    password: Password
+    password_repeat: Repeat password
+    submit: Create account
+reset_password:
+    password: New password
+    password_repeat: Repeat new password
+    submit: Set new password

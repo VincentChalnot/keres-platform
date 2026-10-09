@@ -16,6 +16,7 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpKernel\Attribute\AsController;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
+use Symfony\Contracts\Translation\TranslatorInterface;
 
 /**
  * `POST /settings/privacy/data-export` - T5: request intake only. Creates a
@@ -33,6 +34,7 @@ class SettingsPrivacyDataExportAction extends AbstractController
     public function __construct(
         private readonly EntityManagerInterface $entityManager,
         private readonly AdminNotificationMailer $adminNotificationMailer,
+        private readonly TranslatorInterface $translator,
     ) {
     }
 
@@ -48,7 +50,7 @@ class SettingsPrivacyDataExportAction extends AbstractController
 
         $form = $this->createForm(GdprRequestType::class, null, [
             'user_email' => $user->getEmail(),
-            'submit_label' => 'Request data export',
+            'submit_label' => 'gdpr.submit_export',
         ]);
         $form->handleRequest($request);
 
@@ -66,9 +68,9 @@ class SettingsPrivacyDataExportAction extends AbstractController
 
             $this->adminNotificationMailer->sendGdprRequestNotification($feedback);
 
-            $this->addFlash('success', 'Your data export request has been received. We will get back to you within 30 days.');
+            $this->addFlash('success', $this->translator->trans('flash.export_requested', [], 'flashes'));
         } else {
-            $this->addFlash('error', 'We could not submit your request. Please try again.');
+            $this->addFlash('error', $this->translator->trans('flash.request_failed', [], 'flashes'));
         }
 
         return $this->redirectToRoute('settings_privacy');

@@ -1,0 +1,247 @@
+# Game-related pages: lobby, play board shell, games list, dashboard, local game form, invites,
+# plus the labels produced by GameHeaderPresenter / GameListPresenter and the legacy JSON errors
+# of the /play/{uuid}/* actions.
+color:
+    white: Blancs
+    black: Noirs
+    random: Aléatoire
+    white_initial: B
+    black_initial: N
+
+option:
+    rated: Classée
+    casual: Amicale
+    live_evaluation: Évaluation en direct
+
+speed:
+    bullet: Bullet
+    blitz: Blitz
+    rapid: Rapide
+    classical: Classique
+    correspondence: Correspondance
+
+time_control:
+    kind:
+        realtime: Temps réel
+        correspondence: Correspondance
+        unlimited: Illimitée
+    unlimited: Illimitée
+    correspondence: '{hours} h / coup'
+    realtime: '{initial}+{increment}'
+    seconds_short: '{seconds} s'
+    hours_option: '{hours, plural, one {# heure} other {# heures}}'
+
+header:
+    versus: contre
+    player:
+        ai: 'Ordinateur (niveau {level})'
+        player_1: Joueur 1
+        player_2: Joueur 2
+        anonymous: Joueur
+    badge:
+        rated_title: Compte pour le classement des deux joueurs
+        casual_title: N’affecte pas les classements
+        time_control_title: Cadence
+        speed_title: Catégorie de vitesse
+        live_evaluation_title: La barre d’évaluation du moteur est affichée pendant la partie
+
+game_row:
+    turn:
+        yours: À vous de jouer
+        theirs: Au tour de l’adversaire
+        hotseat: '{side, select, white {Aux Blancs de jouer} other {Aux Noirs de jouer}}'
+        next_to_play: 'Prochain trait : {side, select, white {les Blancs} other {les Noirs}}'
+    result:
+        aborted: Annulée
+        draw: Partie nulle
+        white_wins: Victoire des Blancs
+        black_wins: Victoire des Noirs
+    remaining:
+        overdue: Délai dépassé
+        hours: '{hours} h restantes'
+        minutes: '{minutes} min restantes'
+        seconds: '{seconds} s restantes'
+    finished: 'Terminée : {date}'
+    last_move: 'Dernier coup : {date}'
+    action:
+        view: Voir
+        resume: Reprendre
+        watch: Observer
+
+lobby:
+    page_title: Salon - Keres
+    heading: Salon
+    subtitle: Publiez une proposition de partie ou rejoignez celle d’un autre joueur.
+    new_seek:
+        title: Nouvelle proposition
+        format: Format
+        format_help: Un format remplit le formulaire ci-dessous. Ajustez ce que vous voulez, puis publiez votre proposition.
+        time_control: Cadence
+        initial_minutes: Temps initial (minutes)
+        increment_seconds: Incrément (secondes par coup)
+        time_per_move: Temps par coup
+        colour: Couleur
+        rated: Type de partie
+        unlimited_help: Les parties illimitées sont toujours amicales.
+        post: Publier la proposition
+        invite: Inviter un ami
+        invite_help: '« Inviter un ami » reprend les réglages ci-dessus pour créer un lien privé à usage unique ; il n’apparaît jamais parmi les propositions publiques.'
+    open_seeks:
+        title: Propositions ouvertes
+        player: Joueur
+        time_control: Cadence
+        rated: Type
+        colour: Couleur
+    local:
+        title: Vous préférez jouer contre l’ordinateur ou à deux sur le même écran ?
+        button: Jouer contre l’ordinateur ou à deux
+    your_games:
+        title: Vos parties
+
+game_list:
+    page_title: Vos parties - Keres
+    heading: Vos parties
+    tab:
+        in_progress: En cours
+        finished: Terminées
+    empty:
+        in_progress: Aucune partie en cours.
+        finished: Aucune partie terminée.
+    view_all: 'Voir les {count} parties en cours →'
+    pagination:
+        label: pagination
+        previous: Précédent
+        next: Suivant
+        page: 'Page {current} sur {total}'
+
+dashboard:
+    page_title: Tableau de bord
+    welcome: Bon retour parmi nous
+    welcome_named: 'Bon retour parmi nous, {name}'
+    recent_games:
+        title: Parties en cours
+        new_game: Nouvelle partie
+    stats:
+        title: Vos statistiques
+        wins: Victoires
+        losses: Défaites
+        draws: Nulles
+        win_rate_label: 'Taux de victoire :'
+        win_rate_value: '{rate, number} %'
+        win_rate_basis: 'sur {count, plural, one {# partie terminée} other {# parties terminées}}'
+        empty: Aucune partie terminée pour l’instant.
+
+welcome:
+    page_title: Jouez à Keres en ligne
+    heading: Jouez à Keres en ligne
+    subtitle: Connectez-vous pour trouver des adversaires, jouer des parties classées et conserver votre historique.
+    continue_google: Continuer avec Google
+    continue_discord: Continuer avec Discord
+    create_account: Créer un compte
+    sign_in: Connexion
+    try_it: Vous voulez simplement essayer ?
+    try_button: Jouer contre l’ordinateur ou à deux sans compte
+    guest_help: 'Les parties d’invité n’existent que dans ce navigateur : elles ne sont ni classées ni enregistrées sur un compte.'
+    image_alt: Une partie de Keres en cours
+    announcements:
+        title: Annonces
+        v1:
+            title: Keres v1.0 est arrivé
+            body: Les parties par correspondance, les invitations et les adversaires informatiques de tous niveaux sont désormais disponibles.
+        no_account:
+            title: Jouez sans compte
+            body: Essayez l’ordinateur ou une partie à deux sur le même écran, tout de suite et sans inscription.
+    recent_games:
+        title: Parties terminées récemment
+        empty: Aucune partie terminée à afficher pour l’instant.
+
+play:
+    page_title: Partie - Keres
+    board:
+        eval_bar: Barre d’évaluation du moteur
+        game_over: Partie terminée
+        loading: Chargement…
+        switch_sides: Changer de camp
+        hide_threats: Masquer les menaces
+        hide_coords: Masquer les coordonnées
+        fullscreen: Plein écran
+        undo: Annuler le coup
+        resign: Abandonner
+        feedback: Avis
+        history:
+            title: Historique des coups
+            previous: ◄ Préc.
+            previous_title: Coup précédent
+            next: Suiv. ►
+            next_title: Coup suivant
+        unstack_modal:
+            title: Choisissez votre coup
+            text: Vous déplacez une pile. Souhaitez-vous déplacer toute la pile ou seulement la pièce du dessus ?
+            move_stack: Déplacer la pile
+            move_unstack: Déplacer la pièce du dessus
+            select_instead: Sélectionner cette pièce
+        feedback_modal:
+            title: Avis
+            close: Fermer
+            loading: Chargement
+
+play_guest:
+    page_title: Partie d’invité - Keres
+    notice:
+        intro: 'Vous jouez en tant qu’invité : cette partie n’existe que dans ce navigateur.'
+        sign_in: Connectez-vous
+        or: ou
+        create_account: créez un compte
+        outro: pour jouer en ligne et conserver vos parties.
+
+new_local_game:
+    page_title: Nouvelle partie locale - Keres
+    title: Jouer contre l’ordinateur ou à deux
+    subtitle:
+        before: Vous préférez affronter une autre personne en ligne ? Rendez-vous dans le
+        link: salon
+        after: .
+    back: Retour
+    form:
+        player_side: Camp
+        opponent: Adversaire
+        opponent_ai: Ordinateur
+        opponent_hotseat: À deux sur le même écran
+        ai_level: Difficulté
+        ai_level_help: Ne s’applique que contre l’ordinateur. 1 est le niveau le plus faible, 10 la pleine puissance.
+        live_evaluation: Barre d’évaluation en direct
+        live_evaluation_help: Affiche l’évaluation de la position par le moteur à côté du plateau, comme sur chess.com. Parties amicales uniquement.
+        submit: Commencer la partie
+
+invite:
+    page_title: Invitation à une partie
+    back_to_lobby: Retour au salon
+    self:
+        title: Ceci est votre propre invitation
+        text: 'Partagez plutôt ce lien avec un ami : vous ne pouvez pas accepter votre propre invitation.'
+    blocked:
+        title: Cette invitation n’est pas disponible
+        text: Vous ne pouvez pas accepter l’invitation de cet utilisateur.
+    rate_limited:
+        title: Trop de tentatives
+        text: Patientez un instant, puis rechargez cette page pour réessayer.
+    expired:
+        title: Cette invitation n’est plus disponible
+        text: Elle a peut-être expiré ou a déjà été acceptée. Demandez un nouveau lien.
+    not_found:
+        title: Invitation introuvable
+        text: Ce lien d’invitation n’est pas valide.
+
+# Legacy `{error: ...}` JSON of the /play/{uuid}/* actions, shown as-is by the TypeScript client.
+api_error:
+    game_not_found: Partie introuvable.
+    access_denied: Accès refusé.
+    game_finished: Cette partie est déjà terminée.
+    flagged: Votre temps est écoulé.
+    not_your_turn: Ce n’est pas votre tour.
+    concurrent_move: Un autre coup était joué en même temps. Veuillez réessayer.
+    invalid_move_data: Le coup n’a pas pu être lu.
+    abort_not_allowed: Cette partie ne peut plus être annulée.
+    clock_not_expired: Le temps n’est pas encore écoulé.
+    no_moves_to_undo: Aucun coup à annuler.
+    undo_unavailable_multiplayer: L’annulation d’un coup n’est pas disponible dans les parties multijoueur.

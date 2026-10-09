@@ -1,11 +1,13 @@
 {% extends 'email/_layout.txt.twig' %}
 
+{% trans_default_domain 'emails' %}
+
 {% block content %}
-Hello{{ signup.name ? ' ' ~ signup.name : '' }},
+{{ signup.name ? 'greeting.named'|trans({name: signup.name}) : 'greeting.anonymous'|trans }}
 
-Thanks for your interest in the Keres physical edition! Please confirm this email address to secure your spot on the waitlist.
+{{ 'waitlist_confirm.intro'|trans }}
 
-Confirm my spot: {{ confirmUrl }}
+{{ 'layout.link_line'|trans({label: 'waitlist_confirm.button'|trans, url: confirmUrl}) }}
 
-This link expires in 7 days. If you did not sign up for the waitlist, you can safely ignore this email.
+{{ 'waitlist_confirm.expiry'|trans }}
 {% endblock %}

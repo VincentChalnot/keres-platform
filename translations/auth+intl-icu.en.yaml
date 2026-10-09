@@ -1,0 +1,27 @@
+login:
+    title: Login
+    subtitle: Choose your login provider
+    google: Login with Google
+    discord: Login with Discord
+    email_subtitle: Login with email & password
+    email: Email
+    password: Password
+    submit: Login
+    forgot_password: Forgot your password?
+    no_account: 'No account yet? <a href="{url}">Create one</a>.'
+    dev_title: Dev login (bypasses OIDC)
+    dev_placeholder: someone@example.com
+    dev_submit: Login as
+lost_password:
+    title: Forgot your password?
+    subtitle: We’ll email you a link to reset it.
+    back_to_login: Back to login
+register:
+    title: Create account
+    subtitle: Sign up with email & password
+    trust_notice: 'Read our <a href="{url}">commitments to you</a> before signing up.'
+    have_account: 'Already have an account? <a href="{url}">Log in</a>.'
+reset_password:
+    title: Reset your password
+    subtitle: Choose a new password for {email}
+    back_to_login: Back to login

@@ -9,6 +9,7 @@ use Symfony\Component\Form\AbstractType;
 use Symfony\Component\Form\Extension\Core\Type\CheckboxType;
 use Symfony\Component\Form\Extension\Core\Type\SubmitType;
 use Symfony\Component\Form\FormBuilderInterface;
+use Symfony\Component\OptionsResolver\OptionsResolver;
 
 /**
  * Settings -> Notifications. One in-app toggle and one email toggle per
@@ -26,11 +27,13 @@ class NotificationSettingsType extends AbstractType
 
         foreach (NotificationType::cases() as $type) {
             $inApp->add($type->value, CheckboxType::class, [
-                'label' => $type->label(),
+                'label' => $type->labelKey(),
+                'translation_domain' => 'notifications',
                 'required' => false,
             ]);
             $email->add($type->value, CheckboxType::class, [
-                'label' => $type->label(),
+                'label' => $type->labelKey(),
+                'translation_domain' => 'notifications',
                 'required' => false,
             ]);
         }
@@ -39,11 +42,16 @@ class NotificationSettingsType extends AbstractType
             ->add($inApp)
             ->add($email)
             ->add('newsletterOptIn', CheckboxType::class, [
-                'label' => 'Subscribe to the newsletter',
+                'label' => 'notification_settings.newsletter',
                 'required' => false,
             ])
             ->add('submit', SubmitType::class, [
-                'label' => 'Save changes',
+                'label' => 'common.save_changes',
             ]);
+    }
+
+    public function configureOptions(OptionsResolver $resolver): void
+    {
+        $resolver->setDefault('translation_domain', 'forms');
     }
 }

@@ -1,13 +1,14 @@
+{% trans_default_domain 'game' %}
 <div class="box dashboard-widget">
-    <h3 class="title is-5">Games in progress</h3>
+    <h3 class="title is-5">{{ 'dashboard.recent_games.title'|trans }}</h3>
     {% for game in recentGames %}
         {# @var game \App\Entity\Game #}
         {% include 'actions/_game_row.html.twig' with {row: game_list_row(game, app.user, true), isSelf: true} %}
     {% else %}
-        <p class="has-text-grey">No games in progress.</p>
+        <p class="has-text-grey">{{ 'game_list.empty.in_progress'|trans }}</p>
     {% endfor %}
     {% if inProgressCount > recentGames|length %}
-        <p><a href="{{ path('game_list') }}">View all {{ inProgressCount }} games in progress &rarr;</a></p>
+        <p><a href="{{ path('game_list') }}">{{ 'game_list.view_all'|trans({count: inProgressCount}) }}</a></p>
     {% endif %}
-    <a href="{{ path('lobby') }}" class="button is-primary is-rounded is-fullwidth mt-3">New game</a>
+    <a href="{{ path('lobby') }}" class="button is-primary is-rounded is-fullwidth mt-3">{{ 'dashboard.recent_games.new_game'|trans }}</a>
 </div>

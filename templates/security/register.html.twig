@@ -1,6 +1,7 @@
 {% extends 'base.html.twig' %}
+{% trans_default_domain 'auth' %}
 
-{% block title %}Create account{% endblock %}
+{% block title %}{{ 'register.title'|trans }}{% endblock %}
 
 {% block body %}
     <section class="section">
@@ -8,19 +9,19 @@
             <div class="columns is-centered">
                 <div class="column is-half">
                     <div class="box">
-                        <h3 class="title">Create account</h3>
-                        <p class="subtitle">Sign up with email &amp; password</p>
+                        <h3 class="title">{{ 'register.title'|trans }}</h3>
+                        <p class="subtitle">{{ 'register.subtitle'|trans }}</p>
 
                         {{ form_start(form) }}
                             {{ form_widget(form) }}
                         {{ form_end(form) }}
 
                         <p class="is-size-7 has-text-grey mt-2">
-                            Read our <a href="{{ static_site_url }}/trust">commitments to you</a> before signing up.
+                            {{ 'register.trust_notice'|trans({url: (static_site_url ~ '/trust')|e('html_attr')})|raw }}
                         </p>
 
                         <p class="mt-3">
-                            Already have an account? <a href="{{ path('login') }}">Log in</a>.
+                            {{ 'register.have_account'|trans({url: path('login')|e('html_attr')})|raw }}
                         </p>
                     </div>
                 </div>

@@ -1,0 +1,29 @@
+feedback:
+    page_title: Feedback
+    title: Alpha Feedback
+    subtitle: Help us improve Keres! Report bugs, suggest features, or share your gameplay experience.
+    thanks: Thank you for your feedback!
+    thanks_detail: We review every submission.
+waitlist:
+    page_title: Waitlist confirmation
+    confirmed_title: You’re on the list!
+    confirmed_text: Thanks for confirming — we’ll email you when the physical edition is ready.
+    invalid_title: This link is invalid or has expired
+    invalid_text: Please sign up again from the physical edition page on our website.
+    back: Back to Keres
+error:
+    generic_title: Error {code}
+    403:
+        title: Access denied
+        message: You don’t have permission to view this page.
+    404:
+        title: Page not found
+        message: The page you’re looking for doesn’t exist, or may have been moved.
+    500:
+        title: Something went wrong
+        message: An unexpected error occurred on our end. Please try again in a moment.
+    503:
+        title: Service unavailable
+        message: We’re temporarily unable to handle your request. Please try again shortly.
+    back_to_games: Back to your games
+    back_to_home: Back to home

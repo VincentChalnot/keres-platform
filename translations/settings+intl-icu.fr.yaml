@@ -1,0 +1,47 @@
+title: Paramètres
+nav:
+    label: Rubriques des paramètres
+    profile: Profil
+    board: Plateau et jeu
+    notifications: Notifications
+    privacy: Confidentialité
+    connections: Comptes connectés
+page_title: '{section} - Paramètres'
+profile:
+    title: Profil
+    username_can_change: Vous pouvez changer de nom d’utilisateur une fois tous les 12 mois. Après ce changement, le suivant sera possible le {date}.
+    username_locked: Prochain changement possible le {date}. D’ici là, vous ne pouvez modifier que les majuscules et minuscules.
+    display_name_help: Affiché à la place de votre nom d’utilisateur lorsque la place le permet.
+    email_help: Votre adresse de connexion. Elle ne peut pas être modifiée ici.
+board:
+    title: Plateau et jeu
+    intro: Comment le plateau s’affiche à l’ouverture de vos parties. Vous pouvez toujours modifier ces deux options depuis la page de la partie.
+notifications:
+    title: Notifications
+    in_app:
+        title: Notifications dans l’application
+        intro: Choisissez ce qui apparaît dans votre cloche de notifications. Me notifier quand :
+    email:
+        title: E-mail
+        intro: Recevez un e-mail pour les mêmes événements, même lorsque vous n’êtes pas sur le site. M’écrire quand :
+        unsubscribe: Vous pouvez aussi vous désabonner en cliquant sur le lien présent dans chaque e-mail de notification.
+    newsletter:
+        title: Newsletter
+privacy:
+    title: Confidentialité
+    blocked:
+        title: Utilisateurs bloqués
+        unblock: Débloquer
+        empty: Vous n’avez bloqué personne. Vous pouvez bloquer un joueur depuis sa page de profil.
+    data:
+        title: Vos données
+        intro: Demandez une copie de vos données ou la suppression de votre compte. Ces demandes sont traitées par une personne, pas automatiquement — nous reviendrons vers vous sous 30 jours.
+        export_title: Exporter mes données
+        deletion_title: Supprimer mon compte
+connections:
+    title: Comptes connectés
+    intro: Les fournisseurs avec lesquels vous pouvez vous connecter.
+    linked: Lié
+    not_linked: Non lié
+    password_too: Vous pouvez aussi vous connecter avec votre adresse e-mail et votre mot de passe.
+    auto_link: Se connecter avec un autre fournisseur utilisant la même adresse e-mail le lie automatiquement à ce compte.

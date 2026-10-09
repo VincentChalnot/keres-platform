@@ -20,6 +20,7 @@ use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\Attribute\AsController;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Uid\Uuid;
+use Symfony\Contracts\Translation\TranslatorInterface;
 
 /**
  * 03-time-control.md sec 7.2: needs no consent, refused once
@@ -38,6 +39,7 @@ readonly class AbortGameAction
         private GameEngine $gameEngine,
         private GameStatePayloadBuilder $payloadBuilder,
         private GameUpdatePublisher $publisher,
+        private TranslatorInterface $translator,
     ) {
     }
 
@@ -51,18 +53,22 @@ readonly class AbortGameAction
         $game = $this->gameRepository->findByUuid(Uuid::fromString($uuid));
 
         if (!$game) {
-            return new JsonResponse(['error' => 'Game not found'], Response::HTTP_NOT_FOUND);
+            return new JsonResponse(['error' => $this->translator->trans('api_error.game_not_found', [], 'game')], Response::HTTP_NOT_FOUND);
         }
 
         if (!$this->security->isGranted(GameVoter::PARTICIPATE, $game)) {
-            return new JsonResponse(['error' => 'Access denied'], Response::HTTP_FORBIDDEN);
+            return new JsonResponse(['error' => $this->translator->trans('api_error.access_denied', [], 'game')], Response::HTTP_FORBIDDEN);
         }
 
         if (!$game->isAbortable()) {
             $payload = $this->payloadBuilder->build($game, $this->gameEngine->getBoardMovesData($game));
 
             return new JsonResponse(
-                ['error' => 'abort_not_allowed', 'state' => $payload],
+                [
+                    'error' => $this->translator->trans('api_error.abort_not_allowed', [], 'game'),
+                    'code' => 'abort_not_allowed',
+                    'state' => $payload,
+                ],
                 Response::HTTP_CONFLICT
             );
         }
@@ -88,7 +94,11 @@ readonly class AbortGameAction
 
         if (!$aborted) {
             return new JsonResponse(
-                ['error' => 'abort_not_allowed', 'state' => $payload],
+                [
+                    'error' => $this->translator->trans('api_error.abort_not_allowed', [], 'game'),
+                    'code' => 'abort_not_allowed',
+                    'state' => $payload,
+                ],
                 Response::HTTP_CONFLICT
             );
         }

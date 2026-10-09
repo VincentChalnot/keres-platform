@@ -1,0 +1,247 @@
+# Game-related pages: lobby, play board shell, games list, dashboard, local game form, invites,
+# plus the labels produced by GameHeaderPresenter / GameListPresenter and the legacy JSON errors
+# of the /play/{uuid}/* actions.
+color:
+    white: White
+    black: Black
+    random: Random
+    white_initial: W
+    black_initial: B
+
+option:
+    rated: Rated
+    casual: Casual
+    live_evaluation: Live evaluation
+
+speed:
+    bullet: Bullet
+    blitz: Blitz
+    rapid: Rapid
+    classical: Classical
+    correspondence: Correspondence
+
+time_control:
+    kind:
+        realtime: Real-time
+        correspondence: Correspondence
+        unlimited: Unlimited
+    unlimited: Unlimited
+    correspondence: '{hours}h / move'
+    realtime: '{initial}+{increment}'
+    seconds_short: '{seconds}s'
+    hours_option: '{hours, plural, one {# hour} other {# hours}}'
+
+header:
+    versus: vs
+    player:
+        ai: 'AI (level {level})'
+        player_1: Player 1
+        player_2: Player 2
+        anonymous: Player
+    badge:
+        rated_title: Counts towards both players’ rating
+        casual_title: Does not affect ratings
+        time_control_title: Time control
+        speed_title: Speed category
+        live_evaluation_title: The engine evaluation bar is shown during play
+
+game_row:
+    turn:
+        yours: Your turn
+        theirs: Their turn
+        hotseat: '{side, select, white {White to move} other {Black to move}}'
+        next_to_play: 'Next to play: {side, select, white {White} other {Black}}'
+    result:
+        aborted: Aborted
+        draw: Draw
+        white_wins: White wins
+        black_wins: Black wins
+    remaining:
+        overdue: Overdue
+        hours: '{hours}h left'
+        minutes: '{minutes}m left'
+        seconds: '{seconds}s left'
+    finished: 'Finished: {date}'
+    last_move: 'Last move: {date}'
+    action:
+        view: View
+        resume: Resume
+        watch: Watch
+
+lobby:
+    page_title: Lobby - Keres
+    heading: Lobby
+    subtitle: Post a seek, or join someone else’s.
+    new_seek:
+        title: New seek
+        format: Format
+        format_help: A format fills in the form below. Adjust anything, then post your seek.
+        time_control: Time control
+        initial_minutes: Initial time (minutes)
+        increment_seconds: Increment (seconds per move)
+        time_per_move: Time per move
+        colour: Colour
+        rated: Rated
+        unlimited_help: Unlimited games are always casual.
+        post: Post seek
+        invite: Invite a friend
+        invite_help: '“Invite a friend” uses the same settings above to create a private, one-time link - it never appears in the public pool.'
+    open_seeks:
+        title: Open seeks
+        player: Player
+        time_control: Time control
+        rated: Rated
+        colour: Colour
+    local:
+        title: Prefer a computer or a local opponent?
+        button: Play AI or hot-seat
+    your_games:
+        title: Your games
+
+game_list:
+    page_title: Your Games - Keres
+    heading: Your games
+    tab:
+        in_progress: In progress
+        finished: Finished
+    empty:
+        in_progress: No games in progress.
+        finished: No finished games.
+    view_all: 'View all {count} games in progress →'
+    pagination:
+        label: pagination
+        previous: Previous
+        next: Next
+        page: 'Page {current} of {total}'
+
+dashboard:
+    page_title: Dashboard
+    welcome: Welcome back
+    welcome_named: 'Welcome back, {name}'
+    recent_games:
+        title: Games in progress
+        new_game: New game
+    stats:
+        title: Your stats
+        wins: Wins
+        losses: Losses
+        draws: Draws
+        win_rate_label: 'Win rate:'
+        win_rate_value: '{rate, number}%'
+        win_rate_basis: 'over {count, plural, one {# finished game} other {# finished games}}'
+        empty: No finished games yet.
+
+welcome:
+    page_title: Play Keres online
+    heading: Play Keres online
+    subtitle: Sign in to find opponents, play rated games, and keep your history.
+    continue_google: Continue with Google
+    continue_discord: Continue with Discord
+    create_account: Create an account
+    sign_in: Sign in
+    try_it: Just want to try it?
+    try_button: Play the AI or hot-seat without an account
+    guest_help: 'Guest games live in this browser only: they aren’t rated or saved to an account.'
+    image_alt: A Keres game in progress
+    announcements:
+        title: Announcements
+        v1:
+            title: Keres v1.0 is here
+            body: Correspondence games, invites, and AI opponents at every level are now live.
+        no_account:
+            title: Play without an account
+            body: Try the AI or a local hot-seat game instantly - no sign-up required.
+    recent_games:
+        title: Recently finished games
+        empty: No finished games to show yet.
+
+play:
+    page_title: Play Game - Keres
+    board:
+        eval_bar: Engine evaluation
+        game_over: Game over
+        loading: Loading…
+        switch_sides: Switch Sides
+        hide_threats: Hide Threats
+        hide_coords: Hide Coords
+        fullscreen: Fullscreen
+        undo: Undo
+        resign: Resign
+        feedback: Feedback
+        history:
+            title: Move History
+            previous: ◄ Prev
+            previous_title: Previous Move
+            next: Next ►
+            next_title: Next Move
+        unstack_modal:
+            title: Choose your move
+            text: You are moving a stacked piece. Do you want to move the full stack or only the top piece?
+            move_stack: Move Full Stack
+            move_unstack: Move Top Piece
+            select_instead: Select this piece
+        feedback_modal:
+            title: Feedback
+            close: Close
+            loading: Loading
+
+play_guest:
+    page_title: Guest game - Keres
+    notice:
+        intro: 'You’re playing as a guest: this game lives in this browser only.'
+        sign_in: Sign in
+        or: or
+        create_account: create an account
+        outro: to play online and keep your games.
+
+new_local_game:
+    page_title: New Local Game - Keres
+    title: Play AI or hot-seat
+    subtitle:
+        before: Want to play another person online instead? Head to the
+        link: lobby
+        after: .
+    back: Back
+    form:
+        player_side: Side to play
+        opponent: Opponent
+        opponent_ai: AI
+        opponent_hotseat: Hot-seat (2 players)
+        ai_level: Difficulty
+        ai_level_help: Only applies against the AI. 1 is weakest, 10 is full strength.
+        live_evaluation: Live evaluation bar
+        live_evaluation_help: Shows the engine’s assessment of the position next to the board, like chess.com. Casual games only.
+        submit: Start Game
+
+invite:
+    page_title: Game invite
+    back_to_lobby: Back to the lobby
+    self:
+        title: This is your own invite
+        text: Share this link with a friend instead - you can’t accept your own invite.
+    blocked:
+        title: This invite is unavailable
+        text: You can’t accept an invite from this user.
+    rate_limited:
+        title: Too many attempts
+        text: Please wait a moment and reload this page to try again.
+    expired:
+        title: This invite is no longer available
+        text: It may have expired or already been accepted. Ask for a fresh link.
+    not_found:
+        title: Invite not found
+        text: This invite link is invalid.
+
+# Legacy `{error: ...}` JSON of the /play/{uuid}/* actions, shown as-is by the TypeScript client.
+api_error:
+    game_not_found: Game not found.
+    access_denied: Access denied.
+    game_finished: This game is already over.
+    flagged: Your time has run out.
+    not_your_turn: It’s not your turn.
+    concurrent_move: Another move was being played at the same time. Please try again.
+    invalid_move_data: The move could not be read.
+    abort_not_allowed: This game can no longer be aborted.
+    clock_not_expired: The clock has not run out yet.
+    no_moves_to_undo: There are no moves to undo.
+    undo_unavailable_multiplayer: Undo is not available in multiplayer games.

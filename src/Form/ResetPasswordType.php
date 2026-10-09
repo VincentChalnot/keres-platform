@@ -9,6 +9,7 @@ use Symfony\Component\Form\Extension\Core\Type\PasswordType;
 use Symfony\Component\Form\Extension\Core\Type\RepeatedType;
 use Symfony\Component\Form\Extension\Core\Type\SubmitType;
 use Symfony\Component\Form\FormBuilderInterface;
+use Symfony\Component\OptionsResolver\OptionsResolver;
 use Symfony\Component\Validator\Constraints\Length;
 use Symfony\Component\Validator\Constraints\NotBlank;
 
@@ -25,17 +26,22 @@ class ResetPasswordType extends AbstractType
         $builder
             ->add('password', RepeatedType::class, [
                 'type' => PasswordType::class,
-                'invalid_message' => 'The passwords don\'t match.',
+                'invalid_message' => 'password.mismatch',
                 'required' => true,
-                'first_options' => ['label' => 'New password'],
-                'second_options' => ['label' => 'Repeat new password'],
+                'first_options' => ['label' => 'reset_password.password'],
+                'second_options' => ['label' => 'reset_password.password_repeat'],
                 'constraints' => [
                     new NotBlank(),
-                    new Length(min: self::PASSWORD_MIN_LENGTH, minMessage: 'Your password must be at least {{ limit }} characters.'),
+                    new Length(min: self::PASSWORD_MIN_LENGTH, minMessage: 'password.too_short'),
                 ],
             ])
             ->add('submit', SubmitType::class, [
-                'label' => 'Set new password',
+                'label' => 'reset_password.submit',
             ]);
+    }
+
+    public function configureOptions(OptionsResolver $resolver): void
+    {
+        $resolver->setDefault('translation_domain', 'forms');
     }
 }

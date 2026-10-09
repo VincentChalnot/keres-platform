@@ -13,6 +13,7 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpKernel\Attribute\AsController;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 use Symfony\Component\Routing\Attribute\Route;
+use Symfony\Contracts\Translation\TranslatorInterface;
 
 /**
  * Adapted from SidusUserBundle\Action\ResetPasswordAction: looks up the
@@ -27,6 +28,7 @@ class ResetPasswordAction extends AbstractController
         private readonly UserRepository $userRepository,
         private readonly EntityManagerInterface $entityManager,
         private readonly UserPasswordHasherInterface $passwordHasher,
+        private readonly TranslatorInterface $translator,
     ) {
     }
 
@@ -34,7 +36,7 @@ class ResetPasswordAction extends AbstractController
     public function __invoke(Request $request): RedirectResponse|array
     {
         if ($this->getUser()) {
-            $this->addFlash('error', 'You are already logged in.');
+            $this->addFlash('error', $this->translator->trans('flash.already_logged_in', [], 'flashes'));
 
             return $this->redirectToRoute('lobby');
         }
@@ -42,7 +44,7 @@ class ResetPasswordAction extends AbstractController
         $token = $request->query->get('token');
 
         if (!$token) {
-            $this->addFlash('error', 'Missing reset token.');
+            $this->addFlash('error', $this->translator->trans('flash.reset_missing_token', [], 'flashes'));
 
             return $this->redirectToRoute('login');
         }
@@ -50,7 +52,7 @@ class ResetPasswordAction extends AbstractController
         $user = $this->userRepository->findByValidResetTokenHash(hash('sha256', $token));
 
         if (null === $user) {
-            $this->addFlash('error', 'This reset link is invalid or has expired.');
+            $this->addFlash('error', $this->translator->trans('flash.reset_invalid', [], 'flashes'));
 
             return $this->redirectToRoute('lost_password');
         }
@@ -64,7 +66,7 @@ class ResetPasswordAction extends AbstractController
             $user->setResetTokenExpiresAt(null);
             $this->entityManager->flush();
 
-            $this->addFlash('success', 'Your password has been reset — you can now log in.');
+            $this->addFlash('success', $this->translator->trans('flash.password_reset', [], 'flashes'));
 
             return $this->redirectToRoute('login');
         }

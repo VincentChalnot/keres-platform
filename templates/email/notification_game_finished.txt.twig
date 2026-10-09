@@ -1,19 +1,11 @@
 {% extends 'email/_layout.txt.twig' %}
 
+{% trans_default_domain 'emails' %}
+
 {% block content %}
-Hello {{ recipient.username }},
+{{ 'greeting.named'|trans({name: recipient.username}) }}
 
-{% if outcome == 'win' %}
-You won your game!
-{%- elseif outcome == 'loss' %}
-You lost your game.
-{%- elseif outcome == 'draw' %}
-Your game ended in a draw.
-{%- elseif outcome == 'aborted' %}
-Your game was aborted before it really began - no result, no rating change.
-{%- else %}
-Your game has ended.
-{%- endif %}
+{{ 'notification_game_finished.outcome'|trans({outcome: outcome ?? 'other'}) }}
 
-Review the game: {{ playUrl }}
+{{ 'layout.link_line'|trans({label: 'notification_game_finished.button'|trans, url: playUrl}) }}
 {% endblock %}

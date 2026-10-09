@@ -31,6 +31,7 @@ use Symfony\Component\HttpKernel\EventListener\AbstractSessionListener;
 use Symfony\Component\Messenger\MessageBusInterface;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Uid\Uuid;
+use Symfony\Contracts\Translation\TranslatorInterface;
 
 #[AsController]
 readonly class SubmitMoveAction
@@ -44,6 +45,7 @@ readonly class SubmitMoveAction
         private GameUpdatePublisher $publisher,
         private ClockAdjudicator $clockAdjudicator,
         private NotificationCenter $notificationCenter,
+        private TranslatorInterface $translator,
     ) {
     }
 
@@ -64,14 +66,14 @@ readonly class SubmitMoveAction
 
         if (!$game) {
             return new JsonResponse(
-                ['error' => 'Game not found'],
+                ['error' => $this->translator->trans('api_error.game_not_found', [], 'game')],
                 Response::HTTP_NOT_FOUND
             );
         }
 
         if (!$this->security->isGranted(GameVoter::PARTICIPATE, $game)) {
             return new JsonResponse(
-                ['error' => 'Access denied'],
+                ['error' => $this->translator->trans('api_error.access_denied', [], 'game')],
                 Response::HTTP_FORBIDDEN
             );
         }
@@ -95,16 +97,16 @@ readonly class SubmitMoveAction
 
         if (!$isPlayerTurn) {
             return new JsonResponse(
-                ['error' => 'Not your turn'],
+                ['error' => $this->translator->trans('api_error.not_your_turn', [], 'game')],
                 Response::HTTP_BAD_REQUEST
             );
         }
 
         try {
             $moveData = new MoveData($request->getContent());
-        } catch (\Exception $e) {
+        } catch (\Exception) {
             return new JsonResponse(
-                ['error' => 'Invalid move data: '.$e->getMessage()],
+                ['error' => $this->translator->trans('api_error.invalid_move_data', [], 'game')],
                 Response::HTTP_BAD_REQUEST
             );
         }
@@ -117,12 +119,19 @@ readonly class SubmitMoveAction
             return $this->finishedResponse($game, 'game_finished');
         } catch (StalePositionException) {
             return new JsonResponse(
-                ['error' => 'not_your_turn', 'state' => $this->currentPayload($game)],
+                [
+                    'error' => $this->translator->trans('api_error.not_your_turn', [], 'game'),
+                    'code' => 'not_your_turn',
+                    'state' => $this->currentPayload($game),
+                ],
                 Response::HTTP_CONFLICT
             );
         } catch (OptimisticLockException|RetryableException) {
             return new JsonResponse(
-                ['error' => 'concurrent_move'],
+                [
+                    'error' => $this->translator->trans('api_error.concurrent_move', [], 'game'),
+                    'code' => 'concurrent_move',
+                ],
                 Response::HTTP_CONFLICT
             );
         }
@@ -157,7 +166,11 @@ readonly class SubmitMoveAction
     private function finishedResponse(Game $game, string $errorCode): JsonResponse
     {
         return new JsonResponse(
-            ['error' => $errorCode, 'state' => $this->currentPayload($game)],
+            [
+                'error' => $this->translator->trans('flagged' === $errorCode ? 'api_error.flagged' : 'api_error.game_finished', [], 'game'),
+                'code' => $errorCode,
+                'state' => $this->currentPayload($game),
+            ],
             Response::HTTP_CONFLICT
         );
     }

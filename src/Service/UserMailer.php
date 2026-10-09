@@ -5,17 +5,25 @@ declare(strict_types=1);
 namespace App\Service;
 
 use App\Entity\User;
+use App\Service\Locale\EmailLocale;
 use Psr\Log\LoggerInterface;
 use Symfony\Bridge\Twig\Mime\TemplatedEmail;
 use Symfony\Component\Mailer\Exception\HttpTransportException;
 use Symfony\Component\Mailer\Exception\TransportExceptionInterface;
 use Symfony\Component\Mailer\MailerInterface;
+use Symfony\Contracts\Translation\TranslatorInterface;
 
 /**
  * Adapted from SidusUserBundle\Mailer\UserMailer. Two messages: the
  * password-reset link, and the 05-social.md sec 2.1 registration-oracle
  * fix - notifying an existing account when someone tries to register
  * with its email instead of disclosing that the address is already taken.
+ *
+ * Locale: both mails go to a `User`, so they are written in that user's saved
+ * locale (default locale if none/unsupported) - `EmailLocale::forUser()`. The
+ * locale is pinned on the message (`TemplatedEmail::locale()`: the body
+ * renderer switches the translator to it, whichever request/worker renders
+ * the queued mail) and the subject is translated here with the same locale.
  */
 class UserMailer
 {
@@ -23,15 +31,19 @@ class UserMailer
         private readonly MailerInterface $mailer,
         private readonly LoggerInterface $logger,
         private readonly string $mailerFromAddress,
+        private readonly EmailLocale $emailLocale,
+        private readonly TranslatorInterface $translator,
     ) {
     }
 
     public function sendResetPasswordMail(User $user, string $resetUrl): void
     {
+        $locale = $this->emailLocale->forUser($user);
         $email = (new TemplatedEmail())
             ->from($this->mailerFromAddress)
             ->to($user->getEmail())
-            ->subject('Reset your Keres password')
+            ->locale($locale)
+            ->subject($this->translator->trans('reset_password.subject', [], 'emails', $locale))
             ->htmlTemplate('email/reset_password.html.twig')
             ->textTemplate('email/reset_password.txt.twig')
             ->context([
@@ -45,10 +57,12 @@ class UserMailer
     /** 05-social.md sec 2.1 / Open question 5: never disclose that the address is taken - notify the existing account instead. */
     public function sendAccountAlreadyExistsMail(User $user, string $lostPasswordUrl): void
     {
+        $locale = $this->emailLocale->forUser($user);
         $email = (new TemplatedEmail())
             ->from($this->mailerFromAddress)
             ->to($user->getEmail())
-            ->subject('Someone tried to create an account with your email')
+            ->locale($locale)
+            ->subject($this->translator->trans('account_exists.subject', [], 'emails', $locale))
             ->htmlTemplate('email/account_exists.html.twig')
             ->textTemplate('email/account_exists.txt.twig')
             ->context([

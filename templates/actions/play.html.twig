@@ -1,6 +1,7 @@
 {% extends 'base.html.twig' %}
+{% trans_default_domain 'game' %}
 
-{% block title %}Play Game - Keres{% endblock %}
+{% block title %}{{ 'play.page_title'|trans }}{% endblock %}
 
 {% block head %}
     {{ parent() }}

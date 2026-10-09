@@ -3,4 +3,21 @@
 profile:
     username:
         blank: Veuillez saisir un nom d’utilisateur.
-        format: Le nom d’utilisateur doit comporter de 3 à 32 caractères et ne peut contenir que des lettres, des chiffres, des tirets bas et des tirets.
+        format: Les noms d’utilisateur comptent de 3 à 32 caractères et ne peuvent contenir que des lettres, des chiffres, des tirets bas et des tirets.
+        cooldown: Vous ne pouvez changer de nom d’utilisateur qu’une fois tous les 12 mois. Prochain changement possible le {date}.
+        cooldown_later: Vous ne pouvez changer de nom d’utilisateur qu’une fois tous les 12 mois. Prochain changement possible à une date ultérieure.
+        too_many_attempts: Trop de tentatives, veuillez réessayer plus tard.
+        reserved: Ce nom d’utilisateur est réservé.
+        taken: Ce nom d’utilisateur est déjà pris.
+        just_taken: Ce nom d’utilisateur vient d’être pris.
+password:
+    mismatch: Les mots de passe ne correspondent pas.
+    too_short: Votre mot de passe doit contenir au moins {limit} caractères.
+register:
+    email_blank: Veuillez saisir votre adresse e-mail.
+feedback:
+    category_blank: Veuillez choisir une catégorie.
+    message_blank: Veuillez saisir votre avis.
+    message_too_short: Votre avis doit contenir au moins {limit} caractères.
+gdpr:
+    message_too_long: Veuillez rester en dessous de {limit} caractères.

@@ -1,15 +1,17 @@
 {% extends 'email/_layout.html.twig' %}
 
-{% block title %}Confirm your Keres waitlist spot{% endblock %}
+{% trans_default_domain 'emails' %}
+
+{% block title %}{{ 'waitlist_confirm.subject'|trans }}{% endblock %}
 
 {% block content %}
-    <p style="margin:0 0 16px 0;">Hello{{ signup.name ? ' ' ~ signup.name : '' }},</p>
+    <p style="margin:0 0 16px 0;">{{ signup.name ? 'greeting.named'|trans({name: signup.name}) : 'greeting.anonymous'|trans }}</p>
 
-    <p style="margin:0 0 16px 0;">Thanks for your interest in the Keres physical edition! Please confirm this email address to secure your spot on the waitlist.</p>
+    <p style="margin:0 0 16px 0;">{{ 'waitlist_confirm.intro'|trans }}</p>
 
     <p style="margin:0 0 24px 0;">
-        <a href="{{ confirmUrl }}" style="display:inline-block; background-color:#e19e5b; color:#1a1208; padding:12px 28px; border-radius:9999px; text-decoration:none; font-weight:bold;">Confirm my spot</a>
+        <a href="{{ confirmUrl }}" style="display:inline-block; background-color:#e19e5b; color:#1a1208; padding:12px 28px; border-radius:9999px; text-decoration:none; font-weight:bold;">{{ 'waitlist_confirm.button'|trans }}</a>
     </p>
 
-    <p style="margin:0;">This link expires in 7 days. If you did not sign up for the waitlist, you can safely ignore this email.</p>
+    <p style="margin:0;">{{ 'waitlist_confirm.expiry'|trans }}</p>
 {% endblock %}

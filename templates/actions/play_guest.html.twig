@@ -1,12 +1,13 @@
 {% extends 'base.html.twig' %}
+{% trans_default_domain 'game' %}
 
-{% block title %}Guest game - Keres{% endblock %}
+{% block title %}{{ 'play_guest.page_title'|trans }}{% endblock %}
 
 {% block body %}
     <div class="container mt-4">
         <div class="notification is-dark is-light guest-game-notice">
-            You're playing as a guest: this game lives in this browser only.
-            <a href="{{ path('login') }}">Sign in</a> or <a href="{{ path('register') }}">create an account</a> to play online and keep your games.
+            {{ 'play_guest.notice.intro'|trans }}
+            <a href="{{ path('login') }}">{{ 'play_guest.notice.sign_in'|trans }}</a> {{ 'play_guest.notice.or'|trans }} <a href="{{ path('register') }}">{{ 'play_guest.notice.create_account'|trans }}</a> {{ 'play_guest.notice.outro'|trans }}
         </div>
     </div>
     {# Opponent type and side are resolved client-side (query string on a new game, localStorage on reload). #}

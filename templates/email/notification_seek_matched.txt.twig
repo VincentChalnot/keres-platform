@@ -1,9 +1,11 @@
 {% extends 'email/_layout.txt.twig' %}
 
+{% trans_default_domain 'emails' %}
+
 {% block content %}
-Hello {{ recipient.username }},
+{{ 'greeting.named'|trans({name: recipient.username}) }}
 
-{{ opponent.username }} accepted your seek - the game has started!
+{{ 'notification_seek_matched.body'|trans({opponent: opponent.username}) }}
 
-Go to the game: {{ playUrl }}
+{{ 'layout.link_line'|trans({label: 'notification_seek_matched.button'|trans, url: playUrl}) }}
 {% endblock %}

@@ -1,0 +1,29 @@
+feedback:
+    page_title: Avis
+    title: Avis sur l’alpha
+    subtitle: Aidez-nous à améliorer Keres ! Signalez des bugs, proposez des fonctionnalités ou partagez votre expérience de jeu.
+    thanks: Merci pour votre avis !
+    thanks_detail: Nous lisons chaque message.
+waitlist:
+    page_title: Confirmation de la liste d’attente
+    confirmed_title: Vous êtes sur la liste !
+    confirmed_text: Merci d’avoir confirmé — nous vous écrirons dès que l’édition physique sera disponible.
+    invalid_title: Ce lien est invalide ou a expiré
+    invalid_text: Veuillez vous réinscrire depuis la page de l’édition physique de notre site.
+    back: Retour à Keres
+error:
+    generic_title: Erreur {code}
+    403:
+        title: Accès refusé
+        message: Vous n’avez pas l’autorisation de consulter cette page.
+    404:
+        title: Page introuvable
+        message: La page que vous cherchez n’existe pas ou a peut-être été déplacée.
+    500:
+        title: Une erreur est survenue
+        message: Une erreur inattendue s’est produite de notre côté. Veuillez réessayer dans un instant.
+    503:
+        title: Service indisponible
+        message: Nous ne pouvons pas traiter votre demande pour le moment. Veuillez réessayer dans quelques instants.
+    back_to_games: Retour à vos parties
+    back_to_home: Retour à l’accueil

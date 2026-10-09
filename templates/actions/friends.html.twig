@@ -1,6 +1,7 @@
 {% extends 'base.html.twig' %}
+{% trans_default_domain 'social' %}
 
-{% block title %}Friends{% endblock %}
+{% block title %}{{ 'friends.page_title'|trans }}{% endblock %}
 
 {% block head %}
     {{ parent() }}
@@ -10,16 +11,16 @@
 {% block body %}
     <section class="section">
         <div class="container">
-            <h1 class="title">Friends</h1>
+            <h1 class="title">{{ 'friends.title'|trans }}</h1>
 
             <div id="friends-root" data-user-uuid="{{ userUuid }}">
                 <script type="application/json" id="friends-bootstrap">{{ friendsBootstrap|raw }}</script>
 
                 <div class="box">
-                    <h3 class="title is-5">Find players</h3>
+                    <h3 class="title is-5">{{ 'friends.search.title'|trans }}</h3>
                     <div class="field">
                         <div class="control">
-                            <input class="input" type="text" id="friends-search-input" placeholder="Search by username (3+ characters)" autocomplete="off">
+                            <input class="input" type="text" id="friends-search-input" placeholder="{{ 'friends.search.placeholder'|trans }}" autocomplete="off">
                         </div>
                     </div>
                     <div id="friends-search-results"></div>
@@ -28,24 +29,25 @@
                 <div class="columns is-multiline">
                     <div class="column is-half">
                         <div class="box">
-                            <h3 class="title is-5">Received requests</h3>
+                            <h3 class="title is-5">{{ 'friends.incoming_title'|trans }}</h3>
                             <ul id="friends-incoming-list" class="friends-list"></ul>
                         </div>
                     </div>
                     <div class="column is-half">
                         <div class="box">
-                            <h3 class="title is-5">Sent requests</h3>
+                            <h3 class="title is-5">{{ 'friends.outgoing_title'|trans }}</h3>
                             <ul id="friends-outgoing-list" class="friends-list"></ul>
                         </div>
                     </div>
                 </div>
 
                 <div class="box">
-                    <h3 class="title is-5">Your friends</h3>
+                    <h3 class="title is-5">{{ 'friends.accepted_title'|trans }}</h3>
                     <ul id="friends-accepted-list" class="friends-list"></ul>
                 </div>
 
-                <p class="has-text-grey">Blocked players are managed in <a href="{{ path('settings_privacy') }}">Settings &rarr; Privacy</a>.</p>
+                {% set privacy_link %}<a href="{{ path('settings_privacy') }}">{{ 'friends.blocked_note_link'|trans }}</a>{% endset %}
+                <p class="has-text-grey">{{ 'friends.blocked_note'|trans({link: privacy_link})|raw }}</p>
             </div>
         </div>
     </section>

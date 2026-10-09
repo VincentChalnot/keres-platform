@@ -12,6 +12,7 @@ use App\Model\OpponentType;
 use App\Model\PieceColor;
 use App\Model\TimeControlKind;
 use Symfony\Component\Clock\ClockInterface;
+use Symfony\Contracts\Translation\TranslatorInterface;
 
 /**
  * T13: builds the one `GameListRow` shape every games listing renders,
@@ -26,12 +27,16 @@ use Symfony\Component\Clock\ClockInterface;
  * that phrasing is only meaningful from the subject's own point of view -
  * and gets "Next to play: White/Black" instead, same as the pre-T13
  * profile page already did.
+ *
+ * Labels are translated into the viewer's locale when the row is built
+ * (domain `game`); never cache or store a built row.
  */
 final readonly class GameListPresenter
 {
     public function __construct(
         private ClockInterface $clock,
         private GameHeaderPresenter $gameHeaderPresenter,
+        private TranslatorInterface $translator,
     ) {
     }
 
@@ -53,6 +58,7 @@ final readonly class GameListPresenter
             timeRemainingLabel: $isGameOver ? null : $this->remainingLabel($game),
             lastActivityAt: $game->getLastMoveAt() ?? $game->getCreatedAt(),
             isGameOver: $isGameOver,
+            isSubjectTurn: !$isGameOver && $isSelf && OpponentType::HOTSEAT !== $game->getOpponentType() && $game->isTurnOf($subject),
         );
     }
 
@@ -77,23 +83,23 @@ final readonly class GameListPresenter
     private function turnLabel(Game $game, User $subject, bool $isSelf): string
     {
         if (OpponentType::HOTSEAT === $game->getOpponentType()) {
-            return $game->isWhiteTurn() ? 'White to move' : 'Black to move';
+            return $this->translator->trans('game_row.turn.hotseat', ['side' => $game->isWhiteTurn() ? 'white' : 'black'], 'game');
         }
 
         if ($isSelf) {
-            return $game->isTurnOf($subject) ? 'Your turn' : 'Their turn';
+            return $this->translator->trans($game->isTurnOf($subject) ? 'game_row.turn.yours' : 'game_row.turn.theirs', [], 'game');
         }
 
-        return 'Next to play: '.($game->isWhiteTurn() ? 'White' : 'Black');
+        return $this->translator->trans('game_row.turn.next_to_play', ['side' => $game->isWhiteTurn() ? 'white' : 'black'], 'game');
     }
 
     private function resultLabel(Game $game): string
     {
         return match (true) {
-            GameEndReason::ABORTED === $game->getEndReason() => 'Aborted',
-            $game->isDraw() => 'Draw',
-            $game->isWhiteWins() => 'White wins',
-            default => 'Black wins',
+            GameEndReason::ABORTED === $game->getEndReason() => $this->translator->trans('game_row.result.aborted', [], 'game'),
+            $game->isDraw() => $this->translator->trans('game_row.result.draw', [], 'game'),
+            $game->isWhiteWins() => $this->translator->trans('game_row.result.white_wins', [], 'game'),
+            default => $this->translator->trans('game_row.result.black_wins', [], 'game'),
         };
     }
 
@@ -145,21 +151,21 @@ final readonly class GameListPresenter
     private function formatDuration(int $seconds): string
     {
         if ($seconds <= 0) {
-            return 'Overdue';
+            return $this->translator->trans('game_row.remaining.overdue', [], 'game');
         }
 
         $hours = intdiv($seconds, 3600);
 
         if ($hours >= 1) {
-            return \sprintf('%dh left', $hours);
+            return $this->translator->trans('game_row.remaining.hours', ['hours' => $hours], 'game');
         }
 
         $minutes = intdiv($seconds, 60);
 
         if ($minutes >= 1) {
-            return \sprintf('%dm left', $minutes);
+            return $this->translator->trans('game_row.remaining.minutes', ['minutes' => $minutes], 'game');
         }
 
-        return \sprintf('%ds left', $seconds);
+        return $this->translator->trans('game_row.remaining.seconds', ['seconds' => $seconds], 'game');
     }
 }

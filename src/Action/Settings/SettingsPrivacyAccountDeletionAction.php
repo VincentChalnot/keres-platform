@@ -16,6 +16,7 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpKernel\Attribute\AsController;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
+use Symfony\Contracts\Translation\TranslatorInterface;
 
 /**
  * `POST /settings/privacy/delete-account` - T5: request intake only.
@@ -35,6 +36,7 @@ class SettingsPrivacyAccountDeletionAction extends AbstractController
     public function __construct(
         private readonly EntityManagerInterface $entityManager,
         private readonly AdminNotificationMailer $adminNotificationMailer,
+        private readonly TranslatorInterface $translator,
     ) {
     }
 
@@ -50,7 +52,7 @@ class SettingsPrivacyAccountDeletionAction extends AbstractController
 
         $form = $this->createForm(GdprRequestType::class, null, [
             'user_email' => $user->getEmail(),
-            'submit_label' => 'Request account deletion',
+            'submit_label' => 'gdpr.submit_deletion',
         ]);
         $form->handleRequest($request);
 
@@ -68,9 +70,9 @@ class SettingsPrivacyAccountDeletionAction extends AbstractController
 
             $this->adminNotificationMailer->sendGdprRequestNotification($feedback);
 
-            $this->addFlash('success', 'Your account deletion request has been received. We will get back to you within 30 days.');
+            $this->addFlash('success', $this->translator->trans('flash.deletion_requested', [], 'flashes'));
         } else {
-            $this->addFlash('error', 'We could not submit your request. Please try again.');
+            $this->addFlash('error', $this->translator->trans('flash.request_failed', [], 'flashes'));
         }
 
         return $this->redirectToRoute('settings_privacy');

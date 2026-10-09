@@ -122,16 +122,16 @@ class SettingsProfileAction extends AbstractController
         }
 
         if (!$this->usernameChangeLimiter->create((string) $user->getId())->consume(1)->isAccepted()) {
-            $form->addError(new FormError('Too many attempts, try again later.'));
+            $form->addError(new FormError($this->translator->trans('profile.username.too_many_attempts', [], 'validators')));
 
             return false;
         }
 
         if (!$this->usernameGenerator->isAvailable($newUsername, $user)) {
             $message = $this->usernameGenerator->isReserved($newUsername)
-                ? 'That username is reserved.'
-                : 'That username is already taken.';
-            $form->get('username')->addError(new FormError($message));
+                ? 'profile.username.reserved'
+                : 'profile.username.taken';
+            $form->get('username')->addError(new FormError($this->translator->trans($message, [], 'validators')));
 
             return false;
         }
@@ -147,7 +147,7 @@ class SettingsProfileAction extends AbstractController
             // failure, so this mostly catches a change made by a concurrent
             // tab before this request even started.
             $message = $user->canChangeUsername($now)
-                ? 'That username was just taken.'
+                ? $this->translator->trans('profile.username.just_taken', [], 'validators')
                 : $this->cooldownMessage($user);
             $form->get('username')->addError(new FormError($message));
 
@@ -159,10 +159,15 @@ class SettingsProfileAction extends AbstractController
 
     private function cooldownMessage(User $user): string
     {
-        return \sprintf(
-            'You can only change your username once every 12 months. Next change available on %s.',
-            $user->getNextUsernameChangeAt()?->format('Y-m-d') ?? 'a later date',
-        );
+        $next = $user->getNextUsernameChangeAt();
+
+        if (null === $next) {
+            return $this->translator->trans('profile.username.cooldown_later', [], 'validators');
+        }
+
+        $date = \IntlDateFormatter::formatObject($next, [\IntlDateFormatter::LONG, \IntlDateFormatter::NONE], $this->translator->getLocale());
+
+        return $this->translator->trans('profile.username.cooldown', ['date' => $date], 'validators');
     }
 
     /** @return array<string, mixed> */
