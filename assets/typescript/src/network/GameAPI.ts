@@ -83,6 +83,37 @@ export class GameAPI {
         return Array.from(movesU16).map(decodePotentialMove);
     }
 
+    /** True when this page is a persisted game, i.e. the evaluation endpoint exists for it. */
+    hasEvaluationEndpoint(): boolean {
+        return this.gameUuid !== null;
+    }
+
+    /**
+     * Asks the platform to evaluate every position of the game and returns
+     * what is stored already (index = ply, White's point of view, engine
+     * units; null = queued). The platform never waits for the engine: the
+     * missing ones are pushed over Mercure as they are computed. Idempotent;
+     * refused for a rated game in progress.
+     */
+    async requestEvaluations(): Promise<Array<number | null>> {
+        if (!this.gameUuid) {
+            throw new Error('No game UUID available');
+        }
+
+        const response = await fetch(`${this.backendUrl}/games/${this.gameUuid}/evaluation`, {
+            method: 'POST',
+            headers: {'Accept': 'application/json'},
+        });
+
+        if (!response.ok) {
+            throw new Error(`Evaluation unavailable (HTTP ${response.status})`);
+        }
+
+        const body = await response.json() as {data: {evaluations: Array<number | null>}};
+
+        return body.data.evaluations;
+    }
+
     /**
      * Submit a move to the game and get the new board state.
      * Returns the full authoritative payload (board, moves, game-over

@@ -548,9 +548,98 @@ footer.footer {
 // viewport. The SVG must keep exactly the viewBox aspect ratio (hit-testing
 // maps client coordinates onto the viewBox), so the size is derived from the
 // height limit rather than clamped with max-height.
-#board-container {
-    width: min(100%, max(var(--board-min-width), calc(var(--board-max-height) * var(--board-aspect))));
+// The board and, when enabled, the evaluation bar on its left. The wrapper
+// takes the board's width formula plus the bar's footprint, so the board
+// itself keeps exactly the size it has without the bar.
+.board-with-eval {
+    --eval-bar-extra: 0px;
+
+    display: flex;
+    align-items: stretch;
+    gap: 0.5rem;
+    width: min(100%, calc(max(var(--board-min-width), calc(var(--board-max-height) * var(--board-aspect))) + var(--eval-bar-extra)));
     margin-inline: auto;
+
+    &.has-eval-bar {
+        --eval-bar-extra: 2.25rem;
+    }
+}
+
+// Evaluation bar (chess.com style): black on top, white at the bottom, the
+// white share grows with White's advantage. `.is-flipped` mirrors it with the
+// board so that the viewer's own side is always at the bottom.
+.eval-bar {
+    position: relative;
+    flex: none;
+    width: 1.75rem;
+    overflow: hidden;
+    border-radius: 4px;
+    background: #262421;
+    border: 1px solid rgba(128, 128, 128, 0.6);
+
+    &[hidden] {
+        display: none;
+    }
+
+    // Verdict of the displayed position still being computed by the worker.
+    &.is-pending {
+        opacity: 0.55;
+    }
+
+    &__white {
+        position: absolute;
+        inset: auto 0 0 0;
+        height: 50%;
+        background: #f4f4f4;
+        transition: height 0.4s ease;
+    }
+
+    &__label {
+        position: absolute;
+        inset-inline: 0;
+        text-align: center;
+        font-size: 0.65rem;
+        font-weight: 700;
+        line-height: 1;
+        padding: 0.25rem 0;
+        user-select: none;
+    }
+
+    // The label sits on the side that is ahead, in the contrast colour.
+    &__label.is-white-ahead {
+        bottom: 0;
+        color: #262421;
+    }
+
+    &__label.is-black-ahead {
+        top: 0;
+        color: #f4f4f4;
+    }
+
+    &.is-flipped &__white {
+        inset: 0 0 auto 0;
+    }
+
+    &.is-flipped &__label.is-white-ahead {
+        bottom: auto;
+        top: 0;
+    }
+
+    &.is-flipped &__label.is-black-ahead {
+        top: auto;
+        bottom: 0;
+    }
+}
+
+.move-eval {
+    margin-left: 0.35rem;
+    font-size: 0.7rem;
+    opacity: 0.65;
+}
+
+#board-container {
+    flex: 1 1 0;
+    min-width: 0;
 
     svg {
         display: block;
@@ -581,7 +670,7 @@ html.is-game-fullscreen {
         max-width: none;
         padding: 0.5rem;
 
-        > #board-container {
+        > .board-with-eval {
             order: -1;
             flex: none;
         }

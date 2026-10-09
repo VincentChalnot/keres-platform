@@ -64,7 +64,7 @@ class NewLocalGameAction extends AbstractController
             $aiLevel = OpponentType::AI === $data['opponentType'] ? $data['aiLevel'] : null;
 
             $isFirstGame = 0 === $this->gameRepository->countForUser($user);
-            $game = $this->gameFactory->createAiOrHotseatGame($user, $data['opponentType'], $colorPreference, $aiLevel);
+            $game = $this->gameFactory->createAiOrHotseatGame($user, $data['opponentType'], $colorPreference, $aiLevel, (bool) $data['liveEvaluation']);
 
             $this->entityManager->persist($game);
             $this->entityManager->flush();

@@ -9,6 +9,7 @@ import {decodeMoveListFromBase64, algebraicToPos, posToAlgebraic} from './utils/
 import {computeMaterialDiff, renderMaterialHTML} from './models/materialDiff';
 import {alertModal, confirmModal} from './utils/modal';
 import {PageFullscreen} from './utils/pageFullscreen';
+import {EvalBar, formatEvaluation} from './views/EvalBar';
 
 const OPPONENT_TYPE_AI = 0;
 const OPPONENT_TYPE_HOTSEAT = 1;
@@ -45,6 +46,8 @@ interface GameStateBootstrap {
     endReason: string;
     result: string | null;
     serverTime: number;
+    /** Stored engine evaluations, index = ply (null entries: not computed yet); null when they must not be shown. */
+    evaluations?: Array<number | null> | null;
 }
 
 /**
@@ -111,6 +114,14 @@ class KeresGame {
     private coordsVisible: boolean = true;
     private clockTimer: ReturnType<typeof setInterval> | null = null;
 
+    // Engine evaluation (White's point of view), index = ply (moves played).
+    // Seeded from the page bootstrap, then pushed by the server over Mercure
+    // as the worker computes each one: the page never waits for the engine.
+    private evalBar: EvalBar | null = null;
+    private liveEvaluation: boolean = false;
+    private evaluations: Map<number, number> = new Map();
+    private evaluationsRequestedIn: 'live' | 'over' | null = null;
+
     constructor() {
         this.gameState = new GameState();
 
@@ -142,6 +153,14 @@ class KeresGame {
         this.gameMode = parseInt(this.boardContainer.getAttribute('data-opponent-type') || '0', 10);
         this.playerWhite = (this.boardContainer.getAttribute('data-player-white') === 'true');
         this.spectator = (this.boardContainer.getAttribute('data-spectator') === 'true');
+
+        this.liveEvaluation = this.boardContainer.getAttribute('data-live-evaluation') === 'true';
+        const evalRoot = document.getElementById('eval-bar');
+        const evalWhite = document.getElementById('eval-bar-white');
+        const evalLabel = document.getElementById('eval-bar-label');
+        if (evalRoot && evalWhite && evalLabel) {
+            this.evalBar = new EvalBar(evalRoot, evalWhite, evalLabel, document.getElementById('board-with-eval'));
+        }
 
         if (this.boardContainer.getAttribute('data-guest') === 'true') {
             this.guestRecord = this.resolveGuestRecord();
@@ -207,12 +226,17 @@ class KeresGame {
         const bootstrap = this.readBootstrap();
         if (bootstrap) {
             this.controller.setInitialState(bootstrap.clock, bootstrap.endReason, bootstrap.result, bootstrap.serverTime);
+            bootstrap.evaluations?.forEach((value, ply) => {
+                if (null !== value) {
+                    this.evaluations.set(ply, value);
+                }
+            });
         }
 
         // Initialize Mercure for all game types
         const gameUuid = this.boardContainer.getAttribute('data-game-uuid');
         if (gameUuid) {
-            this.controller.initializeMercure(gameUuid);
+            this.controller.initializeMercure(gameUuid, (ply, evaluation) => this.onEvaluationReceived(ply, evaluation));
         }
 
         // Read moves from data-moves attribute (or this browser's saved guest game)
@@ -381,6 +405,7 @@ class KeresGame {
             if (this.gameMode === OPPONENT_TYPE_HOTSEAT) {
                 await this.controller.flipBoard();
                 this.updateMaterialDiff();
+                this.evalBar?.setFlipped(this.gameState.isBoardFlipped());
             }
         });
     }
@@ -407,6 +432,7 @@ class KeresGame {
     private async handleSwitchSides(): Promise<void> {
         await this.controller.flipBoard();
         this.updateMaterialDiff();
+        this.evalBar?.setFlipped(this.gameState.isBoardFlipped());
         this.renderClocks();
     }
 
@@ -540,6 +566,98 @@ class KeresGame {
         this.updateButtonVisibility();
         this.applyGameOverVisuals();
         this.renderClocks();
+        this.updateEvaluation();
+    }
+
+    /**
+     * The evaluation bar is shown for games created with the live
+     * evaluation option (unrated only) and, whatever the game, once it is
+     * over: that is the replay. A rated game in progress never shows it (the
+     * server refuses to answer anyway).
+     */
+    private isEvaluationVisible(): boolean {
+        if (!this.evalBar || !this.api.hasEvaluationEndpoint()) return false;
+
+        return this.liveEvaluation || this.controller.isGameOver();
+    }
+
+    /**
+     * Renders the bar from what is known; never fetches. Evaluations are
+     * computed by a worker and pushed over Mercure (`onEvaluationReceived`),
+     * so a position whose verdict is not in yet leaves the bar where it was,
+     * marked as pending, until it arrives.
+     */
+    private updateEvaluation(): void {
+        const bar = this.evalBar;
+        if (!bar) return;
+
+        // After an undo the plies beyond the shorter line may be played again differently.
+        const total = this.controller.getTotalPlies();
+        for (const cachedPly of [...this.evaluations.keys()]) {
+            if (cachedPly > total) this.evaluations.delete(cachedPly);
+        }
+
+        const visible = this.isEvaluationVisible();
+        bar.setVisible(visible);
+        if (!visible) return;
+
+        bar.setFlipped(this.gameState.isBoardFlipped());
+        const ply = this.controller.getDisplayedPly();
+        bar.setScore(0 === ply ? 0 : (this.evaluations.get(ply) ?? null));
+
+        void this.requestMissingEvaluations(total);
+    }
+
+    /** One evaluation pushed by the server; plies are counted in moves played. */
+    private onEvaluationReceived(ply: number, evaluation: number): void {
+        this.evaluations.set(ply, evaluation);
+        this.updateEvaluation();
+        this.updateMoveHistoryDisplay();
+    }
+
+    /**
+     * Every move of a live game is queued server-side when it is played, so
+     * this only matters for what the page did not witness: positions without
+     * a stored verdict at load (older games, a backlog), and everything once
+     * the game is over (a rated game kept its evaluations hidden until then).
+     * The answer is immediate (what is stored); the rest comes over Mercure.
+     * Runs at most once per phase (in progress / over): asking again after
+     * each move would only queue the search that is already queued.
+     */
+    private async requestMissingEvaluations(total: number): Promise<void> {
+        const phase = this.controller.isGameOver() ? 'over' : 'live';
+        if (this.evaluationsRequestedIn === phase) return;
+
+        this.evaluationsRequestedIn = phase;
+
+        let missing = false;
+        for (let ply = 1; ply <= total; ply++) {
+            if (!this.evaluations.has(ply)) {
+                missing = true;
+                break;
+            }
+        }
+        if (!missing) return;
+
+        try {
+            const stored = await this.api.requestEvaluations();
+            stored.forEach((value, ply) => {
+                if (null !== value && !this.evaluations.has(ply)) {
+                    this.evaluations.set(ply, value);
+                }
+            });
+            this.updateEvaluation();
+            this.updateMoveHistoryDisplay();
+        } catch (error) {
+            console.error('Failed to request the evaluations:', error);
+        }
+    }
+
+    /** " (+1.5)" suffix for a move's cell in the history table, empty when unknown or hidden. */
+    private moveEvaluationLabel(ply: number): string {
+        const value = this.isEvaluationVisible() ? this.evaluations.get(ply) : undefined;
+
+        return undefined === value ? '' : formatEvaluation(value);
     }
 
     /**
@@ -655,15 +773,29 @@ class KeresGame {
             // White move
             const whiteCell = document.createElement('td');
             whiteCell.textContent = history[i] || '';
+            this.appendMoveEvaluation(whiteCell, i + 1);
             row.appendChild(whiteCell);
             
             // Black move
             const blackCell = document.createElement('td');
             blackCell.textContent = history[i + 1] || '';
+            if (history[i + 1]) {
+                this.appendMoveEvaluation(blackCell, i + 2);
+            }
             row.appendChild(blackCell);
             
             this.moveHistoryBody.appendChild(row);
         }
+    }
+
+    private appendMoveEvaluation(cell: HTMLElement, ply: number): void {
+        const label = this.moveEvaluationLabel(ply);
+        if ('' === label) return;
+
+        const span = document.createElement('span');
+        span.className = 'move-eval';
+        span.textContent = label;
+        cell.appendChild(span);
     }
 
     private updateNavigationButtons(): void {

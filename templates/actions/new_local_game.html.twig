@@ -40,6 +40,15 @@
 
                         <div class="field">
                             <div class="control">
+                                {{ form_widget(form.liveEvaluation) }}
+                                {{ form_label(form.liveEvaluation) }}
+                            </div>
+                            {{ form_help(form.liveEvaluation) }}
+                            {{ form_errors(form.liveEvaluation) }}
+                        </div>
+
+                        <div class="field">
+                            <div class="control">
                                 {{ form_widget(form.submit, {attr: {class: 'button is-rounded is-primary'}}) }}
                             </div>
                         </div>

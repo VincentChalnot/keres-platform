@@ -65,9 +65,14 @@ export class MercureClient {
     }
 
     /**
-     * Subscribe to game updates for a specific game UUID
+     * Subscribe to game updates for a specific game UUID. Engine evaluations
+     * arrive later, independently of the moves, as named `evaluation` events.
      */
-    subscribe(gameUuid: string, onUpdate: (update: GameUpdate) => void): void {
+    subscribe(
+        gameUuid: string,
+        onUpdate: (update: GameUpdate) => void,
+        onEvaluation?: (ply: number, evaluation: number) => void,
+    ): void {
         if (this.eventSource) {
             this.disconnect();
         }
@@ -144,6 +149,17 @@ export class MercureClient {
                 console.error('Error processing Mercure update:', error);
             }
         };
+
+        this.eventSource.addEventListener('evaluation', (event) => {
+            try {
+                const data = JSON.parse((event as MessageEvent<string>).data) as {ply?: unknown; evaluation?: unknown};
+                if (typeof data.ply === 'number' && typeof data.evaluation === 'number') {
+                    onEvaluation?.(data.ply, data.evaluation);
+                }
+            } catch (error) {
+                console.error('Error processing Mercure evaluation:', error);
+            }
+        });
 
         this.eventSource.onerror = (error) => {
             console.error('Mercure connection error:', error);

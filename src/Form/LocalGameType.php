@@ -6,6 +6,7 @@ namespace App\Form;
 
 use App\Model\OpponentType;
 use Symfony\Component\Form\AbstractType;
+use Symfony\Component\Form\Extension\Core\Type\CheckboxType;
 use Symfony\Component\Form\Extension\Core\Type\ChoiceType;
 use Symfony\Component\Form\Extension\Core\Type\SubmitType;
 use Symfony\Component\Form\FormBuilderInterface;
@@ -45,6 +46,12 @@ class LocalGameType extends AbstractType
                 'help' => 'Only applies against the AI. 1 is weakest, 10 is full strength.',
                 'choices' => array_combine(range(1, 10), range(1, 10)),
                 'data' => 1, // T10: default is the weakest level.
+            ])
+            ->add('liveEvaluation', CheckboxType::class, [
+                'label' => 'Live evaluation bar',
+                'help' => 'Shows the engine\'s assessment of the position next to the board, like chess.com. Casual games only.',
+                'required' => false,
+                'data' => false,
             ])
             ->add('submit', SubmitType::class, [
                 'label' => 'Start Game',

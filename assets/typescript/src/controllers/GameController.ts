@@ -70,11 +70,11 @@ export class GameController {
     /**
      * Initialize Mercure connection for real-time updates
      */
-    initializeMercure(gameUuid: string): void {
+    initializeMercure(gameUuid: string, onEvaluation?: (ply: number, evaluation: number) => void): void {
         this.mercureClient = new MercureClient();
         this.mercureClient.subscribe(gameUuid, (update: GameUpdate) => {
             this.handleMercureUpdate(update);
-        });
+        }, onEvaluation);
     }
 
     /**
@@ -466,6 +466,13 @@ export class GameController {
     }
     isBoardLocked(): boolean {
         return this.gameState.isBoardLocked();
+    }
+    /** Number of moves played in the position currently displayed (0 = start position). */
+    getDisplayedPly(): number {
+        return this.gameState.getCurrentMoveIndex() + 1;
+    }
+    getTotalPlies(): number {
+        return this.gameState.getMoveList().length;
     }
     canNavigateToPrevious(): boolean {
         return this.gameState.getCurrentMoveIndex() >= 0;

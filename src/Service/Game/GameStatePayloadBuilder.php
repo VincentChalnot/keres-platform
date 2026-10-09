@@ -55,6 +55,8 @@ final readonly class GameStatePayloadBuilder
             'clock' => $this->buildClock($game),
             'rating' => $this->buildRating($game),
             'aiLevel' => $game->getAiLevel(),
+            'liveEvaluation' => $game->isLiveEvaluationEnabled(),
+            'evaluations' => $this->buildEvaluations($game),
             'serverTime' => (int) (new \DateTimeImmutable())->format('Uu'),
         ];
     }
@@ -62,6 +64,30 @@ final readonly class GameStatePayloadBuilder
     public function encode(array $payload): string
     {
         return json_encode($payload, self::ENCODE_FLAGS);
+    }
+
+    /**
+     * Stored engine evaluations, index = ply (0 = start position), null =
+     * not computed yet (the client asks the evaluation API for those). Null
+     * as a whole while the game must not leak them: a rated game in
+     * progress, or an unrated one that did not opt in. This payload also
+     * goes out over Mercure to spectators, hence the gate here.
+     *
+     * @return list<int|null>|null
+     */
+    private function buildEvaluations(Game $game): ?array
+    {
+        if (!$game->canExposeEvaluation()) {
+            return null;
+        }
+
+        $evaluations = [0];
+
+        foreach ($game->getGameMoves() as $gameMove) {
+            $evaluations[] = $gameMove->getMove()->getEvaluation();
+        }
+
+        return $evaluations;
     }
 
     /**
