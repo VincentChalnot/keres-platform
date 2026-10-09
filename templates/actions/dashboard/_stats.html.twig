@@ -26,4 +26,7 @@
     {% else %}
         <p class="has-text-centered has-text-grey">{{ 'dashboard.stats.empty'|trans }}</p>
     {% endif %}
+    <hr class="announcements__rule">
+    <h4 class="title is-6 mb-3">{{ 'list.title'|trans({}, 'announcements') }}</h4>
+    {% include 'actions/_announcements.html.twig' with {announcements: announcements} only %}
 </div>

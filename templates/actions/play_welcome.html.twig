@@ -47,12 +47,13 @@
             <div class="columns">
                 <div class="column is-5">
                     <h2 class="title is-4">{{ 'welcome.announcements.title'|trans }}</h2>
-                    {% for announcement in announcements %}
-                        <div class="box mb-4">
-                            <p class="title is-6">{{ announcement.title }}</p>
-                            <p>{{ announcement.body }}</p>
-                        </div>
-                    {% endfor %}
+                    <div class="box mb-4">
+                        <p class="title is-6">{{ 'welcome.announcements.no_account.title'|trans }}</p>
+                        <p>{{ 'welcome.announcements.no_account.body'|trans }}</p>
+                    </div>
+                    <div class="box">
+                        {% include 'actions/_announcements.html.twig' with {announcements: announcements, visible: 3} only %}
+                    </div>
                 </div>
                 <div class="column is-7">
                     <h2 class="title is-4">{{ 'welcome.recent_games.title'|trans }}</h2>

@@ -145,9 +145,6 @@ welcome:
     image_alt: A Keres game in progress
     announcements:
         title: Announcements
-        v1:
-            title: Keres v1.0 is here
-            body: Correspondence games, invites, and AI opponents at every level are now live.
         no_account:
             title: Play without an account
             body: Try the AI or a local hot-seat game instantly - no sign-up required.

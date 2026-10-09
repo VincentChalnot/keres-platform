@@ -1,0 +1,30 @@
+{# The announcement list: `announcements` (list<App\Model\Announcement>, newest first), `visible` = how many show before "Show more" (default 5). #}
+{% trans_default_domain 'announcements' %}
+{% macro item(announcement) %}
+    <li class="announcements__item">
+        <time class="announcements__date" datetime="{{ announcement.date|date('Y-m-d') }}">{{ announcement.date|format_date('medium') }}</time>
+        <p class="announcements__heading">{{ announcement.title }}</p>
+        <p class="announcements__body">{{ announcement.body }}</p>
+    </li>
+{% endmacro %}
+{% set visible = visible|default(5) %}
+<div class="announcements">
+    <ul class="announcements__list">
+        {% for announcement in announcements|slice(0, visible) %}
+            {{ _self.item(announcement) }}
+        {% endfor %}
+    </ul>
+    {% if announcements|length > visible %}
+        <details class="announcements__more">
+            <summary class="announcements__toggle">
+                <span class="announcements__toggle-more">{{ 'list.show_more'|trans({count: announcements|length - visible}) }}</span>
+                <span class="announcements__toggle-less">{{ 'list.show_less'|trans }}</span>
+            </summary>
+            <ul class="announcements__list">
+                {% for announcement in announcements|slice(visible) %}
+                    {{ _self.item(announcement) }}
+                {% endfor %}
+            </ul>
+        </details>
+    {% endif %}
+</div>

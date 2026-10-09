@@ -387,6 +387,22 @@ docker compose exec -T php bin/console debug:translation fr --only-missing   # k
 docker compose exec -T php vendor/bin/phpunit                            # TranslationCatalogueTest + FrontendCatalogueTest (every TS t('…') key exists)
 ```
 
+## Announcements
+
+The news list ("Announcements") is shown at the bottom of the "Your stats" card
+on the dashboard and on the anonymous `/lobby` page (latest 3, "Show more"
+beyond that; the dashboard shows 5). It is the typed source
+`App\Service\Announcement\AnnouncementProvider::ENTRIES` (`id => 'Y-m-d'`),
+rendered by `templates/actions/_announcements.html.twig`, dates per locale.
+To add one, user-visible changes only (no refactors/tests/docs/CI), related
+commits grouped, dated by the latest relevant commit:
+
+1. Add `'my_id' => '2026-10-12'` to `ENTRIES` (any position; sorted newest first).
+2. Add `items.my_id.title` and `items.my_id.body` to **both**
+   `translations/announcements+intl-icu.en.yaml` and `.fr.yaml`.
+
+`AnnouncementProviderTest` fails if a key is missing in a locale.
+
 ## Conventions
 
 ### PHP

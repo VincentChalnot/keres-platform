@@ -145,9 +145,6 @@ welcome:
     image_alt: Une partie de Keres en cours
     announcements:
         title: Annonces
-        v1:
-            title: Keres v1.0 est arrivé
-            body: Les parties par correspondance, les invitations et les adversaires informatiques de tous niveaux sont désormais disponibles.
         no_account:
             title: Jouez sans compte
             body: Essayez l’ordinateur ou une partie à deux sur le même écran, tout de suite et sans inscription.

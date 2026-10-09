@@ -1499,3 +1499,108 @@ html.is-game-fullscreen {
     max-width: 100%;
     border-radius: 0.6em;
 }
+
+// ─── Announcements (templates/actions/_announcements.html.twig) ───────────────
+// Newest first; the older ones sit in a native <details> ("Show more").
+
+.announcements {
+    &__rule {
+        margin: 1.25rem 0 1rem;
+        background-color: $keres-dark;
+    }
+
+    &__list {
+        list-style: none;
+        margin: 0;
+        padding: 0;
+    }
+
+    &__item {
+        padding: 0.6rem 0 0.7rem;
+        border-top: 1px solid rgba($keres-dark, 0.8);
+
+        &:first-child {
+            border-top: 0;
+            padding-top: 0;
+        }
+    }
+
+    &__date {
+        display: block;
+        font-size: 0.75rem;
+        letter-spacing: 0.03em;
+        color: $keres-secondary;
+        opacity: 0.8;
+    }
+
+    &__heading {
+        margin: 0.1rem 0 0.15rem;
+        font-weight: 600;
+        color: $keres-light;
+        overflow-wrap: anywhere;
+    }
+
+    &__body {
+        margin: 0;
+        font-size: 0.9rem;
+        line-height: 1.4;
+        color: rgba($keres-light, 0.8);
+        overflow-wrap: anywhere;
+    }
+
+    &__more > &__list > &__item:first-child {
+        border-top: 1px solid rgba($keres-dark, 0.8);
+        padding-top: 0.6rem;
+    }
+
+    &__toggle {
+        display: inline-block;
+        margin-top: 0.4rem;
+        padding: 0.2rem 0;
+        font-size: 0.9rem;
+        color: $keres-primary;
+        cursor: pointer;
+        list-style: none;
+
+        &::-webkit-details-marker {
+            display: none;
+        }
+
+        &::before {
+            content: "▸";
+            display: inline-block;
+            margin-right: 0.4rem;
+            transition: transform 0.15s;
+        }
+
+        &:hover {
+            text-decoration: underline;
+        }
+
+        &:focus-visible {
+            outline: 2px solid $keres-primary;
+            outline-offset: 2px;
+            border-radius: 2px;
+        }
+    }
+
+    &__toggle-less {
+        display: none;
+    }
+
+    &__more[open] > &__toggle {
+        margin-bottom: 0.4rem;
+
+        &::before {
+            transform: rotate(90deg);
+        }
+
+        .announcements__toggle-more {
+            display: none;
+        }
+
+        .announcements__toggle-less {
+            display: inline;
+        }
+    }
+}

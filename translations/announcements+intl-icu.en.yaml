@@ -1,0 +1,49 @@
+# Player-facing announcements (src/Service/Announcement/AnnouncementProvider.php).
+# One block per id listed in AnnouncementProvider::ENTRIES: title + body.
+items:
+    french_translation:
+        title: Keres now speaks French
+        body: 'The whole site, the messages on the board and the e-mails are available in French. Switch language from the menu or in Settings → Profile; “Automatic” follows your browser.'
+    fullscreen_layout:
+        title: Fullscreen that fits your screen
+        body: 'The fullscreen button takes over the whole page, and the opponent’s row, the board and your own row now always fit the screen at any shape. Everything else is a scroll away.'
+    rotate_opponent_pieces:
+        title: Face your opponent’s pieces
+        body: 'A new button on the game page turns the opponent’s pieces upside down, as on a real board. It is off by default.'
+    persistent_login:
+        title: Stay signed in across updates
+        body: 'New versions of Keres no longer log you out. You stay signed in for 30 days after your last visit.'
+    mobile_menu:
+        title: A proper menu on mobile
+        body: 'On phones the navigation hides behind a burger button, and every menu entry now has an icon next to its label.'
+    game_over_reason:
+        title: Why did the game end?
+        body: 'The game-over banner now says exactly how it ended (king captured, 40-move rule, insufficient material, resignation, timeout…) instead of always “checkmate”.'
+    game_players_options:
+        title: Players and options at a glance
+        body: 'The game page shows who is playing above the board, with badges for the options (rated or casual, time control, live evaluation). Every card in your games lists shows them too.'
+    result_banner:
+        title: Win, loss or draw, in one glance
+        body: 'The game-over banner is now green when you win, red when you lose and orange for a draw, with readable text on each.'
+    stack_or_select:
+        title: Smarter stacking
+        body: 'Clicking a friendly piece asks whether you want to stack onto it or select it, and only when both are really possible. Otherwise the game just does the obvious thing.'
+    live_evaluation:
+        title: Live evaluation bar
+        body: 'Tick “Live evaluation” when you start a casual game to see a bar next to the board telling who is ahead, updated after every move. The new-game form is also tidier, with a random side by default.'
+    new_look:
+        title: A fresh look
+        body: 'New logo, redrawn piece icons, a new board colour theme and better contrast on tags and the lobby buttons.'
+    hidden_games_feed:
+        title: Hidden games stay hidden
+        body: 'A game you remove from your lists no longer shows in the public “recently finished games” feed, which no longer names the players either.'
+    email_notifications:
+        title: E-mail notifications on by default
+        body: 'Every kind of e-mail notification (your turn, results, friend requests, matched games) is now on unless you switch it off in Settings.'
+    v1:
+        title: Keres v1.0 is here
+        body: 'Correspondence games, invites, and AI opponents at every level are now live.'
+list:
+    title: Announcements
+    show_more: 'Show {count, plural, one {# more announcement} other {# more announcements}}'
+    show_less: Show fewer

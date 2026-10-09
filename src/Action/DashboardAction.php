@@ -6,6 +6,7 @@ namespace App\Action;
 
 use App\Entity\User;
 use App\Repository\GameRepository;
+use App\Service\Announcement\AnnouncementProvider;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpKernel\Attribute\AsController;
 use Symfony\Component\Routing\Attribute\Route;
@@ -16,6 +17,7 @@ class DashboardAction extends AbstractController
 {
     public function __construct(
         private readonly GameRepository $gameRepository,
+        private readonly AnnouncementProvider $announcementProvider,
     ) {
     }
 
@@ -43,6 +45,7 @@ class DashboardAction extends AbstractController
             'recentGames' => $recentGames,
             'inProgressCount' => $this->gameRepository->countInProgressForUser($user),
             'stats' => $stats,
+            'announcements' => $this->announcementProvider->latest(),
             'totalFinished' => $totalFinished,
             'winRate' => $totalFinished > 0 ? round(($stats['wins'] / $totalFinished) * 100) : null,
         ];

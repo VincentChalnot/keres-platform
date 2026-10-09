@@ -1,0 +1,49 @@
+# Annonces destinées aux joueurs (src/Service/Announcement/AnnouncementProvider.php).
+# Un bloc par identifiant listé dans AnnouncementProvider::ENTRIES : title + body.
+items:
+    french_translation:
+        title: Keres parle désormais français
+        body: 'Tout le site, les messages du plateau et les e-mails sont disponibles en français. Changez de langue depuis le menu ou dans Paramètres → Profil ; « Automatique » suit votre navigateur.'
+    fullscreen_layout:
+        title: Un plein écran adapté à votre écran
+        body: 'Le bouton plein écran occupe toute la page, et la ligne de l’adversaire, le plateau et votre propre ligne tiennent désormais toujours à l’écran, quelle que soit sa forme. Le reste est à un défilement de là.'
+    rotate_opponent_pieces:
+        title: Les pièces adverses face à vous
+        body: 'Un nouveau bouton sur la page de partie retourne les pièces adverses, comme sur un vrai plateau. Désactivé par défaut.'
+    persistent_login:
+        title: Restez connecté d’une mise à jour à l’autre
+        body: 'Les nouvelles versions de Keres ne vous déconnectent plus. Vous restez connecté 30 jours après votre dernière visite.'
+    mobile_menu:
+        title: Un vrai menu sur mobile
+        body: 'Sur téléphone, la navigation se cache derrière un bouton burger, et chaque entrée du menu a désormais une icône à côté de son libellé.'
+    game_over_reason:
+        title: Pourquoi la partie s’est-elle terminée ?
+        body: 'La bannière de fin de partie indique désormais précisément comment elle s’est terminée (roi capturé, règle des 40 coups, matériel insuffisant, abandon, temps écoulé…) au lieu de toujours afficher « échec et mat ».'
+    game_players_options:
+        title: Joueurs et options en un coup d’œil
+        body: 'La page de partie affiche les joueurs au-dessus du plateau, avec des badges pour les options (classée ou amicale, cadence, évaluation en direct). Chaque carte de vos listes de parties les montre aussi.'
+    result_banner:
+        title: Victoire, défaite ou nulle d’un coup d’œil
+        body: 'La bannière de fin de partie est désormais verte si vous gagnez, rouge si vous perdez et orange pour une nulle, avec un texte lisible sur chacune.'
+    stack_or_select:
+        title: Un empilement plus malin
+        body: 'Cliquer sur une pièce alliée vous demande si vous voulez l’empiler ou la sélectionner, et seulement quand les deux sont réellement possibles. Sinon, le jeu fait simplement ce qui est évident.'
+    live_evaluation:
+        title: Barre d’évaluation en direct
+        body: 'Cochez « Évaluation en direct » en lançant une partie amicale pour voir à côté du plateau une barre indiquant qui est en avance, mise à jour à chaque coup. Le formulaire de nouvelle partie est aussi plus net, avec un camp aléatoire par défaut.'
+    new_look:
+        title: Un nouveau look
+        body: 'Nouveau logo, icônes de pièces redessinées, nouvelle palette pour le plateau et meilleur contraste des étiquettes et des boutons du salon.'
+    hidden_games_feed:
+        title: Les parties masquées le restent
+        body: 'Une partie que vous retirez de vos listes n’apparaît plus dans le fil public des « parties terminées récemment », qui ne nomme d’ailleurs plus les joueurs.'
+    email_notifications:
+        title: Notifications par e-mail activées par défaut
+        body: 'Tous les types de notifications par e-mail (votre tour, résultats, demandes d’ami, parties trouvées) sont désormais activés, sauf si vous les désactivez dans les Paramètres.'
+    v1:
+        title: Keres v1.0 est arrivé
+        body: 'Les parties par correspondance, les invitations et les adversaires informatiques de tous niveaux sont désormais disponibles.'
+list:
+    title: Annonces
+    show_more: 'Afficher {count, plural, one {# annonce de plus} other {# annonces de plus}}'
+    show_less: Afficher moins

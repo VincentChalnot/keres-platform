@@ -7,13 +7,13 @@ namespace App\Action\Lobby;
 use App\Entity\User;
 use App\Repository\GameRepository;
 use App\Repository\SeekRepository;
+use App\Service\Announcement\AnnouncementProvider;
 use App\Service\Matchmaking\SeekPayloadBuilder;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\Clock\ClockInterface;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\Attribute\AsController;
 use Symfony\Component\Routing\Attribute\Route;
-use Symfony\Contracts\Translation\TranslatorInterface;
 
 /**
  * `GET /lobby` (04-matchmaking.md sec 9.2) - the multiplayer front door.
@@ -53,7 +53,7 @@ class LobbyAction extends AbstractController
         private readonly SeekPayloadBuilder $seekPayloadBuilder,
         private readonly GameRepository $gameRepository,
         private readonly ClockInterface $clock,
-        private readonly TranslatorInterface $translator,
+        private readonly AnnouncementProvider $announcementProvider,
     ) {
     }
 
@@ -67,7 +67,7 @@ class LobbyAction extends AbstractController
             $this->gameRepository->preloadForListing($publicGames);
 
             return $this->render('actions/play_welcome.html.twig', [
-                'announcements' => $this->announcements(),
+                'announcements' => $this->announcementProvider->latest(),
                 'publicGames' => $publicGames,
             ]);
         }
@@ -85,27 +85,6 @@ class LobbyAction extends AbstractController
             'seeksBootstrap' => $this->seekPayloadBuilder->encode($listing),
             'ongoingGames' => $shownGames,
             'ongoingGamesCount' => \count($ongoingGames),
-        ];
-    }
-
-    /**
-     * T14: static for now ("static content is fine" per the brief) - the texts
-     * live in the `game` translation catalogue; revisit with a real content
-     * source if announcements ever need to be editable without a deploy.
-     *
-     * @return list<array{title: string, body: string}>
-     */
-    private function announcements(): array
-    {
-        return [
-            [
-                'title' => $this->translator->trans('welcome.announcements.v1.title', [], 'game'),
-                'body' => $this->translator->trans('welcome.announcements.v1.body', [], 'game'),
-            ],
-            [
-                'title' => $this->translator->trans('welcome.announcements.no_account.title', [], 'game'),
-                'body' => $this->translator->trans('welcome.announcements.no_account.body', [], 'game'),
-            ],
         ];
     }
 }
