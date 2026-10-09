@@ -122,13 +122,34 @@ Do **not** introduce JSON serialization on this path.
 
 ## Engine API Bridge (`src/Engine/`)
 
-Two endpoints, both `POST`, binary in/out, base URL injected via `$backendApiUrl`
+Three endpoints, all `POST`, binary in/out, base URL injected via `$backendApiUrl`
 (env var `BACKEND_API_URL`):
 
 | Endpoint            | Request                       | Response               |
 |---------------------|-------------------------------|------------------------|
 | `/replay-moves`     | `MovesData` binary (2N bytes) | 83 bytes → `BoardData` |
 | `/engine-move-game` | `MovesData` binary (2N bytes) | 2 bytes → `MoveData`   |
+| `/evaluate-game`    | `MovesData` binary (2N bytes) | 4 bytes → int32 LE, level-10 score, White's point of view (`EngineApi::evaluateGame()`) |
+
+Evaluations are stored on `Move.evaluation` (the move edge, **not** `BoardPosition`:
+a board is shared by many lines but the verdict depends on the line - repetition
+history, no-capture counter) and double as the cache. `Move` is otherwise
+immutable; `evaluation` is the one column filled in after the fact.
+
+The engine is **never** called on a request path. Every played move dispatches an
+`EvaluateMoveMessage` to the dedicated `evaluation` transport (consumed by the
+`evaluation-consume` supervisor program of `php-worker`, separate from `async` so
+level-10 searches cannot delay AI replies or clock checks); `EvaluateMoveHandler`
+calls `MoveEvaluator` (only for an edge with a NULL evaluation), stores the result
+and publishes it on the `game/{uuid}` Mercure topic as a named SSE event
+`evaluation` (`{ply, evaluation}`) when `Game::canExposeEvaluation()` allows it.
+`POST /api/games/{uuid}/evaluation` returns `202` at once with the stored values
+(index = ply, `null` = queued) after queueing the missing plies via
+`EvaluationScheduler`; it treats a request on a rated game in progress as a
+cheating attempt (403 + Sentry `fatal`). The frontend (`app.ts`) renders from
+what it has and updates when `evaluation` events arrive - it never polls.
+`bin/console app:moves:evaluate` backfills history (synchronously, in the console).
+`Game::canExposeEvaluation()` gates every place that ships evaluations to a client.
 
 - `EngineApi` — makes raw HTTP calls
 - `GameEngine` — consumes results, updates `Game` entity, handles game-over detection
@@ -244,8 +265,9 @@ of bug this setup is used to reproduce.
 - Messenger: `ProcessAiMoveMessage`, `CheckClockExpiryMessage`, `ExpireSeekMessage`,
   `RecordAnalyticsEventMessage`, and `Symfony\Component\Mailer\Messenger\SendEmailMessage`
   route to the `async` transport (`config/packages/messenger.yaml`), consumed
-  by the `php-worker` Compose service; everything else routes to `sync`
-  (handled in-process)
+  by the `php-worker` Compose service; `EvaluateMoveMessage` routes to its own
+  `evaluation` transport, consumed by `evaluation-consume` in the same service;
+  everything else routes to `sync` (handled in-process)
 
 ### TypeScript
 

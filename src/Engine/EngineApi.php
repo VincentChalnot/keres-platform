@@ -45,6 +45,30 @@ readonly class EngineApi
         return new MoveData($moveData);
     }
 
+    /**
+     * Level-10 evaluation of the position reached by `$movesData` (`/evaluate-game`,
+     * `docs/PROTOCOL.md` in the engine repo): a little-endian int32, White's
+     * point of view, engine units (+/-1000 = decided game).
+     */
+    public function evaluateGame(MovesData $movesData): int
+    {
+        try {
+            $raw = $this->callApi('evaluate-game', $movesData->toBinary(), $this->aiBackendApiUrl);
+        } catch (\RuntimeException) {
+            $raw = $this->callApi('evaluate-game', $movesData->toBinary());
+        }
+
+        if (4 !== \strlen($raw)) {
+            throw new \RuntimeException('evaluate-game returned '.\strlen($raw).' bytes, expected 4');
+        }
+
+        /** @var int $value */
+        $value = unpack('V', $raw)[1];
+
+        // Unsigned little-endian -> signed 32-bit.
+        return $value >= 0x80000000 ? $value - 0x100000000 : $value;
+    }
+
     private function callApi(string $endpoint, string $body, ?string $baseUrl = null): string
     {
         $url = rtrim($baseUrl ?? $this->backendApiUrl, '/').'/'.ltrim($endpoint, '/');

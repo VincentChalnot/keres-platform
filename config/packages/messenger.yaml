@@ -5,6 +5,13 @@ framework:
         transports:
             # https://symfony.com/doc/current/messenger.html#transport-configuration
             async: '%env(MESSENGER_TRANSPORT_DSN)%'
+            # Level-10 engine searches (seconds each) get their own queue and
+            # consumer (frankenphp/supervisor/evaluation-worker.conf): sharing
+            # `async` would let evaluations delay AI replies and clock checks.
+            evaluation:
+                dsn: '%env(MESSENGER_TRANSPORT_DSN)%'
+                options:
+                    queue_name: evaluation
             failed: 'doctrine://default?queue_name=failed'
             sync: 'sync://'
 
@@ -15,6 +22,7 @@ framework:
             'App\Message\CheckClockExpiryMessage': async
             'App\Message\ExpireSeekMessage': async
             'App\Message\RecordAnalyticsEventMessage': async
+            'App\Message\EvaluateMoveMessage': evaluation
             # SendEmailMessage: without an explicit route, Symfony Mailer's
             # message bus dispatch has no matching transport and the mail is
             # handled synchronously in-process (blocking the HTTP request on
@@ -34,3 +42,4 @@ when@test:
                 # keeps enqueueing (and its absence of a live DB requirement) a pure
                 # in-process no-op, same as the previous implicit-sync behaviour was.
                 async: 'in-memory://'
+                evaluation: 'in-memory://'

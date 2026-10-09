@@ -123,6 +123,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 COPY --link frankenphp/supervisor/supervisord.conf /etc/supervisor/supervisord.conf
 COPY --link frankenphp/supervisor/messenger-worker.conf /etc/supervisor/conf.d/messenger-worker.conf
 COPY --link frankenphp/supervisor/deadline-sweep.conf /etc/supervisor/conf.d/deadline-sweep.conf
+COPY --link frankenphp/supervisor/evaluation-worker.conf /etc/supervisor/conf.d/evaluation-worker.conf
 
 WORKDIR /tmp
 
@@ -148,6 +149,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 COPY --link frankenphp/supervisor/supervisord.conf /etc/supervisor/supervisord.conf
 COPY --link frankenphp/supervisor/messenger-worker.conf /etc/supervisor/conf.d/messenger-worker.conf
 COPY --link frankenphp/supervisor/deadline-sweep.conf /etc/supervisor/conf.d/deadline-sweep.conf
+COPY --link frankenphp/supervisor/evaluation-worker.conf /etc/supervisor/conf.d/evaluation-worker.conf
 
 WORKDIR /tmp
 

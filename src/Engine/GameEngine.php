@@ -9,6 +9,7 @@ use App\Exception\GameAlreadyFinishedException;
 use App\Exception\MoveFlaggedException;
 use App\Exception\StalePositionException;
 use App\Message\CheckClockExpiryMessage;
+use App\Message\EvaluateMoveMessage;
 use App\Model\BoardMovesData;
 use App\Model\MoveData;
 use App\Model\PieceColor;
@@ -114,6 +115,12 @@ readonly class GameEngine
         // arms its flag check; the deadline sweep is the backstop if this
         // dispatch is lost to a crash.
         $this->armClockExpiryCheck($game);
+
+        // Every move gets its engine evaluation stored on the move edge
+        // (already cached edges are a no-op in the handler). Async: a level
+        // 10 search must never sit on the move-submission path. Never
+        // exposed to the players of a rated game before it ends.
+        $this->messageBus->dispatch(new EvaluateMoveMessage($game->getUuid()->toRfc4122(), $game->getGameMoves()->count()));
 
         // T6: dispatched after the transaction has already committed - a
         // rejected/stale move never reaches here (it throws above or from

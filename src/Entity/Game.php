@@ -59,6 +59,10 @@ class Game
     #[ORM\Column(type: Types::BOOLEAN)]
     private bool $rated = false;
 
+    /** The player asked for the live evaluation bar at creation. Meaningless (and ignored) for rated games - see `isLiveEvaluationEnabled()`. */
+    #[ORM\Column(type: Types::BOOLEAN, options: ['default' => false])]
+    private bool $liveEvaluation = false;
+
     #[ORM\Column(type: Types::SMALLINT, options: ['default' => 0])]
     private int $endReasonValue = GameEndReason::NONE->value;
 
@@ -126,7 +130,7 @@ class Game
     #[ORM\OrderBy(['id' => 'ASC'])]
     private Collection $gameMoves;
 
-    public function __construct(User $createdBy, OpponentType $opponentType, TimeControl $timeControl, bool $rated, ?int $aiLevel = null)
+    public function __construct(User $createdBy, OpponentType $opponentType, TimeControl $timeControl, bool $rated, ?int $aiLevel = null, bool $liveEvaluation = false)
     {
         $this->uuid = Uuid::v4();
         $this->createdAt = new \DateTimeImmutable();
@@ -137,6 +141,7 @@ class Game
         $this->aiLevel = $aiLevel;
         $this->timeControl = $timeControl;
         $this->rated = $rated;
+        $this->liveEvaluation = $liveEvaluation && !$rated;
         $this->speedCategoryValue = $timeControl->speedCategory()?->value;
     }
 
@@ -185,6 +190,22 @@ class Game
     public function isRated(): bool
     {
         return $this->rated;
+    }
+
+    /** Live evaluation bar: only ever for unrated games (cheating otherwise). */
+    public function isLiveEvaluationEnabled(): bool
+    {
+        return $this->liveEvaluation && !$this->rated;
+    }
+
+    /**
+     * Whether evaluations may be shown/served for this game right now: any
+     * unrated game that opted in, or any game at all once it is over (replay).
+     * A rated game in progress never qualifies.
+     */
+    public function canExposeEvaluation(): bool
+    {
+        return $this->isGameOver() || $this->isLiveEvaluationEnabled();
     }
 
     public function getEndReason(): GameEndReason
