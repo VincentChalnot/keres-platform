@@ -5,6 +5,9 @@ when@prod:
             # Add request headers, cookies, IP address and the authenticated user
             # see https://docs.sentry.io/platforms/php/data-management/data-collected/ for more info
             # send_default_pii: true
+            # Deployed git tag / short commit (see Dockerfile ARG APP_VERSION),
+            # so Sentry can group issues and regressions per release.
+            release: '%env(default:app_version_unknown:APP_VERSION)%'
             ignore_exceptions:
                 - 'Symfony\Component\ErrorHandler\Error\FatalError'
                 - 'Symfony\Component\Debug\Exception\FatalErrorException'
