@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace App\MessageHandler;
 
 use App\Engine\GameEngine;
+use App\Exception\GameAlreadyFinishedException;
+use App\Exception\StalePositionException;
 use App\Message\ProcessAiMoveMessage;
 use App\Repository\GameRepository;
 use App\Service\Game\GameStatePayloadBuilder;
@@ -34,7 +36,15 @@ readonly class ProcessAiMoveHandler
         if ($game->getGameMoves()->count() !== $message->moveCounter) {
             $boardMovesData = $this->gameEngine->getBoardMovesData($game);
         } else {
-            $boardMovesData = $this->gameEngine->aiMove($game, (int) (microtime(true) * 1_000_000));
+            try {
+                $boardMovesData = $this->gameEngine->aiMove($game, (int) (microtime(true) * 1_000_000));
+            } catch (StalePositionException|GameAlreadyFinishedException) {
+                // Lost the post-lock race (undo, a duplicate message, a move
+                // from the other side): same as the "state changed" branch
+                // above, publish what the game looks like now. Expected, so
+                // neither retried nor reported.
+                $boardMovesData = $this->gameEngine->getBoardMovesData($game);
+            }
         }
 
         $payload = $this->payloadBuilder->build($game, $boardMovesData);
