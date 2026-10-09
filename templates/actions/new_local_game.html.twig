@@ -13,47 +13,74 @@
 
                         {{ form_start(form) }}
 
-                        <div class="field">
-                            {{ form_label(form.playerSide, null, {label_attr: {class: 'label'}}) }}
-                            <div class="control">
-                                {{ form_widget(form.playerSide) }}
+                        {% for name in ['playerSide', 'opponentType'] %}
+                            <div class="field is-horizontal">
+                                <div class="field-label is-normal">
+                                    {{ form_label(form[name]) }}
+                                </div>
+                                <div class="field-body">
+                                    <div class="field">
+                                        <div class="control">
+                                            {{ form_widget(form[name]) }}
+                                        </div>
+                                        {{ form_help(form[name]) }}
+                                        {{ form_errors(form[name]) }}
+                                    </div>
+                                </div>
                             </div>
-                            {{ form_errors(form.playerSide) }}
+                        {% endfor %}
+
+                        <div class="field is-horizontal" id="ai-level-field">
+                            <div class="field-label is-normal">
+                                {{ form_label(form.aiLevel) }}
+                            </div>
+                            <div class="field-body">
+                                <div class="field">
+                                    <div class="control">
+                                        {{ form_widget(form.aiLevel) }}
+                                    </div>
+                                    {{ form_help(form.aiLevel) }}
+                                    {{ form_errors(form.aiLevel) }}
+                                </div>
+                            </div>
                         </div>
 
-                        <div class="field">
-                            {{ form_label(form.opponentType, null, {label_attr: {class: 'label'}}) }}
-                            <div class="control">
-                                {{ form_widget(form.opponentType) }}
+                        <div class="field is-horizontal">
+                            <div class="field-label"></div>
+                            <div class="field-body">
+                                <div class="field">
+                                    <div class="control">
+                                        {# The checkbox widget renders its own label (form/bulma_layout). #}
+                                        {{ form_widget(form.liveEvaluation) }}
+                                    </div>
+                                    {{ form_help(form.liveEvaluation) }}
+                                    {{ form_errors(form.liveEvaluation) }}
+                                </div>
                             </div>
-                            {{ form_errors(form.opponentType) }}
                         </div>
 
-                        <div class="field">
-                            {{ form_label(form.aiLevel, null, {label_attr: {class: 'label'}}) }}
+                        <div class="field is-grouped is-grouped-right">
                             <div class="control">
-                                {{ form_widget(form.aiLevel) }}
+                                <a href="{{ path('lobby') }}" class="button is-rounded">Back</a>
                             </div>
-                            {{ form_help(form.aiLevel) }}
-                            {{ form_errors(form.aiLevel) }}
-                        </div>
-
-                        <div class="field">
-                            <div class="control">
-                                {{ form_widget(form.liveEvaluation) }}
-                                {{ form_label(form.liveEvaluation) }}
-                            </div>
-                            {{ form_help(form.liveEvaluation) }}
-                            {{ form_errors(form.liveEvaluation) }}
-                        </div>
-
-                        <div class="field">
                             <div class="control">
                                 {{ form_widget(form.submit, {attr: {class: 'button is-rounded is-primary'}}) }}
                             </div>
                         </div>
 
                         {{ form_end(form) }}
+
+                        {# Difficulty only applies against the AI. #}
+                        <script>
+                            (() => {
+                                const opponent = document.getElementById('{{ form.opponentType.vars.id }}');
+                                const level = document.getElementById('ai-level-field');
+                                const hotseat = '{{ (form.opponentType.vars.choices|filter(c => c.data == enum('App\\Model\\OpponentType').HOTSEAT)|first).value }}';
+                                const sync = () => { level.hidden = opponent.value === hotseat; };
+                                opponent.addEventListener('change', sync);
+                                sync();
+                            })();
+                        </script>
                     </div>
                 </div>
             </div>

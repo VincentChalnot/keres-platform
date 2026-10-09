@@ -31,7 +31,7 @@ class LocalGameType extends AbstractType
                     'Black' => 'black',
                     'Random' => 'random',
                 ],
-                'data' => 'white', // Default selection
+                'data' => 'random', // Default selection
             ])
             ->add('opponentType', ChoiceType::class, [
                 'label' => 'Opponent',
