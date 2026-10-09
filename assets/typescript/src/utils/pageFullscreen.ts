@@ -34,6 +34,8 @@ export class PageFullscreen {
         }
 
         this.setActive(true);
+        // The button sits below the board: land on the board + player rows, not on the scrolled-off remainder of the page.
+        window.scrollTo(0, 0);
         if (this.root.requestFullscreen) {
             try {
                 await this.root.requestFullscreen();

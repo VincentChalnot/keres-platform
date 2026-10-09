@@ -881,31 +881,104 @@ footer.footer {
     }
 }
 
+// The opponent's row, the board and the player's own row, as one unit. A plain
+// pass-through in the normal page flow; the viewport-fitted stage in fullscreen.
+.game-stage {
+    display: contents;
+}
+
 // ─── Page fullscreen (toggle-fullscreen-btn) ──────────────────────────────────
-// Toggled on <html> by PageFullscreen.ts. Hides the site chrome and puts the
-// board first, fitted to the viewport (black bars left/right in landscape);
-// everything else (clocks, status, buttons, history) stacks below it, out of
-// view until scrolled to.
+// Toggled on <html> by PageFullscreen.ts. Hides the site chrome and turns the
+// .game-stage (opponent row, board, own row) into exactly one viewport: the
+// rows get a fixed height and the board is the largest 1.2252-ish rectangle
+// that fits the rest, both measured in the stage's container units (cqw/cqh),
+// so nothing is clipped or scrolled at any aspect ratio. The group is centred
+// (black bars around it); everything else (header, status, buttons, history)
+// stacks below the stage, out of view until scrolled to.
 
 html.is-game-fullscreen {
     --site-navbar-height: 0px;
+
+    // The stage fills the viewport; what lies below it stays reachable by scrolling, without a permanent scrollbar eating width.
+    scrollbar-width: none;
 
     .site-navbar,
     .footer {
         display: none;
     }
 
-    .game-container {
-        --board-max-height: calc(100dvh - 1rem);
+    // The guest-game notice above the board (play_guest.html.twig) would push the stage down.
+    .container:has(> .guest-game-notice) {
+        display: none;
+    }
 
+    .game-container {
         display: flex;
         flex-direction: column;
         max-width: none;
         padding: 0.5rem;
+    }
+
+    .game-stage {
+        // Height of one player-info-row, shrinking on short viewports.
+        --fs-row-h: clamp(2rem, 7dvh, 3.25rem);
+        --fs-gap: 0.25rem;
+        --eval-bar-extra: 0px;
+        // Width of the board + eval bar: limited by the stage width and by the height left for the board.
+        --fs-w: min(100cqw, calc((100cqh - 2 * var(--fs-row-h) - 2 * var(--fs-gap)) * var(--board-aspect) + var(--eval-bar-extra)));
+
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        gap: var(--fs-gap);
+        order: -1;
+        // Container padding (0.5rem) above, the same below: the rest of the page starts right under the viewport.
+        height: calc(100dvh - 1rem);
+        margin-bottom: 0.5rem;
+        container-type: size;
+
+        &:has(.has-eval-bar) {
+            --eval-bar-extra: 2.25rem;
+        }
 
         > .board-with-eval {
-            order: -1;
             flex: none;
+            width: var(--fs-w);
+        }
+
+        > .player-info-row {
+            flex: none;
+            width: var(--fs-w);
+            height: var(--fs-row-h);
+            margin-inline: auto;
+
+            .material-bar {
+                // Pieces and score are sized in em: 3em = 90% of the row.
+                font-size: calc(var(--fs-row-h) / 3.3);
+                min-height: 0;
+                height: 100%;
+                padding: 0 0.25rem;
+                flex-wrap: nowrap;
+                overflow: hidden;
+            }
+
+            // A long capture list squeezes the icons (down to 1.2em) instead of clipping them; the score stays whole.
+            .material-piece {
+                flex-shrink: 1;
+                min-width: 1.2em;
+            }
+
+            .material-score {
+                flex-shrink: 0;
+                padding-top: 0;
+                white-space: nowrap;
+            }
+
+            .player-clock {
+                min-width: 4.5em;
+                padding: 0.15em 0.6em;
+                font-size: clamp(0.9rem, calc(var(--fs-row-h) * 0.5), 1.3rem);
+            }
         }
     }
 }

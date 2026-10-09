@@ -19,6 +19,8 @@
             {% include 'actions/_game_header.html.twig' with {header: gameHeader} only %}
         {% endif %}
 
+        {# Opponent row, board, own row: one unit. Plain flow (display: contents) normally; in page fullscreen it is the viewport-sized stage the board is fitted into. #}
+        <div class="game-stage">
         <div class="player-info-row" id="player-info-top">
             <div class="material-bar" id="material-top"></div>
             <div class="player-clock" id="clock-top"><span class="player-clock__time">--:--</span></div>
@@ -43,6 +45,7 @@
         <div class="player-info-row" id="player-info-bottom">
             <div class="material-bar" id="material-bottom"></div>
             <div class="player-clock" id="clock-bottom"><span class="player-clock__time">--:--</span></div>
+        </div>
         </div>
 
         <div class="notification game-status-banner is-muted" id="game-status-banner" role="status" aria-live="polite">{{ 'play.board.loading'|trans }}</div>
