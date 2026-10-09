@@ -1,6 +1,7 @@
 import {Board, PotentialMove, Move} from '../models/types';
 import {decodeBoardFromBinary, decodeGameOverReason, encodeBoardToBinary, decodePotentialMove, encodeMove, encodeMoveListToBinary} from '../utils/boardUtils';
 import {ClockState} from './MercureClient';
+import {t} from '../i18n';
 
 /**
  * Full authoritative game state returned by the move/finish endpoints.
@@ -99,7 +100,7 @@ export class GameAPI {
      */
     async requestEvaluations(): Promise<Array<number | null>> {
         if (!this.gameUuid) {
-            throw new Error('No game UUID available');
+            throw new Error(t('play.error.no_game'));
         }
 
         const response = await fetch(`${this.backendUrl}/games/${this.gameUuid}/evaluation`, {
@@ -108,7 +109,7 @@ export class GameAPI {
         });
 
         if (!response.ok) {
-            throw new Error(`Evaluation unavailable (HTTP ${response.status})`);
+            throw new Error(t('play.error.evaluation_unavailable', {status: response.status}));
         }
 
         const body = await response.json() as {data: {evaluations: Array<number | null>}};
@@ -123,7 +124,7 @@ export class GameAPI {
      */
     async submitMove(move: Move): Promise<GameStatePayload> {
         if (!this.gameUuid) {
-            throw new Error('No game UUID available');
+            throw new Error(t('play.error.no_game'));
         }
 
         const moveU16 = encodeMove(move);
@@ -137,7 +138,7 @@ export class GameAPI {
 
         if (!response.ok) {
             const errorData = await response.json();
-            throw new Error(errorData.error || 'Failed to submit move');
+            throw new Error(errorData.error || t('play.error.submit_move'));
         }
 
         const data = await response.json();
@@ -198,7 +199,7 @@ export class GameAPI {
         });
 
         if (!response.ok) {
-            throw new Error(`Server returned ${response.status}`);
+            throw new Error(t('play.error.server_status', {status: response.status}));
         }
 
         const moveBuffer = await response.arrayBuffer();
@@ -226,7 +227,7 @@ export class GameAPI {
         });
 
         if (!response.ok) {
-            throw new Error(`Server returned ${response.status}`);
+            throw new Error(t('play.error.server_status', {status: response.status}));
         }
 
         const boardBuffer = await response.arrayBuffer();
@@ -246,7 +247,7 @@ export class GameAPI {
         });
 
         if (!response.ok) {
-            throw new Error(`Server returned ${response.status}`);
+            throw new Error(t('play.error.server_status', {status: response.status}));
         }
 
         return decodeGameOverReason(new Uint8Array(await response.arrayBuffer()));
@@ -257,7 +258,7 @@ export class GameAPI {
      */
     async undoMove(): Promise<string> {
         if (!this.gameUuid) {
-            throw new Error('No game UUID available');
+            throw new Error(t('play.error.no_game'));
         }
 
         const response = await fetch(`/play/${this.gameUuid}/undo`, {
@@ -266,7 +267,7 @@ export class GameAPI {
 
         if (!response.ok) {
             const errorData = await response.json();
-            throw new Error(errorData.error || 'Failed to undo move');
+            throw new Error(errorData.error || t('play.error.undo_move'));
         }
 
         return response.text();
@@ -278,7 +279,7 @@ export class GameAPI {
      */
     async resign(): Promise<GameStatePayload> {
         if (!this.gameUuid) {
-            throw new Error('No game UUID available');
+            throw new Error(t('play.error.no_game'));
         }
 
         const response = await fetch(`/play/${this.gameUuid}/resign`, {
@@ -289,7 +290,7 @@ export class GameAPI {
         const data = await response.json();
 
         if (!response.ok) {
-            throw new Error(data.error || 'Failed to resign');
+            throw new Error(data.error || t('play.error.resign'));
         }
 
         return this.parsePayload(data);

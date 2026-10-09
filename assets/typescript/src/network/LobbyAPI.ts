@@ -6,6 +6,7 @@ import {
     SeekListing,
 } from '../models/seek';
 import {FriendRequestResult, FriendsListResult, PlayerSearchResult} from '../models/friends';
+import {hasTranslation, t} from '../i18n';
 
 /** Thrown on any `{"error": {...}}` envelope or transport failure - `code` is the only field a caller may branch on (09-api-reference.md sec 2.2/9). */
 export class ApiError extends Error {
@@ -17,6 +18,15 @@ export class ApiError extends Error {
         super(code);
         this.name = 'ApiError';
     }
+}
+
+/** What to tell the user about a failed call: the localized text of the error code, never the server's English `message`. */
+export function apiErrorMessage(error: unknown): string {
+    if (error instanceof ApiError && hasTranslation(`api_error.${error.code}`)) {
+        return t(`api_error.${error.code}`);
+    }
+
+    return t('api_error.internal_error');
 }
 
 /**

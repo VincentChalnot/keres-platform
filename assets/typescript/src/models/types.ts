@@ -1,4 +1,5 @@
 // Core game types
+import {t} from '../i18n';
 
 export interface Piece {
     color: boolean;
@@ -105,19 +106,19 @@ export class Board {
     }
 
     /**
-     * Get the game result message
+     * Get the game result message (the engine's verdict only: no reason is known here)
      */
     getGameResult(): string {
         if (!this.gameOver) {
             return '';
         }
         if (this.draw) {
-            return 'Game Over - Draw!';
+            return t('play.over.draw', {reason: 'unknown'});
         }
         if (this.whiteWins) {
-            return 'Game Over - White Wins!';
+            return t('play.over.white_wins', {reason: 'unknown'});
         }
-        return 'Game Over - Black Wins!';
+        return t('play.over.black_wins', {reason: 'unknown'});
     }
 
     /**

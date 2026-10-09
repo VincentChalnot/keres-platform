@@ -5,6 +5,7 @@
  * Scores are the engine's units, always from White's point of view: a soldier
  * is worth 10, a decided game is +/-1000 (a forced win).
  */
+import {formatNumber, t} from '../i18n';
 
 /** |score| from which the engine reports a forced result rather than a material edge. */
 const DECIDED_SCORE = 500;
@@ -22,14 +23,14 @@ export function whiteShare(score: number): number {
     return Math.min(MAX_SHARE, Math.max(MIN_SHARE, share));
 }
 
-/** Human label: pawn-like units with a sign ("+1.5"), or the result when decided. */
+/** Human label: pawn-like units with a sign ("+1.5", decimal separator of the locale), or the result when decided. */
 export function formatEvaluation(score: number): string {
     if (score >= DECIDED_SCORE) return '1-0';
     if (score <= -DECIDED_SCORE) return '0-1';
     const units = score / 10;
-    const text = Math.abs(units).toFixed(1);
+    const text = formatNumber(Math.abs(units), {minimumFractionDigits: 1, maximumFractionDigits: 1});
 
-    return units > 0 ? `+${text}` : units < 0 ? `-${text}` : '0.0';
+    return units > 0 ? `+${text}` : units < 0 ? `-${text}` : text;
 }
 
 export class EvalBar {
@@ -69,7 +70,7 @@ export class EvalBar {
         this.label.textContent = text;
         this.label.classList.toggle('is-white-ahead', score >= 0);
         this.label.classList.toggle('is-black-ahead', score < 0);
-        this.root.title = `Engine evaluation: ${text}`;
-        this.root.setAttribute('aria-label', `Engine evaluation: ${text}`);
+        this.root.title = t('play.eval.label', {value: text});
+        this.root.setAttribute('aria-label', this.root.title);
     }
 }

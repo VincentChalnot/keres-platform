@@ -1,0 +1,25 @@
+# Friends page, profile friend actions and the notification bell. Exported to TypeScript as `social.<key>`.
+friends:
+    no_requests: Aucune demande en attente.
+    request_sent: Demande envoyée
+    accept: Accepter
+    decline: Refuser
+    unblock: Débloquer
+    remove: Retirer
+    add: Ajouter
+    online: en ligne
+    no_friends: 'Pas encore d’amis : recherchez un nom d’utilisateur ci-dessus.'
+    no_players: Aucun joueur trouvé.
+    search_failed: 'La recherche a échoué : {reason}'
+    action_failed:
+        request: 'Impossible d’envoyer une demande d’ami à {username} : {reason}'
+        accept: 'Impossible d’accepter la demande de {username} : {reason}'
+        decline: 'Impossible de refuser la demande de {username} : {reason}'
+        remove: 'Impossible de retirer {username} de vos amis : {reason}'
+        block: 'Impossible de bloquer {username} : {reason}'
+        unblock: 'Impossible de débloquer {username} : {reason}'
+notifications:
+    bell_label: '{count, plural, =0 {Notifications} one {Notifications (# non lue)} other {Notifications (# non lues)}}'
+    mark_read: Marquer comme lue
+    empty: Vous n’avez pas encore de notification.
+    load_failed: Impossible de charger les notifications.

@@ -1,0 +1,89 @@
+# The game page (board, banner, clocks, modals). Exported to TypeScript as `play.<key>`.
+banner:
+    viewing_history: Viewing history – go to the latest move to continue playing
+    turn: '{side, select, white {White to move} other {Black to move}}'
+    waiting_ai: Waiting for AI…
+    waiting_opponent: Waiting for opponent…
+    your_turn: Your turn
+    game_over: Game over.
+# One sentence per outcome; `reason` is a closed code: resignation, timeout, abandonment, draw_agreed,
+# king_capture, forty_move, insufficient_material, or anything else for "no reason known".
+over:
+    aborted: Game aborted.
+    draw: '{reason, select, resignation {Draw by resignation.} timeout {Draw on time.} abandonment {Draw by abandonment.} draw_agreed {Draw by agreement.} king_capture {Draw by king capture.} forty_move {Draw by the 40-move rule.} insufficient_material {Draw by insufficient material.} other {Draw.}}'
+    white_wins: '{reason, select, resignation {White wins by resignation.} timeout {White wins on time.} abandonment {White wins by abandonment.} draw_agreed {White wins by agreement.} king_capture {White wins by king capture.} forty_move {White wins by the 40-move rule.} insufficient_material {White wins by insufficient material.} other {White wins.}}'
+    black_wins: '{reason, select, resignation {Black wins by resignation.} timeout {Black wins on time.} abandonment {Black wins by abandonment.} draw_agreed {Black wins by agreement.} king_capture {Black wins by king capture.} forty_move {Black wins by the 40-move rule.} insufficient_material {Black wins by insufficient material.} other {Black wins.}}'
+timer:
+    days_hours: '{days}d {hours}h'
+stack_modal:
+    select_title: Stack or select?
+    select_text_full_top: You clicked one of your own pieces. Move the full stack onto it, only the top piece, or select that piece instead?
+    select_text_top: You clicked one of your own pieces. Move the top piece onto it, or select that piece instead?
+    select_text_stack: You clicked one of your own pieces. Stack onto it, or select that piece instead?
+    choose_title: Choose your move
+    choose_text: You are moving a stacked piece. Do you want to move the full stack or only the top piece?
+    move_full_stack: Move Full Stack
+    stack_here: Stack here
+resign:
+    title: Resign
+    message: Are you sure you want to resign? The game will be lost.
+    confirm: Resign
+engine:
+    ask: Ask Engine
+    thinking: Thinking…
+threats:
+    show: Show Threats
+    hide: Hide Threats
+coords:
+    show: Show Coords
+    hide: Hide Coords
+fullscreen:
+    enter: Fullscreen
+    exit: Exit Fullscreen
+eval:
+    label: 'Engine evaluation: {value}'
+feedback:
+    thanks_title: Thank you for your feedback!
+    thanks_text: We review every submission.
+    load_failed: Failed to load the feedback form. Please try again later.
+    submit_failed: Failed to submit feedback. Please try again later.
+error:
+    no_game: No game is available.
+    evaluation_unavailable: 'Evaluation unavailable (HTTP {status})'
+    server_status: 'Server returned {status}'
+    submit_move: Failed to submit move
+    undo_move: Failed to undo move
+    resign: Failed to resign
+    no_moves_to_undo: No moves to undo
+    ai_failed: 'The AI could not play (server returned {status}). Use Undo, then try again.'
+    play_move_failed: 'Failed to play move: {message}'
+    decode_moves_failed: 'Failed to decode move stack: {message}'
+    undo_move_failed: 'Failed to undo move: {message}'
+    resign_failed: 'Failed to resign: {message}'
+    engine_failed: 'Error: {message}. The engine may not be available.'
+# Piece cards (long press / right click on a piece). `movement` lines are separated by a line break.
+piece:
+    soldier:
+        name: Soldier
+        movement: "1 square diagonally forward\n→ Promotes to Paladin"
+    bishop:
+        name: Bishop
+        movement: Unlimited diagonally
+    rook:
+        name: Rook
+        movement: Unlimited orthogonally
+    paladin:
+        name: Paladin
+        movement: 1 or 2 squares orthogonally
+    guard:
+        name: Guard
+        movement: 1 or 2 squares diagonally
+    knight:
+        name: Knight
+        movement: "L-shaped move\nCan jump over pieces"
+    ballista:
+        name: Ballista
+        movement: "Unlimited forward only\n→ Promotes to Rook"
+    king:
+        name: King
+        movement: "1 square in any direction\nCannot be stacked"

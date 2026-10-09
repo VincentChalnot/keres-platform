@@ -2,7 +2,7 @@ import {IBoardView, TileHighlight} from './IBoardView';
 import {BOARD_SIZE, LAST_BOARD_INDEX} from '../models/types';
 import {GameState} from '../models/GameState';
 import {decodePiece} from "../utils/boardUtils";
-import {PIECE_RULES} from '../models/pieceRules';
+import {pieceRule} from '../models/pieceRules';
 
 // Constants for the SVG board
 const SQUARE_WIDTH = 100; // px
@@ -723,7 +723,7 @@ export default class SVGBoardView implements IBoardView {
      * The card contains:
      *  - A 2× visual of the piece/stack
      *  - The piece name(s)
-     *  - The movement description in French
+     *  - The movement description (translated)
      */
     private showPieceCard(tileIndex: number): void {
         if (!this.currentBoardData) return;
@@ -738,7 +738,7 @@ export default class SVGBoardView implements IBoardView {
         const lines: TextLine[] = [];
 
         const addPieceLines = (type: string) => {
-            const rule = PIECE_RULES[type];
+            const rule = pieceRule(type);
             if (!rule) return;
             lines.push({ text: rule.name, bold: true });
             rule.movement.split('\n').forEach(l => lines.push({ text: l, bold: false }));

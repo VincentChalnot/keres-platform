@@ -11,6 +11,7 @@ import {alertModal, confirmModal} from './utils/modal';
 import {PageFullscreen} from './utils/pageFullscreen';
 import {EvalBar, formatEvaluation} from './views/EvalBar';
 import {describeGameOver, gameOverOutcome} from './utils/gameOverText';
+import {t} from './i18n';
 
 const OPPONENT_TYPE_AI = 0;
 const OPPONENT_TYPE_HOTSEAT = 1;
@@ -28,7 +29,7 @@ function formatClockMs(ms: number): string {
     const seconds = totalSeconds % 60;
     const pad = (value: number): string => String(value).padStart(2, '0');
 
-    if (days > 0) return `${days}d ${pad(hours)}h`;
+    if (days > 0) return t('play.timer.days_hours', {days, hours: pad(hours)});
     if (hours > 0) return `${hours}:${pad(minutes)}:${pad(seconds)}`;
 
     return `${minutes}:${pad(seconds)}`;
@@ -409,7 +410,7 @@ class KeresGame {
         // GameController reports failures through this instead of native alert().
         window.addEventListener('showError', (event) => {
             const detail = (event as CustomEvent<{message: string}>).detail;
-            void alertModal(detail.message, 'Error');
+            void alertModal(detail.message, t('common.error'));
         });
 
         // Custom event for board state changes (e.g., from browser history navigation)
@@ -454,17 +455,17 @@ class KeresGame {
     private openUnstackModal(detail: UnstackModalDetail): void {
         const {full, top, selectInstead} = detail;
         if (selectInstead) {
-            this.unstackModalTitle.textContent = 'Stack or select?';
+            this.unstackModalTitle.textContent = t('play.stack_modal.select_title');
             this.unstackModalText.textContent = full && top
-                ? 'You clicked one of your own pieces. Move the full stack onto it, only the top piece, or select that piece instead?'
+                ? t('play.stack_modal.select_text_full_top')
                 : (top
-                    ? 'You clicked one of your own pieces. Move the top piece onto it, or select that piece instead?'
-                    : 'You clicked one of your own pieces. Stack onto it, or select that piece instead?');
-            this.moveStackBtn.textContent = top ? 'Move Full Stack' : 'Stack here';
+                    ? t('play.stack_modal.select_text_top')
+                    : t('play.stack_modal.select_text_stack'));
+            this.moveStackBtn.textContent = top ? t('play.stack_modal.move_full_stack') : t('play.stack_modal.stack_here');
         } else {
-            this.unstackModalTitle.textContent = 'Choose your move';
-            this.unstackModalText.textContent = 'You are moving a stacked piece. Do you want to move the full stack or only the top piece?';
-            this.moveStackBtn.textContent = 'Move Full Stack';
+            this.unstackModalTitle.textContent = t('play.stack_modal.choose_title');
+            this.unstackModalText.textContent = t('play.stack_modal.choose_text');
+            this.moveStackBtn.textContent = t('play.stack_modal.move_full_stack');
         }
         this.moveStackBtn.classList.toggle('is-hidden', !full);
         this.moveUnstackBtn.classList.toggle('is-hidden', !top);
@@ -495,25 +496,25 @@ class KeresGame {
         try {
             if (this.askEngineBtn) {
                 this.askEngineBtn.disabled = true;
-                this.askEngineBtn.innerText = 'Thinking...';
+                this.askEngineBtn.innerText = t('play.engine.thinking');
             }
             await this.controller.requestEngineMove();
             this.refreshUI();
         } catch (error) {
             console.error('Error getting engine move:', error);
-            this.gameStatusBanner.textContent = `Error: ${(error as Error).message}. engine may not be available.`;
+            this.gameStatusBanner.textContent = t('play.error.engine_failed', {message: (error as Error).message});
         } finally {
             if (this.askEngineBtn) {
                 this.askEngineBtn.disabled = false;
-                this.askEngineBtn.innerText = 'Ask Engine';
+                this.askEngineBtn.innerText = t('play.engine.ask');
             }
         }
     }
 
     private async handleResign(): Promise<void> {
         const confirmed = await confirmModal(
-            'Are you sure you want to resign? The game will be lost.',
-            {title: 'Resign', confirmLabel: 'Resign', danger: true},
+            t('play.resign.message'),
+            {title: t('play.resign.title'), confirmLabel: t('play.resign.confirm'), danger: true},
         );
 
         if (!confirmed) return;
@@ -524,7 +525,8 @@ class KeresGame {
 
     private async openFeedbackModal(): Promise<void> {
         this.feedbackModal.classList.add('is-active');
-        this.feedbackModalBody.innerHTML = '<progress class="progress is-small is-primary" max="100">Loading</progress>';
+        this.feedbackModalBody.innerHTML = '<progress class="progress is-small is-primary" max="100"></progress>';
+        this.feedbackModalBody.firstElementChild!.textContent = t('common.loading');
 
         try {
             const response = await fetch('/feedback', {headers: {'X-Requested-With': 'XMLHttpRequest'}});
@@ -532,12 +534,19 @@ class KeresGame {
             this.wireFeedbackForm();
         } catch (error) {
             console.error('Failed to load feedback form:', error);
-            this.feedbackModalBody.innerHTML = '<p>Failed to load the feedback form. Please try again later.</p>';
+            this.feedbackModalBody.replaceChildren(this.feedbackMessage(t('play.feedback.load_failed')));
         }
     }
 
     private closeFeedbackModal(): void {
         this.feedbackModal.classList.remove('is-active');
+    }
+
+    private feedbackMessage(text: string): HTMLParagraphElement {
+        const paragraph = document.createElement('p');
+        paragraph.textContent = text;
+
+        return paragraph;
     }
 
     private wireFeedbackForm(): void {
@@ -565,7 +574,12 @@ class KeresGame {
             const contentType = response.headers.get('content-type') ?? '';
 
             if (contentType.includes('application/json')) {
-                this.feedbackModalBody.innerHTML = '<div class="notification is-success"><strong>Thank you for your feedback!</strong> We review every submission.</div>';
+                const notification = document.createElement('div');
+                notification.className = 'notification is-success';
+                const strong = document.createElement('strong');
+                strong.textContent = t('play.feedback.thanks_title');
+                notification.append(strong, ` ${t('play.feedback.thanks_text')}`);
+                this.feedbackModalBody.replaceChildren(notification);
             } else {
                 // Validation failed: the server re-rendered the form with errors.
                 this.feedbackModalBody.innerHTML = await response.text();
@@ -573,7 +587,7 @@ class KeresGame {
             }
         } catch (error) {
             console.error('Failed to submit feedback:', error);
-            this.feedbackModalBody.innerHTML = '<p>Failed to submit feedback. Please try again later.</p>';
+            this.feedbackModalBody.replaceChildren(this.feedbackMessage(t('play.feedback.submit_failed')));
         }
     }
 
@@ -600,14 +614,14 @@ class KeresGame {
         if (this.view.setCoordinatesVisible) {
             this.view.setCoordinatesVisible(this.coordsVisible);
         }
-        this.toggleCoordsBtn.innerText = this.coordsVisible ? 'Hide Coords' : 'Show Coords';
+        this.toggleCoordsBtn.innerText = this.coordsVisible ? t('play.coords.hide') : t('play.coords.show');
     }
 
     private updateToggleThreatsButton(): void {
         if (this.controller.isShowThreats()) {
-            this.toggleThreatsBtn.innerText = 'Hide Threats';
+            this.toggleThreatsBtn.innerText = t('play.threats.hide');
         } else {
-            this.toggleThreatsBtn.innerText = 'Show Threats';
+            this.toggleThreatsBtn.innerText = t('play.threats.show');
         }
     }
 
@@ -724,7 +738,7 @@ class KeresGame {
         const board = this.gameState.getBoard();
 
         if (!board) {
-            this.setBanner('Loading…', 'muted');
+            this.setBanner(t('common.loading'), 'muted');
             return;
         }
 
@@ -735,30 +749,30 @@ class KeresGame {
         }
 
         if (this.controller.canNavigateToNext()) {
-            this.setBanner('Viewing history – go to the latest move to continue playing', 'muted');
+            this.setBanner(t('play.banner.viewing_history'), 'muted');
             if (this.askEngineBtn) this.askEngineBtn.disabled = true;
             return;
         }
 
         if (this.spectator) {
-            this.setBanner(board.whiteToMove ? 'White to move' : 'Black to move', 'muted');
+            this.setBanner(t('play.banner.turn', {side: board.whiteToMove ? 'white' : 'black'}), 'muted');
             if (this.askEngineBtn) this.askEngineBtn.disabled = true;
             return;
         }
 
         if (this.gameMode === OPPONENT_TYPE_HOTSEAT) {
-            this.setBanner(board.whiteToMove ? 'White to move' : 'Black to move', 'your-turn');
+            this.setBanner(t('play.banner.turn', {side: board.whiteToMove ? 'white' : 'black'}), 'your-turn');
             if (this.askEngineBtn) this.askEngineBtn.disabled = false;
             return;
         }
 
         if (board.whiteToMove !== this.playerWhite) {
-            this.setBanner(this.gameMode === OPPONENT_TYPE_AI ? 'Waiting for AI…' : 'Waiting for opponent…', 'muted');
+            this.setBanner(this.gameMode === OPPONENT_TYPE_AI ? t('play.banner.waiting_ai') : t('play.banner.waiting_opponent'), 'muted');
             if (this.askEngineBtn) this.askEngineBtn.disabled = true;
             return;
         }
 
-        this.setBanner('Your turn', 'your-turn');
+        this.setBanner(t('play.banner.your_turn'), 'your-turn');
         if (this.askEngineBtn) this.askEngineBtn.disabled = this.controller.isBoardLocked();
     }
 
@@ -785,7 +799,7 @@ class KeresGame {
 
         // Fallback for the rare case the authoritative endReason/result
         // hasn't arrived yet - the board binary's own engine verdict.
-        return text ?? (this.gameState.getBoard()?.getGameResult() || 'Game over.');
+        return text ?? (this.gameState.getBoard()?.getGameResult() || t('play.banner.game_over'));
     }
 
     /** Saturates + disables all pointer interaction on the board once the game ends. */

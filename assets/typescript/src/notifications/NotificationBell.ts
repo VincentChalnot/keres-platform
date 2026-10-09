@@ -1,4 +1,5 @@
 import {NotificationAPI, NotificationRow} from '../network/NotificationAPI';
+import {formatDate, formatNumber, formatRelativeTime, t} from '../i18n';
 
 /** Fallback refresh for rows written without a live frame (07-notifications.md sec 7.4). */
 const POLL_INTERVAL_MS = 60000;
@@ -112,7 +113,7 @@ export class NotificationBell {
             this.setUnread(result.unread);
         } catch (error) {
             console.error('Could not load notifications:', error);
-            this.list.replaceChildren(this.emptyItem('Could not load notifications.'));
+            this.list.replaceChildren(this.emptyItem(t('social.notifications.load_failed')));
         }
     }
 
@@ -170,7 +171,7 @@ export class NotificationBell {
 
     private renderList(rows: NotificationRow[]): void {
         if (0 === rows.length) {
-            this.list.replaceChildren(this.emptyItem('You have no notifications yet.'));
+            this.list.replaceChildren(this.emptyItem(t('social.notifications.empty')));
 
             return;
         }
@@ -212,8 +213,8 @@ export class NotificationBell {
             readButton.type = 'button';
             readButton.className = 'button is-small is-text notification-bell__read';
             readButton.dataset.notificationRead = '';
-            readButton.title = 'Mark as read';
-            readButton.setAttribute('aria-label', 'Mark as read');
+            readButton.title = t('social.notifications.mark_read');
+            readButton.setAttribute('aria-label', t('social.notifications.mark_read'));
             readButton.innerHTML = '<span class="icon"><i class="fa-solid fa-check" aria-hidden="true"></i></span>';
             item.appendChild(readButton);
         }
@@ -231,8 +232,8 @@ export class NotificationBell {
 
     private setUnread(count: number): void {
         this.badge.hidden = 0 === count;
-        this.badge.textContent = count >= 100 ? '99+' : String(count);
-        this.toggle.setAttribute('aria-label', count > 0 ? `Notifications (${count} unread)` : 'Notifications');
+        this.badge.textContent = count >= 100 ? `${formatNumber(99)}+` : formatNumber(count);
+        this.toggle.setAttribute('aria-label', t('social.notifications.bell_label', {count}));
 
         if (this.readAllButton) {
             this.readAllButton.disabled = 0 === count;
@@ -240,14 +241,14 @@ export class NotificationBell {
     }
 
     private formatAge(iso: string): string {
-        const seconds = Math.max(0, Math.round((Date.now() - new Date(iso).getTime()) / 1000));
+        const created = new Date(iso).getTime();
+        const now = Math.max(Date.now(), created);
 
-        if (seconds < 60) return 'just now';
-        if (seconds < 3600) return `${Math.floor(seconds / 60)} min ago`;
-        if (seconds < 86400) return `${Math.floor(seconds / 3600)} h ago`;
-        if (seconds < 7 * 86400) return `${Math.floor(seconds / 86400)} d ago`;
+        if (now - created < 7 * 86400 * 1000) {
+            return formatRelativeTime(created, now);
+        }
 
-        return new Date(iso).toLocaleDateString();
+        return formatDate(created);
     }
 }
 

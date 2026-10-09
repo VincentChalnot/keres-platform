@@ -1,7 +1,8 @@
-import {LobbyAPI, ApiError} from '../network/LobbyAPI';
+import {LobbyAPI, ApiError, apiErrorMessage} from '../network/LobbyAPI';
 import {LobbySeekClient} from '../network/LobbySeekClient';
 import {CustomSeekInput, SeekEvent, SeekListing, SeekSummary} from '../models/seek';
 import {alertModal} from '../utils/modal';
+import {hasTranslation, t} from '../i18n';
 
 /** 04-matchmaking.md sec 4.2: the client heartbeat period; also the pairing-retry granularity. */
 const SEEK_HEARTBEAT_INTERVAL_MS = 10000;
@@ -144,7 +145,7 @@ export class LobbyController {
 
     private render(poolSize: number): void {
         if (this.poolSizeEl) {
-            this.poolSizeEl.textContent = `(${poolSize} waiting)`;
+            this.poolSizeEl.textContent = t('lobby.pool_size', {count: poolSize});
         }
 
         this.tableBody.replaceChildren();
@@ -169,11 +170,11 @@ export class LobbyController {
         row.appendChild(timeControl);
 
         const rated = document.createElement('td');
-        rated.textContent = seek.rated ? 'Rated' : 'Casual';
+        rated.textContent = seek.rated ? t('lobby.seek.rated') : t('lobby.seek.casual');
         row.appendChild(rated);
 
         const color = document.createElement('td');
-        color.textContent = seek.color.charAt(0).toUpperCase() + seek.color.slice(1);
+        color.textContent = t(`lobby.color.${seek.color}`);
         row.appendChild(color);
 
         const action = document.createElement('td');
@@ -182,20 +183,20 @@ export class LobbyController {
             const cancelButton = document.createElement('button');
             cancelButton.type = 'button';
             cancelButton.className = 'button is-small is-rounded is-danger is-outlined';
-            cancelButton.textContent = 'Cancel';
+            cancelButton.textContent = t('common.cancel');
             cancelButton.addEventListener('click', () => void this.cancel(seek.uuid));
             action.appendChild(cancelButton);
         } else if (true === seek.playable) {
             const playButton = document.createElement('button');
             playButton.type = 'button';
             playButton.className = 'button is-small is-rounded is-primary';
-            playButton.textContent = 'Play';
+            playButton.textContent = t('lobby.seek.play');
             playButton.addEventListener('click', () => void this.accept(seek.uuid));
             action.appendChild(playButton);
         } else if (null !== seek.playable) {
             const disabled = document.createElement('span');
             disabled.className = 'has-text-grey-light';
-            disabled.textContent = 'Not available';
+            disabled.textContent = t('lobby.seek.unavailable');
             action.appendChild(disabled);
         }
 
@@ -208,16 +209,27 @@ export class LobbyController {
         const {timeControl} = seek;
 
         if ('unlimited' === timeControl.kind) {
-            return 'Unlimited';
+            return t('lobby.time_control.unlimited');
         }
 
         if ('correspondence' === timeControl.kind) {
-            return `${timeControl.hoursPerMove}h/move`;
+            return t('lobby.time_control.correspondence', {hours: timeControl.hoursPerMove ?? 0});
         }
 
-        const clock = `${Math.round((timeControl.initialSeconds ?? 0) / 60)}+${timeControl.incrementSeconds ?? 0}`;
+        const clock = t('lobby.time_control.realtime', {
+            minutes: Math.round((timeControl.initialSeconds ?? 0) / 60),
+            increment: timeControl.incrementSeconds ?? 0,
+        });
 
-        return timeControl.speed ? `${clock} · ${timeControl.speed.charAt(0).toUpperCase()}${timeControl.speed.slice(1)}` : clock;
+        if (!timeControl.speed) {
+            return clock;
+        }
+
+        const speed = hasTranslation(`lobby.speed.${timeControl.speed}`)
+            ? t(`lobby.speed.${timeControl.speed}`)
+            : `${timeControl.speed.charAt(0).toUpperCase()}${timeControl.speed.slice(1)}`;
+
+        return t('lobby.time_control.with_speed', {clock, speed});
     }
 
     /**
@@ -364,7 +376,7 @@ export class LobbyController {
             this.render(this.seeks.size);
             this.syncHeartbeat();
         } catch (error) {
-            this.reportError('Could not post seek', error);
+            this.reportError((reason) => t('lobby.error.post_seek', {reason}), error);
         }
     }
 
@@ -398,12 +410,12 @@ export class LobbyController {
 
             try {
                 await navigator.clipboard.writeText(result.url);
-                await alertModal(`Invite link copied to your clipboard:\n${result.url}`, 'Invite a friend');
+                await alertModal(t('lobby.invite.copied', {url: result.url}), t('lobby.invite.title'));
             } catch {
-                await alertModal(`Share this link with your friend:\n${result.url}`, 'Invite a friend');
+                await alertModal(t('lobby.invite.share', {url: result.url}), t('lobby.invite.title'));
             }
         } catch (error) {
-            this.reportError('Could not create invite', error);
+            this.reportError((reason) => t('lobby.error.create_invite', {reason}), error);
         }
     }
 
@@ -412,7 +424,7 @@ export class LobbyController {
             const result = await this.api.acceptSeek(uuid);
             this.navigateToGame(result.gameUuid);
         } catch (error) {
-            this.reportError('This seek is no longer available', error);
+            this.reportError((reason) => t('lobby.error.accept', {reason}), error);
             void this.refetch();
         }
     }
@@ -429,7 +441,7 @@ export class LobbyController {
             this.render(this.seeks.size);
             this.syncHeartbeat();
         } catch (error) {
-            this.reportError('Could not cancel seek', error);
+            this.reportError((reason) => t('lobby.error.cancel', {reason}), error);
         }
     }
 
@@ -493,9 +505,8 @@ export class LobbyController {
         window.location.href = `/play/${gameUuid}`;
     }
 
-    private reportError(context: string, error: unknown): void {
-        const message = error instanceof ApiError ? error.code : String(error);
-        console.error(`${context}: ${message}`);
-        void alertModal(`${context}: ${message}`, 'Error');
+    private reportError(describe: (reason: string) => string, error: unknown): void {
+        console.error(`Lobby request failed: ${error instanceof ApiError ? error.code : String(error)}`);
+        void alertModal(describe(apiErrorMessage(error)), t('common.error'));
     }
 }

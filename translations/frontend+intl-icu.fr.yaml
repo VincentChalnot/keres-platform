@@ -1,0 +1,42 @@
+# Strings shared by the whole TypeScript client (`t('common.cancel')`, `t('api_error.rate_limited')`).
+# Area-specific strings live in frontend_<area>+intl-icu.*.yaml (exported as `<area>.<key>`).
+common:
+    ok: OK
+    cancel: Annuler
+    confirm: Confirmer
+    notice: Information
+    close: Fermer
+    loading: Chargement…
+    error: Erreur
+    unknown_error: Une erreur est survenue. Veuillez réessayer.
+# What to tell the user for each `error.code` of the JSON API envelope (ApiErrorCode); the
+# server-side `message` is developer-facing English and is never shown. Unknown codes fall
+# back to `api_error.internal_error`.
+api_error:
+    authentication_required: Vous devez vous connecter pour faire cela.
+    forbidden: Vous n’avez pas le droit de faire cela.
+    not_found: Introuvable.
+    validation_failed: Certaines des informations saisies ne sont pas valides.
+    malformed_json: La requête n’a pas pu être comprise. Veuillez réessayer.
+    rate_limited: Trop de requêtes. Patientez un instant, puis réessayez.
+    internal_error: Un problème est survenu de notre côté. Veuillez réessayer.
+    network_error: Erreur réseau. Vérifiez votre connexion, puis réessayez.
+    unrated_time_control: Une partie sans pendule ne peut pas être classée.
+    invalid_time_control: Cette cadence n’est pas valide.
+    seek_not_found: Cette proposition n’existe plus.
+    seek_unavailable: Cette proposition n’est plus ouverte.
+    seek_expired: Cette proposition a expiré.
+    seek_already_matched: Cette proposition a déjà été acceptée.
+    cannot_accept_own_seek: Vous ne pouvez pas accepter votre propre proposition.
+    rating_out_of_range: Votre classement est en dehors de la fourchette de cette proposition.
+    blocked: 'Action impossible : l’un de vous a bloqué l’autre.'
+    user_not_found: Aucun compte ne porte ce nom d’utilisateur.
+    cannot_request_self: Vous ne pouvez pas vous envoyer une demande d’ami.
+    cannot_block_self: Vous ne pouvez pas vous bloquer vous-même.
+    search_prefix_too_short: Saisissez encore quelques caractères pour lancer la recherche.
+    friendship_exists: Vous êtes déjà amis avec ce joueur.
+    friendship_not_found: Cette amitié ou cette demande n’existe pas.
+    username_taken: Ce nom d’utilisateur est déjà pris.
+    username_reserved: Ce nom d’utilisateur est réservé.
+    username_already_changed: Vous avez changé de nom d’utilisateur trop récemment.
+    notification_not_found: Cette notification n’existe plus.

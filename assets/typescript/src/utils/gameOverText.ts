@@ -4,20 +4,19 @@
  * known here only - the codes are those of `POST /game-over-reason` in the
  * engine's `docs/PROTOCOL.md`.
  */
+import {t} from '../i18n';
 
-/** How a game ended, from `Game::getEndReason()` (`endReason` of the game-state payload). */
-const END_REASON_SUFFIX: Record<string, string> = {
-    resignation: 'by resignation',
-    timeout: 'on time',
-    abandonment: 'by abandonment',
-    draw_agreed: 'by agreement',
-};
+/**
+ * How a game ended, from `Game::getEndReason()` (`endReason` of the game-state payload):
+ * the reasons that need no engine code. Each is a branch of the `play.over.*` messages.
+ */
+const END_REASONS: Record<string, true> = {resignation: true, timeout: true, abandonment: true, draw_agreed: true};
 
-/** Which engine rule ended an engine-ended game (`engineEndCode`). */
-const ENGINE_END_SUFFIX: Record<number, string> = {
-    1: 'by king capture',
-    2: 'by the 40-move rule',
-    3: 'by insufficient material',
+/** Which engine rule ended an engine-ended game (`engineEndCode`), as a branch of the `play.over.*` messages. */
+const ENGINE_END_REASONS: Record<number, string> = {
+    1: 'king_capture',
+    2: 'forty_move',
+    3: 'insufficient_material',
 };
 
 export type GameOverOutcome = 'won' | 'lost' | 'drawn' | 'neutral';
@@ -43,17 +42,18 @@ export function gameOverOutcome(endReason: string, result: string | null, viewer
  */
 export function describeGameOver(endReason: string, engineEndCode: number | null, result: string | null): string | null {
     if ('aborted' === endReason) {
-        return 'Game aborted.';
+        return t('play.over.aborted');
     }
 
-    const suffix = 'engine' === endReason
-        ? (null === engineEndCode ? undefined : ENGINE_END_SUFFIX[engineEndCode])
-        : END_REASON_SUFFIX[endReason];
-    const withSuffix = (text: string): string => (suffix ? `${text} ${suffix}.` : `${text}.`);
+    // Anything else selects the "no reason" branch of the message.
+    const reason = 'engine' === endReason
+        ? (null === engineEndCode ? undefined : ENGINE_END_REASONS[engineEndCode])
+        : (END_REASONS[endReason] ? endReason : undefined);
+    const params = {reason: reason ?? 'unknown'};
 
-    if ('draw' === result) return withSuffix('Draw');
-    if ('white' === result) return withSuffix('White wins');
-    if ('black' === result) return withSuffix('Black wins');
+    if ('draw' === result) return t('play.over.draw', params);
+    if ('white' === result) return t('play.over.white_wins', params);
+    if ('black' === result) return t('play.over.black_wins', params);
 
     return null;
 }

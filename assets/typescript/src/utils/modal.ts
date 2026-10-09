@@ -5,6 +5,7 @@
  * every page (game view, lobby, friends, profile) gets the same look
  * without duplicating modal markup per page.
  */
+import {t} from '../i18n';
 
 export interface ConfirmOptions {
     title?: string;
@@ -78,15 +79,15 @@ function openModal(message: string, title: string, okLabel: string, okDanger: bo
 export function confirmModal(message: string, options: ConfirmOptions = {}): Promise<boolean> {
     return openModal(
         message,
-        options.title ?? 'Confirm',
-        options.confirmLabel ?? 'Confirm',
+        options.title ?? t('common.confirm'),
+        options.confirmLabel ?? t('common.confirm'),
         options.danger ?? false,
         true,
-        options.cancelLabel ?? 'Cancel',
+        options.cancelLabel ?? t('common.cancel'),
     );
 }
 
 /** Replaces `window.alert()`. Resolves once the user dismisses it. */
-export async function alertModal(message: string, title = 'Notice'): Promise<void> {
-    await openModal(message, title, 'OK', false, false, 'Cancel');
+export async function alertModal(message: string, title = t('common.notice')): Promise<void> {
+    await openModal(message, title, t('common.ok'), false, false, t('common.cancel'));
 }

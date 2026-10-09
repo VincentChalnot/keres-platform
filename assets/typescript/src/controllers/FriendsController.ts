@@ -1,10 +1,31 @@
-import {ApiError, LobbyAPI} from '../network/LobbyAPI';
+import {ApiError, LobbyAPI, apiErrorMessage} from '../network/LobbyAPI';
 import {FriendEventClient} from '../network/FriendEventClient';
 import {FriendRequestRow, FriendRow, FriendsListResult, PlayerSearchResult, UserEvent} from '../models/friends';
 import {alertModal} from '../utils/modal';
+import {t} from '../i18n';
 
 const SEARCH_DEBOUNCE_MS = 250;
 const MIN_SEARCH_LENGTH = 3;
+
+/** The error-modal text for a failed friend/block action (shared with the profile page buttons), `action` being a `data-action` value. */
+export function friendActionFailedMessage(action: string, username: string, reason: string): string {
+    switch (action) {
+        case 'friend-request':
+            return t('social.friends.action_failed.request', {username, reason});
+        case 'friend-accept':
+            return t('social.friends.action_failed.accept', {username, reason});
+        case 'friend-decline':
+            return t('social.friends.action_failed.decline', {username, reason});
+        case 'friend-remove':
+            return t('social.friends.action_failed.remove', {username, reason});
+        case 'friend-block':
+            return t('social.friends.action_failed.block', {username, reason});
+        case 'friend-unblock':
+            return t('social.friends.action_failed.unblock', {username, reason});
+        default:
+            return reason;
+    }
+}
 
 /**
  * `GET /friends` orchestrator (05-social.md sec 3/4, 08-frontend.md sec
@@ -100,8 +121,8 @@ export class FriendsController {
     }
 
     private render(listing: FriendsListResult): void {
-        this.renderRequests(this.incomingList, listing.incoming, ['friend-accept', 'friend-decline'], 'No pending requests.');
-        this.renderRequests(this.outgoingList, listing.outgoing, [], 'No pending requests.', 'Request sent');
+        this.renderRequests(this.incomingList, listing.incoming, ['friend-accept', 'friend-decline'], t('social.friends.no_requests'));
+        this.renderRequests(this.outgoingList, listing.outgoing, [], t('social.friends.no_requests'), t('social.friends.request_sent'));
         this.renderFriends(listing.friends);
     }
 
@@ -126,10 +147,14 @@ export class FriendsController {
             li.dataset.username = row.username;
 
             const buttons = actions.map((action) => {
-                const label = {'friend-accept': 'Accept', 'friend-decline': 'Decline', 'friend-unblock': 'Unblock'}[action];
+                const label = {
+                    'friend-accept': t('social.friends.accept'),
+                    'friend-decline': t('social.friends.decline'),
+                    'friend-unblock': t('social.friends.unblock'),
+                }[action];
                 const cls = 'friend-accept' === action ? 'is-primary' : 'is-light';
 
-                return `<button type="button" class="button is-small is-rounded ${cls}" data-action="${action}" data-username="${this.escape(row.username)}">${label}</button>`;
+                return `<button type="button" class="button is-small is-rounded ${cls}" data-action="${action}" data-username="${this.escape(row.username)}">${this.escape(label)}</button>`;
             }).join(' ');
 
             li.innerHTML = `<span>${this.escape(row.displayName ?? row.username)} <span class="has-text-grey">@${this.escape(row.username)}</span></span> `
@@ -143,7 +168,7 @@ export class FriendsController {
         this.friendsList.innerHTML = '';
 
         if (0 === rows.length) {
-            this.friendsList.innerHTML = '<li class="has-text-grey">No friends yet - search for a username above.</li>';
+            this.friendsList.innerHTML = `<li class="has-text-grey">${this.escape(t('social.friends.no_friends'))}</li>`;
 
             return;
         }
@@ -152,9 +177,9 @@ export class FriendsController {
             const li = document.createElement('li');
             li.className = 'friends-list__row mb-2';
             li.dataset.username = row.username;
-            const dot = row.online ? '<span class="tag is-success is-rounded is-small">online</span>' : '';
+            const dot = row.online ? `<span class="tag is-success is-rounded is-small">${this.escape(t('social.friends.online'))}</span>` : '';
             li.innerHTML = `<span>${this.escape(row.displayName ?? row.username)} <span class="has-text-grey">@${this.escape(row.username)}</span></span> ${dot} `
-                + `<button type="button" class="button is-small is-rounded is-light" data-action="friend-remove" data-username="${this.escape(row.username)}">Unfriend</button>`;
+                + `<button type="button" class="button is-small is-rounded is-light" data-action="friend-remove" data-username="${this.escape(row.username)}">${this.escape(t('social.friends.remove'))}</button>`;
             this.friendsList.appendChild(li);
         }
     }
@@ -211,7 +236,7 @@ export class FriendsController {
 
             await this.refetch();
         } catch (error) {
-            this.reportError(`Could not complete "${action}"`, error);
+            this.reportError((reason) => friendActionFailedMessage(action, username, reason), error);
         }
     }
 
@@ -247,7 +272,7 @@ export class FriendsController {
                 return; // superseded by a newer keystroke
             }
 
-            this.reportError('Search failed', error);
+            this.reportError((reason) => t('social.friends.search_failed', {reason}), error);
         }
     }
 
@@ -255,7 +280,7 @@ export class FriendsController {
         this.searchResults.innerHTML = '';
 
         if (0 === results.length) {
-            this.searchResults.innerHTML = '<p class="has-text-grey">No players found.</p>';
+            this.searchResults.innerHTML = `<p class="has-text-grey">${this.escape(t('social.friends.no_players'))}</p>`;
 
             return;
         }
@@ -266,9 +291,9 @@ export class FriendsController {
         for (const player of results) {
             const li = document.createElement('li');
             li.className = 'friends-list__row mb-2';
-            const dot = player.online ? '<span class="tag is-success is-rounded is-small">online</span>' : '';
+            const dot = player.online ? `<span class="tag is-success is-rounded is-small">${this.escape(t('social.friends.online'))}</span>` : '';
             li.innerHTML = `<span>@${this.escape(player.username)}</span> ${dot} `
-                + `<button type="button" class="button is-small is-rounded is-primary" data-action="friend-request" data-username="${this.escape(player.username)}">Add friend</button>`;
+                + `<button type="button" class="button is-small is-rounded is-primary" data-action="friend-request" data-username="${this.escape(player.username)}">${this.escape(t('social.friends.add'))}</button>`;
             list.appendChild(li);
         }
 
@@ -282,9 +307,8 @@ export class FriendsController {
         return div.innerHTML;
     }
 
-    private reportError(context: string, error: unknown): void {
-        const message = error instanceof ApiError ? error.code : String(error);
-        console.error(`${context}: ${message}`);
-        void alertModal(`${context}: ${message}`, 'Error');
+    private reportError(describe: (reason: string) => string, error: unknown): void {
+        console.error(`Friends request failed: ${error instanceof ApiError ? error.code : String(error)}`);
+        void alertModal(describe(apiErrorMessage(error)), t('common.error'));
     }
 }

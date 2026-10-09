@@ -1,0 +1,89 @@
+# The game page (board, banner, clocks, modals). Exported to TypeScript as `play.<key>`.
+banner:
+    viewing_history: Historique affiché – revenez au dernier coup pour continuer à jouer
+    turn: '{side, select, white {Aux Blancs de jouer} other {Aux Noirs de jouer}}'
+    waiting_ai: En attente de l’ordinateur…
+    waiting_opponent: En attente de l’adversaire…
+    your_turn: À vous de jouer
+    game_over: Partie terminée.
+# One sentence per outcome; `reason` is a closed code: resignation, timeout, abandonment, draw_agreed,
+# king_capture, forty_move, insufficient_material, or anything else for "no reason known".
+over:
+    aborted: Partie annulée.
+    draw: '{reason, select, resignation {Partie nulle par abandon.} timeout {Partie nulle au temps.} abandonment {Partie nulle par désertion.} draw_agreed {Partie nulle par accord mutuel.} king_capture {Partie nulle par capture du roi.} forty_move {Partie nulle par la règle des 40 coups.} insufficient_material {Partie nulle par matériel insuffisant.} other {Partie nulle.}}'
+    white_wins: '{reason, select, resignation {Les Blancs gagnent par abandon.} timeout {Victoire des Blancs au temps.} abandonment {Les Blancs gagnent par désertion.} draw_agreed {Les Blancs gagnent par accord mutuel.} king_capture {Les Blancs gagnent par capture du roi.} forty_move {Les Blancs gagnent par la règle des 40 coups.} insufficient_material {Les Blancs gagnent par matériel insuffisant.} other {Les Blancs gagnent.}}'
+    black_wins: '{reason, select, resignation {Les Noirs gagnent par abandon.} timeout {Victoire des Noirs au temps.} abandonment {Les Noirs gagnent par désertion.} draw_agreed {Les Noirs gagnent par accord mutuel.} king_capture {Les Noirs gagnent par capture du roi.} forty_move {Les Noirs gagnent par la règle des 40 coups.} insufficient_material {Les Noirs gagnent par matériel insuffisant.} other {Les Noirs gagnent.}}'
+timer:
+    days_hours: '{days} j {hours} h'
+stack_modal:
+    select_title: Empiler ou sélectionner ?
+    select_text_full_top: Vous avez cliqué sur l’une de vos pièces. Souhaitez-vous déplacer toute la pile sur celle-ci, seulement la pièce du dessus, ou sélectionner cette pièce à la place ?
+    select_text_top: Vous avez cliqué sur l’une de vos pièces. Souhaitez-vous déplacer la pièce du dessus sur celle-ci, ou sélectionner cette pièce à la place ?
+    select_text_stack: Vous avez cliqué sur l’une de vos pièces. Souhaitez-vous l’empiler sur celle-ci, ou sélectionner cette pièce à la place ?
+    choose_title: Choisissez votre coup
+    choose_text: Vous déplacez une pile. Souhaitez-vous déplacer toute la pile ou seulement la pièce du dessus ?
+    move_full_stack: Déplacer la pile
+    stack_here: Empiler ici
+resign:
+    title: Abandonner
+    message: Voulez-vous vraiment abandonner ? La partie sera perdue.
+    confirm: Abandonner
+engine:
+    ask: Demander au moteur
+    thinking: Réflexion…
+threats:
+    show: Afficher les menaces
+    hide: Masquer les menaces
+coords:
+    show: Afficher les coordonnées
+    hide: Masquer les coordonnées
+fullscreen:
+    enter: Plein écran
+    exit: Quitter le plein écran
+eval:
+    label: 'Évaluation du moteur : {value}'
+feedback:
+    thanks_title: Merci pour votre avis !
+    thanks_text: Nous lisons chaque message.
+    load_failed: Impossible de charger le formulaire d’avis. Veuillez réessayer plus tard.
+    submit_failed: Impossible d’envoyer votre avis. Veuillez réessayer plus tard.
+error:
+    no_game: Aucune partie disponible.
+    evaluation_unavailable: 'Évaluation indisponible (HTTP {status})'
+    server_status: 'Réponse du serveur : {status}'
+    submit_move: Impossible de jouer ce coup
+    undo_move: Impossible d’annuler le coup
+    resign: Impossible d’abandonner
+    no_moves_to_undo: Aucun coup à annuler
+    ai_failed: 'L’ordinateur n’a pas pu jouer (réponse du serveur : {status}). Annulez votre coup, puis réessayez.'
+    play_move_failed: 'Impossible de jouer ce coup : {message}'
+    decode_moves_failed: 'Impossible de lire la liste des coups : {message}'
+    undo_move_failed: 'Impossible d’annuler le coup : {message}'
+    resign_failed: 'Impossible d’abandonner : {message}'
+    engine_failed: 'Erreur : {message}. Le moteur est peut-être indisponible.'
+# Piece cards (long press / right click on a piece). `movement` lines are separated by a line break.
+piece:
+    soldier:
+        name: Soldat (S)
+        movement: "1 case en diagonale avant\n→ Promotion en Paladin"
+    bishop:
+        name: Fou (F)
+        movement: Illimité en diagonale
+    rook:
+        name: Tour (T)
+        movement: Illimité orthogonalement
+    paladin:
+        name: Paladin (P)
+        movement: 1 ou 2 cases orthogonalement
+    guard:
+        name: Garde (G)
+        movement: 1 ou 2 cases en diagonale
+    knight:
+        name: Cavalier (C)
+        movement: "Mouvement en L\nPeut sauter par-dessus les pièces"
+    ballista:
+        name: Baliste (B)
+        movement: "Illimité vers l’avant uniquement\n→ Promotion en Tour"
+    king:
+        name: Roi (R)
+        movement: "1 case dans toutes les directions\nNe peut pas être empilé"

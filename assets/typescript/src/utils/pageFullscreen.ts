@@ -1,3 +1,5 @@
+import {t} from '../i18n';
+
 const ACTIVE_CLASS = 'is-game-fullscreen';
 
 /**
@@ -43,6 +45,6 @@ export class PageFullscreen {
 
     private setActive(active: boolean): void {
         this.root.classList.toggle(ACTIVE_CLASS, active);
-        this.button.innerText = active ? 'Exit Fullscreen' : 'Fullscreen';
+        this.button.innerText = active ? t('play.fullscreen.exit') : t('play.fullscreen.enter');
     }
 }

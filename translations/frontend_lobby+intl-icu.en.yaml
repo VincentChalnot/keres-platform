@@ -1,0 +1,31 @@
+# Lobby page (seek table, new-seek feedback, invite link). Exported to TypeScript as `lobby.<key>`.
+pool_size: '({count} waiting)'
+seek:
+    rated: Rated
+    casual: Casual
+    play: Play
+    unavailable: Not available
+color:
+    white: White
+    black: Black
+    random: Random
+speed:
+    bullet: Bullet
+    blitz: Blitz
+    rapid: Rapid
+    classical: Classical
+    correspondence: Correspondence
+time_control:
+    unlimited: Unlimited
+    realtime: '{minutes}+{increment}'
+    correspondence: '{hours}h/move'
+    with_speed: '{clock} · {speed}'
+invite:
+    title: Invite a friend
+    copied: "Invite link copied to your clipboard:\n{url}"
+    share: "Share this link with your friend:\n{url}"
+error:
+    post_seek: 'Could not post seek: {reason}'
+    create_invite: 'Could not create invite: {reason}'
+    accept: 'Could not accept this seek: {reason}'
+    cancel: 'Could not cancel seek: {reason}'

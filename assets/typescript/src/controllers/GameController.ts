@@ -4,6 +4,7 @@ import {MercureClient, GameUpdate, ClockState} from '../network/MercureClient';
 import {IBoardView, TileHighlight} from '../views/IBoardView';
 import {Move} from '../models/types';
 import {decodeMoveListFromBase64, posToAlgebraic, encodeBoardToBinary} from '../utils/boardUtils';
+import {t} from '../i18n';
 
 export const OPPONENT_TYPE_AI = 0;
 export const OPPONENT_TYPE_HOTSEAT = 1;
@@ -239,7 +240,7 @@ export class GameController {
             // Unlock board on error
             this.gameState.setBoardLocked(false);
             console.error('Failed to play move:', error);
-            window.dispatchEvent(new CustomEvent('showError', {detail: {message: 'Failed to play move: ' + (error as Error).message}}));
+            window.dispatchEvent(new CustomEvent('showError', {detail: {message: t('play.error.play_move_failed', {message: (error as Error).message})}}));
         }
     }
 
@@ -258,14 +259,14 @@ export class GameController {
                 moves = decodeMoveListFromBase64(movesBase64);
             } catch (error) {
                 console.error('Failed to decode move stack:', error);
-                window.dispatchEvent(new CustomEvent('showError', {detail: {message: 'Failed to decode move stack: ' + (error as Error).message}}));
+                window.dispatchEvent(new CustomEvent('showError', {detail: {message: t('play.error.decode_moves_failed', {message: (error as Error).message})}}));
                 moves = [];
             }
             await this.setMoves(moves);
             window.dispatchEvent(new CustomEvent('boardStateChanged'));
         } catch (error) {
             console.error('Failed to undo move:', error);
-            window.dispatchEvent(new CustomEvent('showError', {detail: {message: 'Failed to undo move: ' + (error as Error).message}}));
+            window.dispatchEvent(new CustomEvent('showError', {detail: {message: t('play.error.undo_move_failed', {message: (error as Error).message})}}));
         }
     }
 
@@ -524,7 +525,7 @@ export class GameController {
             window.dispatchEvent(new CustomEvent('clockChanged'));
         } catch (error) {
             console.error('Failed to resign:', error);
-            window.dispatchEvent(new CustomEvent('showError', {detail: {message: 'Failed to resign: ' + (error as Error).message}}));
+            window.dispatchEvent(new CustomEvent('showError', {detail: {message: t('play.error.resign_failed', {message: (error as Error).message})}}));
         }
     }
 

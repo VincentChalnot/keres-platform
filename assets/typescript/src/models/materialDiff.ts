@@ -5,6 +5,7 @@
  * material score, regardless of game history.
  */
 
+import {formatNumber} from '../i18n';
 import {Board} from './types';
 
 /**
@@ -114,7 +115,7 @@ export function renderMaterialHTML(excess: Record<string, number>, advantage: nu
     }
 
     if (advantage > 0) {
-        html += `<span class="material-score">+${advantage}</span>`;
+        html += `<span class="material-score">+${formatNumber(advantage)}</span>`;
     }
 
     return html;

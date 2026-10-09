@@ -2,6 +2,7 @@ import {Board, Move} from '../models/types';
 import {decodeMove, encodeMove, encodeMoveListToBase64, encodeMoveListToBinary} from '../utils/boardUtils';
 import {GameAPI, GameStatePayload} from './GameAPI';
 import {GameUpdate} from './MercureClient';
+import {t} from '../i18n';
 
 const OPPONENT_TYPE_AI = 0;
 
@@ -88,7 +89,7 @@ export class LocalGameAPI extends GameAPI {
 
     async undoMove(): Promise<string> {
         if (0 === this.record.moves.length) {
-            throw new Error('No moves to undo');
+            throw new Error(t('play.error.no_moves_to_undo'));
         }
 
         this.record.moves.pop();
@@ -153,7 +154,7 @@ export class LocalGameAPI extends GameAPI {
         });
 
         if (!response.ok) {
-            window.dispatchEvent(new CustomEvent('showError', {detail: {message: `The AI could not play (server returned ${response.status}). Use Undo, then try again.`}}));
+            window.dispatchEvent(new CustomEvent('showError', {detail: {message: t('play.error.ai_failed', {status: response.status})}}));
             return;
         }
 

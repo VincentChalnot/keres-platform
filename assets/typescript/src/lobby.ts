@@ -1,7 +1,8 @@
-import {LobbyAPI} from './network/LobbyAPI';
+import {LobbyAPI, apiErrorMessage} from './network/LobbyAPI';
 import {LobbyController} from './controllers/LobbyController';
-import {FriendsController} from './controllers/FriendsController';
+import {FriendsController, friendActionFailedMessage} from './controllers/FriendsController';
 import {alertModal} from './utils/modal';
+import {t} from './i18n';
 
 const lobbyRoot = document.getElementById('lobby-root');
 
@@ -78,7 +79,7 @@ if (profileRoot) {
                     window.location.reload();
                 } catch (error) {
                     console.error(`Could not complete "${action}":`, error);
-                    void alertModal(`Could not complete "${action}".`, 'Error');
+                    void alertModal(friendActionFailedMessage(action, username, apiErrorMessage(error)), t('common.error'));
                 }
             })();
         });
@@ -107,7 +108,7 @@ if (blockedRoot) {
             .catch((error: unknown) => {
                 button.disabled = false;
                 console.error(`Could not unblock ${username}:`, error);
-                void alertModal(`Could not unblock ${username}.`, 'Error');
+                void alertModal(friendActionFailedMessage('friend-unblock', username, apiErrorMessage(error)), t('common.error'));
             });
     });
 }

@@ -1,0 +1,42 @@
+# Strings shared by the whole TypeScript client (`t('common.cancel')`, `t('api_error.rate_limited')`).
+# Area-specific strings live in frontend_<area>+intl-icu.*.yaml (exported as `<area>.<key>`).
+common:
+    ok: OK
+    cancel: Cancel
+    confirm: Confirm
+    notice: Notice
+    close: Close
+    loading: Loading…
+    error: Error
+    unknown_error: Something went wrong. Please try again.
+# What to tell the user for each `error.code` of the JSON API envelope (ApiErrorCode); the
+# server-side `message` is developer-facing English and is never shown. Unknown codes fall
+# back to `api_error.internal_error`.
+api_error:
+    authentication_required: You need to sign in to do that.
+    forbidden: You are not allowed to do that.
+    not_found: Not found.
+    validation_failed: Some of the information you entered is not valid.
+    malformed_json: The request could not be understood. Please try again.
+    rate_limited: Too many requests. Please wait a moment and try again.
+    internal_error: Something went wrong on our side. Please try again.
+    network_error: Network error. Check your connection and try again.
+    unrated_time_control: A game without a clock cannot be rated.
+    invalid_time_control: That time control is not valid.
+    seek_not_found: This seek no longer exists.
+    seek_unavailable: This seek is no longer open.
+    seek_expired: This seek has expired.
+    seek_already_matched: This seek was already matched.
+    cannot_accept_own_seek: You cannot accept your own seek.
+    rating_out_of_range: Your rating is outside this seek’s range.
+    blocked: You cannot do that because one of you has blocked the other.
+    user_not_found: No account with that username.
+    cannot_request_self: You cannot send a friend request to yourself.
+    cannot_block_self: You cannot block yourself.
+    search_prefix_too_short: Type a few more characters to search.
+    friendship_exists: You are already friends with this player.
+    friendship_not_found: There is no such friendship or request.
+    username_taken: That username is already taken.
+    username_reserved: That username is reserved.
+    username_already_changed: You changed your username too recently.
+    notification_not_found: This notification no longer exists.
