@@ -161,6 +161,7 @@ play:
         eval_bar: Barre d’évaluation du moteur
         game_over: Partie terminée
         loading: Chargement…
+        rotate_opponent: Retourner les pièces adverses
         switch_sides: Changer de camp
         hide_threats: Masquer les menaces
         hide_coords: Masquer les coordonnées

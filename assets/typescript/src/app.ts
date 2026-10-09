@@ -13,6 +13,7 @@ import {EvalBar, formatEvaluation} from './views/EvalBar';
 import {describeGameOver, gameOverOutcome} from './utils/gameOverText';
 import {t} from './i18n';
 
+const OPPONENT_ROTATED_KEY = 'keres.rotateOpponentPieces';
 const OPPONENT_TYPE_AI = 0;
 const OPPONENT_TYPE_HOTSEAT = 1;
 const OPPONENT_TYPE_MULTIPLAYER = 2;
@@ -111,6 +112,7 @@ class KeresGame {
     private askEngineBtn: HTMLButtonElement | null;
     private toggleThreatsBtn: HTMLButtonElement;
     private toggleCoordsBtn: HTMLButtonElement;
+    private toggleRotateBtn: HTMLButtonElement;
     private materialTop: HTMLElement | null;
     private materialBottom: HTMLElement | null;
     private clockTop: HTMLElement;
@@ -120,6 +122,7 @@ class KeresGame {
     private spectator: boolean = false; // viewer is not a participant (public multiplayer view)
     private guestRecord: GuestGameRecord | null = null; // browser-only game without an account
     private coordsVisible: boolean = true;
+    private opponentRotated: boolean = false;
     private clockTimer: ReturnType<typeof setInterval> | null = null;
 
     // Engine evaluation (White's point of view), index = ply (moves played).
@@ -155,6 +158,7 @@ class KeresGame {
         this.askEngineBtn = document.getElementById('ask-engine-btn') as HTMLButtonElement | null;
         this.toggleThreatsBtn = document.getElementById('toggle-threats-btn') as HTMLButtonElement;
         this.toggleCoordsBtn = document.getElementById('toggle-coords-btn') as HTMLButtonElement;
+        this.toggleRotateBtn = document.getElementById('toggle-rotate-btn') as HTMLButtonElement;
         this.materialTop = document.getElementById('material-top');
         this.materialBottom = document.getElementById('material-bottom');
         this.clockTop = document.getElementById('clock-top') as HTMLElement;
@@ -295,6 +299,9 @@ class KeresGame {
         if (this.boardContainer.getAttribute('data-show-coordinates') === 'false') {
             this.handleToggleCoords();
         }
+        // Not rotated unless the browser remembers the player turned it on.
+        this.setOpponentRotated(window.localStorage.getItem(OPPONENT_ROTATED_KEY) === '1', false);
+
         if (this.boardContainer.getAttribute('data-show-threats') === 'false' && this.controller.isShowThreats()) {
             this.controller.toggleShowThreats();
         }
@@ -399,6 +406,7 @@ class KeresGame {
 
         // Custom event for unstack / stack-confirmation modal
         window.addEventListener('showUnstackModal', (event) => {
+        this.toggleRotateBtn.addEventListener('click', () => this.setOpponentRotated(!this.opponentRotated, true));
             this.openUnstackModal((event as CustomEvent<UnstackModalDetail>).detail);
         });
         document.addEventListener('keydown', (event) => {
@@ -621,6 +629,23 @@ class KeresGame {
         if (this.controller.isShowThreats()) {
             this.toggleThreatsBtn.innerText = t('play.threats.hide');
         } else {
+    /** Turns the opponent's piece icons upside down (as seen from their side) or upright; remembered per browser, guests included. */
+    private setOpponentRotated(rotated: boolean, persist: boolean): void {
+        this.opponentRotated = rotated;
+        if (persist) {
+            window.localStorage.setItem(OPPONENT_ROTATED_KEY, rotated ? '1' : '0');
+        }
+        this.view.setOpponentRotated?.(rotated);
+        const label = rotated ? t('play.rotate.disable') : t('play.rotate.enable');
+        const text = document.getElementById('toggle-rotate-label');
+        if (text) {
+            text.textContent = label;
+        }
+        this.toggleRotateBtn.title = label;
+        this.toggleRotateBtn.setAttribute('aria-label', label);
+        this.toggleRotateBtn.setAttribute('aria-pressed', String(rotated));
+    }
+
             this.toggleThreatsBtn.innerText = t('play.threats.show');
         }
     }

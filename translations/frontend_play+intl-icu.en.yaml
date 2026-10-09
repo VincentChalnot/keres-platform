@@ -37,6 +37,9 @@ threats:
 coords:
     show: Show Coords
     hide: Hide Coords
+rotate:
+    enable: Rotate Opponent Pieces
+    disable: Keep Opponent Pieces Upright
 fullscreen:
     enter: Fullscreen
     exit: Exit Fullscreen

@@ -161,6 +161,7 @@ play:
         eval_bar: Engine evaluation
         game_over: Game over
         loading: Loading…
+        rotate_opponent: Rotate Opponent Pieces
         switch_sides: Switch Sides
         hide_threats: Hide Threats
         hide_coords: Hide Coords

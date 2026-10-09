@@ -57,6 +57,7 @@
             <button class="button is-rounded is-outlined is-light" id="toggle-threats-btn">{{ 'play.board.hide_threats'|trans }}</button>
             <button class="button is-rounded is-outlined is-light" id="toggle-coords-btn">{{ 'play.board.hide_coords'|trans }}</button>
             <button class="button is-rounded is-outlined is-light" id="toggle-fullscreen-btn">{{ 'play.board.fullscreen'|trans }}</button>
+            <button class="button is-rounded is-outlined is-light" id="toggle-rotate-btn" type="button" title="{{ 'play.board.rotate_opponent'|trans }}" aria-label="{{ 'play.board.rotate_opponent'|trans }}" aria-pressed="false"><span class="icon"><i class="fa-solid fa-rotate" aria-hidden="true"></i></span><span id="toggle-rotate-label">{{ 'play.board.rotate_opponent'|trans }}</span></button>
             <button class="button is-rounded is-light" id="undo-btn">{{ 'play.board.undo'|trans }}</button>
             {% if not gameOver %}
                 <button type="button" class="button is-rounded is-danger" id="resign-btn">{{ 'play.board.resign'|trans }}</button>

@@ -47,6 +47,11 @@ export interface IBoardView {
      * Toggle coordinate labels visibility (optional)
      */
     setCoordinatesVisible?(visible: boolean): void;
+
+    /**
+     * Draw the opponent's (top side's) piece icons upside down when true, upright when false (optional)
+     */
+    setOpponentRotated?(rotated: boolean): void;
 }
 
 export interface TileHighlight {

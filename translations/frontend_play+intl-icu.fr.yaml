@@ -37,6 +37,9 @@ threats:
 coords:
     show: Afficher les coordonnées
     hide: Masquer les coordonnées
+rotate:
+    enable: Retourner les pièces adverses
+    disable: Garder les pièces adverses droites
 fullscreen:
     enter: Plein écran
     exit: Quitter le plein écran

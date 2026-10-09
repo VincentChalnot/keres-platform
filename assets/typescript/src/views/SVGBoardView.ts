@@ -75,6 +75,9 @@ export default class SVGBoardView implements IBoardView {
     // Whether coordinate labels are visible (affects viewBox)
     private coordsVisible: boolean = true;
 
+    // Whether the opponent's piece icons are drawn upside down (off by default)
+    private opponentRotated: boolean = false;
+
     // Bound event handler references for proper cleanup
     private boundHandleClick: ((e: MouseEvent) => void) | null = null;
     private boundHandleMouseMove: ((e: MouseEvent) => void) | null = null;
@@ -322,7 +325,7 @@ export default class SVGBoardView implements IBoardView {
     private async createPieceUse(x: number, y: number, pieceType: string, color: boolean, reversed: boolean, tileIndex: number, isTopPiece: boolean): Promise<void> {
         // Use <use> referencing the inlined sprite symbol
         const colorClass = color ? 'p-w' : 'p-b';
-        const reversedClass = color !== reversed ? '' : 'p-r';
+        const reversedClass = this.opponentRotated && color === reversed ? 'p-r' : '';
         const use = document.createElementNS('http://www.w3.org/2000/svg', 'use');
         use.setAttribute('href', `#piece-${pieceType}`);
         use.setAttribute('class', `piece ${colorClass} ${reversedClass}`);
@@ -593,7 +596,7 @@ export default class SVGBoardView implements IBoardView {
 
         const flipped = this.gameState.isBoardFlipped();
         const colorClass = piece.color ? 'p-w' : 'p-b';
-        const reversedClass = (piece.color !== flipped) ? '' : 'p-r';
+        const reversedClass = (this.opponentRotated && piece.color === flipped) ? 'p-r' : '';
 
         // Render bottom piece
         const useBottom = document.createElementNS('http://www.w3.org/2000/svg', 'use');
@@ -809,7 +812,7 @@ export default class SVGBoardView implements IBoardView {
         // We use a <g transform="scale(2)"> centred inside the card.
         const flipped = this.gameState.isBoardFlipped();
         const colorClass = piece.color ? 'p-w' : 'p-b';
-        const reversedClass = (piece.color !== flipped) ? '' : 'p-r';
+        const reversedClass = (this.opponentRotated && piece.color === flipped) ? 'p-r' : '';
 
         // The piece symbols are drawn in a 100×80 viewport. We scale by 2 and translate to center.
         const scaleX = cardX + CARD_PADDING;
@@ -886,6 +889,15 @@ export default class SVGBoardView implements IBoardView {
     private hidePieceCard(): void {
         this.cardGroup.style.display = 'none';
         this.cardVisible = false;
+    }
+
+    setOpponentRotated(rotated: boolean): void {
+        this.opponentRotated = rotated;
+        const flipped = this.gameState.isBoardFlipped();
+        this.piecesGroup?.querySelectorAll('.piece').forEach((use) => {
+            const white = use.classList.contains('p-w');
+            use.classList.toggle('p-r', rotated && white === flipped);
+        });
     }
 
     setCoordinatesVisible(visible: boolean): void {
