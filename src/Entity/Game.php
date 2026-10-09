@@ -66,6 +66,15 @@ class Game
     #[ORM\Column(type: Types::SMALLINT, options: ['default' => 0])]
     private int $endReasonValue = GameEndReason::NONE->value;
 
+    /**
+     * The engine's own code for *why* it ended the game (`EngineApi::gameOverReason()`),
+     * opaque to PHP - only the client knows what each value means. Set once, with
+     * `GameEndReason::ENGINE`; NULL for every other ending and for engine endings that
+     * predate the column (`app:games:backfill-engine-end-code`).
+     */
+    #[ORM\Column(type: Types::SMALLINT, nullable: true)]
+    private ?int $engineEndCode = null;
+
     #[ORM\Column(type: Types::DATETIMETZ_IMMUTABLE)]
     private \DateTimeImmutable $createdAt;
 
@@ -211,6 +220,21 @@ class Game
     public function getEndReason(): GameEndReason
     {
         return GameEndReason::from($this->endReasonValue);
+    }
+
+    public function getEngineEndCode(): ?int
+    {
+        return $this->engineEndCode;
+    }
+
+    /** Backfill only (`app:games:backfill-engine-end-code`): `finish()` is the one writer for live games. */
+    public function setEngineEndCode(int $engineEndCode): void
+    {
+        if (GameEndReason::ENGINE !== $this->getEndReason() || null !== $this->engineEndCode) {
+            throw new \LogicException('The engine end code is written once, for an engine-ended game.');
+        }
+
+        $this->engineEndCode = $engineEndCode;
     }
 
     public function getCreatedAt(): ?\DateTimeImmutable
@@ -548,7 +572,7 @@ class Game
      * 01-domain-model.md sec 4.3). Callers own clock finalisation
      * (ClockManager::stop()) themselves; this only writes the result.
      */
-    public function finish(GameEndReason $reason, ?PieceColor $winner): void
+    public function finish(GameEndReason $reason, ?PieceColor $winner, ?int $engineEndCode = null): void
     {
         if (null !== $this->gameOverAt) {
             throw new \LogicException('A finished game is never reopened.');
@@ -556,6 +580,7 @@ class Game
 
         $this->gameOverAt = new \DateTimeImmutable();
         $this->endReasonValue = $reason->value;
+        $this->engineEndCode = GameEndReason::ENGINE === $reason ? $engineEndCode : null;
         // Abort has no result at all - distinct from a draw, even though
         // both leave $winner null (06-rating.md sec 6.2: ABORTED writes
         // whiteWins = false, draw = false).
@@ -576,6 +601,7 @@ class Game
     {
         $this->gameOverAt = null;
         $this->endReasonValue = GameEndReason::NONE->value;
+        $this->engineEndCode = null;
         $this->whiteWins = false;
         $this->draw = false;
     }

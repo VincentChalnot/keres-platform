@@ -114,9 +114,11 @@ export class LocalGameAPI extends GameAPI {
         return this.buildPayload();
     }
 
-    /** The saved resignation, re-applied after the initial replay on page load. */
-    async restoredResignation(): Promise<GameStatePayload | null> {
-        return null === this.record.resignedColor ? null : this.buildPayload();
+    /** How the saved game ended (resignation, or the engine's verdict with its reason), re-applied after the initial replay on page load; null while it is in progress. */
+    async restoredEnding(): Promise<GameStatePayload | null> {
+        const payload = await this.buildPayload();
+
+        return payload.gameOver ? payload : null;
     }
 
     /** Asks the engine for its reply when it's the AI's move (after a player move, or on reload). */
@@ -185,6 +187,7 @@ export class LocalGameAPI extends GameAPI {
         }
 
         const gameOver = board.isGameOver();
+        const engineEndCode = gameOver && null === resigned ? await this.fetchGameOverReason(this.getMoves()) : null;
         const result = !gameOver ? null : (board.draw ? 'draw' : (board.whiteWins ? 'white' : 'black'));
 
         return {
@@ -192,6 +195,7 @@ export class LocalGameAPI extends GameAPI {
             moves: [...this.record.moves],
             status: gameOver ? 'finished' : (0 === this.record.moves.length ? 'created' : 'ongoing'),
             endReason: null !== resigned ? 'resignation' : (gameOver ? 'engine' : 'none'),
+            engineEndCode,
             result,
             gameOver,
             whiteWins: board.whiteWins,

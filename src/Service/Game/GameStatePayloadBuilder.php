@@ -48,6 +48,7 @@ final readonly class GameStatePayloadBuilder
             'moves' => base64_encode($boardMovesData->movesData->toBinary()),
             'status' => $status,
             'endReason' => strtolower($game->getEndReason()->name),
+            'engineEndCode' => $game->getEngineEndCode(),
             'result' => $result,
             'gameOver' => $game->isGameOver(),
             'whiteWins' => $game->isWhiteWins(),

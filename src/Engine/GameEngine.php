@@ -61,12 +61,16 @@ readonly class GameEngine
         $mover = $game->isWhiteTurn() ? PieceColor::WHITE : PieceColor::BLACK;
         $boardData = $this->engineApi->replayMoves($movesData);
         $boardMovesData = new BoardMovesData($boardData, $movesData);
+        // Asked once, here, for the move that ends the game: stored on the
+        // Game by finish(), never recomputed (replaying a finished game's
+        // moves would give the same answer, at the cost of an engine call).
+        $engineEndCode = $boardData->gameOver ? $this->engineApi->gameOverReason($movesData) : null;
 
         // 2. One transaction, one lock, one flush. Returns whether the move
         // was rejected as flagged - thrown *after* this returns, so the
         // flag-finalisation commit is never rolled back by the throw.
         $flagged = $this->entityManager->wrapInTransaction(
-            function (EntityManagerInterface $em) use ($game, $boardMovesData, $boardData, $expectedMoveCount, $receivedAtMicros, $mover): bool {
+            function (EntityManagerInterface $em) use ($game, $boardMovesData, $boardData, $engineEndCode, $expectedMoveCount, $receivedAtMicros, $mover): bool {
                 $em->getConnection()->executeStatement("SET LOCAL lock_timeout = '3s'");
 
                 // SELECT ... FOR UPDATE + re-hydrate (EntityManager.php:339-343).
@@ -94,8 +98,8 @@ readonly class GameEngine
                 $em->persist($newMove);
                 $game->setDrawOfferedByColor(null); // any move revokes a standing offer
 
-                if ($boardData->gameOver) {
-                    $this->gameLifecycleManager->finaliseEngineResult($game, $boardData->whiteWins, $boardData->draw);
+                if (null !== $engineEndCode) {
+                    $this->gameLifecycleManager->finaliseEngineResult($game, $boardData->whiteWins, $boardData->draw, $engineEndCode);
                     $this->clockManager->stop($game, $receivedAtMicros);
                 }
 

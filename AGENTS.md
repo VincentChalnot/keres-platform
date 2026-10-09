@@ -122,7 +122,7 @@ Do **not** introduce JSON serialization on this path.
 
 ## Engine API Bridge (`src/Engine/`)
 
-Three endpoints, all `POST`, binary in/out, base URL injected via `$backendApiUrl`
+Four endpoints, all `POST`, binary in/out, base URL injected via `$backendApiUrl`
 (env var `BACKEND_API_URL`):
 
 | Endpoint            | Request                       | Response               |
@@ -130,6 +130,16 @@ Three endpoints, all `POST`, binary in/out, base URL injected via `$backendApiUr
 | `/replay-moves`     | `MovesData` binary (2N bytes) | 83 bytes → `BoardData` |
 | `/engine-move-game` | `MovesData` binary (2N bytes) | 2 bytes → `MoveData`   |
 | `/evaluate-game`    | `MovesData` binary (2N bytes) | 4 bytes → int32 LE, level-10 score, White's point of view (`EngineApi::evaluateGame()`) |
+| `/game-over-reason` | `MovesData` binary (2N bytes) | 1 byte → the engine's code for why the game is over, 0 = in progress (`EngineApi::gameOverReason()`) |
+
+The game-over code is stored once, when the engine ends a game (`GameEngine::applyMove()`
+→ `Game::finish()`), in `Game.engineEndCode`, and shipped as `engineEndCode` in the game-state
+payload (page bootstrap, Mercure, API). It is **opaque to PHP**: only the TypeScript client
+(`utils/gameOverText.ts`) knows what each value means, so the banner can say "Draw by the 40-move
+rule" without game rules leaking into the platform. NULL for non-engine endings (resignation,
+timeout...) and for engine endings that predate the column until
+`bin/console app:games:backfill-engine-end-code` has run; the banner then shows no reason.
+Guest (browser-only) games ask the engine through the `/api/game-over-reason` relay.
 
 Evaluations are stored on `Move.evaluation` (the move edge, **not** `BoardPosition`:
 a board is shared by many lines but the verdict depends on the line - repetition

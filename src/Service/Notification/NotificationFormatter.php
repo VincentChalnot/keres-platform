@@ -111,7 +111,6 @@ final readonly class NotificationFormatter
     private function gameFinishedText(string $opponent, array $payload): string
     {
         $how = match ($payload['endReason'] ?? null) {
-            'engine' => ' by checkmate',
             'resignation' => ' by resignation',
             'timeout' => ' on time',
             'abandonment' => ' by abandonment',

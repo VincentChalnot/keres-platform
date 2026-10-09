@@ -34,11 +34,11 @@ final readonly class GameLifecycleManager
     ) {
     }
 
-    /** The engine's own verdict (board.gameOver). */
-    public function finaliseEngineResult(Game $game, bool $whiteWins, bool $draw): void
+    /** The engine's own verdict (board.gameOver), with the engine's opaque code for why it ended the game. */
+    public function finaliseEngineResult(Game $game, bool $whiteWins, bool $draw, int $engineEndCode): void
     {
         $winner = $draw ? null : ($whiteWins ? PieceColor::WHITE : PieceColor::BLACK);
-        $game->finish(GameEndReason::ENGINE, $winner);
+        $game->finish(GameEndReason::ENGINE, $winner, $engineEndCode);
         $this->ratingUpdater->applyForFinishedGame($game);
         $this->notificationCenter->gameFinished($game);
         $this->analyticsRecorder->gameFinished($game);

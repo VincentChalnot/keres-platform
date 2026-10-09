@@ -10,6 +10,7 @@ import {computeMaterialDiff, renderMaterialHTML} from './models/materialDiff';
 import {alertModal, confirmModal} from './utils/modal';
 import {PageFullscreen} from './utils/pageFullscreen';
 import {EvalBar, formatEvaluation} from './views/EvalBar';
+import {describeGameOver} from './utils/gameOverText';
 
 const OPPONENT_TYPE_AI = 0;
 const OPPONENT_TYPE_HOTSEAT = 1;
@@ -17,14 +18,6 @@ const OPPONENT_TYPE_MULTIPLAYER = 2;
 
 /** Server timestamps in the game-state payload are Uu-format microseconds. */
 const CLOCK_TICK_MS = 250;
-
-const END_REASON_SUFFIX: Record<string, string> = {
-    engine: 'by checkmate',
-    resignation: 'by resignation',
-    timeout: 'on time',
-    abandonment: 'by abandonment',
-    draw_agreed: 'by agreement',
-};
 
 /** Formats milliseconds remaining as a clock face, day-aware for correspondence. */
 function formatClockMs(ms: number): string {
@@ -51,6 +44,7 @@ interface UnstackModalDetail {
 interface GameStateBootstrap {
     clock: ClockState | null;
     endReason: string;
+    engineEndCode: number | null;
     result: string | null;
     serverTime: number;
     /** Stored engine evaluations, index = ply (null entries: not computed yet); null when they must not be shown. */
@@ -239,7 +233,7 @@ class KeresGame {
         // instead of only the board binary's engine-only verdict.
         const bootstrap = this.readBootstrap();
         if (bootstrap) {
-            this.controller.setInitialState(bootstrap.clock, bootstrap.endReason, bootstrap.result, bootstrap.serverTime);
+            this.controller.setInitialState(bootstrap.clock, bootstrap.endReason, bootstrap.engineEndCode, bootstrap.result, bootstrap.serverTime);
             bootstrap.evaluations?.forEach((value, ply) => {
                 if (null !== value) {
                     this.evaluations.set(ply, value);
@@ -263,9 +257,9 @@ class KeresGame {
             localApi.onRemoteUpdate((update) => {
                 void this.controller.applyRemoteUpdate(update).then(() => this.refreshUI());
             });
-            const resignation = await localApi.restoredResignation();
-            if (resignation) {
-                await this.controller.applyRemoteUpdate({...resignation, seq: moves.length, rating: null});
+            const ending = await localApi.restoredEnding();
+            if (ending) {
+                await this.controller.applyRemoteUpdate({...ending, seq: moves.length, rating: null});
             }
             const board = this.gameState.getBoard();
             if (board) {
@@ -772,22 +766,11 @@ class KeresGame {
     }
 
     private describeGameOver(): string {
-        const endReason = this.controller.getEndReason();
-        const result = this.controller.getResult();
-
-        if ('aborted' === endReason) {
-            return 'Game aborted.';
-        }
-
-        const suffix = END_REASON_SUFFIX[endReason] ?? '';
-
-        if ('draw' === result) return suffix ? `Draw ${suffix}.` : 'Draw.';
-        if ('white' === result) return suffix ? `White wins ${suffix}.` : 'White wins.';
-        if ('black' === result) return suffix ? `Black wins ${suffix}.` : 'Black wins.';
+        const text = describeGameOver(this.controller.getEndReason(), this.controller.getEngineEndCode(), this.controller.getResult());
 
         // Fallback for the rare case the authoritative endReason/result
         // hasn't arrived yet - the board binary's own engine verdict.
-        return this.gameState.getBoard()?.getGameResult() || 'Game over.';
+        return text ?? (this.gameState.getBoard()?.getGameResult() || 'Game over.');
     }
 
     /** Saturates + disables all pointer interaction on the board once the game ends. */

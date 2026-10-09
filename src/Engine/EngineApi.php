@@ -69,6 +69,24 @@ readonly class EngineApi
         return $value >= 0x80000000 ? $value - 0x100000000 : $value;
     }
 
+    /**
+     * Why the game reached by `$movesData` is over (`/game-over-reason`,
+     * `docs/PROTOCOL.md` in the engine repo): one byte, `0` while the game is
+     * still in progress, otherwise the engine's code for the rule that ended
+     * it. The codes are the engine's business - PHP stores and relays the
+     * value, the client maps it to text. Runs no search, so no AI backend.
+     */
+    public function gameOverReason(MovesData $movesData): int
+    {
+        $raw = $this->callApi('game-over-reason', $movesData->toBinary());
+
+        if (1 !== \strlen($raw)) {
+            throw new \RuntimeException('game-over-reason returned '.\strlen($raw).' bytes, expected 1');
+        }
+
+        return \ord($raw);
+    }
+
     private function callApi(string $endpoint, string $body, ?string $baseUrl = null): string
     {
         $url = rtrim($baseUrl ?? $this->backendApiUrl, '/').'/'.ltrim($endpoint, '/');

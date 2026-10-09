@@ -144,6 +144,18 @@ export function decodeBoardFromBinary(binary: Uint8Array): Board {
 }
 
 /**
+ * Decode the 1-byte `/game-over-reason` response: the engine's code for why
+ * the game is over, 0 while it is not. Opaque here - see utils/gameOverText.ts.
+ */
+export function decodeGameOverReason(binary: Uint8Array): number {
+    if (1 !== binary.length) {
+        throw new Error(`Invalid game-over reason: expected 1 byte, got ${binary.length}`);
+    }
+
+    return binary[0];
+}
+
+/**
  * Encode Board to binary representation (Uint8Array of 83 bytes)
  */
 export function encodeBoardToBinary(board: Board): Uint8Array {

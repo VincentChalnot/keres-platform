@@ -1,5 +1,5 @@
 import {Board, PotentialMove, Move} from '../models/types';
-import {decodeBoardFromBinary, encodeBoardToBinary, decodePotentialMove, encodeMove, encodeMoveListToBinary} from '../utils/boardUtils';
+import {decodeBoardFromBinary, decodeGameOverReason, encodeBoardToBinary, decodePotentialMove, encodeMove, encodeMoveListToBinary} from '../utils/boardUtils';
 import {ClockState} from './MercureClient';
 
 /**
@@ -11,6 +11,8 @@ export interface GameStatePayload {
     moves: number[];
     status: string;
     endReason: string;
+    /** The engine's code for why it ended the game (see utils/gameOverReason.ts); null for non-engine endings and old games. */
+    engineEndCode: number | null;
     result: string | null;
     gameOver: boolean;
     whiteWins: boolean;
@@ -147,7 +149,7 @@ export class GameAPI {
  * GameStatePayload, decoding the base64 board and overriding the board's
  * binary flags with the authoritative JSON verdict.
      */
-    parsePayload(data: {board?: string; moves?: number[]; status?: string; endReason?: string; result?: string | null; gameOver?: boolean; whiteWins?: boolean; draw?: boolean; clock?: ClockState | null; aiLevel?: number | null; serverTime?: number}): GameStatePayload {
+    parsePayload(data: {board?: string; moves?: number[]; status?: string; endReason?: string; engineEndCode?: number | null; result?: string | null; gameOver?: boolean; whiteWins?: boolean; draw?: boolean; clock?: ClockState | null; aiLevel?: number | null; serverTime?: number}): GameStatePayload {
         const boardBase64 = data.board ?? '';
         const binaryString = atob(boardBase64);
         const bytes = new Uint8Array(binaryString.length);
@@ -173,6 +175,7 @@ export class GameAPI {
             moves: data.moves ?? [],
             status: data.status ?? '',
             endReason: data.endReason ?? '',
+            engineEndCode: data.engineEndCode ?? null,
             result: data.result ?? null,
             gameOver: data.gameOver ?? board.isGameOver(),
             whiteWins: data.whiteWins ?? board.whiteWins,
@@ -228,6 +231,25 @@ export class GameAPI {
 
         const boardBuffer = await response.arrayBuffer();
         return decodeBoardFromBinary(new Uint8Array(boardBuffer));
+    }
+
+    /**
+     * The engine's code for why the game reached by `moves` is over (0 while
+     * it is not). Only guest games ask: a persisted game gets the code from
+     * the server with the rest of its state.
+     */
+    async fetchGameOverReason(moves: Move[]): Promise<number> {
+        const response = await fetch(`${this.backendUrl}/game-over-reason`, {
+            method: 'POST',
+            headers: {'Content-Type': 'application/octet-stream'},
+            body: encodeMoveListToBinary(moves) as BodyInit,
+        });
+
+        if (!response.ok) {
+            throw new Error(`Server returned ${response.status}`);
+        }
+
+        return decodeGameOverReason(new Uint8Array(await response.arrayBuffer()));
     }
 
     /**

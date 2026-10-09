@@ -26,6 +26,7 @@ export interface GameUpdate {
     moves: number[];
     status: string;
     endReason: string;
+    engineEndCode: number | null;
     /** 'white' | 'black' | 'draw' | null — authoritative result from the Game entity. */
     result: string | null;
     gameOver: boolean;
@@ -135,6 +136,7 @@ export class MercureClient {
                     moves: moves,
                     status: data.status ?? '',
                     endReason: data.endReason ?? '',
+                    engineEndCode: data.engineEndCode ?? null,
                     result: data.result ?? null,
                     gameOver: data.gameOver ?? board.isGameOver(),
                     whiteWins: data.whiteWins ?? board.whiteWins,

@@ -23,6 +23,7 @@ export class GameController {
     // binary which only carries the engine's verdict). Updated on every
     // Mercure update and every move/resign response.
     private endReason: string = '';
+    private engineEndCode: number | null = null;
     private resultValue: string | null = null;
     private clockState: ClockState | null = null;
     // Wall-clock anchor pairing a server timestamp (micros, from the same
@@ -86,6 +87,7 @@ export class GameController {
         // Store authoritative game-over verdict + clock (from the Game entity,
         // not the board binary which only carries the engine's verdict).
         this.endReason = update.endReason;
+        this.engineEndCode = update.engineEndCode;
         this.resultValue = update.result;
         this.clockState = update.clock;
         this.captureClockTiming(update.serverTime);
@@ -205,6 +207,7 @@ export class GameController {
 
             // Store authoritative game-over verdict + clock
             this.endReason = result.endReason;
+            this.engineEndCode = result.engineEndCode;
             this.resultValue = result.result;
             this.clockState = result.clock;
             this.captureClockTiming(result.serverTime);
@@ -508,6 +511,7 @@ export class GameController {
         try {
             const result = await this.api.resign();
             this.endReason = result.endReason;
+            this.engineEndCode = result.engineEndCode;
             this.resultValue = result.result;
             this.clockState = result.clock;
             this.captureClockTiming(result.serverTime);
@@ -528,6 +532,9 @@ export class GameController {
     getEndReason(): string {
         return this.endReason;
     }
+    getEngineEndCode(): number | null {
+        return this.engineEndCode;
+    }
     getResult(): string | null {
         return this.resultValue;
     }
@@ -546,9 +553,10 @@ export class GameController {
     }
 
     /** Seeds the authoritative clock/result state from the page's initial bootstrap. */
-    setInitialState(clock: ClockState | null, endReason: string, result: string | null, serverTimeMicros: number): void {
+    setInitialState(clock: ClockState | null, endReason: string, engineEndCode: number | null, result: string | null, serverTimeMicros: number): void {
         this.clockState = clock;
         this.endReason = endReason;
+        this.engineEndCode = engineEndCode;
         this.resultValue = result;
         this.captureClockTiming(serverTimeMicros);
     }
