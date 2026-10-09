@@ -10,6 +10,9 @@ items:
     rotate_opponent_pieces:
         title: Les pièces adverses face à vous
         body: 'Un nouveau bouton sur la page de partie retourne les pièces adverses, comme sur un vrai plateau. Désactivé par défaut.'
+    guest_limits:
+        title: 'Parties d’invité : niveaux 1 à 4'
+        body: 'Sans compte, vous jouez contre l’ordinateur aux niveaux 1 à 4 seulement, sans barre d’évaluation en direct. Connectez-vous pour débloquer les niveaux 5 à 10 et la barre d’évaluation.'
     persistent_login:
         title: Restez connecté d’une mise à jour à l’autre
         body: 'Les nouvelles versions de Keres ne vous déconnectent plus. Vous restez connecté 30 jours après votre dernière visite.'

@@ -10,6 +10,9 @@ items:
     rotate_opponent_pieces:
         title: Face your opponent’s pieces
         body: 'A new button on the game page turns the opponent’s pieces upside down, as on a real board. It is off by default.'
+    guest_limits:
+        title: 'Guest games: AI levels 1 to 4'
+        body: 'Playing without an account is limited to AI levels 1 to 4 and has no live evaluation bar. Sign in to unlock levels 5 to 10 and the evaluation bar.'
     persistent_login:
         title: Stay signed in across updates
         body: 'New versions of Keres no longer log you out. You stay signed in for 30 days after your last visit.'

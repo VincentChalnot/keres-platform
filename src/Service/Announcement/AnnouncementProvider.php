@@ -27,6 +27,7 @@ final readonly class AnnouncementProvider
         'french_translation' => '2026-10-10',
         'fullscreen_layout' => '2026-10-10',
         'rotate_opponent_pieces' => '2026-10-10',
+        'guest_limits' => '2026-10-10',
         'persistent_login' => '2026-10-09',
         'mobile_menu' => '2026-10-09',
         'game_over_reason' => '2026-10-09',
