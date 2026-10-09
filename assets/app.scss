@@ -229,6 +229,23 @@ li { margin-bottom: 8px; }
         border: 1px solid $keres-primary;
         font-weight: bold;
     }
+
+    // Final result. Bulma's `.notification.is-success/.is-warning` pick their
+    // own text colour (white on the orange draw background was unreadable), so
+    // both are pinned to a dark text on a saturated background.
+    &.is-success {
+        background: #48c78e;
+        color: #0a2418;
+        border: 1px solid #48c78e;
+        font-weight: bold;
+    }
+
+    &.is-warning {
+        background: #f0a030;
+        color: #231503;
+        border: 1px solid #f0a030;
+        font-weight: bold;
+    }
 }
 
 // ─── Hero (landing page) ──────────────────────────────────────────────────────
