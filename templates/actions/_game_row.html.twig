@@ -1,24 +1,25 @@
 {# T13: the one games-list row markup, fed a `GameListRow` (see
    `App\Model\GameListRow`, built by `game_list_row()`). Used by the
-   dashboard widget, `/games`, and a profile's game history - never
-   duplicated. @var row \App\Model\GameListRow #}
+   dashboard widget, `/games`, the lobby and a profile's game history - never
+   duplicated. The players and option badges are the game page's own header
+   partial, compact. @var row \App\Model\GameListRow #}
 <div class="box game-row mb-4">
-    <a href="{{ path('play', {uuid: row.uuid}) }}" class="button is-rounded is-primary is-small is-pulled-right">
+    <div class="game-row__body">
+        {% include 'actions/_game_header.html.twig' with {header: row.header, compact: true} only %}
+        <p class="game-row__status">
+            {% if row.turnLabel %}
+                <span class="tag is-rounded {{ row.turnLabel == 'Your turn' ? 'is-primary' : 'is-dark' }}">{{ row.turnLabel }}</span>
+            {% endif %}
+            {% if row.resultLabel %}
+                <span class="tag is-rounded is-light">{{ row.resultLabel }}</span>
+            {% endif %}
+            {% if row.timeRemainingLabel %}
+                <span class="has-text-grey">{{ row.timeRemainingLabel }}</span>
+            {% endif %}
+            <span class="has-text-grey">{{ row.isGameOver ? 'Finished' : 'Last move' }}: {{ row.lastActivityAt|date('Y-m-d H:i') }}</span>
+        </p>
+    </div>
+    <a href="{{ path('play', {uuid: row.uuid}) }}" class="button is-rounded is-primary is-small game-row__action">
         {{ row.isGameOver ? 'View' : (isSelf ? 'Resume' : 'Watch') }}
     </a>
-    <p>
-        <strong>{{ row.opponentLabel }}</strong>
-        {% if row.turnLabel %}
-            &middot; <span class="tag is-rounded {{ row.turnLabel == 'Your turn' ? 'is-primary' : 'is-dark' }}">{{ row.turnLabel }}</span>
-        {% endif %}
-        {% if row.resultLabel %}
-            &middot; <span class="tag is-rounded is-light">{{ row.resultLabel }}</span>
-        {% endif %}
-        {% if row.timeRemainingLabel %}
-            &middot; <span class="has-text-grey">{{ row.timeRemainingLabel }}</span>
-        {% endif %}
-    </p>
-    <p class="has-text-grey">
-        {{ row.isGameOver ? 'Finished' : 'Last move' }}: {{ row.lastActivityAt|date('Y-m-d H:i') }}
-    </p>
 </div>

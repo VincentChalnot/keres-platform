@@ -36,8 +36,11 @@ class DashboardAction extends AbstractController
         $stats = $this->gameRepository->getFinishedGameStatsForUser($user);
         $totalFinished = $stats['wins'] + $stats['losses'] + $stats['draws'];
 
+        $recentGames = $this->gameRepository->findRecentInProgressForUser($user, 5);
+        $this->gameRepository->preloadForListing($recentGames);
+
         return [
-            'recentGames' => $this->gameRepository->findRecentInProgressForUser($user, 5),
+            'recentGames' => $recentGames,
             'inProgressCount' => $this->gameRepository->countInProgressForUser($user),
             'stats' => $stats,
             'totalFinished' => $totalFinished,

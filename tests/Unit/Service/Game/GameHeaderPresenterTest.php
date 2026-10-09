@@ -47,6 +47,18 @@ final class GameHeaderPresenterTest extends TestCase
         self::assertNull($header->white->username);
     }
 
+    public function testProfileSubjectIsNamedEvenToAnAnonymousViewer(): void
+    {
+        $white = $this->user('white@example.com', 'alice');
+        $black = $this->user('black@example.com', 'bob');
+
+        $header = (new GameHeaderPresenter())->present($this->multiplayer($white, $black), null, $white);
+
+        self::assertSame('alice', $header->white->label);
+        self::assertSame('Player', $header->black->label);
+        self::assertNull($header->black->username);
+    }
+
     public function testSignedInViewerSeesUsernames(): void
     {
         $white = $this->user('white@example.com', 'alice');

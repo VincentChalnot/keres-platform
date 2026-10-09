@@ -31,16 +31,23 @@ final readonly class GameListPresenter
 {
     public function __construct(
         private ClockInterface $clock,
+        private GameHeaderPresenter $gameHeaderPresenter,
     ) {
     }
 
-    public function present(Game $game, User $subject, bool $isSelf): GameListRow
+    /**
+     * `$viewer` is who is looking at the list: it decides whether usernames
+     * are shown (see `GameHeaderPresenter`). It is the subject on a self
+     * list; only a profile page, which anyone may open, passes someone else
+     * - or null for an anonymous visitor.
+     */
+    public function present(Game $game, User $subject, bool $isSelf, ?User $viewer = null): GameListRow
     {
         $isGameOver = $game->isGameOver();
 
         return new GameListRow(
             uuid: (string) $game->getUuid(),
-            opponentLabel: $this->opponentLabel($game, $subject),
+            header: $this->gameHeaderPresenter->present($game, $isSelf ? $subject : $viewer, $subject),
             turnLabel: $isGameOver ? null : $this->turnLabel($game, $subject, $isSelf),
             resultLabel: $isGameOver ? $this->resultLabel($game) : null,
             timeRemainingLabel: $isGameOver ? null : $this->remainingLabel($game),
@@ -51,37 +58,20 @@ final readonly class GameListPresenter
 
     /**
      * The row for the anonymous `/lobby` feed: told from no one's
-     * perspective and naming no participant - an anonymous visitor has no
-     * business learning who played whom.
+     * perspective and naming no participant (an anonymous visitor has no
+     * business learning who played whom) - engine and bot seats excepted.
      */
     public function presentPublic(Game $game): GameListRow
     {
         return new GameListRow(
             uuid: (string) $game->getUuid(),
-            opponentLabel: 'Multiplayer game',
+            header: $this->gameHeaderPresenter->present($game, null),
             turnLabel: null,
             resultLabel: $this->resultLabel($game),
             timeRemainingLabel: null,
             lastActivityAt: $game->getLastMoveAt() ?? $game->getCreatedAt(),
             isGameOver: true,
         );
-    }
-
-    private function opponentLabel(Game $game, User $subject): string
-    {
-        $opponentType = $game->getOpponentType();
-
-        if (OpponentType::HOTSEAT === $opponentType) {
-            return 'Hot-seat game';
-        }
-
-        if (OpponentType::AI === $opponentType) {
-            return \sprintf('AI (level %d)', $game->getAiLevel() ?? 1);
-        }
-
-        $opponent = $game->getOpponentOf($subject);
-
-        return null !== $opponent ? ($opponent->getDisplayName() ?? $opponent->getUsername()) : 'Multiplayer';
     }
 
     private function turnLabel(Game $game, User $subject, bool $isSelf): string

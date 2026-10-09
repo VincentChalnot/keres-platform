@@ -9,7 +9,7 @@ use Twig\Extension\AbstractExtension;
 use Twig\TwigFunction;
 
 /**
- * `game_list_row(game, subject, isSelf)` - the one entry point every games
+ * `game_list_row(game, subject, isSelf[, viewer])` - the one entry point every games
  * listing template uses to get a `GameListRow` (T13), plus
  * `public_game_list_row(game)` for the anonymous lobby feed. Mirrors
  * `NotificationExtension`'s shape.

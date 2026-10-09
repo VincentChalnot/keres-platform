@@ -421,12 +421,46 @@ li { margin-bottom: 8px; }
         }
     }
 
+    // Compact: the same header inside a games-list card; badges follow the names instead of pushing right.
+    &--compact {
+        justify-content: flex-start;
+        margin-bottom: 0.4rem;
+        font-size: 0.95rem;
+    }
+
     &__badges.tags {
         margin-bottom: 0;
 
         .tag {
             margin-bottom: 0;
         }
+    }
+}
+
+// ─── Games-list card: header + status line, with the action button on the right ──
+
+.game-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+
+    &__body {
+        flex: 1;
+        min-width: 0;
+    }
+
+    &__action {
+        flex-shrink: 0;
+    }
+
+    &__status {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 0.3rem 0.6rem;
+        margin-bottom: 0;
+        font-size: 0.9rem;
     }
 }
 

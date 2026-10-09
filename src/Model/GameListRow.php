@@ -15,7 +15,8 @@ final readonly class GameListRow
 {
     public function __construct(
         public string $uuid,
-        public string $opponentLabel,
+        /** Who plays and which options the game has - the same header as the game page, rendered compact. */
+        public GameHeader $header,
         /** Null exactly when `$isGameOver` is true - see `$resultLabel`. */
         public ?string $turnLabel,
         /** Null exactly when `$isGameOver` is false - see `$turnLabel`. */

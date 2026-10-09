@@ -21,23 +21,26 @@ use App\Service\BotTournament\BotAccounts;
  * time control). Shared by the live and the finished view - the page cannot
  * tell them apart, and neither can the header.
  *
+ * Also the identity half of every games-list card (`GameListPresenter`).
+ *
  * Usernames are only shown to a signed-in viewer, like everywhere else an
  * anonymous visitor could otherwise learn who played whom (`/lobby` feed,
  * `GameListPresenter::presentPublic()`); engine and tournament-bot seats are
- * not people, so they are always named.
+ * not people, so they are always named. `$subject` is the one exception: the
+ * owner of the profile page the card is listed on is named in the URL already.
  */
 final readonly class GameHeaderPresenter
 {
-    public function present(Game $game, ?User $viewer): GameHeader
+    public function present(Game $game, ?User $viewer, ?User $subject = null): GameHeader
     {
         return new GameHeader(
-            white: $this->player($game, PieceColor::WHITE, $viewer),
-            black: $this->player($game, PieceColor::BLACK, $viewer),
+            white: $this->player($game, PieceColor::WHITE, $viewer, $subject),
+            black: $this->player($game, PieceColor::BLACK, $viewer, $subject),
             badges: $this->badges($game),
         );
     }
 
-    private function player(Game $game, PieceColor $color, ?User $viewer): GameHeaderPlayer
+    private function player(Game $game, PieceColor $color, ?User $viewer, ?User $subject): GameHeaderPlayer
     {
         $seat = $game->getPlayer($color);
 
@@ -56,7 +59,7 @@ final readonly class GameHeaderPresenter
             return new GameHeaderPlayer($color, $user->getDisplayName() ?? $user->getUsername(), 'bot');
         }
 
-        if (null === $viewer) {
+        if (null === $viewer && $user !== $subject) {
             return new GameHeaderPlayer($color, 'Player', 'anonymous');
         }
 

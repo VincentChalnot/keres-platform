@@ -70,6 +70,8 @@ class ProfilePageAction extends AbstractController
         $page = max(1, $request->query->getInt('page', 1));
         $pager->setCurrentPage(min($page, max(1, $pager->getNbPages())));
 
+        $this->gameRepository->preloadForListing($pager->getCurrentPageResults());
+
         return [
             'subject' => $subject,
             'viewer' => $viewer,

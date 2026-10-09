@@ -114,7 +114,7 @@
 
                 {% for game in games %}
                     {# @var game \App\Entity\Game #}
-                    {% include 'actions/_game_row.html.twig' with {row: game_list_row(game, subject, isSelf), isSelf: isSelf} %}
+                    {% include 'actions/_game_row.html.twig' with {row: game_list_row(game, subject, isSelf, app.user), isSelf: isSelf} %}
                 {% else %}
                     <p class="has-text-grey">No games to show{{ isSelf ? '' : ' yet' }}.</p>
                 {% endfor %}

@@ -59,6 +59,39 @@ class GameRepository extends ServiceEntityRepository
     }
 
     /**
+     * One query that initialises `players` and their users on every given
+     * (already managed) game, so the identity half of a games-list card
+     * (`GameHeaderPresenter`: both seats) costs no per-game query. A
+     * fetch-join on already-loaded entities fills their still uninitialised
+     * collections; it does not re-select the games. `gameMoves` is left alone
+     * on purpose: it eagerly loads every `Move` of every game, which is far
+     * heavier than the one cheap read a card needs from it.
+     *
+     * @param iterable<Game> $games
+     */
+    public function preloadForListing(iterable $games): void
+    {
+        $ids = [];
+
+        foreach ($games as $game) {
+            $ids[] = $game->getId();
+        }
+
+        if ([] === $ids) {
+            return;
+        }
+
+        $this->createQueryBuilder('g')
+            ->select('g', 'p', 'pu')
+            ->leftJoin('g.players', 'p')
+            ->leftJoin('p.user', 'pu')
+            ->andWhere('g.id IN (:ids)')
+            ->setParameter('ids', $ids)
+            ->getQuery()
+            ->getResult();
+    }
+
+    /**
      * @return Game[]
      */
     public function findOngoingForUser(User $user): array

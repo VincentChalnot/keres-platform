@@ -50,6 +50,8 @@ class GameListAction extends AbstractController
         $pager->setMaxPerPage(self::PER_PAGE);
         $pager->setCurrentPage(min($page, max(1, $pager->getNbPages())));
 
+        $this->gameRepository->preloadForListing($pager->getCurrentPageResults());
+
         return [
             'status' => $status,
             'games' => $pager,

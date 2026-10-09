@@ -71,9 +71,12 @@ class LobbyAction extends AbstractController
         $user = $this->getUser();
 
         if (!$user instanceof User) {
+            $publicGames = $this->gameRepository->findRecentPubliclyFinishedGames(self::PUBLIC_GAMES_LIMIT);
+            $this->gameRepository->preloadForListing($publicGames);
+
             return $this->render('actions/play_welcome.html.twig', [
                 'announcements' => self::ANNOUNCEMENTS,
-                'publicGames' => $this->gameRepository->findRecentPubliclyFinishedGames(self::PUBLIC_GAMES_LIMIT),
+                'publicGames' => $publicGames,
             ]);
         }
 
@@ -81,12 +84,14 @@ class LobbyAction extends AbstractController
         $seeks = $this->seekRepository->findOpenForListing($now);
         $listing = $this->seekPayloadBuilder->buildListing($seeks, $user, \count($seeks), $now);
         $ongoingGames = $this->gameRepository->findOngoingForUser($user);
+        $shownGames = \array_slice($ongoingGames, 0, self::OWN_GAMES_LIMIT);
+        $this->gameRepository->preloadForListing($shownGames);
 
         return [
             'presets' => self::PRESETS,
             'defaultPreset' => self::DEFAULT_PRESET,
             'seeksBootstrap' => $this->seekPayloadBuilder->encode($listing),
-            'ongoingGames' => \array_slice($ongoingGames, 0, self::OWN_GAMES_LIMIT),
+            'ongoingGames' => $shownGames,
             'ongoingGamesCount' => \count($ongoingGames),
         ];
     }
