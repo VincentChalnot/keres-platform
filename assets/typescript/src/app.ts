@@ -46,6 +46,9 @@ interface GameStateBootstrap {
     endReason: string;
     engineEndCode: number | null;
     result: string | null;
+    gameOver: boolean;
+    whiteWins: boolean;
+    draw: boolean;
     serverTime: number;
     /** Stored engine evaluations, index = ply (null entries: not computed yet); null when they must not be shown. */
     evaluations?: Array<number | null> | null;
@@ -251,6 +254,9 @@ class KeresGame {
         const movesBase64 = this.boardContainer.getAttribute('data-moves') || '';
         const moves = localApi ? localApi.getMoves() : decodeMoveListFromBase64(movesBase64);
         await this.controller.setMoves(moves);
+        if (bootstrap?.gameOver) {
+            this.controller.applyStoredVerdict(bootstrap.whiteWins, bootstrap.draw);
+        }
 
         if (localApi) {
             // The AI's replies arrive where a Mercure update would for a persisted game.

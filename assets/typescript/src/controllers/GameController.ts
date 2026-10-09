@@ -552,6 +552,24 @@ export class GameController {
         return this.playerWhite;
     }
 
+    /**
+     * The initial replay only knows the engine's verdict, so a game that ended
+     * any other way (resignation, timeout, abort) or under a rule the engine no
+     * longer has replays as "in progress". Flags that board with the stored
+     * verdict and locks the position, as a live game-over update would.
+     */
+    applyStoredVerdict(whiteWins: boolean, draw: boolean): void {
+        const board = this.gameState.getBoard();
+        if (!board) return;
+
+        board.gameOver = true;
+        board.whiteWins = whiteWins;
+        board.draw = draw;
+        this.gameState.setPotentialMoves([]);
+        this.gameState.setOpponentThreats([]);
+        this.gameState.setBoardLocked(true);
+    }
+
     /** Seeds the authoritative clock/result state from the page's initial bootstrap. */
     setInitialState(clock: ClockState | null, endReason: string, engineEndCode: number | null, result: string | null, serverTimeMicros: number): void {
         this.clockState = clock;
