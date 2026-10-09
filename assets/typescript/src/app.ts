@@ -41,6 +41,13 @@ function formatClockMs(ms: number): string {
     return `${minutes}:${pad(seconds)}`;
 }
 
+/** Payload of the `showUnstackModal` event dispatched by GameController. */
+interface UnstackModalDetail {
+    kind: 'unstack' | 'stack-onto';
+    allowUnstack?: boolean;
+    forceUnstack?: boolean;
+}
+
 interface GameStateBootstrap {
     clock: ClockState | null;
     endReason: string;
@@ -90,6 +97,10 @@ class KeresGame {
     private unstackModal: HTMLDivElement;
     private moveStackBtn: HTMLButtonElement;
     private moveUnstackBtn: HTMLButtonElement;
+    private selectInsteadBtn: HTMLButtonElement;
+    private unstackModalTitle: HTMLElement;
+    private unstackModalText: HTMLElement;
+    private unstackModalForceUnstack = false;
     private switchSidesBtn: HTMLButtonElement | null;
     private moveHistoryBody: HTMLTableSectionElement;
     private prevMoveBtn: HTMLButtonElement;
@@ -131,6 +142,9 @@ class KeresGame {
         this.unstackModal = document.getElementById('unstack-modal') as HTMLDivElement;
         this.moveStackBtn = document.getElementById('move-stack') as HTMLButtonElement;
         this.moveUnstackBtn = document.getElementById('move-unstack') as HTMLButtonElement;
+        this.selectInsteadBtn = document.getElementById('select-instead') as HTMLButtonElement;
+        this.unstackModalTitle = document.getElementById('unstack-modal-title') as HTMLElement;
+        this.unstackModalText = document.getElementById('unstack-modal-text') as HTMLElement;
         this.switchSidesBtn = document.getElementById('switch-sides-btn') as HTMLButtonElement | null;
         this.moveHistoryBody = document.getElementById('move-history-body') as HTMLTableSectionElement;
         this.prevMoveBtn = document.getElementById('prev-move-btn') as HTMLButtonElement;
@@ -352,8 +366,9 @@ class KeresGame {
 
     private setupEventListeners(): void {
         // Unstack modal buttons
-        this.moveStackBtn.addEventListener('click', () => this.handleMoveStack());
+        this.moveStackBtn.addEventListener('click', () => void this.handleModalConfirm());
         this.moveUnstackBtn.addEventListener('click', () => this.handleMoveUnstack());
+        this.selectInsteadBtn.addEventListener('click', () => this.handleSelectInstead());
 
         // Modal background close
         const modalBackground = this.unstackModal.querySelector('.modal-background');
@@ -382,9 +397,14 @@ class KeresGame {
         this.toggleCoordsBtn.addEventListener('click', () => this.handleToggleCoords());
         new PageFullscreen(document.getElementById('toggle-fullscreen-btn') as HTMLButtonElement);
 
-        // Custom event for unstack modal
-        window.addEventListener('showUnstackModal', () => {
-            this.unstackModal.classList.add('is-active');
+        // Custom event for unstack / stack-confirmation modal
+        window.addEventListener('showUnstackModal', (event) => {
+            this.openUnstackModal((event as CustomEvent<UnstackModalDetail | undefined>).detail);
+        });
+        document.addEventListener('keydown', (event) => {
+            if ('Escape' === event.key && this.unstackModal.classList.contains('is-active')) {
+                this.handleModalClose();
+            }
         });
 
         // GameController reports failures through this instead of native alert().
@@ -410,12 +430,12 @@ class KeresGame {
         });
     }
 
-    private async handleMoveStack(fullStack: boolean = false): Promise<void> {
-        this.unstackModal.classList.remove('is-active');
+    private async handleMoveStack(unstack: boolean = false): Promise<void> {
+        this.closeUnstackModal();
         const selectedPosition = this.gameState.getSelectedPosition();
         const clickedDestination = this.gameState.getClickedDestination();
         if (selectedPosition !== null && clickedDestination !== null) {
-            await this.controller.playMove(selectedPosition, clickedDestination, fullStack);
+            await this.controller.playMove(selectedPosition, clickedDestination, unstack);
             this.refreshUI();
         }
     }
@@ -424,8 +444,42 @@ class KeresGame {
         await this.handleMoveStack(true);
     }
 
-    private handleModalClose(): void {
+    /** Modal "confirm" button: plays the move as given by the potential move (stack mode) or as a full-stack move. */
+    private async handleModalConfirm(): Promise<void> {
+        await this.handleMoveStack(this.unstackModalForceUnstack);
+    }
+
+    private handleSelectInstead(): void {
+        const target = this.gameState.getClickedDestination();
+        this.closeUnstackModal();
+        if (target !== null) {
+            this.controller.selectPosition(target);
+        }
+    }
+
+    private openUnstackModal(detail: UnstackModalDetail | undefined): void {
+        const stackOnto = detail?.kind === 'stack-onto';
+        const allowUnstack = !stackOnto || (detail?.allowUnstack ?? false);
+        this.unstackModalForceUnstack = stackOnto && (detail?.forceUnstack ?? false);
+        this.unstackModalTitle.textContent = stackOnto ? 'Stack your pieces?' : 'Choose your move';
+        this.unstackModalText.textContent = stackOnto
+            ? (allowUnstack
+                ? 'You are moving onto one of your own pieces. Move the full stack, only the top piece, or select that piece instead?'
+                : 'You are moving onto one of your own pieces. Do you want to stack onto it, or select that piece instead?')
+            : 'You are moving a stacked piece. Do you want to move the full stack or only the top piece?';
+        this.moveStackBtn.textContent = stackOnto && !allowUnstack ? 'Stack here' : 'Move Full Stack';
+        this.moveUnstackBtn.hidden = !allowUnstack;
+        this.selectInsteadBtn.hidden = !stackOnto;
+        this.unstackModal.classList.add('is-active');
+        this.moveStackBtn.focus();
+    }
+
+    private closeUnstackModal(): void {
         this.unstackModal.classList.remove('is-active');
+    }
+
+    private handleModalClose(): void {
+        this.closeUnstackModal();
         this.controller.clearSelectedMove();
     }
 

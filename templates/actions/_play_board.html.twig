@@ -86,14 +86,15 @@
         <div class="modal-background"></div>
         <div class="modal-card">
             <header class="modal-card-head">
-                <p class="modal-card-title">Choose your move</p>
+                <p class="modal-card-title" id="unstack-modal-title">Choose your move</p>
             </header>
             <section class="modal-card-body">
-                <p>You are moving a stacked piece. Do you want to move the full stack or only the top piece?</p>
+                <p id="unstack-modal-text">You are moving a stacked piece. Do you want to move the full stack or only the top piece?</p>
             </section>
             <footer class="modal-card-foot">
                 <button class="button is-primary" id="move-stack">Move Full Stack</button>
                 <button class="button" id="move-unstack">Move Top Piece</button>
+                <button class="button" id="select-instead" hidden>Select this piece</button>
             </footer>
         </div>
     </div>

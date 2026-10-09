@@ -333,11 +333,20 @@ export class GameController {
             return;
         }
         const moves = this.gameState.getPotentialMovesForPosition(selectedPosition);
+        const selectedPiece = board.getPieceAt(selectedPosition);
+        const targetPiece = board.getPieceAt(pos);
+        const targetIsFriendly = selectedPiece !== null && targetPiece !== null && selectedPiece.color === targetPiece.color;
         for (const move of moves) {
             if (move.to !== pos) continue;
-            if (move.unstackable && !move.force_unstack && !shiftKey) {
+            if (targetIsFriendly) {
+                // Stacking onto a friendly piece: ask for confirmation, or let the user select that piece instead.
                 this.gameState.setClickedDestination(pos);
-                window.dispatchEvent(new CustomEvent('showUnstackModal'));
+                window.dispatchEvent(new CustomEvent('showUnstackModal', {
+                    detail: {kind: 'stack-onto', allowUnstack: move.unstackable && !move.force_unstack, forceUnstack: move.force_unstack},
+                }));
+            } else if (move.unstackable && !move.force_unstack && !shiftKey) {
+                this.gameState.setClickedDestination(pos);
+                window.dispatchEvent(new CustomEvent('showUnstackModal', {detail: {kind: 'unstack'}}));
             } else {
                 this.gameState.setSelectedPosition(null);
                 this.playMove(selectedPosition, pos, move.force_unstack);
@@ -381,7 +390,7 @@ export class GameController {
             if (move.unstackable && !move.force_unstack && !shiftKey) {
                 this.gameState.setSelectedPosition(from);
                 this.gameState.setClickedDestination(to);
-                window.dispatchEvent(new CustomEvent('showUnstackModal'));
+                window.dispatchEvent(new CustomEvent('showUnstackModal', {detail: {kind: 'unstack'}}));
             } else {
                 this.gameState.setSelectedPosition(null);
                 this.updateOverlays();
@@ -447,6 +456,13 @@ export class GameController {
     }
     clearSelectedMove(): void {
         this.gameState.setSelectedPosition(null);
+        this.updateOverlays();
+    }
+
+    /** Selects `pos` if it has potential moves, otherwise clears the selection. */
+    selectPosition(pos: number): void {
+        const hasMoves = this.gameState.getPotentialMovesForPosition(pos).length > 0;
+        this.gameState.setSelectedPosition(hasMoves ? pos : null);
         this.updateOverlays();
     }
     toggleShowThreats(): void {
