@@ -356,20 +356,35 @@ li { margin-bottom: 8px; }
         font-weight: bold;
     }
 
-    // Final result. Bulma's `.notification.is-success/.is-warning` pick their
-    // own text colour (white on the orange draw background was unreadable), so
-    // both are pinned to a dark text on a saturated background.
-    &.is-success {
+    // Final result, from the viewer's side. Each variant pins both colours:
+    // Bulma's `.notification` modifiers pick their own text colour (white on
+    // the orange draw background was unreadable).
+    &.is-won {
         background: #48c78e;
         color: #0a2418;
         border: 1px solid #48c78e;
         font-weight: bold;
     }
 
-    &.is-warning {
+    &.is-lost {
+        background: #c62836;
+        color: #fff;
+        border: 1px solid #c62836;
+        font-weight: bold;
+    }
+
+    &.is-drawn {
         background: #f0a030;
         color: #231503;
         border: 1px solid #f0a030;
+        font-weight: bold;
+    }
+
+    // A result that is nobody's win or loss here (spectator, hot-seat, aborted).
+    &.is-neutral-result {
+        background: $keres-secondary;
+        color: #1a1208;
+        border: 1px solid $keres-secondary;
         font-weight: bold;
     }
 }

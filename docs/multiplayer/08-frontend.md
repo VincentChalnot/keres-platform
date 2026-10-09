@@ -1043,8 +1043,10 @@ as in a persisted AI/hot-seat game; no clock, no feedback button.
 "Your turn" with the active-clock accent (`.is-your-turn`, same colours as
 `.player-clock.is-active`); "Waiting for opponent…" / "Waiting for AI…" muted
 (`.is-muted`); "White/Black to move" for hot-seat (accent) and spectators
-(muted); the result once the game is over. `data-spectator` tells a spectator
-from a participant.
+(muted); the result once the game is over, coloured from the viewer's side:
+green `.is-won`, red `.is-lost`, orange `.is-drawn`, and a neutral cream
+`.is-neutral-result` for spectators, hot-seat and aborted games.
+`data-spectator` tells a spectator from a participant.
 
 **Board preferences (R6).** `data-show-coordinates` / `data-show-threats` on
 `#board-container` carry Settings → Board & gameplay into the page's initial

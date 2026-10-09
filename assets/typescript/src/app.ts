@@ -10,7 +10,7 @@ import {computeMaterialDiff, renderMaterialHTML} from './models/materialDiff';
 import {alertModal, confirmModal} from './utils/modal';
 import {PageFullscreen} from './utils/pageFullscreen';
 import {EvalBar, formatEvaluation} from './views/EvalBar';
-import {describeGameOver} from './utils/gameOverText';
+import {describeGameOver, gameOverOutcome} from './utils/gameOverText';
 
 const OPPONENT_TYPE_AI = 0;
 const OPPONENT_TYPE_HOTSEAT = 1;
@@ -764,12 +764,20 @@ class KeresGame {
 
     private setBanner(text: string, tone: 'muted' | 'your-turn' | 'game-over'): void {
         this.gameStatusBanner.textContent = text;
-        this.gameStatusBanner.classList.remove('is-hidden', 'is-muted', 'is-your-turn', 'is-success', 'is-warning');
+        this.gameStatusBanner.classList.remove('is-hidden', 'is-muted', 'is-your-turn', 'is-won', 'is-lost', 'is-drawn', 'is-neutral-result');
         if ('game-over' === tone) {
-            this.gameStatusBanner.classList.add(null === this.controller.getResult() || 'draw' === this.controller.getResult() ? 'is-warning' : 'is-success');
+            this.gameStatusBanner.classList.add(`is-${this.gameOverOutcome()}`);
         } else {
             this.gameStatusBanner.classList.add('muted' === tone ? 'is-muted' : 'is-your-turn');
         }
+    }
+
+    /** Banner colour class suffix: won (green), lost (red), drawn (orange), or a neutral result for spectators/hot-seat. */
+    private gameOverOutcome(): 'won' | 'lost' | 'drawn' | 'neutral-result' {
+        const viewer = this.spectator || this.gameMode === OPPONENT_TYPE_HOTSEAT ? null : (this.playerWhite ? 'white' : 'black');
+        const outcome = gameOverOutcome(this.controller.getEndReason(), this.controller.getResult(), viewer);
+
+        return 'neutral' === outcome ? 'neutral-result' : outcome;
     }
 
     private describeGameOver(): string {

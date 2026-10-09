@@ -20,6 +20,22 @@ const ENGINE_END_SUFFIX: Record<number, string> = {
     3: 'by insufficient material',
 };
 
+export type GameOverOutcome = 'won' | 'lost' | 'drawn' | 'neutral';
+
+/**
+ * How a finished game looks from where the viewer stands, for the banner colour.
+ * `viewer` is the colour the viewer plays, or null when they play neither (a
+ * spectator) or both (hot-seat): a decisive result is then just 'neutral', as
+ * is an aborted game or a result not known yet.
+ */
+export function gameOverOutcome(endReason: string, result: string | null, viewer: 'white' | 'black' | null): GameOverOutcome {
+    if ('aborted' === endReason) return 'neutral';
+    if ('draw' === result) return 'drawn';
+    if (null === viewer || ('white' !== result && 'black' !== result)) return 'neutral';
+
+    return result === viewer ? 'won' : 'lost';
+}
+
 /**
  * The banner text of a finished game. An engine ending whose code is unknown
  * (games finished before the code was stored, a code this client does not
