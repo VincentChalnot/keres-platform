@@ -144,6 +144,35 @@ li { margin-bottom: 8px; }
         }
     }
 
+    // Every menu entry carries an icon and a label; each breakpoint shows the
+    // subset it needs (desktop: today's mix of icon-only and text-only items,
+    // mobile: icon + label on every row).
+    .site-navbar__row {
+        display: inline-flex;
+        align-items: center;
+    }
+
+    .site-navbar__avatar {
+        margin-right: 0;
+    }
+
+    .site-navbar__username .icon {
+        width: auto;
+        height: auto;
+        margin-right: 0.5rem;
+    }
+
+    .site-navbar__icon .icon-king {
+        width: 1.1em;
+        height: 1.1em;
+    }
+
+    @media screen and (min-width: 1024px) {
+        .is-mobile-only {
+            display: none;
+        }
+    }
+
     // Below Bulma's desktop breakpoint the menu is a vertical panel under the bar.
     @media screen and (max-width: 1023px) {
         .navbar-menu {
@@ -152,11 +181,82 @@ li { margin-bottom: 8px; }
             box-shadow: none;
             max-height: calc(100dvh - var(--site-navbar-height));
             overflow-y: auto;
+            padding: 0.5rem 0;
         }
 
         .navbar-end .navbar-item {
-            flex-wrap: wrap;
-            gap: 0.5rem;
+            display: flex;
+            flex-direction: column;
+            align-items: stretch;
+            padding: 0;
+            gap: 0;
+        }
+
+        // One row style for links, buttons and the bell: same icon column, height and padding.
+        .site-navbar__row {
+            display: flex;
+            color: $keres-light;
+            width: 100%;
+            min-height: 3rem;
+            gap: 0.75rem;
+            padding: 0.75rem 1rem;
+            justify-content: flex-start;
+            font: inherit;
+            line-height: 1.5;
+            text-align: left;
+            text-decoration: none;
+        }
+
+        .site-navbar__row .icon,
+        .button.site-navbar__row .icon {
+            flex: none;
+            width: 1.5rem;
+            height: 1.5rem;
+            margin: 0;
+            font-size: 1.1rem;
+        }
+
+        .site-navbar__avatar {
+            width: 1.5rem;
+            height: 1.5rem;
+        }
+
+        .site-navbar__username .icon {
+            width: 1.5rem;
+            height: 1.5rem;
+        }
+
+        .site-navbar__username,
+        .site-navbar__row.mr-2,
+        .notification-bell {
+            margin-right: 0 !important;
+        }
+
+        // Buttons become plain rows so they line up with the links.
+        .button.site-navbar__row {
+            height: auto;
+            border: 0;
+            border-radius: 0;
+            background: transparent;
+            box-shadow: none;
+            color: $keres-light;
+
+            &:hover {
+                background: transparent;
+                color: $keres-primary;
+            }
+        }
+
+        .button.site-navbar__play,
+        .button.site-navbar__play:hover {
+            color: $keres-primary;
+        }
+
+        // The panel flows inside the menu instead of floating over it.
+        .notification-bell__panel {
+            position: static;
+            width: auto;
+            margin: 0 1rem 0.5rem;
         }
     }
 }

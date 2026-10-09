@@ -38,27 +38,42 @@
                 <div class="navbar-start">
                     {% block nav_extra %}
                         {% if app.user %}
-                            <a href="{{ path('dashboard') }}" class="navbar-item">Dashboard</a>
-                            <a href="{{ path('friends') }}" class="navbar-item">Friends</a>
+                            <a href="{{ path('dashboard') }}" class="navbar-item site-navbar__row">
+                                <span class="icon site-navbar__icon is-mobile-only"><i class="fa-solid fa-chart-line" aria-hidden="true"></i></span>
+                                <span>Dashboard</span>
+                            </a>
+                            <a href="{{ path('friends') }}" class="navbar-item site-navbar__row">
+                                <span class="icon site-navbar__icon is-mobile-only"><i class="fa-solid fa-users" aria-hidden="true"></i></span>
+                                <span>Friends</span>
+                            </a>
                         {% endif %}
                     {% endblock %}
-                    <a href="{{ static_site_url }}/rules" class="navbar-item">Rules</a>
+                    <a href="{{ static_site_url }}/rules" class="navbar-item site-navbar__row">
+                        <span class="icon site-navbar__icon is-mobile-only"><i class="fa-solid fa-list-check" aria-hidden="true"></i></span>
+                        <span>Rules</span>
+                    </a>
                 </div>
                 <div class="navbar-end">
                     <div class="navbar-item">
-                        <a href="{{ path('lobby') }}" class="button is-primary is-rounded is-small">Play</a>
+                        <a href="{{ path('lobby') }}" class="button is-primary is-rounded is-small site-navbar__row site-navbar__play">
+                            <span class="icon site-navbar__icon is-mobile-only">{{ include('_icon_king.html.twig') }}</span>
+                            <span>Play</span>
+                        </a>
                     </div>
-                    <div class="navbar-item">
+                    <div class="navbar-item site-navbar__actions">
                         {% if app.user %}
                             {% set unread = unread_notification_count() %}
-                            <div class="notification-bell mr-2" id="notification-bell"
+                            <div class="notification-bell site-navbar__row-wrap mr-2" id="notification-bell"
                                  data-user-uuid="{{ app.user.id }}"
                                  data-mercure-url="{{ mercure() }}">
-                                <button type="button" class="notification-bell__toggle" id="notification-bell-toggle"
+                                <button type="button" class="notification-bell__toggle site-navbar__row" id="notification-bell-toggle"
                                         aria-haspopup="true" aria-expanded="false" aria-controls="notification-bell-panel"
                                         aria-label="Notifications{{ unread > 0 ? ' (' ~ unread ~ ' unread)' }}" title="Notifications">
-                                    <span class="icon"><i class="fa-solid fa-bell" aria-hidden="true"></i></span>
-                                    <span class="notification-bell__badge" id="notification-bell-badge" {% if unread == 0 %}hidden{% endif %}>{{ unread >= 100 ? '99+' : unread }}</span>
+                                    <span class="icon site-navbar__icon">
+                                        <i class="fa-solid fa-bell" aria-hidden="true"></i>
+                                        <span class="notification-bell__badge" id="notification-bell-badge" {% if unread == 0 %}hidden{% endif %}>{{ unread >= 100 ? '99+' : unread }}</span>
+                                    </span>
+                                    <span class="is-mobile-only" aria-hidden="true">Notifications</span>
                                 </button>
                                 <div class="notification-bell__panel" id="notification-bell-panel" hidden>
                                     <div class="notification-bell__header">
@@ -71,28 +86,25 @@
                                     <a href="{{ path('notifications') }}" class="notification-bell__footer">See all notifications</a>
                                 </div>
                             </div>
-                            <a href="{{ path('settings') }}" class="icon mr-2" aria-label="Settings" title="Settings">
-                                <i class="fa-solid fa-gear" aria-hidden="true"></i>
+                            <a href="{{ path('settings') }}" class="site-navbar__row mr-2" aria-label="Settings" title="Settings">
+                                <span class="icon site-navbar__icon"><i class="fa-solid fa-gear" aria-hidden="true"></i></span>
+                                <span class="is-mobile-only" aria-hidden="true">Settings</span>
                             </a>
-                            {% if app.user.avatarUrl %}
-                                <img src="{{ app.user.avatarUrl }}" alt="Avatar" class="site-navbar__avatar">
-                            {% else %}
-                                <span class="icon mr-2">
-                                    <i class="fa-solid fa-circle-user" aria-hidden="true"></i>
-                                </span>
-                            {% endif %}
-                            <a href="{{ path('profile', {username: app.user.username}) }}" class="site-navbar__username">{{ app.user.displayName ?? app.user.username }}</a>
-                            <a href="{{ path('logout') }}" class="button is-small is-rounded is-outlined is-light">
-                                <span class="icon">
-                                    <i class="fa-solid fa-right-from-bracket" aria-hidden="true"></i>
-                                </span>
+                            <a href="{{ path('profile', {username: app.user.username}) }}" class="site-navbar__row site-navbar__username">
+                                {% if app.user.avatarUrl %}
+                                    <span class="icon site-navbar__icon"><img src="{{ app.user.avatarUrl }}" alt="" class="site-navbar__avatar"></span>
+                                {% else %}
+                                    <span class="icon site-navbar__icon"><i class="fa-solid fa-circle-user" aria-hidden="true"></i></span>
+                                {% endif %}
+                                <span>{{ app.user.displayName ?? app.user.username }}</span>
+                            </a>
+                            <a href="{{ path('logout') }}" class="button is-small is-rounded is-outlined is-light site-navbar__row site-navbar__logout">
+                                <span class="icon site-navbar__icon"><i class="fa-solid fa-right-from-bracket" aria-hidden="true"></i></span>
                                 <span>Logout</span>
                             </a>
                         {% else %}
-                            <a href="{{ path('login') }}" class="button is-small is-rounded is-outlined is-light">
-                                <span class="icon">
-                                    <i class="fa-solid fa-right-to-bracket" aria-hidden="true"></i>
-                                </span>
+                            <a href="{{ path('login') }}" class="button is-small is-rounded is-outlined is-light site-navbar__row site-navbar__logout">
+                                <span class="icon site-navbar__icon"><i class="fa-solid fa-right-to-bracket" aria-hidden="true"></i></span>
                                 <span>Login</span>
                             </a>
                         {% endif %}
