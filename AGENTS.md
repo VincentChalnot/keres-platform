@@ -260,6 +260,37 @@ directly: that bypasses Traefik and TLS, so cookie `Secure`/domain
 behaviour no longer matches what a real browser sees — precisely the class
 of bug this setup is used to reproduce.
 
+## Sessions
+
+Sessions are stored in the Postgres `sessions` table (Symfony
+`PdoSessionHandler`, `framework.session.handler_id`; service in
+`config/services.yaml`), **not** on the php container's filesystem, so logins
+survive container restarts and redeployments. Rules:
+
+- The table comes from a migration (`Version20261009190000`), never
+  auto-created, and is hidden from the ORM by `doctrine.dbal.schema_filter`
+  (`schema:validate` / `migrations:diff` ignore it). It reuses the default DBAL
+  connection's PDO handle (no second connection) with `LOCK_ADVISORY`
+  (`pg_advisory_lock`, no wrapping transaction — `LOCK_TRANSACTIONAL` would
+  clash with DBAL/ORM transactions on the shared connection). Concurrent
+  requests of the *same* session serialise, as with file sessions; different
+  sessions never block each other.
+- Lifetime is 30 days, sliding: `gc_maxlifetime` is the row TTL, pushed forward
+  on each request that starts the session, and `SessionCookieRefreshListener`
+  re-issues the cookie with a fresh expiry (Symfony only re-sends it when the
+  id changes). Both are `framework.session.cookie_lifetime`/`gc_maxlifetime`.
+- Cleanup is PHP's probabilistic gc (`gc_probability: 1` / `gc_divisor: 100`:
+  ~1% of session starts run `DELETE ... WHERE sess_lifetime < now()` on an
+  indexed column). No cron/command needed.
+- Sessions survive deploys only if `APP_SECRET` is stable (it is required env
+  in prod, no generated fallback) and the `User` entity's serialised fields
+  stay compatible — changing the password hash or the fields the entity
+  exposes to the session token logs affected users out. There is no
+  remember-me; the session is the login. Security's CSRF tokens are stateless
+  (`config/packages/csrf.yaml`), so they don't depend on server state.
+- Dev uses the distinct cookie name `KERESDEVSESSID` (see `compose.yaml`) to
+  avoid colliding with prod's `KERESSESSID`; keep that.
+
 ## Conventions
 
 ### PHP

@@ -30,6 +30,31 @@ services:
     App\:
         resource: '../src/'
 
+    # Session storage (framework.session.handler_id): the `sessions` table,
+    # created by migration Version20261009190000 (never auto-created), on the
+    # PDO handle of the default DBAL connection - no second connection. The
+    # handler (and so the DB connection) is only built when a request actually
+    # uses the session.
+    # LOCK_ADVISORY (pg_advisory_lock, session-level, no transaction) mirrors
+    # the per-session serialisation files gave us without wrapping the whole
+    # request in a transaction, which would clash with DBAL/ORM transactions
+    # on the shared connection (LOCK_TRANSACTIONAL does that). Row TTL comes
+    # from session.gc_maxlifetime.
+    app.session_pdo:
+        class: PDO
+        autowire: false
+        autoconfigure: false
+        factory: ['@doctrine.dbal.default_connection', 'getNativeConnection']
+
+    Symfony\Component\HttpFoundation\Session\Storage\Handler\PdoSessionHandler:
+        autowire: false
+        autoconfigure: false
+        arguments:
+            - '@app.session_pdo'
+            -
+                db_table: sessions
+                lock_mode: !php/const Symfony\Component\HttpFoundation\Session\Storage\Handler\PdoSessionHandler::LOCK_ADVISORY
+
     # Bound explicitly (not a global _defaults.bind) so only these dev-only
     # classes ever see kernel.environment.
     App\Security\DevLoginAuthenticator:

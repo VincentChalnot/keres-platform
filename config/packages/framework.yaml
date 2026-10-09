@@ -42,9 +42,22 @@ framework:
     # successful login silently bounces back to /login until the cookie is
     # deleted. Hence a per-environment name (SESSION_COOKIE_NAME); the other
     # environment's cookie is then simply ignored.
+    #
+    # Sessions live in the `sessions` Postgres table (PdoSessionHandler, see
+    # config/services.yaml), not in the container's filesystem, so logins
+    # survive container restarts and redeployments. The cookie lasts 30 days
+    # and is re-issued on every request that touches the session; the row's
+    # sess_lifetime is pushed forward at the same time (sliding expiry), and
+    # gc_maxlifetime is what PdoSessionHandler uses as the row TTL. Expired
+    # rows are purged by PHP's probabilistic gc (1% of session starts).
     session:
         name: '%env(SESSION_COOKIE_NAME)%'
         cookie_domain: '%env(SESSION_COOKIE_DOMAIN)%'
+        handler_id: Symfony\Component\HttpFoundation\Session\Storage\Handler\PdoSessionHandler
+        cookie_lifetime: 2592000
+        gc_maxlifetime: 2592000
+        gc_probability: 1
+        gc_divisor: 100
 
     #esi: true
     #fragments: true
