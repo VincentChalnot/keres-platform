@@ -299,13 +299,13 @@ class KeresGame {
             await this.controller.flipBoard();
         }
 
+        // Not rotated unless the browser remembers the player turned it on.
+        this.setOpponentRotated(window.localStorage.getItem(OPPONENT_ROTATED_KEY) === '1', false);
+
         // Settings -> Board & gameplay: initial state of the two in-page toggles.
         if (this.boardContainer.getAttribute('data-show-coordinates') === 'false') {
             this.handleToggleCoords();
         }
-        // Not rotated unless the browser remembers the player turned it on.
-        this.setOpponentRotated(window.localStorage.getItem(OPPONENT_ROTATED_KEY) === '1', false);
-
         if (this.boardContainer.getAttribute('data-show-threats') === 'false' && this.controller.isShowThreats()) {
             this.controller.toggleShowThreats();
         }
@@ -406,11 +406,11 @@ class KeresGame {
         this.nextMoveBtn.addEventListener('click', () => this.handleNextMove());
         this.toggleThreatsBtn.addEventListener('click', () => this.handleToggleThreats());
         this.toggleCoordsBtn.addEventListener('click', () => this.handleToggleCoords());
+        this.toggleRotateBtn.addEventListener('click', () => this.setOpponentRotated(!this.opponentRotated, true));
         new PageFullscreen(document.getElementById('toggle-fullscreen-btn') as HTMLButtonElement);
 
         // Custom event for unstack / stack-confirmation modal
         window.addEventListener('showUnstackModal', (event) => {
-        this.toggleRotateBtn.addEventListener('click', () => this.setOpponentRotated(!this.opponentRotated, true));
             this.openUnstackModal((event as CustomEvent<UnstackModalDetail>).detail);
         });
         document.addEventListener('keydown', (event) => {
@@ -629,10 +629,6 @@ class KeresGame {
         this.toggleCoordsBtn.innerText = this.coordsVisible ? t('play.coords.hide') : t('play.coords.show');
     }
 
-    private updateToggleThreatsButton(): void {
-        if (this.controller.isShowThreats()) {
-            this.toggleThreatsBtn.innerText = t('play.threats.hide');
-        } else {
     /** Turns the opponent's piece icons upside down (as seen from their side) or upright; remembered per browser, guests included. */
     private setOpponentRotated(rotated: boolean, persist: boolean): void {
         this.opponentRotated = rotated;
@@ -650,6 +646,10 @@ class KeresGame {
         this.toggleRotateBtn.setAttribute('aria-pressed', String(rotated));
     }
 
+    private updateToggleThreatsButton(): void {
+        if (this.controller.isShowThreats()) {
+            this.toggleThreatsBtn.innerText = t('play.threats.hide');
+        } else {
             this.toggleThreatsBtn.innerText = t('play.threats.show');
         }
     }
