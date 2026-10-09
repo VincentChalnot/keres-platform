@@ -49,6 +49,24 @@ final readonly class GameListPresenter
         );
     }
 
+    /**
+     * The row for the anonymous `/lobby` feed: told from no one's
+     * perspective and naming no participant - an anonymous visitor has no
+     * business learning who played whom.
+     */
+    public function presentPublic(Game $game): GameListRow
+    {
+        return new GameListRow(
+            uuid: (string) $game->getUuid(),
+            opponentLabel: 'Multiplayer game',
+            turnLabel: null,
+            resultLabel: $this->resultLabel($game),
+            timeRemainingLabel: null,
+            lastActivityAt: $game->getLastMoveAt() ?? $game->getCreatedAt(),
+            isGameOver: true,
+        );
+    }
+
     private function opponentLabel(Game $game, User $subject): string
     {
         $opponentType = $game->getOpponentType();

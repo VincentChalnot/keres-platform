@@ -57,7 +57,7 @@
                     <h2 class="title is-4">Recently finished games</h2>
                     {% for game in publicGames %}
                         {# @var game \App\Entity\Game #}
-                        {% include 'actions/_game_row.html.twig' with {row: game_list_row(game, game.createdBy, false), isSelf: false} %}
+                        {% include 'actions/_game_row.html.twig' with {row: public_game_list_row(game), isSelf: false} %}
                     {% else %}
                         <p class="has-text-grey">No finished games to show yet.</p>
                     {% endfor %}

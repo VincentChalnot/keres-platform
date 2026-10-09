@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Repository;
 
 use App\Entity\Game;
+use App\Entity\GamePlayer;
 use App\Entity\User;
 use App\Model\GameEndReason;
 use App\Model\OpponentType;
@@ -302,6 +303,12 @@ class GameRepository extends ServiceEntityRepository
      * `Paginator`: a bare `setMaxResults()` would cap the joined rows and
      * leave the last game with a missing player.
      *
+     * A game any of whose participants hid it from their own lists
+     * (`GamePlayer::$hiddenAt`) is left out: that is a request to stop
+     * advertising it, and it must not stay on a public feed. The check is a
+     * subquery so it neither filters the fetch-joined `players` rows nor
+     * disturbs the paginator's limit-by-games behaviour.
+     *
      * @return Game[]
      */
     public function findRecentPubliclyFinishedGames(int $limit): array
@@ -313,6 +320,7 @@ class GameRepository extends ServiceEntityRepository
             ->andWhere('g.opponentTypeValue = :opponentType')
             ->andWhere('g.deletedAt IS NULL')
             ->andWhere('g.gameOverAt IS NOT NULL')
+            ->andWhere('NOT EXISTS (SELECT 1 FROM '.GamePlayer::class.' hp WHERE hp.game = g AND hp.hiddenAt IS NOT NULL)')
             ->setParameter('opponentType', OpponentType::MULTIPLAYER->value)
             ->orderBy('g.gameOverAt', 'DESC')
             ->addOrderBy('g.id', 'DESC')
