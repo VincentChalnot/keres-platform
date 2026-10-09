@@ -3,6 +3,15 @@ import "@fortawesome/fontawesome-free/css/fontawesome.min.css";
 import "@fortawesome/fontawesome-free/css/brands.min.css";
 import "@fortawesome/fontawesome-free/css/solid.min.css";
 import {initNotifications} from "./typescript/src/notifications/NotificationBell";
+import {initializeNavbarToggle} from "./typescript/src/navbar-toggle";
+
+// ─── Mobile navigation burger (every page) ───────────────────────────────────
+
+if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", initializeNavbarToggle);
+} else {
+    initializeNavbarToggle();
+}
 
 // ─── Notification bell (every signed-in page) ────────────────────────────────
 

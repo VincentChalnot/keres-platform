@@ -133,6 +133,32 @@ li { margin-bottom: 8px; }
         color: $keres-primary;
         text-decoration: none;
     }
+
+    // Burger bars follow the theme's light colour (Bulma defaults to a dark text colour).
+    .navbar-burger {
+        color: $keres-light;
+
+        &:hover {
+            background-color: transparent;
+            color: $keres-primary;
+        }
+    }
+
+    // Below Bulma's desktop breakpoint the menu is a vertical panel under the bar.
+    @media screen and (max-width: 1023px) {
+        .navbar-menu {
+            background-color: $keres-bg;
+            border-top: 1px solid $keres-dark;
+            box-shadow: none;
+            max-height: calc(100dvh - var(--site-navbar-height));
+            overflow-y: auto;
+        }
+
+        .navbar-end .navbar-item {
+            flex-wrap: wrap;
+            gap: 0.5rem;
+        }
+    }
 }
 
 .site-navbar__logo {
