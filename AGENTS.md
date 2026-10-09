@@ -75,6 +75,7 @@ knowledge (piece names, SVG representations, movement descriptions).
 | `src/network/MercureClient.ts`      | Mercure SSE subscription                                                        |
 | `src/views/IBoardView.ts`           | Renderer interface                                                              |
 | `src/views/SVGBoardView.ts`         | **Active renderer** — SVG, inline sprite sheet                                  |
+| `src/i18n/`                         | `t()` + ICU-subset formatter over the server-rendered catalogue (see Internationalisation) |
 | `src/views/ThreeJSBoardView.ts`     | Inactive renderer — do not modify unless explicitly asked                       |
 
 ## Domain Model
@@ -290,6 +291,101 @@ survive container restarts and redeployments. Rules:
   (`config/packages/csrf.yaml`), so they don't depend on server state.
 - Dev uses the distinct cookie name `KERESDEVSESSID` (see `compose.yaml`) to
   avoid colliding with prod's `KERESSESSID`; keep that.
+
+## Internationalisation (en / fr)
+
+The whole UI is bilingual: `en` (default and fallback) and `fr`
+(`framework.enabled_locales` in `config/packages/translation.yaml`). Symfony
+Translation, **ICU MessageFormat in YAML**, one file per domain and locale:
+`translations/<domain>+intl-icu.<locale>.yaml` (nested keys, 4-space indent).
+
+| Domain                         | Used by                                                                 |
+|--------------------------------|-------------------------------------------------------------------------|
+| `navigation`                   | navbar, footer, notification bell, confirm modal, language switcher     |
+| `game`                         | lobby, play pages, game lists, dashboard, game header/badges            |
+| `auth`, `settings`, `pages`    | login/register/reset, settings pages, feedback/waitlist/error pages     |
+| `social`, `notifications`      | friends, profile, inbox page and the notification texts                 |
+| `forms`, `validators`, `flashes` | form labels/help/choices, our constraint messages, flash messages     |
+| `emails`                       | e-mail subjects and bodies                                              |
+| `frontend`, `frontend_<area>`  | the TypeScript client (see below)                                       |
+
+Admin screens (`templates/admin/**`, `config/admin`, `config/datagrid`,
+`src/Action/Admin/**`, the admin TS entry), the admin-facing e-mail
+(`admin_gdpr_request*`), console output and developer-facing exception/log/API
+`message` texts are **deliberately English-only**. Links to the marketing site
+(`STATIC_SITE_URL`) are unchanged (no `/fr` assumptions). Known untranslated
+art: the piece names printed on the piece sprites (`assets/pieces/texts/*.svg`,
+outlined vector artwork) are English; accessible names/tooltips are translated.
+Legacy game JSON endpoints (`/play/{uuid}/move|undo|resign|…`) return a
+translated `error` plus a machine-readable `code` (e.g. `concurrent_move`); the
+`/lobby`, `/friends`, `/notifications` endpoints use the `ApiResponse` envelope
+(English `message`, `code` is the contract).
+
+### Which language a request is served in
+
+`App\Service\Locale\LocaleResolver` (applied by `App\EventListener\LocaleListener`
+right after the firewall): the signed-in user's saved `User::$locale` → the
+`keres_locale` cookie → `Accept-Language` → `en`. The language switcher
+(`templates/_language_switcher.html.twig`, `GET /locale/{locale}?redirect=/path`)
+sets the cookie (this is how anonymous visitors are remembered, no session is
+started) and, when signed in, saves `User::$locale`; Settings → Profile has the
+same choice, with "Automatic" (= NULL, follow the browser). New accounts start
+in the language of their first request (`NewUserLocaleListener`). `<html lang>`
+follows the request locale. Anything rendered outside a request (queued
+e-mails, Mercure/notification texts built for another user) must pass the
+recipient's locale explicitly (`$translator->trans($id, $params, $domain, $locale)`,
+`TemplatedEmail::locale()`); never rely on the ambient locale there.
+
+### Adding or changing a string
+
+1. Add the key to **both** `<domain>+intl-icu.en.yaml` and `.fr.yaml` (same key,
+   same ICU arguments). English is the source; write real French, not a
+   word-for-word translation (formal "vous", `’` apostrophes, a no-break space
+   before `: ; ? !` and inside « »). Domain glossary: game = partie, move =
+   coup, seek = proposition, time control = cadence, rated = classée…
+2. Use it. **Twig**: `{% trans_default_domain 'game' %}` at the top, then
+   `{{ 'lobby.title'|trans }}` / `{{ 'key'|trans({count: n}) }}`; keys must be
+   literals. Dates and numbers: `format_date`/`format_datetime`/`format_number`.
+   **PHP**: inject `TranslatorInterface`, `->trans('flash.saved', [], 'flashes')`;
+   forms use `translation_domain` + keys, constraints use keys in `validators`;
+   `src/Model` stays translator-free (codes in, text out at display time).
+   **TypeScript**: `import {t} from '../i18n'`, `t('lobby.seek.accept')`,
+   `t('play.timer.minutes', {count: 3})`.
+3. ICU subset only (it is what the TS formatter implements): `{name}`,
+   `{n, number}`, `{count, plural, =0 {…} one {…} other {…}}` (`#` = the
+   number), `{x, select, a {…} other {…}}`. Never put `'` directly before `{`
+   or `}`. No date/ordinal types.
+4. Keep API contracts language-neutral: the JSON envelope's `error.code` is the
+   contract (`api_error.<code>` in `frontend` is what the client shows); stored
+   rows/Mercure payloads carry codes + params, not rendered text.
+
+### TypeScript catalogue (single source of truth)
+
+No second copy of any string: every domain called `frontend` or
+`frontend_<area>` is exported by `App\Service\Locale\FrontendCatalogue` as JSON
+into `<script type="application/json" id="app-i18n">` (see `base.html.twig`).
+`frontend` keys keep their name (`common.cancel`); `frontend_play` key
+`banner.won` becomes `play.banner.won`. `assets/typescript/src/i18n/` holds
+`t()`, `locale()`, `formatDate/DateTime/Number/RelativeTime` and the ICU
+interpreter. A missing key renders as the key and warns in the console.
+
+### Adding a language
+
+1. `framework.enabled_locales` (+ `fallbacks` stays `en`) in `config/packages/translation.yaml`.
+2. One `<domain>+intl-icu.<locale>.yaml` per existing domain, plus the endonym
+   `language.<locale>` in **every** `navigation` file (the switcher and the
+   settings select list `enabled_locales`).
+3. `bin/console app:translations:check` must pass; check the layout with the
+   longest strings (navbar, buttons, badges, 390px mobile).
+
+### Checks (CI)
+
+```bash
+docker compose exec -T php bin/console app:translations:check            # same files/keys/ICU arguments in every locale
+docker compose exec -T php bin/console lint:translations                 # Symfony: ICU validity
+docker compose exec -T php bin/console debug:translation fr --only-missing   # keys used in code but absent from fr (also: en)
+docker compose exec -T php vendor/bin/phpunit                            # TranslationCatalogueTest + FrontendCatalogueTest (every TS t('…') key exists)
+```
 
 ## Conventions
 
