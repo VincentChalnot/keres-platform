@@ -4,7 +4,7 @@
       opponentType (int), moves (base64), gameUuid (?string), playerWhite (bool),
       spectator (bool), guest (bool), isAi (bool), gameOver (bool),
       gameStateBootstrap (?string, JSON), showCoordinates (bool), showThreats (bool),
-      aiLevel (?int, T10 - undefined for guest games),
+      gameHeader (?\App\Model\GameHeader - players + option badges; undefined for guest games),
       liveEvaluation (bool, optional - the evaluation bar was requested at creation; unrated games only)
 #}
     <div class="game-container"
@@ -14,8 +14,8 @@
             <script type="application/json" id="game-state-bootstrap">{{ gameStateBootstrap|raw }}</script>
         {% endif %}
 
-        {% if isAi and aiLevel is defined and aiLevel %}
-            <p class="has-text-grey is-size-7 mb-2" id="ai-level-indicator">vs AI (level {{ aiLevel }})</p>
+        {% if gameHeader is defined and gameHeader %}
+            {% include 'actions/_game_header.html.twig' with {header: gameHeader} only %}
         {% endif %}
 
         <div class="player-info-row" id="player-info-top">

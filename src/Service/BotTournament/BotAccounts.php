@@ -27,6 +27,22 @@ class BotAccounts
     ) {
     }
 
+    /** The AI level a bot account (`bot-level-N@playkeres.com`) plays at; null for any other user. */
+    public static function levelOfUser(User $user): ?int
+    {
+        $prefix = 'bot-level-';
+        $suffix = '@playkeres.com';
+        $email = $user->getEmail();
+
+        if (!str_starts_with($email, $prefix) || !str_ends_with($email, $suffix)) {
+            return null;
+        }
+
+        $level = substr($email, \strlen($prefix), -\strlen($suffix));
+
+        return ctype_digit($level) ? (int) $level : null;
+    }
+
     /**
      * Creates missing accounts (and silences their notifications: fake
      * mailbox, empty bell).

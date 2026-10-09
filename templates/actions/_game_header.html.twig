@@ -1,0 +1,24 @@
+{# The players and option badges above the board. @var header \App\Model\GameHeader #}
+{% macro seat(player, letter, tagClass) %}
+    <span class="game-header__seat">
+        <span class="tag {{ tagClass }}" title="{{ letter == 'W' ? 'White' : 'Black' }}">{{ letter }}</span>
+        {% if player.username %}
+            <a href="{{ path('profile', {username: player.username}) }}" class="game-header__name">{{ player.label }}</a>
+        {% else %}
+            <span class="game-header__name {{ player.kind in ['ai', 'bot'] ? 'is-engine' : (player.kind == 'anonymous' ? 'has-text-grey' : '') }}">{{ player.label }}</span>
+        {% endif %}
+    </span>
+{% endmacro %}
+{% import _self as m %}
+<div class="game-header" id="game-header">
+    <div class="game-header__players">
+        {{ m.seat(header.white, 'W', 'is-white') }}
+        <span class="has-text-grey-light">vs</span>
+        {{ m.seat(header.black, 'B', 'is-dark') }}
+    </div>
+    <div class="tags game-header__badges">
+        {% for badge in header.badges %}
+            <span class="tag is-rounded {{ badge.tone }}"{% if badge.title %} title="{{ badge.title }}"{% endif %}>{{ badge.label }}</span>
+        {% endfor %}
+    </div>
+</div>

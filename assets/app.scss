@@ -248,6 +248,47 @@ li { margin-bottom: 8px; }
     }
 }
 
+// ─── Game header (players + option badges above the board) ───────────────────
+
+.game-header {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.4rem 1rem;
+    margin-bottom: 0.6rem;
+
+    &__players {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 0.4rem 0.6rem;
+    }
+
+    &__seat {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.35rem;
+    }
+
+    &__name {
+        font-weight: 600;
+
+        &.is-engine {
+            font-style: italic;
+            color: $keres-secondary;
+        }
+    }
+
+    &__badges.tags {
+        margin-bottom: 0;
+
+        .tag {
+            margin-bottom: 0;
+        }
+    }
+}
+
 // ─── Hero (landing page) ──────────────────────────────────────────────────────
 
 .hero-header {
