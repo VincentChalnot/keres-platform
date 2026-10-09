@@ -34,11 +34,11 @@ function formatClockMs(ms: number): string {
     return `${minutes}:${pad(seconds)}`;
 }
 
-/** Payload of the `showUnstackModal` event dispatched by GameController. */
+/** Payload of the `showUnstackModal` event dispatched by GameController: which buttons to offer. */
 interface UnstackModalDetail {
-    kind: 'unstack' | 'stack-onto';
-    allowUnstack?: boolean;
-    forceUnstack?: boolean;
+    full: boolean;
+    top: boolean;
+    selectInstead: boolean;
 }
 
 interface GameStateBootstrap {
@@ -97,7 +97,6 @@ class KeresGame {
     private selectInsteadBtn: HTMLButtonElement;
     private unstackModalTitle: HTMLElement;
     private unstackModalText: HTMLElement;
-    private unstackModalForceUnstack = false;
     private switchSidesBtn: HTMLButtonElement | null;
     private moveHistoryBody: HTMLTableSectionElement;
     private prevMoveBtn: HTMLButtonElement;
@@ -366,7 +365,7 @@ class KeresGame {
 
     private setupEventListeners(): void {
         // Unstack modal buttons
-        this.moveStackBtn.addEventListener('click', () => void this.handleModalConfirm());
+        this.moveStackBtn.addEventListener('click', () => void this.handleMoveStack());
         this.moveUnstackBtn.addEventListener('click', () => this.handleMoveUnstack());
         this.selectInsteadBtn.addEventListener('click', () => this.handleSelectInstead());
 
@@ -399,7 +398,7 @@ class KeresGame {
 
         // Custom event for unstack / stack-confirmation modal
         window.addEventListener('showUnstackModal', (event) => {
-            this.openUnstackModal((event as CustomEvent<UnstackModalDetail | undefined>).detail);
+            this.openUnstackModal((event as CustomEvent<UnstackModalDetail>).detail);
         });
         document.addEventListener('keydown', (event) => {
             if ('Escape' === event.key && this.unstackModal.classList.contains('is-active')) {
@@ -444,11 +443,6 @@ class KeresGame {
         await this.handleMoveStack(true);
     }
 
-    /** Modal "confirm" button: plays the move as given by the potential move (stack mode) or as a full-stack move. */
-    private async handleModalConfirm(): Promise<void> {
-        await this.handleMoveStack(this.unstackModalForceUnstack);
-    }
-
     private handleSelectInstead(): void {
         const target = this.gameState.getClickedDestination();
         this.closeUnstackModal();
@@ -457,21 +451,28 @@ class KeresGame {
         }
     }
 
-    private openUnstackModal(detail: UnstackModalDetail | undefined): void {
-        const stackOnto = detail?.kind === 'stack-onto';
-        const allowUnstack = !stackOnto || (detail?.allowUnstack ?? false);
-        this.unstackModalForceUnstack = stackOnto && (detail?.forceUnstack ?? false);
-        this.unstackModalTitle.textContent = stackOnto ? 'Stack your pieces?' : 'Choose your move';
-        this.unstackModalText.textContent = stackOnto
-            ? (allowUnstack
-                ? 'You are moving onto one of your own pieces. Move the full stack, only the top piece, or select that piece instead?'
-                : 'You are moving onto one of your own pieces. Do you want to stack onto it, or select that piece instead?')
-            : 'You are moving a stacked piece. Do you want to move the full stack or only the top piece?';
-        this.moveStackBtn.textContent = stackOnto && !allowUnstack ? 'Stack here' : 'Move Full Stack';
-        this.moveUnstackBtn.hidden = !allowUnstack;
-        this.selectInsteadBtn.hidden = !stackOnto;
+    private openUnstackModal(detail: UnstackModalDetail): void {
+        const {full, top, selectInstead} = detail;
+        if (selectInstead) {
+            this.unstackModalTitle.textContent = 'Stack or select?';
+            this.unstackModalText.textContent = full && top
+                ? 'You clicked one of your own pieces. Move the full stack onto it, only the top piece, or select that piece instead?'
+                : (top
+                    ? 'You clicked one of your own pieces. Move the top piece onto it, or select that piece instead?'
+                    : 'You clicked one of your own pieces. Stack onto it, or select that piece instead?');
+            this.moveStackBtn.textContent = top ? 'Move Full Stack' : 'Stack here';
+        } else {
+            this.unstackModalTitle.textContent = 'Choose your move';
+            this.unstackModalText.textContent = 'You are moving a stacked piece. Do you want to move the full stack or only the top piece?';
+            this.moveStackBtn.textContent = 'Move Full Stack';
+        }
+        this.moveStackBtn.classList.toggle('is-hidden', !full);
+        this.moveUnstackBtn.classList.toggle('is-hidden', !top);
+        this.selectInsteadBtn.classList.toggle('is-hidden', !selectInstead);
+        this.moveStackBtn.classList.toggle('is-primary', full);
+        this.moveUnstackBtn.classList.toggle('is-primary', !full && top);
         this.unstackModal.classList.add('is-active');
-        this.moveStackBtn.focus();
+        (full ? this.moveStackBtn : this.moveUnstackBtn).focus();
     }
 
     private closeUnstackModal(): void {

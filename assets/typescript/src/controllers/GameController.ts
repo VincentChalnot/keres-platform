@@ -341,15 +341,17 @@ export class GameController {
         const targetIsFriendly = selectedPiece !== null && targetPiece !== null && selectedPiece.color === targetPiece.color;
         for (const move of moves) {
             if (move.to !== pos) continue;
-            if (targetIsFriendly) {
-                // Stacking onto a friendly piece: ask for confirmation, or let the user select that piece instead.
+            if (targetIsFriendly && !shiftKey) {
+                // Genuine doubt: stack onto the friendly piece, or just select it instead.
+                // Offer only the stack interpretations the engine allows for this move.
+                const sourceIsStack = move.unstackable || move.force_unstack;
                 this.gameState.setClickedDestination(pos);
                 window.dispatchEvent(new CustomEvent('showUnstackModal', {
-                    detail: {kind: 'stack-onto', allowUnstack: move.unstackable && !move.force_unstack, forceUnstack: move.force_unstack},
+                    detail: {full: !move.force_unstack, top: sourceIsStack, selectInstead: true},
                 }));
             } else if (move.unstackable && !move.force_unstack && !shiftKey) {
                 this.gameState.setClickedDestination(pos);
-                window.dispatchEvent(new CustomEvent('showUnstackModal', {detail: {kind: 'unstack'}}));
+                window.dispatchEvent(new CustomEvent('showUnstackModal', {detail: {full: true, top: true, selectInstead: false}}));
             } else {
                 this.gameState.setSelectedPosition(null);
                 this.playMove(selectedPosition, pos, move.force_unstack);
@@ -393,7 +395,7 @@ export class GameController {
             if (move.unstackable && !move.force_unstack && !shiftKey) {
                 this.gameState.setSelectedPosition(from);
                 this.gameState.setClickedDestination(to);
-                window.dispatchEvent(new CustomEvent('showUnstackModal', {detail: {kind: 'unstack'}}));
+                window.dispatchEvent(new CustomEvent('showUnstackModal', {detail: {full: true, top: true, selectInstead: false}}));
             } else {
                 this.gameState.setSelectedPosition(null);
                 this.updateOverlays();
