@@ -11,6 +11,7 @@ use App\Model\OpponentType;
 use App\Model\TimeControlKind;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\ORM\QueryBuilder;
+use Doctrine\ORM\Tools\Pagination\Paginator;
 use Doctrine\Persistence\ManagerRegistry;
 use Symfony\Component\Uid\Uuid;
 
@@ -297,11 +298,15 @@ class GameRepository extends ServiceEntityRepository
      * `ProfilePageAction`; this query only decides what this one public
      * feed advertises, not what `/play/{uuid}` itself allows).
      *
+     * `players` is a to-many fetch-join, so `$limit` must go through the
+     * `Paginator`: a bare `setMaxResults()` would cap the joined rows and
+     * leave the last game with a missing player.
+     *
      * @return Game[]
      */
     public function findRecentPubliclyFinishedGames(int $limit): array
     {
-        return $this->createQueryBuilder('g')
+        $query = $this->createQueryBuilder('g')
             ->addSelect('p', 'pu')
             ->leftJoin('g.players', 'p')
             ->leftJoin('p.user', 'pu')
@@ -310,8 +315,10 @@ class GameRepository extends ServiceEntityRepository
             ->andWhere('g.gameOverAt IS NOT NULL')
             ->setParameter('opponentType', OpponentType::MULTIPLAYER->value)
             ->orderBy('g.gameOverAt', 'DESC')
+            ->addOrderBy('g.id', 'DESC')
             ->setMaxResults($limit)
-            ->getQuery()
-            ->getResult();
+            ->getQuery();
+
+        return iterator_to_array(new Paginator($query, fetchJoinCollection: true), false);
     }
 }
