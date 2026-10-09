@@ -158,10 +158,10 @@ play:
         eval_bar: Engine evaluation
         game_over: Game over
         loading: Loading…
-        rotate_opponent: Rotate Opponent Pieces
         switch_sides: Switch Sides
         hide_threats: Hide Threats
         hide_coords: Hide Coords
+        rotate_opponent: Rotate Opponent Pieces
         fullscreen: Fullscreen
         undo: Undo
         resign: Resign
@@ -209,6 +209,10 @@ new_local_game:
         ai_level_help: Only applies against the AI. 1 is weakest, 10 is full strength.
         live_evaluation: Live evaluation bar
         live_evaluation_help: Shows the engine’s assessment of the position next to the board, like chess.com. Casual games only.
+        ai_level_locked: '{level} - sign in to unlock'
+        ai_level_guest_help: 'Only applies against the AI. Guests can play levels 1 to 4; sign in to unlock levels 5 to 10.'
+        live_evaluation_guest_help: Sign in to unlock the live evaluation bar.
+        ai_level_guest_error: Sign in to play against this level.
         submit: Start Game
 
 invite:

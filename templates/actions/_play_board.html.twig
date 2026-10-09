@@ -40,6 +40,7 @@
              data-show-coordinates="{{ showCoordinates ?? true ? 'true' : 'false' }}"
              data-show-threats="{{ showThreats ?? true ? 'true' : 'false' }}"
              data-live-evaluation="{{ liveEvaluation ?? false ? 'true' : 'false' }}"
+             data-can-evaluate="{{ app.user ? 'true' : 'false' }}"
              data-game-over-label="{{ 'play.board.game_over'|trans }}"></div>
         </div>
         <div class="player-info-row" id="player-info-bottom">

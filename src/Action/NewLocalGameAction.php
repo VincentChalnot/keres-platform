@@ -13,10 +13,12 @@ use App\Service\Analytics\AnalyticsRecorder;
 use App\Service\GameFactory;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\Form\FormError;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpKernel\Attribute\AsController;
 use Symfony\Component\Routing\Attribute\Route;
+use Symfony\Contracts\Translation\TranslatorInterface;
 
 /**
  * `GET|POST /play/new` (04-matchmaking.md sec 9.2) - the AI/hot-seat half
@@ -32,14 +34,20 @@ class NewLocalGameAction extends AbstractController
         private readonly GameFactory $gameFactory,
         private readonly GameRepository $gameRepository,
         private readonly AnalyticsRecorder $analyticsRecorder,
+        private readonly TranslatorInterface $translator,
     ) {
     }
 
     #[Route(path: '/play/new', name: 'new_local_game', methods: ['GET', 'POST'])]
     public function __invoke(Request $request): RedirectResponse|array
     {
-        $form = $this->createForm(LocalGameType::class);
+        $guest = !$this->getUser() instanceof User;
+        $form = $this->createForm(LocalGameType::class, null, ['guest' => $guest]);
         $form->handleRequest($request);
+
+        if ($guest && $form->isSubmitted() && OpponentType::AI === $form->get('opponentType')->getData() && $form->get('aiLevel')->getData() > LocalGameType::GUEST_MAX_AI_LEVEL) {
+            $form->get('aiLevel')->addError(new FormError($this->translator->trans('new_local_game.form.ai_level_guest_error', [], 'game')));
+        }
 
         if ($form->isSubmitted() && $form->isValid()) {
             $data = $form->getData();
@@ -52,6 +60,7 @@ class NewLocalGameAction extends AbstractController
                 return $this->redirectToRoute('play_guest', [
                     'new' => OpponentType::AI === $data['opponentType'] ? 'ai' : 'hotseat',
                     'side' => $side,
+                    'level' => OpponentType::AI === $data['opponentType'] ? $data['aiLevel'] : null,
                 ]);
             }
 

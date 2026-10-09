@@ -21,8 +21,13 @@ use Symfony\Component\OptionsResolver\OptionsResolver;
  */
 class LocalGameType extends AbstractType
 {
+    /** Highest AI level an anonymous visitor may play (levels above need an account). */
+    public const int GUEST_MAX_AI_LEVEL = 4;
+
     public function buildForm(FormBuilderInterface $builder, array $options): void
     {
+        $guest = $options['guest'];
+
         $builder
             ->add('playerSide', ChoiceType::class, [
                 'label' => 'new_local_game.form.player_side',
@@ -43,15 +48,19 @@ class LocalGameType extends AbstractType
             ])
             ->add('aiLevel', ChoiceType::class, [
                 'label' => 'new_local_game.form.ai_level',
-                'help' => 'new_local_game.form.ai_level_help',
-                'choice_translation_domain' => false,
+                'help' => $guest ? 'new_local_game.form.ai_level_guest_help' : 'new_local_game.form.ai_level_help',
                 'choices' => array_combine(range(1, 10), range(1, 10)),
+                // Locked levels are listed but disabled for guests (`NewLocalGameAction` and the engine relay refuse them too).
+                'choice_label' => static fn (int $level): string => $guest && $level > self::GUEST_MAX_AI_LEVEL ? 'new_local_game.form.ai_level_locked' : (string) $level,
+                'choice_translation_parameters' => static fn (int $level): array => ['level' => $level],
+                'choice_attr' => static fn (int $level): array => $guest && $level > self::GUEST_MAX_AI_LEVEL ? ['disabled' => 'disabled'] : [],
                 'data' => 1, // T10: default is the weakest level.
             ])
             ->add('liveEvaluation', CheckboxType::class, [
                 'label' => 'new_local_game.form.live_evaluation',
-                'help' => 'new_local_game.form.live_evaluation_help',
+                'help' => $guest ? 'new_local_game.form.live_evaluation_guest_help' : 'new_local_game.form.live_evaluation_help',
                 'required' => false,
+                'disabled' => $guest, // A disabled field ignores the submitted value: guests never get the bar.
                 'data' => false,
             ])
             ->add('submit', SubmitType::class, [
@@ -63,5 +72,7 @@ class LocalGameType extends AbstractType
     public function configureOptions(OptionsResolver $resolver): void
     {
         $resolver->setDefault('translation_domain', 'game');
+        $resolver->setDefault('guest', false);
+        $resolver->setAllowedTypes('guest', 'bool');
     }
 }

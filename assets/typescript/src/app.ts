@@ -169,11 +169,13 @@ class KeresGame {
         this.playerWhite = (this.boardContainer.getAttribute('data-player-white') === 'true');
         this.spectator = (this.boardContainer.getAttribute('data-spectator') === 'true');
 
-        this.liveEvaluation = this.boardContainer.getAttribute('data-live-evaluation') === 'true';
+        // Evaluations are for signed-in players (guests and anonymous spectators never get the bar; the server refuses them too).
+        const canEvaluate = this.boardContainer.getAttribute('data-can-evaluate') === 'true';
+        this.liveEvaluation = canEvaluate && this.boardContainer.getAttribute('data-live-evaluation') === 'true';
         const evalRoot = document.getElementById('eval-bar');
         const evalWhite = document.getElementById('eval-bar-white');
         const evalLabel = document.getElementById('eval-bar-label');
-        if (evalRoot && evalWhite && evalLabel) {
+        if (canEvaluate && evalRoot && evalWhite && evalLabel) {
             this.evalBar = new EvalBar(evalRoot, evalWhite, evalLabel, document.getElementById('board-with-eval'));
         }
 
@@ -200,9 +202,11 @@ class KeresGame {
         const requested = params.get('new');
 
         if ('ai' === requested || 'hotseat' === requested) {
+            const level = parseInt(params.get('level') || '1', 10);
             const record = LocalGameAPI.start(
                 'ai' === requested ? OPPONENT_TYPE_AI : OPPONENT_TYPE_HOTSEAT,
                 'black' !== params.get('side'),
+                Number.isFinite(level) ? level : 1,
             );
             // A reload must resume this game, not start another one.
             window.history.replaceState(null, '', window.location.pathname);

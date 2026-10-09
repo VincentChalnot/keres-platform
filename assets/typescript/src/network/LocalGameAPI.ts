@@ -10,6 +10,8 @@ const OPPONENT_TYPE_AI = 0;
 export interface GuestGameRecord {
     opponentType: number;
     playerWhite: boolean;
+    /** AI difficulty (1-10, guests are limited to 1-4 by the server); absent in games saved before it existed. */
+    aiLevel?: number;
     moves: number[];
     resignedColor: 'white' | 'black' | null;
 }
@@ -46,6 +48,7 @@ export class LocalGameAPI extends GameAPI {
             return {
                 opponentType: parsed.opponentType,
                 playerWhite: parsed.playerWhite,
+                aiLevel: typeof parsed.aiLevel === 'number' ? parsed.aiLevel : 1,
                 moves: parsed.moves.filter((m): m is number => typeof m === 'number'),
                 resignedColor: parsed.resignedColor === 'white' || parsed.resignedColor === 'black' ? parsed.resignedColor : null,
             };
@@ -54,8 +57,8 @@ export class LocalGameAPI extends GameAPI {
         }
     }
 
-    static start(opponentType: number, playerWhite: boolean): GuestGameRecord {
-        const record: GuestGameRecord = {opponentType, playerWhite, moves: [], resignedColor: null};
+    static start(opponentType: number, playerWhite: boolean, aiLevel: number = 1): GuestGameRecord {
+        const record: GuestGameRecord = {opponentType, playerWhite, aiLevel, moves: [], resignedColor: null};
         LocalGameAPI.persist(record);
         return record;
     }
@@ -78,6 +81,7 @@ export class LocalGameAPI extends GameAPI {
 
     async submitMove(move: Move): Promise<GameStatePayload> {
         this.record.moves.push(encodeMove(move));
+        this.recordLastMove();
         this.record.resignedColor = null;
         const payload = await this.buildPayload();
         this.save();
@@ -147,7 +151,7 @@ export class LocalGameAPI extends GameAPI {
     }
 
     private async playAiMove(position: string): Promise<void> {
-        const response = await fetch('/api/engine-move-game', {
+        const response = await fetch(`/api/engine-move-game?level=${this.record.aiLevel ?? 1}`, {
             method: 'POST',
             headers: {'Content-Type': 'application/octet-stream'},
             body: encodeMoveListToBinary(this.getMoves()) as BodyInit,
@@ -165,10 +169,25 @@ export class LocalGameAPI extends GameAPI {
 
         const [aiMove] = new Uint16Array(await response.arrayBuffer());
         this.record.moves.push(aiMove);
+        this.recordLastMove();
         const payload = await this.buildPayload();
         this.save();
 
         this.remoteUpdateListener?.({...payload, seq: this.record.moves.length, rating: null});
+    }
+
+    /**
+     * Feeds the last move to the server's analytics tree (`/api/guest-moves`,
+     * the server replays the whole list itself). Fire and forget: a failure
+     * must never disturb the game.
+     */
+    private recordLastMove(): void {
+        void fetch('/api/guest-moves', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/octet-stream'},
+            body: encodeMoveListToBinary(this.getMoves()) as BodyInit,
+            keepalive: true,
+        }).catch(() => undefined);
     }
 
     private isAiTurn(plies: number): boolean {

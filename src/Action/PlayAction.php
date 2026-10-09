@@ -91,6 +91,12 @@ class PlayAction extends AbstractController
         // rather than only the board binary's engine-only verdict.
         $statePayload = $this->payloadBuilder->build($game, $this->gameEngine->getBoardMovesData($game));
 
+        // Evaluations are for signed-in players: an anonymous spectator gets neither the live flag nor any stored value.
+        if (!$user instanceof User) {
+            $statePayload['liveEvaluation'] = false;
+            $statePayload['evaluations'] = null;
+        }
+
         // Settings -> Board & gameplay: how the board opens (both still toggle in-page).
         $preferences = $user instanceof User ? $this->userPreferencesRepository->findByUser($user) : null;
 

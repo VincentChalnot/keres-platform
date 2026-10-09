@@ -142,6 +142,15 @@ timeout...) and for engine endings that predate the column until
 `bin/console app:games:backfill-engine-end-code` has run; the banner then shows no reason.
 Guest (browser-only) games ask the engine through the `/api/game-over-reason` relay.
 
+Guest games have no `Game` row but still feed the shared tree: after each ply the browser posts
+the whole move list to `POST /api/guest-moves` (rate-limited per IP), and
+`BoardTreeManager::recordLastMove()` replays it through the engine (an illegal list records
+nothing) and stores the last move as a `Move` edge between deduped `BoardPosition`s - no
+`GameMove`, no evaluation job. Guests are limited to AI levels 1-4
+(`LocalGameType::GUEST_MAX_AI_LEVEL`; `/api/engine-move-game?level=N` answers 403 above it unless
+signed in) and never get the live evaluation bar (form field disabled, `/api/games/**` is
+`ROLE_USER`, anonymous spectators get no evaluations in the page bootstrap and no eval bar).
+
 Evaluations are stored on `Move.evaluation` (the move edge, **not** `BoardPosition`:
 a board is shared by many lines but the verdict depends on the line - repetition
 history, no-capture counter) and double as the cache. `Move` is otherwise

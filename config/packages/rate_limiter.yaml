@@ -53,6 +53,10 @@ framework:
             policy: 'token_bucket'
             limit: 20
             rate: { interval: '1 minute', amount: 30 }
+        guest_move_record:           # $guestMoveRecordLimiter, keyed on client IP - guest moves recorded into the analytics tree
+            policy: 'token_bucket'
+            limit: 60
+            rate: { interval: '1 minute', amount: 60 }
         waitlist_signup:            # $waitlistSignupLimiter, keyed on client IP (T7)
             policy: 'sliding_window'
             limit: 3

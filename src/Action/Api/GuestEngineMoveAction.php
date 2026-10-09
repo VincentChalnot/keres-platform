@@ -5,8 +5,11 @@ declare(strict_types=1);
 namespace App\Action\Api;
 
 use App\Engine\EngineApi;
+use App\Entity\User;
+use App\Form\LocalGameType;
 use App\Model\MoveData;
 use App\Model\MovesData;
+use Symfony\Bundle\SecurityBundle\Security;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\Attribute\AsController;
@@ -19,7 +22,9 @@ use Symfony\Component\Routing\Attribute\Route;
  * row for `ProcessAiMoveHandler` to work on. Same binary contract as the
  * engine endpoint (N moves in, one 2-byte move out), relayed through
  * `EngineApi` so it gets the AI backend and its fallback. Rate-limited per
- * client IP: this is the one anonymous route that costs engine CPU.
+ * client IP: this is the one anonymous route that costs engine CPU. The
+ * difficulty comes as `?level=` (1-10, default 1); levels above
+ * `LocalGameType::GUEST_MAX_AI_LEVEL` are refused (403) unless signed in.
  */
 #[AsController]
 readonly class GuestEngineMoveAction
@@ -30,6 +35,7 @@ readonly class GuestEngineMoveAction
     public function __construct(
         private EngineApi $engineApi,
         private RateLimiterFactory $guestEngineMoveLimiter,
+        private Security $security,
     ) {
     }
 
@@ -38,6 +44,16 @@ readonly class GuestEngineMoveAction
     {
         if (!$this->guestEngineMoveLimiter->create($request->getClientIp() ?? 'unknown')->consume(1)->isAccepted()) {
             return new Response('Too many requests', Response::HTTP_TOO_MANY_REQUESTS);
+        }
+
+        $level = $request->query->getInt('level', 1);
+
+        if ($level < 1 || $level > 10) {
+            return new Response('Invalid level', Response::HTTP_BAD_REQUEST);
+        }
+
+        if ($level > LocalGameType::GUEST_MAX_AI_LEVEL && !$this->security->getUser() instanceof User) {
+            return new Response('Sign in to unlock this AI level', Response::HTTP_FORBIDDEN);
         }
 
         $body = $request->getContent();
@@ -56,7 +72,7 @@ readonly class GuestEngineMoveAction
         }
 
         try {
-            $move = $this->engineApi->aiMove($movesData);
+            $move = $this->engineApi->aiMove($movesData, $level);
         } catch (\RuntimeException) {
             return new Response('Engine unavailable', Response::HTTP_BAD_GATEWAY);
         }

@@ -45,6 +45,33 @@ readonly class BoardTreeManager
         return $game->addMove($move);
     }
 
+    /**
+     * Records the last move of a game that has no `Game` row (a guest game)
+     * as an edge of the shared tree: both boards are derived by replaying
+     * the line through the engine (it rejects an illegal line with a
+     * `\RuntimeException`), never taken from the client. Already-known
+     * positions and edges are reused.
+     */
+    public function recordLastMove(MovesData $line): Move
+    {
+        $lastMoveData = $line->getMoves()->last();
+
+        if (!$lastMoveData instanceof MoveData) {
+            throw new \RuntimeException('No moves to record');
+        }
+
+        $previous = new MovesData();
+
+        foreach ($line->getMoves()->slice(0, $line->getMoves()->count() - 1) as $moveData) {
+            $previous->addMove($moveData);
+        }
+
+        $fromBoardPosition = $this->getBoardPosition($this->engineApi->replayMoves($previous));
+        $toBoardPosition = $this->getBoardPosition($this->engineApi->replayMoves($line));
+
+        return $this->getMove($lastMoveData, $fromBoardPosition, $toBoardPosition);
+    }
+
     public function getMove(MoveData $moveData, BoardPosition $fromBoardPosition, BoardPosition $toBoardPosition): Move
     {
         $repo = $this->getRepository(Move::class);
