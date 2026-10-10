@@ -662,8 +662,9 @@ $game-border: rgba($keres-secondary, 0.16);
 $game-radius: 4px;
 // Container width from which the cards | board | panel arrangement is used (narrower: board + panel, then stacked).
 $game-wide: 94rem;
-// Container width from which the board and the moves panel sit side by side (narrower: everything stacked).
-$game-mid: 46rem;
+// Container width from which the board and the moves panel sit side by side: the width left for the board
+// (container - 20rem panel - gap) must reach 750px, else the board is better off full width with the panel below.
+$game-mid: 68rem;
 
 // A panel block (moves, actions, piece info) standing as a card of its own.
 @mixin game-block {
