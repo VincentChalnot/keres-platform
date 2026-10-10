@@ -103,6 +103,7 @@ class PlayAction extends AbstractController
         return [
             'showCoordinates' => $preferences?->isShowBoardCoordinates() ?? true,
             'showThreats' => $preferences?->isShowOpponentThreatsOnHover() ?? true,
+            'rotateOpponent' => $preferences?->isRotateOpponentPieces() ?? false,
             'game' => $game,
             'moves' => $movesBase64,
             'playerWhite' => PieceColor::WHITE === $playerColor,

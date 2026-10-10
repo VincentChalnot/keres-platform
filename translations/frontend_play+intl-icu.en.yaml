@@ -28,18 +28,20 @@ resign:
     title: Resign
     message: Are you sure you want to resign? The game will be lost.
     confirm: Resign
-engine:
-    ask: Ask Engine
-    thinking: Thinking…
-threats:
-    show: Show Threats
-    hide: Hide Threats
-coords:
-    show: Show Coords
-    hide: Hide Coords
-rotate:
-    enable: Rotate Opponent Pieces
-    disable: Keep Opponent Pieces Upright
+players:
+    you: You
+    ai: 'AI (level {level})'
+    player_1: Player 1
+    player_2: Player 2
+settings:
+    saved: Saved - new games will open like this.
+    save_failed: Your defaults could not be saved. Please try again.
+history:
+    empty: No moves yet.
+piece_info:
+    hint: Hover, select or long-press a piece to see how it moves.
+    on_top: On top
+    underneath: Underneath
 fullscreen:
     enter: Fullscreen
     exit: Exit Fullscreen
@@ -63,8 +65,7 @@ error:
     decode_moves_failed: 'Failed to decode move stack: {message}'
     undo_move_failed: 'Failed to undo move: {message}'
     resign_failed: 'Failed to resign: {message}'
-    engine_failed: 'Error: {message}. The engine may not be available.'
-# Piece cards (long press / right click on a piece). `movement` lines are separated by a line break.
+# Piece info panel (hover, selection or long press on a piece). `movement` lines are separated by a line break.
 piece:
     soldier:
         name: Soldier

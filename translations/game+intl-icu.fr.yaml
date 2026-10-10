@@ -158,20 +158,35 @@ play:
         eval_bar: Barre d’évaluation du moteur
         game_over: Partie terminée
         loading: Chargement…
-        switch_sides: Changer de camp
-        hide_threats: Masquer les menaces
-        hide_coords: Masquer les coordonnées
-        rotate_opponent: Retourner les pièces adverses
         fullscreen: Plein écran
         undo: Annuler le coup
         resign: Abandonner
-        feedback: Avis
+        player:
+            to_move: Au trait
+            provisional_title: Classement provisoire - pas encore assez de parties classées
+        panel:
+            moves: Coups
+            flip: Retourner le plateau
+            settings: Réglages d’affichage
+        settings:
+            title: Affichage (cette partie seulement)
+            coordinates: Coordonnées
+            threats: Menaces au survol
+            rotate: Pièces adverses à l’envers
+            hint: Vos réglages par défaut s’appliquent à chaque nouvelle partie.
+            save_defaults: Enregistrer par défaut
         history:
-            title: Historique des coups
-            previous: ◄ Préc.
-            previous_title: Coup précédent
-            next: Suiv. ►
-            next_title: Coup suivant
+            label: Historique des coups
+            first: Position de départ
+            previous: Coup précédent
+            next: Coup suivant
+            last: Dernier coup
+        piece_info:
+            title: Pièce
+        feedback_banner:
+            title: Façonnez Keres avec moi
+            text: Participez au développement du jeu et donnez-moi votre avis.
+            cta: Donner mon avis
         unstack_modal:
             title: Choisissez votre coup
             text: Vous déplacez une pile. Souhaitez-vous déplacer toute la pile ou seulement la pièce du dessus ?

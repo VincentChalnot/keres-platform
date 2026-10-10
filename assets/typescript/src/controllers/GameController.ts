@@ -32,6 +32,11 @@ export class GameController {
     // UI can extrapolate a live countdown between server updates.
     private clockServerTimeMs: number = Date.now();
     private clockReceivedAtMs: number = Date.now();
+    // Piece shown in the page's piece-info panel when nothing is selected or hovered: set by a long press, cleared by the next click or board change.
+    private pinnedInspection: number | null = null;
+    private inspectHandler: ((position: number | null) => void) | null = null;
+    // History navigation in progress: each jump replays positions server-side, so they run one after the other.
+    private navigation: Promise<void> = Promise.resolve();
 
     /** Three call sites (Mercure, move, resign) plus the page bootstrap need identical anchoring. */
     private captureClockTiming(serverTimeMicros: number): void {
@@ -52,6 +57,10 @@ export class GameController {
         if (this.view.onDragMove) {
             this.view.onDragMove((from, to, shiftKey) => this.handleDragMove(from, to, shiftKey));
         }
+        this.view.onPieceLongPress?.((pos) => {
+            this.pinnedInspection = pos;
+            this.updateOverlays();
+        });
     }
 
     /**
@@ -203,8 +212,19 @@ export class GameController {
         
         // Submit move to server
         const move: Move = {from, to, unstack};
+        const pliesBefore = this.gameState.getMoveList().length;
         try {
             const result = await this.api.submitMove(move);
+
+            // The Mercure update for this move (or even the reply to it) can
+            // arrive before this response: it already carries the move, and a
+            // newer state than the response. Keep it rather than appending the
+            // move a second time.
+            if (this.gameState.getMoveList().length > pliesBefore) {
+                this.gameState.setBoardLocked(this.computeInputLocked());
+                window.dispatchEvent(new CustomEvent('moveSubmitted'));
+                return;
+            }
 
             // Store authoritative game-over verdict + clock
             this.endReason = result.endReason;
@@ -244,13 +264,6 @@ export class GameController {
         }
     }
 
-    async requestEngineMove(): Promise<void> {
-        const board = this.gameState.getBoard();
-        if (!board) return;
-        const move = await this.api.getEngineMove(board);
-        await this.playMove(move.from, move.to, move.unstack);
-    }
-
     async undoMove(): Promise<void> {
         try {
             const movesBase64 = await this.api.undoMove();
@@ -268,19 +281,6 @@ export class GameController {
             console.error('Failed to undo move:', error);
             window.dispatchEvent(new CustomEvent('showError', {detail: {message: t('play.error.undo_move_failed', {message: (error as Error).message})}}));
         }
-    }
-
-    async navigateToPreviousMove(): Promise<void> {
-        const currentIndex = this.gameState.getCurrentMoveIndex();
-        if (currentIndex < 0) return;
-        await this.navigateToMoveIndex(currentIndex - 1);
-    }
-
-    async navigateToNextMove(): Promise<void> {
-        const currentIndex = this.gameState.getCurrentMoveIndex();
-        const moveList = this.gameState.getMoveList();
-        if (currentIndex >= moveList.length - 1) return;
-        await this.navigateToMoveIndex(currentIndex + 1);
     }
 
     private async navigateToMoveIndex(targetIndex: number): Promise<void> {
@@ -318,6 +318,10 @@ export class GameController {
     }
 
     private handleTileClick(pos: number, shiftKey?: boolean): void {
+        if (null !== this.pinnedInspection) {
+            this.pinnedInspection = null;
+            this.updateOverlays();
+        }
         const board = this.gameState.getBoard();
         if (!board) return;
         if (this.gameState.isBoardLocked()) return;
@@ -376,7 +380,7 @@ export class GameController {
             return;
         }
         const board = this.gameState.getBoard();
-        if (!board || board.isGameOver()) return;
+        if (!board) return;
         const selectedPosition = this.gameState.getSelectedPosition();
         if (selectedPosition === null) {
             this.gameState.setHoveredPosition(pos);
@@ -424,6 +428,7 @@ export class GameController {
                 highlights.push({position: move.to, type: 'potential'});
             }
             this.view.updateOverlays(highlights);
+            this.inspectHandler?.(selectedPosition);
             return;
         }
         const hoveredPosition = this.gameState.getHoveredPosition();
@@ -443,6 +448,12 @@ export class GameController {
             }
         }
         this.view.updateOverlays(highlights);
+        this.inspectHandler?.(hoveredPosition ?? this.pinnedInspection);
+    }
+
+    /** Called with the square whose piece the page should describe: the selected one, else the hovered one, else the last long-pressed one (null: none). */
+    onInspect(handler: (position: number | null) => void): void {
+        this.inspectHandler = handler;
     }
 
     private async renderBoard(): Promise<void> {
@@ -451,6 +462,7 @@ export class GameController {
         const flipped = this.gameState.isBoardFlipped();
         const boardBinary = encodeBoardToBinary(board);
         await this.view.render(boardBinary, flipped);
+        this.pinnedInspection = null;
         this.updateOverlays();
     }
 
@@ -478,13 +490,33 @@ export class GameController {
     isShowThreats(): boolean {
         return this.gameState.isShowThreats();
     }
-    async previousMove(): Promise<void> {
-        await this.navigateToPreviousMove();
-        window.dispatchEvent(new CustomEvent('boardStateChanged'));
+    previousMove(): Promise<void> {
+        return this.queueNavigation(() => this.getDisplayedPly() - 1);
     }
-    async nextMove(): Promise<void> {
-        await this.navigateToNextMove();
-        window.dispatchEvent(new CustomEvent('boardStateChanged'));
+    nextMove(): Promise<void> {
+        return this.queueNavigation(() => this.getDisplayedPly() + 1);
+    }
+    /** Shows the position after `ply` moves (0 = start position), clamped to the game. */
+    goToPly(ply: number): Promise<void> {
+        return this.queueNavigation(() => ply);
+    }
+
+    /**
+     * Jumps are queued and their target resolved when their turn comes, so a
+     * burst of arrow-key presses steps one position after the other instead
+     * of racing (or all starting from the same ply).
+     */
+    private queueNavigation(target: () => number): Promise<void> {
+        this.navigation = this.navigation.then(async () => {
+            const ply = Math.max(0, Math.min(this.getTotalPlies(), target()));
+            if (ply === this.getDisplayedPly()) return;
+            await this.navigateToMoveIndex(ply - 1);
+            window.dispatchEvent(new CustomEvent('boardStateChanged'));
+        }).catch((error) => {
+            console.error('Failed to navigate the move history:', error);
+        });
+
+        return this.navigation;
     }
     isBoardLocked(): boolean {
         return this.gameState.isBoardLocked();

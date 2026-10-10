@@ -20,6 +20,7 @@ final class GameHeaderExtension extends AbstractExtension
     {
         return [
             new TwigFunction('game_header', $this->gameHeaderPresenter->present(...)),
+            new TwigFunction('game_board_header', $this->gameHeaderPresenter->presentForBoard(...)),
         ];
     }
 }

@@ -44,6 +44,11 @@ export interface IBoardView {
     onDragMove?(handler: (from: number, to: number, shiftKey?: boolean) => void): void;
 
     /**
+     * Set the handler of a long press on a piece: inspect it without selecting it (optional)
+     */
+    onPieceLongPress?(handler: (tileIndex: number) => void): void;
+
+    /**
      * Toggle coordinate labels visibility (optional)
      */
     setCoordinatesVisible?(visible: boolean): void;

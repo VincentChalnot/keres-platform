@@ -2,12 +2,32 @@
     The board page shared by persisted games (play.html.twig) and browser-only
     guest games (play_guest.html.twig). Variables:
       opponentType (int), moves (base64), gameUuid (?string), playerWhite (bool),
-      spectator (bool), guest (bool), isAi (bool), gameOver (bool),
-      gameStateBootstrap (?string, JSON), showCoordinates (bool), showThreats (bool),
-      gameHeader (?\App\Model\GameHeader - players + option badges; undefined for guest games),
+      spectator (bool), guest (bool), gameOver (bool),
+      gameStateBootstrap (?string, JSON), showCoordinates (bool), showThreats (bool), rotateOpponent (bool),
+      gameHeader (?\App\Model\GameHeader - players with avatar/rating + option badges; undefined for guest games),
       liveEvaluation (bool, optional - the evaluation bar was requested at creation; unrated games only)
+
+    Layout (app.scss, .game-layout): player cards | board | moves panel on wide
+    screens; the cards turn into slim rows above/below the board and the panel
+    drops under it on narrower ones. The cards are one per colour: the stylesheet
+    puts Black on top unless the layout carries `is-flipped` (set by app.ts).
 #}
 {% trans_default_domain 'game' %}
+{% set header = gameHeader ?? null %}
+{% macro avatar(player) %}
+    <span class="player-card__avatar" aria-hidden="true">
+        {%- if player and player.avatarUrl -%}
+            <img src="{{ player.avatarUrl }}" alt="" referrerpolicy="no-referrer" loading="lazy">
+        {%- elseif player and player.kind in ['ai', 'bot'] -%}
+            <i class="fa-solid fa-robot"></i>
+        {%- elseif player and player.kind == 'human' and player.username -%}
+            {{ player.label|first|upper }}
+        {%- else -%}
+            <i class="fa-solid fa-user"></i>
+        {%- endif -%}
+    </span>
+{% endmacro %}
+{% import _self as m %}
     <div class="game-container"
          id="game-container"
          data-opponent-type="{{ opponentType }}">
@@ -15,78 +35,151 @@
             <script type="application/json" id="game-state-bootstrap">{{ gameStateBootstrap|raw }}</script>
         {% endif %}
 
-        {% if gameHeader is defined and gameHeader %}
-            {% include 'actions/_game_header.html.twig' with {header: gameHeader} only %}
+        <div class="game-layout" id="game-layout">
+            {% for color in ['black', 'white'] %}
+                {% set player = header ? attribute(header, color) : null %}
+                <section class="player-card player-card--{{ color }}" id="player-card-{{ color }}" data-color="{{ color }}" aria-label="{{ ('color.' ~ color)|trans }}">
+                    <div class="player-card__identity">
+                        {{ m.avatar(player) }}
+                        <div class="player-card__who">
+                            {% if player and player.username %}
+                                <a href="{{ path('profile', {username: player.username}) }}" class="player-card__name">{{ player.label }}</a>
+                            {% else %}
+                                <span class="player-card__name{{ player and player.kind == 'ai' ? ' is-engine' }}">{{ player ? player.label : ('color.' ~ color)|trans }}</span>
+                            {% endif %}
+                            <span class="player-card__meta">
+                                <span class="player-card__color is-{{ color }}" aria-hidden="true"></span>
+                                <span>{{ ('color.' ~ color)|trans }}</span>
+                                {% if player and player.rating %}
+                                    <span class="player-card__rating{{ player.rating.provisional ? ' is-provisional' }}"{% if player.rating.provisional %} title="{{ 'play.board.player.provisional_title'|trans }}"{% endif %}>
+                                        {{- player.rating.value|format_number }}{{ player.rating.provisional ? '?' -}}
+                                    </span>
+                                    {% if player.rating.delta is not null %}
+                                        <span class="player-card__delta {{ player.rating.delta >= 0 ? 'is-gain' : 'is-loss' }}">{{ player.rating.delta >= 0 ? '+' }}{{ player.rating.delta|format_number }}</span>
+                                    {% endif %}
+                                {% endif %}
+                            </span>
+                        </div>
+                        <span class="player-card__turn" title="{{ 'play.board.player.to_move'|trans }}"></span>
+                    </div>
+                    <div class="player-clock" id="clock-{{ color }}"><i class="fa-regular fa-clock player-clock__icon" aria-hidden="true"></i><span class="player-clock__time">--:--</span></div>
+                    <div class="material-bar" id="material-{{ color }}"></div>
+                </section>
+            {% endfor %}
+
+            <div class="game-info">
+                <div class="game-status-banner is-muted" id="game-status-banner" role="status" aria-live="polite">{{ 'play.board.loading'|trans }}</div>
+                {% if header and header.badges is not empty %}
+                    <div class="tags game-info__badges">
+                        {% for badge in header.badges %}
+                            <span class="tag {{ badge.tone }}"{% if badge.title %} title="{{ badge.title }}"{% endif %}>{{ badge.label }}</span>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+            </div>
+
+            <div class="game-board">
+                <div class="board-with-eval" id="board-with-eval">
+                    <div class="eval-bar" id="eval-bar" hidden aria-label="{{ 'play.board.eval_bar'|trans }}" role="img">
+                        <div class="eval-bar__white" id="eval-bar-white"></div>
+                        <span class="eval-bar__label" id="eval-bar-label"></span>
+                    </div>
+                    <div id="board-container"
+                         data-moves="{{ moves }}"
+                         {% if gameUuid %}data-game-uuid="{{ gameUuid }}"{% endif %}
+                         data-opponent-type="{{ opponentType }}"
+                         data-player-white="{{ playerWhite ? 'true' : 'false' }}"
+                         data-spectator="{{ spectator ? 'true' : 'false' }}"
+                         data-guest="{{ guest ? 'true' : 'false' }}"
+                         data-show-coordinates="{{ showCoordinates ?? true ? 'true' : 'false' }}"
+                         data-show-threats="{{ showThreats ?? true ? 'true' : 'false' }}"
+                         data-rotate-opponent="{{ rotateOpponent ?? false ? 'true' : 'false' }}"
+                         data-live-evaluation="{{ liveEvaluation ?? false ? 'true' : 'false' }}"
+                         data-can-evaluate="{{ app.user ? 'true' : 'false' }}"
+                         data-game-over-label="{{ 'play.board.game_over'|trans }}"></div>
+                </div>
+            </div>
+
+            <aside class="game-panel" aria-labelledby="game-panel-title">
+                <div class="game-panel__inner">
+                    <div class="game-moves">
+                    <header class="game-panel__header">
+                        <h2 class="game-panel__title" id="game-panel-title">{{ 'play.board.panel.moves'|trans }}</h2>
+                        <div class="game-panel__tools">
+                            <button type="button" class="icon-button" id="flip-board-btn" title="{{ 'play.board.panel.flip'|trans }}" aria-label="{{ 'play.board.panel.flip'|trans }}">
+                                <i class="fa-solid fa-arrows-up-down" aria-hidden="true"></i>
+                            </button>
+                            <button type="button" class="icon-button" id="toggle-fullscreen-btn" title="{{ 'play.board.fullscreen'|trans }}" aria-label="{{ 'play.board.fullscreen'|trans }}">
+                                <i class="fa-solid fa-expand" aria-hidden="true"></i>
+                            </button>
+                            <div class="board-settings">
+                                <button type="button" class="icon-button" id="board-settings-btn" title="{{ 'play.board.panel.settings'|trans }}" aria-label="{{ 'play.board.panel.settings'|trans }}" aria-expanded="false" aria-controls="board-settings-menu">
+                                    <i class="fa-solid fa-sliders" aria-hidden="true"></i>
+                                </button>
+                                <div class="board-settings__menu" id="board-settings-menu" hidden>
+                                    <p class="board-settings__title">{{ 'play.board.settings.title'|trans }}</p>
+                                    <label class="switch-row">
+                                        <span>{{ 'play.board.settings.coordinates'|trans }}</span>
+                                        <input type="checkbox" role="switch" id="setting-coords">
+                                    </label>
+                                    <label class="switch-row">
+                                        <span>{{ 'play.board.settings.threats'|trans }}</span>
+                                        <input type="checkbox" role="switch" id="setting-threats">
+                                    </label>
+                                    <label class="switch-row">
+                                        <span>{{ 'play.board.settings.rotate'|trans }}</span>
+                                        <input type="checkbox" role="switch" id="setting-rotate">
+                                    </label>
+                                    <p class="board-settings__hint">{{ 'play.board.settings.hint'|trans }}</p>
+                                    <button type="button" class="game-button is-small" id="save-board-defaults-btn">{{ 'play.board.settings.save_defaults'|trans }}</button>
+                                    <p class="board-settings__status" id="save-board-defaults-status" role="status" aria-live="polite"></p>
+                                </div>
+                            </div>
+                        </div>
+                    </header>
+
+                    <div class="move-list" id="move-list" tabindex="-1">
+                        <ol class="move-list__rows" id="move-history-body"></ol>
+                    </div>
+
+                    <nav class="move-nav" aria-label="{{ 'play.board.history.label'|trans }}">
+                        <button type="button" class="icon-button" id="first-move-btn" title="{{ 'play.board.history.first'|trans }}" aria-label="{{ 'play.board.history.first'|trans }}"><i class="fa-solid fa-backward-step" aria-hidden="true"></i></button>
+                        <button type="button" class="icon-button" id="prev-move-btn" title="{{ 'play.board.history.previous'|trans }}" aria-label="{{ 'play.board.history.previous'|trans }}"><i class="fa-solid fa-chevron-left" aria-hidden="true"></i></button>
+                        <button type="button" class="icon-button" id="next-move-btn" title="{{ 'play.board.history.next'|trans }}" aria-label="{{ 'play.board.history.next'|trans }}"><i class="fa-solid fa-chevron-right" aria-hidden="true"></i></button>
+                        <button type="button" class="icon-button" id="last-move-btn" title="{{ 'play.board.history.last'|trans }}" aria-label="{{ 'play.board.history.last'|trans }}"><i class="fa-solid fa-forward-step" aria-hidden="true"></i></button>
+                    </nav>
+                    </div>
+
+                    {% if not spectator and not gameOver %}
+                        <div class="game-actions" id="game-actions">
+                            <button type="button" class="game-button" id="undo-btn"><i class="fa-solid fa-rotate-left" aria-hidden="true"></i><span>{{ 'play.board.undo'|trans }}</span></button>
+                            <button type="button" class="game-button is-danger" id="resign-btn"><i class="fa-solid fa-flag" aria-hidden="true"></i><span>{{ 'play.board.resign'|trans }}</span></button>
+                        </div>
+                    {% endif %}
+
+                    <section class="piece-info" aria-labelledby="piece-info-title">
+                        <h3 class="piece-info__title" id="piece-info-title">{{ 'play.board.piece_info.title'|trans }}</h3>
+                        <div class="piece-info__body" id="piece-info-body" aria-live="polite"></div>
+                    </section>
+                </div>
+            </aside>
+        </div>
+
+        <div class="game-board__brand" aria-hidden="true">
+            <img src="{{ asset('logo.svg') }}" alt="" width="20" height="20">
+            <span>Keres</span>
+        </div>
+
+        {% if app.user %}
+            <button type="button" class="feedback-banner" id="feedback-btn">
+                <img class="feedback-banner__avatar" src="{{ asset('images/feedback-avatar.webp') }}" alt="" width="64" height="64">
+                <span class="feedback-banner__text">
+                    <span class="feedback-banner__title">{{ 'play.board.feedback_banner.title'|trans }}</span>
+                    <span class="feedback-banner__subtitle">{{ 'play.board.feedback_banner.text'|trans }}</span>
+                </span>
+                <span class="feedback-banner__cta">{{ 'play.board.feedback_banner.cta'|trans }}<i class="fa-solid fa-arrow-right" aria-hidden="true"></i></span>
+            </button>
         {% endif %}
-
-        {# Opponent row, board, own row: one unit. Plain flow (display: contents) normally; in page fullscreen it is the viewport-sized stage the board is fitted into. #}
-        <div class="game-stage">
-        <div class="player-info-row" id="player-info-top">
-            <div class="material-bar" id="material-top"></div>
-            <div class="player-clock" id="clock-top"><span class="player-clock__time">--:--</span></div>
-        </div>
-        <div class="board-with-eval" id="board-with-eval">
-        <div class="eval-bar" id="eval-bar" hidden aria-label="{{ 'play.board.eval_bar'|trans }}" role="img">
-            <div class="eval-bar__white" id="eval-bar-white"></div>
-            <span class="eval-bar__label" id="eval-bar-label"></span>
-        </div>
-        <div id="board-container"
-             data-moves="{{ moves }}"
-             {% if gameUuid %}data-game-uuid="{{ gameUuid }}"{% endif %}
-             data-opponent-type="{{ opponentType }}"
-             data-player-white="{{ playerWhite ? 'true' : 'false' }}"
-             data-spectator="{{ spectator ? 'true' : 'false' }}"
-             data-guest="{{ guest ? 'true' : 'false' }}"
-             data-show-coordinates="{{ showCoordinates ?? true ? 'true' : 'false' }}"
-             data-show-threats="{{ showThreats ?? true ? 'true' : 'false' }}"
-             data-live-evaluation="{{ liveEvaluation ?? false ? 'true' : 'false' }}"
-             data-can-evaluate="{{ app.user ? 'true' : 'false' }}"
-             data-game-over-label="{{ 'play.board.game_over'|trans }}"></div>
-        </div>
-        <div class="player-info-row" id="player-info-bottom">
-            <div class="material-bar" id="material-bottom"></div>
-            <div class="player-clock" id="clock-bottom"><span class="player-clock__time">--:--</span></div>
-        </div>
-        </div>
-
-        <div class="notification game-status-banner is-muted" id="game-status-banner" role="status" aria-live="polite">{{ 'play.board.loading'|trans }}</div>
-
-        <div class="buttons mt-3">
-            {% if isAi %}
-                <button class="button is-rounded is-outlined is-light" id="switch-sides-btn">{{ 'play.board.switch_sides'|trans }}</button>
-            {% endif %}
-            <button class="button is-rounded is-outlined is-light" id="toggle-threats-btn">{{ 'play.board.hide_threats'|trans }}</button>
-            <button class="button is-rounded is-outlined is-light" id="toggle-coords-btn">{{ 'play.board.hide_coords'|trans }}</button>
-            <button class="button is-rounded is-outlined is-light" id="toggle-rotate-btn" type="button" title="{{ 'play.board.rotate_opponent'|trans }}" aria-label="{{ 'play.board.rotate_opponent'|trans }}" aria-pressed="false"><span class="icon"><i class="fa-solid fa-rotate" aria-hidden="true"></i></span><span id="toggle-rotate-label">{{ 'play.board.rotate_opponent'|trans }}</span></button>
-            <button class="button is-rounded is-outlined is-light" id="toggle-fullscreen-btn">{{ 'play.board.fullscreen'|trans }}</button>
-            <button class="button is-rounded is-light" id="undo-btn">{{ 'play.board.undo'|trans }}</button>
-            {% if not gameOver %}
-                <button type="button" class="button is-rounded is-danger" id="resign-btn">{{ 'play.board.resign'|trans }}</button>
-            {% endif %}
-            {% if app.user %}
-                <button type="button" class="button is-rounded is-outlined is-light" id="feedback-btn">{{ 'play.board.feedback'|trans }}</button>
-            {% endif %}
-        </div>
-        <div class="move-history">
-            <label class="label">{{ 'play.board.history.title'|trans }}</label>
-            <div class="buttons">
-                <button class="button is-rounded is-small is-outlined is-light" id="prev-move-btn" title="{{ 'play.board.history.previous_title'|trans }}">{{ 'play.board.history.previous'|trans }}</button>
-                <button class="button is-rounded is-small is-outlined is-light" id="next-move-btn" title="{{ 'play.board.history.next_title'|trans }}">{{ 'play.board.history.next'|trans }}</button>
-            </div>
-            <div id="move-history-display" class="move-history-box">
-                <table class="table is-fullwidth move-history-table">
-                    <thead>
-                    <tr>
-                        <th>#</th>
-                        <th>{{ 'color.white'|trans }}</th>
-                        <th>{{ 'color.black'|trans }}</th>
-                    </tr>
-                    </thead>
-                    <tbody id="move-history-body">
-                    </tbody>
-                </table>
-            </div>
-        </div>
     </div>
 
     <div class="modal" id="unstack-modal">

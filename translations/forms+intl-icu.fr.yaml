@@ -16,6 +16,7 @@ common:
 board_settings:
     show_coordinates: Afficher les coordonnées du plateau
     show_threats: Mettre en évidence les menaces de l’adversaire au survol
+    rotate_opponent: Retourner les pièces de l’adversaire (comme vues de son côté)
 notification_settings:
     newsletter: Je m’abonne à la newsletter
 privacy_settings:

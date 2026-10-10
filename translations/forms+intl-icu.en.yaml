@@ -16,6 +16,7 @@ common:
 board_settings:
     show_coordinates: Show board coordinates
     show_threats: Highlight opponent threats on hover
+    rotate_opponent: Turn the opponent’s pieces upside down (as seen from their side)
 notification_settings:
     newsletter: Subscribe to the newsletter
 privacy_settings:

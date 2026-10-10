@@ -158,20 +158,35 @@ play:
         eval_bar: Engine evaluation
         game_over: Game over
         loading: Loading…
-        switch_sides: Switch Sides
-        hide_threats: Hide Threats
-        hide_coords: Hide Coords
-        rotate_opponent: Rotate Opponent Pieces
         fullscreen: Fullscreen
         undo: Undo
         resign: Resign
-        feedback: Feedback
+        player:
+            to_move: To move
+            provisional_title: Provisional rating - not enough rated games yet
+        panel:
+            moves: Moves
+            flip: Flip the board
+            settings: Display settings
+        settings:
+            title: Display (this game only)
+            coordinates: Coordinates
+            threats: Threats on hover
+            rotate: Upside-down opponent pieces
+            hint: Your defaults apply to every new game.
+            save_defaults: Save as my defaults
         history:
-            title: Move History
-            previous: ◄ Prev
-            previous_title: Previous Move
-            next: Next ►
-            next_title: Next Move
+            label: Move history
+            first: Start position
+            previous: Previous move
+            next: Next move
+            last: Latest move
+        piece_info:
+            title: Piece info
+        feedback_banner:
+            title: Help shape Keres
+            text: Take part in the game’s development - tell me what you think.
+            cta: Give feedback
         unstack_modal:
             title: Choose your move
             text: You are moving a stacked piece. Do you want to move the full stack or only the top piece?

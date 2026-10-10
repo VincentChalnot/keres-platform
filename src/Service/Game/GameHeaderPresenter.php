@@ -5,16 +5,20 @@ declare(strict_types=1);
 namespace App\Service\Game;
 
 use App\Entity\Game;
+use App\Entity\GamePlayer;
 use App\Entity\User;
 use App\Model\GameHeader;
 use App\Model\GameHeaderBadge;
 use App\Model\GameHeaderPlayer;
+use App\Model\GameHeaderRating;
 use App\Model\OpponentType;
 use App\Model\PieceColor;
 use App\Model\SpeedCategory;
 use App\Model\TimeControl;
 use App\Model\TimeControlKind;
 use App\Service\BotTournament\BotAccounts;
+use App\Service\Rating\RatingUpdater;
+use Symfony\Component\Clock\ClockInterface;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
 /**
@@ -38,6 +42,8 @@ final readonly class GameHeaderPresenter
 {
     public function __construct(
         private TranslatorInterface $translator,
+        private RatingUpdater $ratingUpdater,
+        private ClockInterface $clock,
     ) {
     }
 
@@ -50,7 +56,37 @@ final readonly class GameHeaderPresenter
         );
     }
 
-    private function player(Game $game, PieceColor $color, ?User $viewer, ?User $subject): GameHeaderPlayer
+    /** `present()` plus each human/bot seat's rating (one rating lookup per seat of a game still being played). */
+    public function presentForBoard(Game $game, ?User $viewer): GameHeader
+    {
+        return new GameHeader(
+            white: $this->player($game, PieceColor::WHITE, $viewer, null, true),
+            black: $this->player($game, PieceColor::BLACK, $viewer, null, true),
+            badges: $this->badges($game),
+        );
+    }
+
+    /** The rating the game itself recorded once rated, else the seat's current pool rating. */
+    private function rating(Game $game, GamePlayer $seat, User $user): ?GameHeaderRating
+    {
+        $category = $game->getSpeedCategory();
+
+        if (null === $category) {
+            return null;
+        }
+
+        $after = $seat->getRatingAfter();
+
+        if (null !== $after) {
+            return new GameHeaderRating($after, (bool) $seat->getProvisionalBefore(), $after - ($seat->getRatingBefore() ?? $after));
+        }
+
+        $current = $this->ratingUpdater->currentRating($user, $category, $this->clock->now());
+
+        return new GameHeaderRating($current->display(), $current->isProvisional());
+    }
+
+    private function player(Game $game, PieceColor $color, ?User $viewer, ?User $subject, bool $withRating = false): GameHeaderPlayer
     {
         $seat = $game->getPlayer($color);
 
@@ -66,14 +102,14 @@ final readonly class GameHeaderPresenter
         }
 
         if (null !== BotAccounts::levelOfUser($user)) {
-            return new GameHeaderPlayer($color, $user->getDisplayName() ?? $user->getUsername(), 'bot');
+            return new GameHeaderPlayer($color, $user->getDisplayName() ?? $user->getUsername(), 'bot', null, $user->getAvatarUrl(), $withRating ? $this->rating($game, $seat, $user) : null);
         }
 
         if (null === $viewer && $user !== $subject) {
             return new GameHeaderPlayer($color, $this->translator->trans('header.player.anonymous', [], 'game'), 'anonymous');
         }
 
-        return new GameHeaderPlayer($color, $user->getUsername(), 'human', $user->getUsername());
+        return new GameHeaderPlayer($color, $user->getUsername(), 'human', $user->getUsername(), $user->getAvatarUrl(), $withRating ? $this->rating($game, $seat, $user) : null);
     }
 
     /**

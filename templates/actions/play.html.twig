@@ -14,9 +14,8 @@
         gameUuid: game.uuid,
         spectator: not game.isParticipant(app.user),
         guest: false,
-        isAi: game.opponentType == enum('App\\Model\\OpponentType').AI,
         gameOver: game.gameOver,
-        gameHeader: game_header(game, app.user),
+        gameHeader: game_board_header(game, app.user),
         liveEvaluation: game.liveEvaluationEnabled,
     } %}
 {% endblock %}

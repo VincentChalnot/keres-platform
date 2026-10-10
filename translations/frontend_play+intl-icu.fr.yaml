@@ -28,18 +28,20 @@ resign:
     title: Abandonner
     message: Voulez-vous vraiment abandonner ? La partie sera perdue.
     confirm: Abandonner
-engine:
-    ask: Demander au moteur
-    thinking: Réflexion…
-threats:
-    show: Afficher les menaces
-    hide: Masquer les menaces
-coords:
-    show: Afficher les coordonnées
-    hide: Masquer les coordonnées
-rotate:
-    enable: Retourner les pièces adverses
-    disable: Garder les pièces adverses droites
+players:
+    you: Vous
+    ai: 'IA (niveau {level})'
+    player_1: Joueur 1
+    player_2: Joueur 2
+settings:
+    saved: Enregistré - les nouvelles parties s’ouvriront ainsi.
+    save_failed: Vos réglages par défaut n’ont pas pu être enregistrés. Veuillez réessayer.
+history:
+    empty: Aucun coup pour l’instant.
+piece_info:
+    hint: Survolez, sélectionnez ou appuyez longuement sur une pièce pour voir comment elle se déplace.
+    on_top: Dessus
+    underneath: Dessous
 fullscreen:
     enter: Plein écran
     exit: Quitter le plein écran
@@ -63,8 +65,7 @@ error:
     decode_moves_failed: 'Impossible de lire la liste des coups : {message}'
     undo_move_failed: 'Impossible d’annuler le coup : {message}'
     resign_failed: 'Impossible d’abandonner : {message}'
-    engine_failed: 'Erreur : {message}. Le moteur est peut-être indisponible.'
-# Piece cards (long press / right click on a piece). `movement` lines are separated by a line break.
+# Piece info panel (hover, selection or long press on a piece). `movement` lines are separated by a line break.
 piece:
     soldier:
         name: Soldat (S)

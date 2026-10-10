@@ -25,6 +25,10 @@ class BoardSettingsType extends AbstractType
                 'label' => 'board_settings.show_threats',
                 'required' => false,
             ])
+            ->add('rotateOpponentPieces', CheckboxType::class, [
+                'label' => 'board_settings.rotate_opponent',
+                'required' => false,
+            ])
             ->add('submit', SubmitType::class, [
                 'label' => 'common.save_changes',
             ]);

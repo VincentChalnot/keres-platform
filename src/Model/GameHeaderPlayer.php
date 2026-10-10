@@ -19,6 +19,10 @@ final readonly class GameHeaderPlayer
         public string $kind,
         /** Profile handle to link to; null unless `$kind` is `human`. */
         public ?string $username = null,
+        /** Avatar image URL; only for `human` and `bot` seats that have one. */
+        public ?string $avatarUrl = null,
+        /** Seat rating; only filled by `GameHeaderPresenter::presentForBoard()`. */
+        public ?GameHeaderRating $rating = null,
     ) {
     }
 }

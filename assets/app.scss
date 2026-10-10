@@ -290,106 +290,7 @@ li { margin-bottom: 8px; }
     color: $keres-light;
 }
 
-// ─── Player info row (material bar + remaining-time clock side by side) ───────
-
-.player-info-row {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 0.75rem;
-
-    .material-bar {
-        flex: 1;
-        min-width: 0;
-    }
-}
-
-.player-clock {
-    flex-shrink: 0;
-    min-width: 5.5em;
-    padding: 0.4em 0.9em;
-    border-radius: 0.5em;
-    text-align: center;
-    font-family: 'RomanSerif', serif;
-    font-size: 1.3rem;
-    font-variant-numeric: tabular-nums;
-    background: #1a1a1a;
-    color: $keres-secondary;
-    border: 1px solid $keres-dark;
-    transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease;
-
-    // Stopped/not-to-move: dim, dark background (per spec — inactive stays dark).
-    &.is-inactive {
-        background: #141414;
-        color: color.adjust($keres-secondary, $lightness: -20%);
-    }
-
-    // Ticking/to-move: highlighted so the active side is unmistakable.
-    &.is-active {
-        background: $keres-primary;
-        color: #1a1208;
-        border-color: $keres-primary;
-        font-weight: bold;
-    }
-}
-
-// ─── Game status bar (whose turn / waiting / final result) ───────────────────
-
-.game-status-banner {
-    margin: 0.75rem 0 0;
-    text-align: center;
-    padding: 0.6em 1em;
-    transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease;
-
-    // Opponent's turn, history view, loading: neutral and quiet.
-    &.is-muted {
-        background: #141414;
-        color: #a3a3a3;
-        border: 1px solid #2a2a2a;
-    }
-
-    // The viewer's turn: same accent as the active `.player-clock`.
-    &.is-your-turn {
-        background: $keres-primary;
-        color: #1a1208;
-        border: 1px solid $keres-primary;
-        font-weight: bold;
-    }
-
-    // Final result, from the viewer's side. Each variant pins both colours:
-    // Bulma's `.notification` modifiers pick their own text colour (white on
-    // the orange draw background was unreadable).
-    &.is-won {
-        background: #48c78e;
-        color: #0a2418;
-        border: 1px solid #48c78e;
-        font-weight: bold;
-    }
-
-    &.is-lost {
-        background: #c62836;
-        color: #fff;
-        border: 1px solid #c62836;
-        font-weight: bold;
-    }
-
-    &.is-drawn {
-        background: #f0a030;
-        color: #231503;
-        border: 1px solid #f0a030;
-        font-weight: bold;
-    }
-
-    // A result that is nobody's win or loss here (spectator, hot-seat, aborted).
-    &.is-neutral-result {
-        background: $keres-secondary;
-        color: #1a1208;
-        border: 1px solid $keres-secondary;
-        font-weight: bold;
-    }
-}
-
-// ─── Game header (players + option badges above the board) ───────────────────
+// ─── Game header (players + option badges at the top of a games-list card) ───
 
 .game-header {
     display: flex;
@@ -601,17 +502,6 @@ footer.footer {
     border: 1px solid $keres-dark;
 }
 
-// Table overrides
-.move-history-table {
-    font-family: monospace;
-}
-
-.move-history-table th,
-.move-history-table thead th {
-    color: white !important;
-    background: transparent !important;
-}
-
 // Notification-like blocks used in rules page
 .warning,
 .special-note {
@@ -758,6 +648,19 @@ footer.footer {
     -webkit-tap-highlight-color: rgba(255, 255, 255, 0);
 }
 
+// ─── Game page (_play_board.html.twig) ────────────────────────────────────────
+// Three columns on wide screens - player cards | board | moves panel - so the
+// board fills the viewport height and every control stays in view. Narrower:
+// the cards become slim rows above/below the board and the panel stays on the
+// right, then drops under the board on phones. The layout is a grid on
+// .game-layout whose direct children are placed by area, so the same DOM serves
+// every width; container queries (on .game-container) pick the arrangement.
+
+$keres-teal: #1faba3;
+$game-surface: #12110f;
+$game-border: rgba($keres-secondary, 0.16);
+$game-radius: 4px;
+
 .game-container {
     // `--board-aspect` (viewBox width / height) is published by SVGBoardView and
     // changes when the coordinate labels are toggled; this default only covers
@@ -769,32 +672,135 @@ footer.footer {
     // level; with it, zooming in past this point enlarges the board and the
     // page scrolls instead.
     --board-min-width: 320px;
-    // The sticky navbar covers the top of the viewport.
-    --board-max-height: calc(100dvh - var(--site-navbar-height));
 
-    max-width: 1200px;
+    container: game / inline-size;
+    max-width: 1800px;
     margin: auto;
     padding: 1rem;
 }
 
-// The board is never wider than its container nor taller than the visible
-// viewport. The SVG must keep exactly the viewBox aspect ratio (hit-testing
-// maps client coordinates onto the viewBox), so the size is derived from the
-// height limit rather than clamped with max-height.
-// The board and, when enabled, the evaluation bar on its left. The wrapper
-// takes the board's width formula plus the bar's footprint, so the board
-// itself keeps exactly the size it has without the bar.
-.board-with-eval {
+.game-layout {
+    --side-w: 15rem;
+    --panel-w: 20rem;
+    --gap: 1rem;
     --eval-bar-extra: 0px;
+    // Height the arrangement needs besides the board itself: phones show two slim player rows and no brand line.
+    --board-reserved-h: 8rem;
+    // Width left for the board (+ evaluation bar) once the side columns are placed.
+    --board-avail-w: 100cqw;
+    // The sticky navbar covers the top of the viewport; the container padding takes 1rem above and below.
+    --board-max-height: calc(100dvh - var(--site-navbar-height) - 2rem - var(--board-reserved-h));
+    // The board is never wider than its column nor taller than the visible
+    // viewport. The SVG must keep exactly the viewBox aspect ratio (hit-testing
+    // maps client coordinates onto the viewBox), so the size is derived from the
+    // height limit rather than clamped with max-height. The evaluation bar adds
+    // its footprint so the board itself keeps the size it has without it.
+    --board-w: min(var(--board-avail-w), calc(max(var(--board-min-width), calc(var(--board-max-height) * var(--board-aspect))) + var(--eval-bar-extra)));
 
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-areas: "top" "board" "bottom" "info" "panel";
+    gap: 0.6rem var(--gap);
+    justify-content: center;
+
+    &:has(.has-eval-bar) {
+        --eval-bar-extra: 2.25rem;
+    }
+
+    // Board + moves panel side by side: player rows above/below the board, status over the panel.
+    @container game (min-width: 52rem) {
+        --board-reserved-h: 12rem;
+        --board-avail-w: calc(100cqw - var(--panel-w) - var(--gap));
+
+        grid-template-columns: var(--board-w) var(--panel-w);
+        grid-template-areas:
+            "top    info"
+            "board  panel"
+            "bottom panel";
+        grid-template-rows: auto 1fr auto;
+    }
+
+    // Cards | board | panel.
+    @container game (min-width: 72rem) {
+        --board-reserved-h: 2.25rem;
+        --board-avail-w: calc(100cqw - var(--side-w) - var(--panel-w) - 2 * var(--gap));
+
+        grid-template-columns: var(--side-w) var(--board-w) var(--panel-w);
+        grid-template-areas:
+            "top    board moves"
+            "info   board actions"
+            "bottom board pieces";
+        grid-template-rows: minmax(0, 1fr) auto minmax(0, 1fr);
+        // Exactly the board's height, so the cards and panel blocks share it instead of stretching the rows.
+        height: calc((var(--board-w) - var(--eval-bar-extra)) / var(--board-aspect));
+    }
+}
+
+// Black's card sits on top while White is at the bottom of the board; app.ts flips both with the board.
+.player-card--black { grid-area: top; }
+.player-card--white { grid-area: bottom; }
+.game-layout.is-flipped {
+    .player-card--black { grid-area: bottom; }
+    .player-card--white { grid-area: top; }
+}
+
+.game-board {
+    grid-area: board;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    min-width: 0;
+}
+
+.board-with-eval {
     display: flex;
     align-items: stretch;
     gap: 0.5rem;
-    width: min(100%, calc(max(var(--board-min-width), calc(var(--board-max-height) * var(--board-aspect))) + var(--eval-bar-extra)));
-    margin-inline: auto;
+    width: var(--board-w);
+    max-width: 100%;
+}
 
-    &.has-eval-bar {
-        --eval-bar-extra: 2.25rem;
+// The Keres signature under the board, like the maker's mark on a real one.
+.game-board__brand {
+    display: none;
+    align-items: center;
+    gap: 0.6rem;
+    width: min(60%, 24rem);
+    height: 1.75rem;
+    margin-top: 0.5rem;
+    color: rgba($keres-secondary, 0.75);
+    font-family: 'Carolingia', serif;
+    font-size: 1.5rem;
+    line-height: 1;
+
+    &::before,
+    &::after {
+        content: "";
+        flex: 1;
+        height: 1px;
+        background: linear-gradient(to var(--brand-line-dir, right), transparent, rgba($keres-secondary, 0.45));
+    }
+
+    &::after {
+        --brand-line-dir: left;
+    }
+
+    img {
+        width: 1.1rem;
+        height: 1.1rem;
+        opacity: 0.8;
+    }
+
+    span {
+        padding-top: 0.3rem;
+    }
+
+    // Under the layout, so the board's bottom edge lines up with the side panels; the board column sits
+    // 2.5rem left of the layout's centre (15rem cards vs 20rem panel).
+    @container game (min-width: 72rem) {
+        display: flex;
+        margin: 0.5rem auto 0;
+        transform: translateX(-2.5rem);
     }
 }
 
@@ -881,105 +887,938 @@ footer.footer {
     }
 }
 
-// The opponent's row, the board and the player's own row, as one unit. A plain
-// pass-through in the normal page flow; the viewport-fitted stage in fullscreen.
-.game-stage {
-    display: contents;
+// ─── Player cards ─────────────────────────────────────────────────────────────
+// One per colour (avatar, name, rating, clock, material edge). Wide screens: a
+// tall card in the left column. Otherwise: one slim row above/below the board.
+
+.player-card {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-areas: "identity clock" "material material";
+    align-items: center;
+    gap: 0 0.75rem;
+    min-width: 0;
+    padding: 0.4rem 0.6rem;
+    background: $game-surface;
+    border: 1px solid $game-border;
+    border-radius: $game-radius;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+
+    &.is-to-move {
+        border-color: rgba($keres-teal, 0.55);
+        box-shadow: inset 3px 0 0 $keres-teal;
+    }
+
+    @container game (min-width: 52rem) {
+        grid-template-columns: minmax(0, 1fr) auto auto;
+        grid-template-areas: "identity material clock";
+    }
+
+    @container game (min-width: 72rem) {
+        position: relative;
+        grid-template-columns: minmax(0, 1fr);
+        grid-template-areas: "identity" "clock" "material";
+        // The card fills its share of the column; the content spreads over the height.
+        align-content: space-evenly;
+        gap: 0.75rem;
+        padding: 1rem;
+
+        &.is-to-move {
+            box-shadow: inset 0 3px 0 $keres-teal;
+        }
+    }
+}
+
+.player-card__identity {
+    grid-area: identity;
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    min-width: 0;
+
+    @container game (min-width: 72rem) {
+        flex-direction: column;
+        gap: 0.75rem;
+        width: 100%;
+    }
+}
+
+.player-card__avatar {
+    flex: none;
+    display: grid;
+    place-items: center;
+    width: 2.25rem;
+    height: 2.25rem;
+    overflow: hidden;
+    border-radius: 50%;
+    border: 2px solid rgba($keres-secondary, 0.55);
+    background: radial-gradient(circle at 35% 30%, #2b2620, #0d0c0a);
+    color: $keres-secondary;
+    font-family: 'RomanSerif', serif;
+    font-size: 1.1rem;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+
+    img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+
+    .is-to-move & {
+        border-color: $keres-teal;
+        box-shadow: 0 0 0.6rem rgba($keres-teal, 0.45);
+    }
+
+    @container game (min-width: 72rem) {
+        width: min(100%, 6rem);
+        height: auto;
+        aspect-ratio: 1;
+        font-size: 2.2rem;
+    }
+}
+
+.player-card__who {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    line-height: 1.25;
+
+    @container game (min-width: 72rem) {
+        width: 100%;
+        align-items: center;
+        text-align: center;
+    }
+}
+
+.player-card__name {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    color: $keres-light;
+    font-family: 'RomanSerif', serif;
+    font-size: 1.1rem;
+
+    &.is-engine {
+        color: $keres-secondary;
+    }
+
+    @container game (min-width: 72rem) {
+        // Long names wrap rather than truncate.
+        overflow: visible;
+        text-overflow: clip;
+        white-space: normal;
+        overflow-wrap: anywhere;
+        font-size: 1.3rem;
+    }
+}
+
+a.player-card__name:hover {
+    color: $keres-primary;
+}
+
+.player-card__meta {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    font-size: 0.8rem;
+    color: rgba($keres-light, 0.65);
+    font-variant-numeric: tabular-nums;
+}
+
+// Which colour the seat plays: a small disc in the piece colours.
+.player-card__color {
+    width: 0.7rem;
+    height: 0.7rem;
+    border-radius: 50%;
+    border: 1px solid rgba($keres-secondary, 0.6);
+
+    &.is-white { background: #f1e6d2; }
+    &.is-black { background: #1d1a16; }
+}
+
+.player-card__rating {
+    &::before {
+        content: "·";
+        margin-right: 0.4rem;
+        color: rgba($keres-light, 0.4);
+    }
+
+    &.is-provisional {
+        color: rgba($keres-light, 0.45);
+    }
+}
+
+.player-card__delta {
+    font-weight: 600;
+
+    &.is-gain { color: #48c78e; }
+    &.is-loss { color: #f0707b; }
+}
+
+// "To move" marker: a dot at the card's corner on wide screens, next to the name otherwise.
+.player-card__turn {
+    flex: none;
+    width: 0.55rem;
+    height: 0.55rem;
+    margin-left: auto;
+    border-radius: 50%;
+    background: $keres-teal;
+    box-shadow: 0 0 0.5rem $keres-teal;
+    visibility: hidden;
+
+    .is-to-move & {
+        visibility: visible;
+    }
+
+    @container game (min-width: 72rem) {
+        position: absolute;
+        top: 0.8rem;
+        right: 0.8rem;
+        width: 0.75rem;
+        height: 0.75rem;
+    }
+}
+
+.player-clock {
+    grid-area: clock;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5em;
+    min-width: 5.5em;
+    padding: 0.2em 0.7em;
+    border: 1px solid $game-border;
+    border-radius: $game-radius;
+    background: #0b0a09;
+    color: rgba($keres-secondary, 0.7);
+    font-family: 'RomanSerif', serif;
+    font-size: 1.2rem;
+    font-variant-numeric: tabular-nums;
+    transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease;
+
+    &[hidden] {
+        display: none;
+    }
+
+    // Ticking: the side to move, unmistakable.
+    &.is-active {
+        border-color: $keres-teal;
+        background: rgba($keres-teal, 0.1);
+        color: color.adjust($keres-teal, $lightness: 15%);
+    }
+
+    @container game (min-width: 72rem) {
+        padding: 0.35em 0.5em;
+        font-size: 2.1rem;
+    }
+}
+
+.player-clock__icon {
+    font-size: 0.7em;
+    opacity: 0.8;
+}
+
+// ─── Material difference (Lichess-style), inside the player card ─────────────
+
+.material-bar {
+    grid-area: material;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    min-width: 0;
+    // Pieces and score are sized in em.
+    font-size: 0.55rem;
+
+    // Even material: nothing to show, no room taken.
+    &:empty {
+        display: none;
+    }
+
+    @container game (min-width: 72rem) {
+        min-height: 2.2rem;
+        padding-top: 0.6rem;
+        border-top: 1px solid $game-border;
+        font-size: 0.7rem;
+        // Seen from the card's centre line, the stack of pieces reads as one block.
+        justify-content: center;
+    }
+}
+
+.material-piece {
+    flex: 0 1 4.5em;
+    // Never more than four to a row, whatever the card width.
+    max-width: 25%;
+    height: auto;
+    display: block;
+    overflow: visible;
+}
+
+.material-score {
+    flex: none;
+    align-self: center;
+    margin-left: 0.3em;
+    color: $keres-primary;
+    font-size: 1.6em;
+    font-weight: bold;
+    white-space: nowrap;
+}
+
+// ─── Status line + option badges (between the cards on wide screens) ─────────
+
+.game-info {
+    grid-area: info;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 0.5rem;
+    min-width: 0;
+}
+
+.game-info__badges.tags {
+    justify-content: center;
+    margin-bottom: 0;
+
+    .tag {
+        margin-bottom: 0;
+        border-radius: $game-radius;
+    }
+}
+
+// Whose turn / waiting / final result.
+.game-status-banner {
+    padding: 0.55em 0.8em;
+    border: 1px solid transparent;
+    border-radius: $game-radius;
+    font-size: 0.95rem;
+    text-align: center;
+    transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease;
+
+    // Opponent's turn, history view, loading: neutral and quiet.
+    &.is-muted {
+        background: $game-surface;
+        color: #a3a3a3;
+        border-color: $game-border;
+    }
+
+    // The viewer's turn: same accent as the ticking clock.
+    &.is-your-turn {
+        background: rgba($keres-teal, 0.14);
+        color: color.adjust($keres-teal, $lightness: 20%);
+        border-color: $keres-teal;
+        font-weight: bold;
+    }
+
+    // Final result, from the viewer's side. Each variant pins both colours.
+    &.is-won {
+        background: #48c78e;
+        color: #0a2418;
+        border-color: #48c78e;
+        font-weight: bold;
+    }
+
+    &.is-lost {
+        background: #c62836;
+        color: #fff;
+        border-color: #c62836;
+        font-weight: bold;
+    }
+
+    &.is-drawn {
+        background: #f0a030;
+        color: #231503;
+        border-color: #f0a030;
+        font-weight: bold;
+    }
+
+    // A result that is nobody's win or loss here (spectator, hot-seat, aborted).
+    &.is-neutral-result {
+        background: $keres-secondary;
+        color: #1a1208;
+        border-color: $keres-secondary;
+        font-weight: bold;
+    }
+}
+
+// ─── Moves panel: moves, history navigation, game actions, piece info ────────
+
+// The three blocks of the panel (moves, actions, piece info). Below 72rem they are one card in one column;
+// from 72rem on the wrappers vanish and each block takes the grid row of the card or status line beside it.
+.game-panel {
+    grid-area: panel;
+    position: relative;
+    min-width: 0;
+
+    // Beside the board the panel takes the board's height (its content scrolls instead of stretching the row).
+    @container game (min-width: 52rem) {
+        min-height: 24rem;
+    }
+
+    @container game (min-width: 72rem) {
+        display: contents;
+    }
+}
+
+.game-panel__inner {
+    display: flex;
+    flex-direction: column;
+    background: $game-surface;
+    border: 1px solid $game-border;
+    border-radius: $game-radius;
+
+    @container game (min-width: 52rem) {
+        position: absolute;
+        inset: 0;
+    }
+
+    @container game (min-width: 72rem) {
+        display: contents;
+    }
+}
+
+.game-moves {
+    display: flex;
+    flex: 1 1 auto;
+    flex-direction: column;
+    min-height: 0;
+
+    @container game (min-width: 72rem) {
+        grid-area: moves;
+        overflow: hidden;
+        background: $game-surface;
+        border: 1px solid $game-border;
+        border-radius: $game-radius;
+    }
+}
+
+.game-panel__header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+    padding: 0.4rem 0.4rem 0.4rem 0.9rem;
+    border-bottom: 1px solid $game-border;
+}
+
+.game-panel__title {
+    margin: 0;
+    color: $keres-secondary;
+    font-size: 0.95rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+}
+
+.game-panel__tools {
+    display: flex;
+    align-items: center;
+    gap: 0.15rem;
+}
+
+.icon-button {
+    display: inline-grid;
+    place-items: center;
+    width: 2.1rem;
+    height: 2.1rem;
+    padding: 0;
+    border: 1px solid transparent;
+    border-radius: $game-radius;
+    background: transparent;
+    color: $keres-secondary;
+    font-size: 0.95rem;
+    cursor: pointer;
+    transition: background-color 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+
+    &:hover:not(:disabled),
+    &[aria-expanded="true"] {
+        background: rgba($keres-secondary, 0.1);
+        border-color: $game-border;
+        color: $keres-light;
+    }
+
+    &:focus-visible {
+        outline: 2px solid $keres-teal;
+        outline-offset: 1px;
+    }
+
+    &:disabled {
+        opacity: 0.3;
+        cursor: default;
+    }
+}
+
+// Flat, squared action button of the game page.
+.game-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.55em;
+    padding: 0.6em 1em;
+    border: 1px solid rgba($keres-secondary, 0.45);
+    border-radius: $game-radius;
+    background: rgba($keres-secondary, 0.05);
+    color: $keres-light;
+    font-size: 0.85rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: background-color 0.15s ease, border-color 0.15s ease;
+
+    &:hover:not(:disabled) {
+        background: rgba($keres-secondary, 0.14);
+        border-color: $keres-secondary;
+    }
+
+    &:focus-visible {
+        outline: 2px solid $keres-teal;
+        outline-offset: 1px;
+    }
+
+    &:disabled {
+        opacity: 0.5;
+        cursor: default;
+    }
+
+    &.is-danger {
+        border-color: rgba(#e2574c, 0.6);
+        background: rgba(#8f1d1d, 0.35);
+        color: #f6d3cd;
+
+        &:hover:not(:disabled) {
+            background: rgba(#8f1d1d, 0.6);
+            border-color: #e2574c;
+        }
+    }
+
+    &.is-small {
+        padding: 0.45em 0.8em;
+        font-size: 0.75rem;
+    }
+
+    &.is-hidden {
+        display: none;
+    }
+}
+
+// Display settings popover (gear button).
+.board-settings {
+    position: relative;
+}
+
+.board-settings__menu {
+    position: absolute;
+    top: calc(100% + 0.4rem);
+    right: 0;
+    z-index: 30;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    width: 17rem;
+    padding: 0.85rem;
+    background: #1a1814;
+    border: 1px solid rgba($keres-secondary, 0.3);
+    border-radius: $game-radius;
+    box-shadow: 0 0.75rem 2rem rgba(0, 0, 0, 0.6);
+    font-size: 0.9rem;
+
+    &[hidden] {
+        display: none;
+    }
+
+    p {
+        margin: 0;
+    }
+}
+
+.board-settings__title {
+    color: $keres-secondary;
+    font-size: 0.75rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+}
+
+.board-settings__hint,
+.board-settings__status {
+    color: rgba($keres-light, 0.6);
+    font-size: 0.8rem;
+    line-height: 1.35;
+}
+
+.board-settings__status:empty {
+    display: none;
+}
+
+// A checkbox drawn as an on/off switch.
+.switch-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    cursor: pointer;
+
+    input {
+        appearance: none;
+        position: relative;
+        flex: none;
+        width: 2.2rem;
+        height: 1.2rem;
+        margin: 0;
+        border-radius: 1rem;
+        background: #3a352d;
+        cursor: pointer;
+        transition: background-color 0.15s ease;
+
+        &::after {
+            content: "";
+            position: absolute;
+            top: 0.15rem;
+            left: 0.15rem;
+            width: 0.9rem;
+            height: 0.9rem;
+            border-radius: 50%;
+            background: $keres-light;
+            transition: transform 0.15s ease;
+        }
+
+        &:checked {
+            background: $keres-teal;
+
+            &::after {
+                transform: translateX(1rem);
+            }
+        }
+
+        &:focus-visible {
+            outline: 2px solid $keres-teal;
+            outline-offset: 2px;
+        }
+    }
+}
+
+// The moves: one row per full move, each half-move a button that shows its position.
+.move-list {
+    position: relative;
+    flex: 1 1 auto;
+    min-height: 5rem;
+    max-height: 16rem;
+    overflow-y: auto;
+    scrollbar-width: thin;
+    scrollbar-color: rgba($keres-secondary, 0.35) transparent;
+
+    @container game (min-width: 52rem) {
+        max-height: none;
+        min-height: 0;
+    }
+}
+
+.move-list__rows {
+    margin: 0;
+    padding: 0.3rem 0;
+    list-style: none;
+}
+
+.move-list__row {
+    display: grid;
+    grid-template-columns: 2.6rem 1fr 1fr;
+    align-items: center;
+    margin: 0;
+    padding: 0 0.5rem;
+
+    &:nth-child(even) {
+        background: rgba($keres-secondary, 0.035);
+    }
+}
+
+.move-list__number {
+    padding-left: 0.4rem;
+    color: rgba($keres-light, 0.4);
+    font-size: 0.85rem;
+    font-variant-numeric: tabular-nums;
+}
+
+.move-list__move {
+    display: flex;
+    align-items: baseline;
+    min-width: 0;
+    padding: 0.2rem 0.45rem;
+    border: 0;
+    border-radius: 3px;
+    background: transparent;
+    color: $keres-light;
+    font-family: ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+    font-size: 0.95rem;
+    text-align: left;
+    cursor: pointer;
+
+    &:hover {
+        background: rgba($keres-secondary, 0.12);
+    }
+
+    &:focus-visible {
+        outline: 2px solid $keres-teal;
+        outline-offset: -2px;
+    }
+
+    &.is-current {
+        background: rgba($keres-teal, 0.2);
+        color: color.adjust($keres-teal, $lightness: 25%);
+    }
+}
+
+.move-list__empty {
+    margin: 0;
+    padding: 0.75rem 1rem;
+    color: rgba($keres-light, 0.45);
+    font-size: 0.9rem;
+    font-style: italic;
+}
+
+.move-nav {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 0.25rem;
+    padding: 0.35rem 0.5rem;
+    border-top: 1px solid $game-border;
+
+    .icon-button {
+        width: 100%;
+    }
+}
+
+.game-actions {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(7rem, 1fr));
+    gap: 0.5rem;
+    padding: 0.6rem 0.75rem;
+    border-top: 1px solid $game-border;
+
+    &.is-hidden {
+        display: none;
+    }
+
+    // Same grid row as the status line and badges, centred on them.
+    @container game (min-width: 72rem) {
+        grid-area: actions;
+        align-self: center;
+        background: $game-surface;
+        border: 1px solid $game-border;
+        border-radius: $game-radius;
+    }
+}
+
+// How the inspected piece or stack moves (hover, selection or long press on the board).
+.piece-info {
+    display: flex;
+    flex: none;
+    flex-direction: column;
+    padding: 0.6rem 0.85rem 0.75rem;
+    border-top: 1px solid $game-border;
+
+    // Right column of the three-column layout: the card facing the player's own card.
+    @container game (min-width: 72rem) {
+        grid-area: pieces;
+        min-height: 0;
+        overflow: hidden;
+        background: $game-surface;
+        border: 1px solid $game-border;
+        border-radius: $game-radius;
+    }
+}
+
+.piece-info__title {
+    margin: 0 0 0.4rem;
+    color: $keres-secondary;
+    font-size: 0.8rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+}
+
+.piece-info__body {
+    display: flex;
+    flex: 1 1 auto;
+    flex-direction: column;
+    min-height: 0;
+    gap: 0.6rem;
+    // The card has a fixed height (the grid row), so no height is reserved; the empty figure still holds
+    // its place, so hovering never shifts the text.
+    font-size: 0.85rem;
+    line-height: 1.35;
+}
+
+.piece-info__hint {
+    margin: 0;
+    color: rgba($keres-light, 0.5);
+    font-style: italic;
+}
+
+// The enlarged piece: the whole width of the panel, centred in a square box so a single piece and a stack share one scale.
+.piece-info__figure {
+    flex: none;
+    width: 13rem;
+    max-width: 100%;
+    aspect-ratio: 1;
+    align-self: center;
+
+    // The card has a fixed height: the figure is 13rem at most and gives up height to the text when short.
+    @container game (min-width: 72rem) {
+        flex: 1 1 13rem;
+        width: auto;
+        min-height: 0;
+        max-height: 13rem;
+    }
+    border-radius: $game-radius;
+    background: radial-gradient(circle at 50% 45%, rgba($keres-secondary, 0.08), transparent 70%);
+
+    svg {
+        display: block;
+        width: 100%;
+        height: 100%;
+        overflow: visible;
+    }
+}
+
+.piece-info__details,
+.piece-info__hint {
+    flex: none;
+    min-width: 0;
+}
+
+.piece-info__name {
+    margin: 0;
+    color: $keres-light;
+    font-weight: 600;
+
+    & + .piece-info__movement + & {
+        margin-top: 0.4rem;
+    }
+}
+
+.piece-info__layer {
+    color: rgba($keres-secondary, 0.8);
+    font-size: 0.75rem;
+    font-weight: normal;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+}
+
+.piece-info__movement {
+    margin: 0;
+    color: rgba($keres-light, 0.7);
+    list-style: none;
+
+    li {
+        margin: 0;
+    }
+}
+
+// ─── Feedback banner (signed-in players) ─────────────────────────────────────
+
+.feedback-banner {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    width: 100%;
+    max-width: 60rem;
+    margin: 2rem auto 0;
+    padding: 0.9rem 1.25rem;
+    border: 1px solid rgba($keres-secondary, 0.3);
+    border-radius: $game-radius;
+    background:
+        radial-gradient(circle at 0% 50%, rgba($keres-teal, 0.18), transparent 45%),
+        linear-gradient(100deg, #191510, #0e0d0b 70%);
+    color: $keres-light;
+    text-align: left;
+    cursor: pointer;
+    transition: border-color 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
+
+    &:hover {
+        border-color: $keres-secondary;
+        box-shadow: 0 0.5rem 1.5rem rgba(0, 0, 0, 0.5);
+        transform: translateY(-1px);
+    }
+
+    &:focus-visible {
+        outline: 2px solid $keres-teal;
+        outline-offset: 2px;
+    }
+}
+
+.feedback-banner__avatar {
+    flex: none;
+    width: 3.5rem;
+    height: 3.5rem;
+    border-radius: 50%;
+    border: 2px solid $keres-secondary;
+    box-shadow: 0 0 0 3px rgba($keres-teal, 0.35);
+    object-fit: cover;
+}
+
+.feedback-banner__text {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    min-width: 0;
+}
+
+.feedback-banner__title {
+    color: $keres-secondary;
+    font-family: 'RomanSerif', serif;
+    font-size: 1.3rem;
+    line-height: 1.2;
+}
+
+.feedback-banner__subtitle {
+    color: rgba($keres-light, 0.7);
+    font-size: 0.9rem;
+}
+
+.feedback-banner__cta {
+    display: inline-flex;
+    flex: none;
+    align-items: center;
+    gap: 0.5em;
+    padding: 0.5em 0.9em;
+    border: 1px solid rgba($keres-teal, 0.7);
+    border-radius: $game-radius;
+    color: color.adjust($keres-teal, $lightness: 15%);
+    font-size: 0.8rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+
+    @media (max-width: 600px) {
+        display: none;
+    }
 }
 
 // ─── Page fullscreen (toggle-fullscreen-btn) ──────────────────────────────────
-// Toggled on <html> by PageFullscreen.ts. Hides the site chrome and turns the
-// .game-stage (opponent row, board, own row) into exactly one viewport: the
-// rows get a fixed height and the board is the largest 1.2252-ish rectangle
-// that fits the rest, both measured in the stage's container units (cqw/cqh),
-// so nothing is clipped or scrolled at any aspect ratio. The group is centred
-// (black bars around it); everything else (header, status, buttons, history)
-// stacks below the stage, out of view until scrolled to.
+// Toggled on <html> by PageFullscreen.ts. Hides the site chrome; with the
+// navbar gone the layout's height budget grows to the whole viewport, so the
+// board and its side columns simply refit. On narrow screens what lies under
+// the board stays reachable by scrolling.
 
 html.is-game-fullscreen {
     --site-navbar-height: 0px;
 
-    // The stage fills the viewport; what lies below it stays reachable by scrolling, without a permanent scrollbar eating width.
+    // No permanent scrollbar eating width.
     scrollbar-width: none;
 
     .site-navbar,
-    .footer {
+    .footer,
+    .feedback-banner {
         display: none;
     }
 
-    // The guest-game notice above the board (play_guest.html.twig) would push the stage down.
+    // The guest-game notice above the board (play_guest.html.twig) would push the board down.
     .container:has(> .guest-game-notice) {
         display: none;
     }
 
     .game-container {
-        display: flex;
-        flex-direction: column;
         max-width: none;
-        padding: 0.5rem;
+        padding-block: 0.5rem;
     }
 
-    .game-stage {
-        // Height of one player-info-row, shrinking on short viewports.
-        --fs-row-h: clamp(2rem, 7dvh, 3.25rem);
-        --fs-gap: 0.25rem;
-        --eval-bar-extra: 0px;
-        // Width of the board + eval bar: limited by the stage width and by the height left for the board.
-        --fs-w: min(100cqw, calc((100cqh - 2 * var(--fs-row-h) - 2 * var(--fs-gap)) * var(--board-aspect) + var(--eval-bar-extra)));
-
-        display: flex;
-        flex-direction: column;
-        justify-content: center;
-        gap: var(--fs-gap);
-        order: -1;
-        // Container padding (0.5rem) above, the same below: the rest of the page starts right under the viewport.
-        height: calc(100dvh - 1rem);
-        margin-bottom: 0.5rem;
-        container-type: size;
-
-        &:has(.has-eval-bar) {
-            --eval-bar-extra: 2.25rem;
-        }
-
-        > .board-with-eval {
-            flex: none;
-            width: var(--fs-w);
-        }
-
-        > .player-info-row {
-            flex: none;
-            width: var(--fs-w);
-            height: var(--fs-row-h);
-            margin-inline: auto;
-
-            .material-bar {
-                // Pieces and score are sized in em: 3em = 90% of the row.
-                font-size: calc(var(--fs-row-h) / 3.3);
-                min-height: 0;
-                height: 100%;
-                padding: 0 0.25rem;
-                flex-wrap: nowrap;
-                overflow: hidden;
-            }
-
-            // A long capture list squeezes the icons (down to 1.2em) instead of clipping them; the score stays whole.
-            .material-piece {
-                flex-shrink: 1;
-                min-width: 1.2em;
-            }
-
-            .material-score {
-                flex-shrink: 0;
-                padding-top: 0;
-                white-space: nowrap;
-            }
-
-            .player-clock {
-                min-width: 4.5em;
-                padding: 0.15em 0.6em;
-                font-size: clamp(0.9rem, calc(var(--fs-row-h) * 0.5), 1.3rem);
-            }
-        }
+    .game-layout {
+        // The container padding is 0.5rem above and below here, not 1rem.
+        --board-max-height: calc(100dvh - 1rem - var(--board-reserved-h));
     }
 }
 
@@ -1016,44 +1855,6 @@ html.is-game-fullscreen {
         pointer-events: none;
         margin-top: -1.6cqw;
     }
-}
-
-.move-history {
-    max-width: 400px;
-    flex-shrink: 0;
-    margin-bottom: 1em;
-}
-
-.move-history-box {
-    max-height: 400px;
-    overflow-y: auto;
-}
-
-// ─── Material difference (Lichess-style) ──────────────────────────────────────
-
-.material-bar {
-    display: flex;
-    align-items: center;
-    min-height: 3.3em;
-    padding: 0 1.8rem 0.3rem;
-    gap: 1px;
-    flex-wrap: wrap;
-}
-
-.material-piece {
-    width: 3em;
-    height: 3em;
-    display: inline-block;
-    vertical-align: middle;
-    flex-shrink: 0;
-    overflow: visible;
-}
-
-.material-score {
-    font-weight: bold;
-    color: $keres-primary;
-    margin-left: 0.3em;
-    padding-top: 0.7em;
 }
 
 // ─── Rules side panel (desktop) ──────────────────────────────────────────────
@@ -1251,7 +2052,7 @@ html.is-game-fullscreen {
     .piece-icon.dark    { background-color: #fff !important; }
     .piece-icon.primary { background-color: #b36b00 !important; }
 
-    nav, .button, .hero-img, .move-history, .game-container, .section-img, .no-print {
+    nav, .button, .hero-img, .game-container, .section-img, .no-print {
         display: none !important;
     }
 

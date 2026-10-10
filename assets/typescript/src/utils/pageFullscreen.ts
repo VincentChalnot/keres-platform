@@ -34,7 +34,7 @@ export class PageFullscreen {
         }
 
         this.setActive(true);
-        // The button sits below the board: land on the board + player rows, not on the scrolled-off remainder of the page.
+        // On narrow screens the button sits below the board: land on the board, not on the scrolled-off remainder of the page.
         window.scrollTo(0, 0);
         if (this.root.requestFullscreen) {
             try {
@@ -47,6 +47,9 @@ export class PageFullscreen {
 
     private setActive(active: boolean): void {
         this.root.classList.toggle(ACTIVE_CLASS, active);
-        this.button.innerText = active ? t('play.fullscreen.exit') : t('play.fullscreen.enter');
+        const label = active ? t('play.fullscreen.exit') : t('play.fullscreen.enter');
+        this.button.title = label;
+        this.button.setAttribute('aria-label', label);
+        this.button.querySelector('i')?.classList.replace(active ? 'fa-expand' : 'fa-compress', active ? 'fa-compress' : 'fa-expand');
     }
 }

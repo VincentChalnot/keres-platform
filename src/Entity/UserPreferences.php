@@ -43,6 +43,9 @@ class UserPreferences
     #[ORM\Column(type: Types::BOOLEAN)]
     private bool $showOpponentThreatsOnHover = true;
 
+    #[ORM\Column(type: Types::BOOLEAN, options: ['default' => false])]
+    private bool $rotateOpponentPieces = false;
+
     #[ORM\Column(type: Types::BOOLEAN)]
     private bool $allowContactByEmail = true;
 
@@ -131,6 +134,16 @@ class UserPreferences
     public function setShowOpponentThreatsOnHover(bool $showOpponentThreatsOnHover): void
     {
         $this->showOpponentThreatsOnHover = $showOpponentThreatsOnHover;
+    }
+
+    public function isRotateOpponentPieces(): bool
+    {
+        return $this->rotateOpponentPieces;
+    }
+
+    public function setRotateOpponentPieces(bool $rotateOpponentPieces): void
+    {
+        $this->rotateOpponentPieces = $rotateOpponentPieces;
     }
 
     public function isAllowContactByEmail(): bool
