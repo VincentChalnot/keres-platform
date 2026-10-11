@@ -593,49 +593,6 @@ footer.footer {
     background: $keres-secondary;
 }
 
-// ─── Piece icons (shared across pages) ────────────────────────────────────────
-
-.piece-icon {
-    display: inline-block;
-    vertical-align: text-bottom;
-    width: 1.2em;
-    aspect-ratio: 1 / 1;
-    background-color: $keres-light;
-    -webkit-mask-size: contain;
-    mask-size: contain;
-    -webkit-mask-repeat: no-repeat;
-    mask-repeat: no-repeat;
-    -webkit-mask-position: center;
-    mask-position: center;
-
-    &.dark    { background-color: $keres-dark; }
-    &.primary { background-color: $keres-primary; }
-
-    &.ballista { -webkit-mask-image: url('../public/images/pieces/ballista.svg'); mask-image: url('../public/images/pieces/ballista.svg'); }
-    &.rook     { -webkit-mask-image: url('../public/images/pieces/rook.svg');     mask-image: url('../public/images/pieces/rook.svg'); }
-    &.knight   { -webkit-mask-image: url('../public/images/pieces/knight.svg');   mask-image: url('../public/images/pieces/knight.svg'); }
-    &.guard    { -webkit-mask-image: url('../public/images/pieces/guard.svg');    mask-image: url('../public/images/pieces/guard.svg'); }
-    &.bishop   { -webkit-mask-image: url('../public/images/pieces/bishop.svg');   mask-image: url('../public/images/pieces/bishop.svg'); }
-    &.king     { -webkit-mask-image: url('../public/images/pieces/king.svg');     mask-image: url('../public/images/pieces/king.svg'); }
-    &.paladin  { -webkit-mask-image: url('../public/images/pieces/paladin.svg');  mask-image: url('../public/images/pieces/paladin.svg'); }
-    &.soldier  { -webkit-mask-image: url('../public/images/pieces/soldier.svg');  mask-image: url('../public/images/pieces/soldier.svg'); }
-}
-
-.piece--white {
-    --piece-bg: #fff;
-    --piece-fg: #000;
-}
-
-.piece--black {
-    --piece-bg: #000;
-    --piece-fg: #fff;
-}
-
-.piece--reversed .piece-icon {
-    transform-origin: 45px 35.2px;
-    transform: rotate(180deg);
-}
-
 // ─── Board & game layout ──────────────────────────────────────────────────────
 
 #board-canvas {
@@ -2083,10 +2040,6 @@ html.is-game-fullscreen {
         color: #000 !important;
         text-shadow: none !important;
     }
-
-    .piece-icon { background-color: #000 !important; }
-    .piece-icon.dark    { background-color: #fff !important; }
-    .piece-icon.primary { background-color: #b36b00 !important; }
 
     nav, .button, .hero-img, .game-container, .section-img, .no-print {
         display: none !important;

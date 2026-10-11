@@ -44,10 +44,14 @@
     user-select: none;
 }
 
-/* Prevent browser text-selection highlight and tap flash on the board SVG.
-   `pinch-zoom` (not `none`) keeps page pinch-zoom working over the board while
-   single-finger drags still reach the piece drag handlers instead of scrolling. */
-#board-container svg {
+/* Interaction hints for the board SVG (`svg.keres-board`, set by SVGBoardView -
+   no dependency on the page container, so the same sheet works in the admin
+   board editor and in static exports). Prevent browser text-selection
+   highlight and tap flash. `pinch-zoom` (not `none`) keeps page pinch-zoom
+   working over the board while single-finger drags still reach the piece drag
+   handlers instead of scrolling. */
+svg.keres-board {
+    cursor: pointer;
     user-select: none;
     -webkit-user-select: none;
     -webkit-tap-highlight-color: transparent;

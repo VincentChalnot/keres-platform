@@ -2,6 +2,7 @@ import {IBoardView, TileHighlight} from './IBoardView';
 import {BOARD_SIZE, LAST_BOARD_INDEX} from '../models/types';
 import {GameState} from '../models/GameState';
 import {decodePiece} from "../utils/boardUtils";
+import {injectBoardCss} from './boardCss';
 
 // Constants for the SVG board
 const SQUARE_WIDTH = 100; // px
@@ -16,8 +17,6 @@ const COORD_HEIGHT = 25; // px bottom margin for column letters (A-I)
 const TOP_MARGIN = 10;
 
 const SPRITE_URL = '/build/pieces-sprite.svg';
-// Use Vite's asset handling to get the correct URL for board.css
-const BOARD_CSS_URL = new URL('/assets/board.css', import.meta.url).href;
 
 /**
  * SVG-based board renderer
@@ -84,10 +83,10 @@ export default class SVGBoardView implements IBoardView {
 
     async initialize(container: HTMLElement): Promise<void> {
         this.container = container;
-        await this.injectBoardCSS();
+        injectBoardCss();
         this.svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
         this.applyViewBox();
-        this.svg.style.cursor = 'pointer';
+        this.svg.classList.add('keres-board');
 
         // Inline the sprite sheet symbols/defs directly into the SVG
         await this.inlineSpriteDefs(this.svg);
@@ -138,16 +137,6 @@ export default class SVGBoardView implements IBoardView {
 
         window.addEventListener('resize', this.boundOnResize);
         this.onResize();
-    }
-
-    private async injectBoardCSS() {
-        if (!document.querySelector(`link[data-board-css]`)) {
-            const link = document.createElement('link');
-            link.rel = 'stylesheet';
-            link.href = BOARD_CSS_URL;
-            link.setAttribute('data-board-css', 'true');
-            document.head.appendChild(link);
-        }
     }
 
     private async inlineSpriteDefs(targetSvg: SVGSVGElement) {

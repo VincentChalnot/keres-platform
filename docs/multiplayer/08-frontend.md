@@ -86,7 +86,6 @@ this move do to the board?" into TypeScript, the exact rules knowledge
 | `views/ThreeJSBoardView.ts` (510 lines) | dead, **but type-checked**: `implements IBoardView` at `:49`, matched by `tsconfig.json:21-23` `src/**/*` |
 | `utils/spriteLoader.ts` (18 lines) | zero references in `assets/`, `templates/`, `src/`, `vite.config.js` |
 | `IBoardView.ts:60-62` `IPieceSpriteLoader` | only declaration |
-| `src/pieces.css` | 0 bytes, zero references |
 | `boardUtils.ts:34-55` `encodeBoardToHash` / `decodeBoardFromHash` | only declarations; the URL-hash board feature is gone |
 
 **Policy: do not extend dead code, and do not delete it in this work either.** It is

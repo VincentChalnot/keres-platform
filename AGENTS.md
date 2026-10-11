@@ -75,8 +75,31 @@ knowledge (piece names, SVG representations, movement descriptions).
 | `src/network/MercureClient.ts`      | Mercure SSE subscription                                                        |
 | `src/views/IBoardView.ts`           | Renderer interface                                                              |
 | `src/views/SVGBoardView.ts`         | **Active renderer** — SVG, inline sprite sheet                                  |
+| `assets/board.css`                  | **The one stylesheet of the board SVG** (tiles, pieces, coordinate labels, piece animation, arrows) |
+| `src/views/boardCss.ts`             | `board.css` as a string (`?inline`): `injectBoardCss()` for the page, the default export for static exports |
 | `src/i18n/`                         | `t()` + ICU-subset formatter over the server-rendered catalogue (see Internationalisation) |
 | `src/views/ThreeJSBoardView.ts`     | Inactive renderer — do not modify unless explicitly asked                       |
+
+### Board styling: `assets/board.css` and nowhere else
+
+**SVG board styling lives in `assets/board.css` and nowhere else.** Every rule that targets something
+inside the board `<svg>` (`.tile`, `.piece`, `.p-w`/`.p-b`/`.p-r`, `.piece-icon`, `.coord-label`, the
+`#pieces-layer` animation, `.arrow*`, …) goes there; it must stay self-contained (no dependency on the page:
+select by class/id of the SVG's own content, never by `#board-container` or other page chrome) so it alone
+renders the board identically in the game page, the admin pages (opening explorer) and a static export.
+`app.scss` keeps the page: the container's layout (`#board-container`, `.game-container`, `--board-aspect`
+sizing, responsive rules), the game-over dimming/stamp of the container, panels and cards (including the size
+of the `<svg>`s of the material bar and piece-info panel, whose *colours* still come from `.p-w`/`.p-b` in
+`board.css`). The sprite sources (`assets/template.svg`, `assets/pieces/**`) carry no `<style>`; they only
+use the CSS variables (`--piece-bg`, `--piece-fg`, `--icon-rotation`) that `board.css` defines.
+
+`board.css` is bundled as a string, not as a stylesheet: `views/boardCss.ts` does
+`import boardCss from '../../../board.css?inline'`. `SVGBoardView.initialize()` calls `injectBoardCss()`,
+which adds ONE `<style data-board-css>` to `<head>` synchronously (no extra request, no flash of unstyled
+board, identical under the Vite dev server and in the production build, no change in the Twig templates:
+`play` and `admin` have no CSS file of their own). The default export of the module is the raw text for
+anything that needs to write the board out with its styles (the HTML export). The `<svg>` carries the class
+`keres-board`.
 
 ## Domain Model
 
