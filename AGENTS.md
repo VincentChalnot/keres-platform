@@ -77,6 +77,7 @@ knowledge (piece names, SVG representations, movement descriptions).
 | `src/views/SVGBoardView.ts`         | **Active renderer** — SVG, inline sprite sheet                                  |
 | `assets/board.css`                  | **The one stylesheet of the board SVG** (tiles, pieces, coordinate labels, piece animation, arrows) |
 | `src/views/boardCss.ts`             | `board.css` as a string (`?inline`): `injectBoardCss()` for the page, the default export for static exports |
+| `src/views/BoardArrows.ts`          | Right-button analysis arrows of the board (state, geometry, mouse handling)    |
 | `src/i18n/`                         | `t()` + ICU-subset formatter over the server-rendered catalogue (see Internationalisation) |
 | `src/views/ThreeJSBoardView.ts`     | Inactive renderer — do not modify unless explicitly asked                       |
 
@@ -122,6 +123,26 @@ board, identical under the Vite dev server and in the production build, no chang
 `play` and `admin` have no CSS file of their own). The default export of the module is the raw text for
 anything that needs to write the board out with its styles (the HTML export). The `<svg>` carries the class
 `keres-board`.
+
+### Analysis arrows (right mouse button)
+
+Right-press on a tile, drag, release on another one draws a semi-transparent arrow between the two tile
+centres: plain = orange, Shift = green, Ctrl = red (Ctrl wins), read live for the preview and at release.
+Same tile or outside the board draws nothing; Escape or a left press while dragging cancels. The same
+from/to/colour again removes the arrow, another colour replaces it. A knight offset ((1,2) or (2,1) tiles,
+whatever stands there) is drawn as an elbow, long leg first. `BoardArrows` (`views/BoardArrows.ts`) owns it:
+arrows are `{from, to, color}` records keyed by logical tile index (as `onTileClick`), drawn into
+`<g id="arrows-layer">` above the pieces through the view's flip-aware tile geometry (a flip, a selection or
+toggling the coordinates keeps them on their squares), each as one `<g class="arrow arrow-<colour>">` with a
+single closed outline path, styled only by `board.css` (the opacity is on the group, `.arrow-preview` is the
+one being dragged); `pointer-events: none`, so they never reach clicks or drags. Pure view state, independent
+of turn, input lock or game state: they work on past plies, finished games, spectators and guest games.
+Desktop mouse only (touch is out of scope; a macOS Ctrl+click is the OS's own right click and arrives as
+button 0). API on `SVGBoardView`/`IBoardView` (all optional in the interface, `ThreeJSBoardView` has none):
+`clearArrows()`, `getArrows()`, `setArrows()`. The view never clears arrows by itself (the admin board editor
+re-renders while keeping them): `GameController.renderBoard()` is the single place that clears them,
+whenever the displayed ply or the squares differ from the last render (move, opponent/AI reply, undo,
+history navigation; not flip or a resignation that leaves the position as it is).
 
 ## Domain Model
 

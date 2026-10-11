@@ -3,6 +3,7 @@ import {AnimationSpeed, BOARD_SIZE, LAST_BOARD_INDEX} from '../models/types';
 import {GameState} from '../models/GameState';
 import {decodePiece} from "../utils/boardUtils";
 import {injectBoardCss} from './boardCss';
+import BoardArrows, {BoardArrow} from './BoardArrows';
 
 // Constants for the SVG board
 const SQUARE_WIDTH = 100; // px
@@ -28,6 +29,9 @@ export default class SVGBoardView implements IBoardView {
     private piecesGroup!: SVGGElement;
     private overlaysGroup!: SVGGElement;
     private coordsGroup!: SVGGElement;
+    private arrowsGroup!: SVGGElement;
+    // Right-button analysis arrows: purely visual state of this view, cleared by whoever changes the displayed position
+    private arrows: BoardArrows | null = null;
     private gameState: GameState;
 
     private clickHandler: ((tileIndex: number, shiftKey?: boolean) => void) | null = null;
@@ -115,12 +119,28 @@ export default class SVGBoardView implements IBoardView {
         this.piecesGroup.setAttribute('id', 'pieces-layer');
         this.svg.appendChild(this.piecesGroup);
 
+        // Analysis arrows live above the pieces (and never take the mouse: board.css)
+        this.arrowsGroup = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+        this.arrowsGroup.setAttribute('id', 'arrows-layer');
+        this.svg.appendChild(this.arrowsGroup);
+
         container.appendChild(this.svg);
 
         // Create the board background
         this.createBoard();
         this.createCoordinates(false);
         this.createOverlays();
+        this.arrows = new BoardArrows({
+            svg: this.svg,
+            layer: this.arrowsGroup,
+            tileCentre: (index) => {
+                const {x, y} = this.getTilePosition(index);
+                return {x: x + SQUARE_WIDTH / 2, y: y + SQUARE_HEIGHT / 2};
+            },
+            tileAt: (event) => this.getPosFromMouseEvent(event),
+            // A piece in the air owns the mouse; a merely pressed left button does not
+            canStart: () => !this.dragState.active,
+        });
 
         // Event listeners - bind and store references for proper cleanup
         this.boundHandleClick = (e: MouseEvent) => this.handleClick(e);
@@ -263,6 +283,7 @@ export default class SVGBoardView implements IBoardView {
             this.recreateAllPieces(boardData, flipped);
             if (orientationChanged) {
                 this.createCoordinates(flipped);
+                this.arrows?.redraw(); // the arrows stay on their squares, which moved
             }
             this.currentBoardData = new Uint8Array(boardData);
             this.currentFlipped = flipped;
@@ -610,6 +631,8 @@ export default class SVGBoardView implements IBoardView {
     }
 
     private handleMouseUp(event: MouseEvent): void {
+        // Only the primary button drops a piece (the right one belongs to the arrows)
+        if (event.button !== 0) return;
         this.cancelLongPressTimer();
         if (!this.dragState.active) {
             this.dragState.from = -1;
@@ -849,6 +872,20 @@ export default class SVGBoardView implements IBoardView {
         this.applyViewBox();
     }
 
+    /** Removes every analysis arrow. */
+    clearArrows(): void {
+        this.arrows?.clear();
+    }
+
+    getArrows(): BoardArrow[] {
+        return this.arrows?.get() ?? [];
+    }
+
+    /** Replaces the analysis arrows (invalid ones are dropped; one arrow per from/to pair, the last wins). */
+    setArrows(arrows: BoardArrow[]): void {
+        this.arrows?.set(arrows);
+    }
+
     /**
      * Sets the SVG viewBox and publishes its aspect ratio as `--board-aspect` on
      * the game container: CSS sizes the board from it (fit to the viewport
@@ -901,6 +938,9 @@ export default class SVGBoardView implements IBoardView {
         if (this.svg && this.svg.parentNode) {
             this.svg.parentNode.removeChild(this.svg);
         }
+
+        this.arrows?.dispose();
+        this.arrows = null;
 
         // Clear caches
         this.overlayElements.clear();

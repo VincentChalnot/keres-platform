@@ -1,4 +1,5 @@
 import type {AnimationSpeed} from '../models/types';
+import type {BoardArrow} from './BoardArrows';
 
 /**
  * Interface for board rendering
@@ -70,6 +71,22 @@ export interface IBoardView {
      * Resolves once the piece movement started by the last render has finished (immediately when nothing moves) (optional)
      */
     whenSettled?(): Promise<void>;
+
+    /**
+     * Remove every analysis arrow (the ones drawn with the right mouse button). The view never clears them on its own:
+     * whoever changes the displayed position calls this (optional)
+     */
+    clearArrows?(): void;
+
+    /**
+     * The analysis arrows as plain data, tiles indexed like `onTileClick` (optional)
+     */
+    getArrows?(): BoardArrow[];
+
+    /**
+     * Replace the analysis arrows (optional)
+     */
+    setArrows?(arrows: BoardArrow[]): void;
 }
 
 export interface TileHighlight {

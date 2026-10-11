@@ -98,3 +98,43 @@ svg[data-anim-speed="slow"] {
     0%, 40% { opacity: 0; }
     100% { opacity: 1; }
 }
+
+/* ─── Analysis arrows (BoardArrows) ──────────────────────────────────────────
+   `#arrows-layer` sits above the pieces and never takes the mouse. Every arrow
+   is a <g class="arrow arrow-<colour>"> holding ONE closed outline (shaft +
+   head), so the opacity lives on the group and is uniform over the whole
+   arrow. `.arrow-preview` is the one still being dragged. The colours read on
+   both tile colours (#513a27 dark, #ddbd90 light) thanks to the darker rim. */
+#arrows-layer {
+    pointer-events: none;
+}
+
+.arrow {
+    opacity: 0.85;
+}
+
+.arrow path {
+    fill: var(--arrow-fill);
+    stroke: var(--arrow-rim);
+    stroke-width: 3px;
+    stroke-linejoin: round;
+}
+
+.arrow-preview {
+    opacity: 0.55;
+}
+
+.arrow-orange {
+    --arrow-fill: #f59a1b;
+    --arrow-rim: #8a4b00;
+}
+
+.arrow-green {
+    --arrow-fill: #3fb04a;
+    --arrow-rim: #16591d;
+}
+
+.arrow-red {
+    --arrow-fill: #e8453a;
+    --arrow-rim: #7d1612;
+}

@@ -2,7 +2,7 @@ import {GameState} from '../models/GameState';
 import {GameAPI} from '../network/GameAPI';
 import {MercureClient, GameUpdate, ClockState} from '../network/MercureClient';
 import {IBoardView, TileHighlight} from '../views/IBoardView';
-import {Move} from '../models/types';
+import {LAST_BOARD_INDEX, Move} from '../models/types';
 import {decodeMoveListFromBase64, posToAlgebraic, encodeBoardToBinary} from '../utils/boardUtils';
 import {t} from '../i18n';
 
@@ -37,6 +37,8 @@ export class GameController {
     private inspectHandler: ((position: number | null) => void) | null = null;
     // History navigation in progress: each jump replays positions server-side, so they run one after the other.
     private navigation: Promise<void> = Promise.resolve();
+    // The position drawn last (displayed ply + the 81 squares): the view's analysis arrows belong to it
+    private drawnPosition: {ply: number; squares: Uint8Array} | null = null;
 
     /** Three call sites (Mercure, move, resign) plus the page bootstrap need identical anchoring. */
     private captureClockTiming(serverTimeMicros: number): void {
@@ -458,11 +460,28 @@ export class GameController {
         this.inspectHandler = handler;
     }
 
+    /**
+     * Analysis arrows are tied to one displayed position. Playing, undoing, an incoming move (Mercure, AI reply, guest
+     * game) and every history jump change the ply or the pieces and wipe them; a flip, a selection or a game-over flag
+     * (resignation, timeout) leave the position alone and keep them. Every path that changes the displayed position
+     * ends in renderBoard(), which makes this the one place that has to know.
+     */
+    private clearArrowsOnNewPosition(boardBinary: Uint8Array): void {
+        const ply = this.getDisplayedPly();
+        const squares = boardBinary.slice(0, LAST_BOARD_INDEX + 1);
+        const previous = this.drawnPosition;
+        this.drawnPosition = {ply, squares};
+        if (!previous || previous.ply !== ply || previous.squares.some((piece, index) => piece !== squares[index])) {
+            this.view.clearArrows?.();
+        }
+    }
+
     private async renderBoard(): Promise<void> {
         const board = this.gameState.getBoard();
         if (!board) return;
         const flipped = this.gameState.isBoardFlipped();
         const boardBinary = encodeBoardToBinary(board);
+        this.clearArrowsOnNewPosition(boardBinary);
         await this.view.render(boardBinary, flipped);
         this.pinnedInspection = null;
         this.updateOverlays();
