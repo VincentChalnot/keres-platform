@@ -87,6 +87,12 @@ export interface IBoardView {
      * Replace the analysis arrows (optional)
      */
     setArrows?(arrows: BoardArrow[]): void;
+
+    /**
+     * The board as currently displayed, as a complete standalone HTML document (board CSS + SVG, no script, no external
+     * request). Admin tooling; never changes what the live board shows (optional)
+     */
+    exportStaticHtml?(title: string): string;
 }
 
 export interface TileHighlight {

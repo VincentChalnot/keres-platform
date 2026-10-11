@@ -15,6 +15,7 @@ import {EvalBar, formatEvaluation} from './views/EvalBar';
 import {describeGameOver, gameOverOutcome} from './utils/gameOverText';
 import {t} from './i18n';
 import {ANIMATION_SPEEDS, AnimationSpeed} from './models/types';
+import {downloadHtml} from './views/boardExport';
 
 /** Display defaults of a visitor without an account (guest games, anonymous spectators); signed-in players keep theirs in Settings. */
 const BOARD_DEFAULTS_KEY = 'keres.boardDefaults';
@@ -507,6 +508,7 @@ class KeresGame {
 
         // Panel tools: flip, fullscreen, display settings
         document.getElementById('flip-board-btn')?.addEventListener('click', () => void this.handleFlipBoard());
+        document.getElementById('export-board-btn')?.addEventListener('click', () => this.handleExportBoard());
         new PageFullscreen(document.getElementById('toggle-fullscreen-btn') as HTMLButtonElement);
         this.settingsBtn.addEventListener('click', () => this.setSettingsOpen(this.settingsMenu.hidden));
         this.coordsSwitch.addEventListener('change', () => this.setCoordinatesVisible(this.coordsSwitch.checked));
@@ -645,6 +647,19 @@ class KeresGame {
     private async handleFlipBoard(): Promise<void> {
         await this.controller.flipBoard();
         this.applyOrientation();
+    }
+
+    /**
+     * Admin tooling (the button is only rendered for ROLE_ADMIN; English only): downloads the board as it is displayed,
+     * at whatever ply is shown and with whatever is selected or drawn, as a standalone HTML file. Changes nothing.
+     */
+    private handleExportBoard(): void {
+        if (!this.view.exportStaticHtml) return;
+
+        const gameUuid = this.boardContainer.getAttribute('data-game-uuid');
+        const ply = this.controller.getDisplayedPly();
+        const html = this.view.exportStaticHtml(gameUuid ? `Keres board - game ${gameUuid}, ply ${ply}` : `Keres board - ply ${ply}`);
+        downloadHtml(html, gameUuid ? `keres-board-${gameUuid.slice(0, 8)}-ply${ply}.html` : 'keres-board.html');
     }
 
     /** The player cards and the evaluation bar follow the board: the side at the bottom of the board has its card at the bottom. */

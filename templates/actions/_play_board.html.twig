@@ -110,6 +110,12 @@
                             <button type="button" class="icon-button" id="flip-board-btn" title="{{ 'play.board.panel.flip'|trans }}" aria-label="{{ 'play.board.panel.flip'|trans }}">
                                 <i class="fa-solid fa-arrows-up-down" aria-hidden="true"></i>
                             </button>
+                            {# Admin tooling, deliberately English-only (no translation keys): saves the board as displayed as a static HTML file. The export is client-side (app.ts); the button only exists in the markup of admins. #}
+                            {% if is_granted('ROLE_ADMIN') %}
+                                <button type="button" class="icon-button" id="export-board-btn" title="Download the board as a static HTML file" aria-label="Download the board as a static HTML file">
+                                    <i class="fa-solid fa-download" aria-hidden="true"></i>
+                                </button>
+                            {% endif %}
                             <button type="button" class="icon-button" id="toggle-fullscreen-btn" title="{{ 'play.board.fullscreen'|trans }}" aria-label="{{ 'play.board.fullscreen'|trans }}">
                                 <i class="fa-solid fa-expand" aria-hidden="true"></i>
                             </button>

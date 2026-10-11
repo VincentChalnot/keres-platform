@@ -3,6 +3,7 @@ import {AnimationSpeed, BOARD_SIZE, LAST_BOARD_INDEX} from '../models/types';
 import {GameState} from '../models/GameState';
 import {decodePiece} from "../utils/boardUtils";
 import {injectBoardCss} from './boardCss';
+import {buildBoardHtml} from './boardExport';
 import BoardArrows, {BoardArrow} from './BoardArrows';
 
 // Constants for the SVG board
@@ -18,6 +19,19 @@ const COORD_HEIGHT = 25; // px bottom margin for column letters (A-I)
 const TOP_MARGIN = 10;
 
 const SPRITE_URL = '/build/pieces-sprite.svg';
+
+interface HighlightStyle {
+    fill: string;
+    opacity: string;
+}
+
+const HIGHLIGHT_STYLES: Record<TileHighlight['type'], HighlightStyle> = {
+    selected: {fill: '#7fa0dd', opacity: '0.6'},
+    potential: {fill: '#55d157', opacity: '0.5'},
+    hovered: {fill: '#e1ca58', opacity: '0.4'},
+    threat: {fill: '#ff4444', opacity: '0.5'},
+    last_move: {fill: '#e89038', opacity: '0.5'},
+};
 
 /**
  * SVG-based board renderer
@@ -45,6 +59,9 @@ export default class SVGBoardView implements IBoardView {
 
     // Cache for overlay rectangles
     private overlayElements: Map<number, SVGRectElement> = new Map();
+
+    // What the overlays currently show, in painting order (a later highlight of a tile covers an earlier one)
+    private painted: Array<{visualIndex: number; type: TileHighlight['type']}> = [];
 
     // Drag & drop state
     private dragState: {
@@ -532,38 +549,17 @@ export default class SVGBoardView implements IBoardView {
         }
 
         // Apply highlights
+        this.painted = [];
         for (const highlight of highlights) {
             const tileIndex = highlight.position;
             const visualIndex = flipped ? (LAST_BOARD_INDEX - tileIndex) : tileIndex;
+            this.painted.push({visualIndex, type: highlight.type});
             const overlay = this.overlayElements.get(visualIndex);
             if (!overlay) continue;
 
-            let color: string;
-            let opacity: string;
-            switch (highlight.type) {
-                case 'selected':
-                    color = '#7fa0dd';
-                    opacity = '0.6';
-                    break;
-                case 'potential':
-                    color = '#55d157';
-                    opacity = '0.5';
-                    break;
-                case 'hovered':
-                    color = '#e1ca58';
-                    opacity = '0.4';
-                    break;
-                case 'threat':
-                    color = '#ff4444';
-                    opacity = '0.5';
-                    break;
-                case 'last_move':
-                    color = '#e89038';
-                    opacity = '0.5';
-                    break;
-            }
-            overlay.setAttribute('fill', color);
-            overlay.setAttribute('opacity', opacity);
+            const style = HIGHLIGHT_STYLES[highlight.type];
+            overlay.setAttribute('fill', style.fill);
+            overlay.setAttribute('opacity', style.opacity);
         }
     }
 
@@ -739,6 +735,7 @@ export default class SVGBoardView implements IBoardView {
         if (!piece) return;
 
         const ghost = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+        ghost.setAttribute('data-drag-ghost', ''); // not part of the position: left out of an export
         ghost.setAttribute('pointer-events', 'none');
         ghost.style.opacity = '0.7';
 
@@ -884,6 +881,37 @@ export default class SVGBoardView implements IBoardView {
     /** Replaces the analysis arrows (invalid ones are dropped; one arrow per from/to pair, the last wins). */
     setArrows(arrows: BoardArrow[]): void {
         this.arrows?.set(arrows);
+    }
+
+    /**
+     * The complete HTML document of the board as it is displayed right now (see `boardExport.ts`): the position at the
+     * displayed ply, orientation, coordinates, piece rotation, arrows and the painted overlay (selection, potential
+     * moves, last move, threats - not a mouse hover). Works on a copy: the live board is never touched.
+     */
+    exportStaticHtml(title: string): string {
+        return buildBoardHtml(this.svg, {title, prepare: (clone) => this.freezeForExport(clone)});
+    }
+
+    /** What is specific to this view in the copy to export: no drag in the air, only the lasting highlights. */
+    private freezeForExport(clone: SVGSVGElement): void {
+        clone.querySelectorAll('[data-drag-ghost]').forEach((ghost) => ghost.remove());
+
+        // A hover is not part of the position; where it covered another highlight, that one shows again
+        const styles = new Map<number, HighlightStyle>();
+        for (const {visualIndex, type} of this.painted) {
+            if ('hovered' !== type) {
+                styles.set(visualIndex, HIGHLIGHT_STYLES[type]);
+            }
+        }
+        clone.querySelectorAll<SVGRectElement>('#overlays-layer rect').forEach((rect) => {
+            const style = styles.get(Number(rect.dataset.tileIndex));
+            if (!style) {
+                rect.remove(); // transparent: nothing to see
+                return;
+            }
+            rect.setAttribute('fill', style.fill);
+            rect.setAttribute('opacity', style.opacity);
+        });
     }
 
     /**

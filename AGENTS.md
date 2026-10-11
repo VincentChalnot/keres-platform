@@ -77,6 +77,7 @@ knowledge (piece names, SVG representations, movement descriptions).
 | `src/views/SVGBoardView.ts`         | **Active renderer** — SVG, inline sprite sheet                                  |
 | `assets/board.css`                  | **The one stylesheet of the board SVG** (tiles, pieces, coordinate labels, piece animation, arrows) |
 | `src/views/boardCss.ts`             | `board.css` as a string (`?inline`): `injectBoardCss()` for the page, the default export for static exports |
+| `src/views/boardExport.ts`          | Admin-only static HTML export of the board SVG: `buildBoardHtml()`, `downloadHtml()` (see Static HTML export) |
 | `src/views/BoardArrows.ts`          | Right-button analysis arrows of the board (state, geometry, mouse handling)    |
 | `src/i18n/`                         | `t()` + ICU-subset formatter over the server-rendered catalogue (see Internationalisation) |
 | `src/views/ThreeJSBoardView.ts`     | Inactive renderer — do not modify unless explicitly asked                       |
@@ -143,6 +144,34 @@ button 0). API on `SVGBoardView`/`IBoardView` (all optional in the interface, `T
 re-renders while keeping them): `GameController.renderBoard()` is the single place that clears them,
 whenever the displayed ply or the squares differ from the last render (move, opponent/AI reply, undo,
 history navigation; not flip or a resignation that leaves the position as it is).
+
+### Static HTML export of the board (admin only)
+
+`SVGBoardView.exportStaticHtml(title: string): string` (optional `IBoardView.exportStaticHtml?`) returns a
+complete standalone HTML document of the board as it is displayed right now; `downloadHtml(html, filename)`
+(`views/boardExport.ts`: Blob + temporary `<a download>`) hands it to the browser. Nothing depends on the game
+controller, so the admin board editor uses the same two calls. The game page has a download button next to
+"flip the board" (`#export-board-btn` in `_play_board.html.twig`, wired by `handleExportBoard()` in `app.ts`),
+rendered only for `is_granted('ROLE_ADMIN')` - the markup is absent for players, spectators and guests - and
+English only, like the admin screens (no translation keys). The export is entirely client-side (no endpoint), works
+for every kind of game at any displayed ply and never changes the live board or the selection. File name
+`keres-board-<first 8 chars of the game uuid>-ply<N>.html`, `keres-board.html` without a game id (guest games).
+
+The file is ONE `<style>` (`boardCss` verbatim + a few lines of page CSS: the app's `html` background `#010101`,
+the board centred and scaled to the window at the viewBox's aspect ratio) and ONE `<svg>`; no script, no request.
+`buildBoardHtml(svg, {title, prepare?})` works on a CLONE: the view's `freezeForExport()` (the `prepare` hook)
+removes the drag ghost, the transparent overlay rects and the `hovered` overlay (a mouse hover is not the
+position; selection, potential moves, last move and threats stay), then `boardExport.ts` removes what `board.css`
+owns of the animation/interaction state (`.piece-captured`, `.piece-revived`, inline `visibility`/`transition` on
+pieces, `.arrow-preview`, `data-anim-speed`, `data-tile-index`, `pointer-events`; piece transforms are inline
+end states, so an export during a move shows the piece arrived), prunes the sprite `<symbol>`/`<defs>` that nothing
+references (transitively, through `href`, `xlink:href` and `url(#…)` in attributes, `<style>` and board.css), and
+drops layout whitespace. What the *page* does to the board is carried over as declarations on the exported
+`<svg>`, read from the live SVG's computed style (`pageStyleOf`): the game-over dimming `filter` and the
+`text-rendering`/font smoothing that the coordinate labels inherit from Bulma (without them the labels are
+rasterised differently from the app). The "GAME OVER" stamp is a pseudo-element of the container, not part of the
+SVG, and is not exported. A new page-level style that reaches the board SVG (outside `board.css`) must be added
+to `PAGE_PROPERTIES` there, or the file will not be an exact copy of the board.
 
 ## Domain Model
 
