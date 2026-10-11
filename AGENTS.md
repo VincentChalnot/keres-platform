@@ -85,12 +85,12 @@ knowledge (piece names, SVG representations, movement descriptions).
 ### Front-end styling: the Keres design system
 
 All the UI is styled by `@keres/design-system` (Tailwind 3: tokens, base layer, components), a separate repo consumed
-as a pinned git dependency; `assets/design-system.css` is its entry, `tailwind.config.js` + `postcss.config.js` wire it
-into Vite. Bulma (`assets/app.scss`) is being phased out page by page and is loaded alongside it until the last page
-is migrated. **Read [`docs/design-system.md`](docs/design-system.md) before touching any template, form or CSS**: how
-it is installed in dev/CI/production, how to update it, the conventions (tokens only, `is-*` JS state classes, Font
-Awesome icons, form theme `form/ds_layout.html.twig`) and the Bulma → DS class mapping table. A reusable component
-belongs in the DS repo, not in `app.scss`.
+as a pinned git dependency; `assets/design-system.css` is its entry (the only stylesheet besides Font Awesome and the
+board's `assets/board.css`), `tailwind.config.js` + `postcss.config.js` wire it into Vite. There is no Bulma and no Sass.
+**Read [`docs/design-system.md`](docs/design-system.md) before touching any template, form or CSS**: how it is
+installed in dev/CI/production, how to update it, the conventions (tokens only, `is-*` JS state classes, Font
+Awesome icons, form theme `form/ds_layout.html.twig`), the pitfalls (class names Tailwind cannot see, `grid-cols-1`,
+long French labels at 390 px) and a Bulma → DS vocabulary table. A reusable component belongs in the DS repo.
 
 ### Board display preferences & piece animation
 

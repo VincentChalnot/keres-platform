@@ -7,12 +7,12 @@ shadows, z-indexes) + one CSS entry (`src/keres.css`) with the tokens (`--k-*`),
 components (`.btn`, `.card`, `.alert`, `.navbar`, `.modal` …). Its style guide (`styleguide/index.html`,
 `game.html`, `game-frame.html`) is the visual reference: **copy the markup from there**.
 
-Bulma and `assets/app.scss` are being replaced by it, page by page. Until the last page is migrated both are
-loaded (see [Migration status](#migration-status-and-coexistence-with-bulma)).
+There is no other stylesheet: no Bulma, no Sass, no `app.scss`.
 
 Contents: [How it is wired](#how-it-is-wired) · [Running it](#running-it-dev-ci-production) ·
 [Updating the DS](#updating-or-extending-the-design-system) · [Conventions](#conventions) ·
-[Bulma → DS class mapping](#bulma--ds-class-mapping) · [Verifying a migrated page](#verifying-a-migrated-page)
+[Things that bite](#things-that-bite) · [Appendix: Bulma → DS vocabulary](#appendix-bulma--ds-vocabulary) ·
+[Verifying a page](#verifying-a-page)
 
 ## How it is wired
 
@@ -22,7 +22,7 @@ Contents: [How it is wired](#how-it-is-wired) · [Running it](#running-it-dev-ci
 | Tailwind config | `tailwind.config.js` | `presets: [@keres/design-system/tailwind.preset]`, `content` globs, `corePlugins.container: false`. |
 | PostCSS | `postcss.config.js` | `tailwindcss` + `autoprefixer` (Vite inlines `@import` itself, no `postcss-import`). |
 | CSS entry | `assets/design-system.css` | `@import "@keres/design-system/keres.css"`: tokens, Tailwind base/components/utilities, DS components. Platform-only rules would go below it. |
-| JS entry | `assets/app.js` | imports `app.scss` (Bulma, temporary) **then** `design-system.css`, so the DS wins when a class name exists in both. |
+| JS entry | `assets/app.js` | imports `design-system.css` and the Font Awesome CSS (the only stylesheets of the site). |
 | Fonts | `public/fonts/` | The DS `@font-face` rules point at `/fonts/*` (Carolingia, RomanSerif, Source Serif 4). Copy of `node_modules/@keres/design-system/styleguide/fonts/*`. |
 | Form theme | `templates/form/ds_layout.html.twig`, registered in `config/packages/twig.yaml` | Symfony forms render with the DS form classes. |
 | Layout | `templates/base.html.twig`, `templates/admin/base.html.twig`, `templates/_language_switcher.html.twig` | Navbar, flash messages, confirm modal, footer. |
@@ -45,8 +45,7 @@ Tailwind generates a utility only if its **complete** name appears as a word in 
   dynamically: the DS sources are in `content` too (`node_modules/@keres/design-system/src/**/*.css`), so
   `'alert--' ~ kind` and `` `btn--${variant}` `` are fine. Only **utilities** need the literal.
 
-`corePlugins.container` is disabled: the DS wrapper is `.container-page`; Tailwind's own `.container` would
-override Bulma's on pages not yet migrated.
+`corePlugins.container` is disabled: the DS wrapper is `.container-page`; Tailwind's own `.container` is not used.
 
 ## Running it (dev, CI, production)
 
@@ -58,7 +57,7 @@ docker compose exec node npm run build       # production build → public/build
 docker compose exec node npm run type-check
 ```
 
-- **Dev**: the `node` service runs `apk add --no-cache git && npm install && npm run dev`. `git` is needed because
+- **Dev**: the `node` service runs `command -v git || apk add git; npm install && npm run dev`. `git` is needed because
   npm fetches the DS with it and `node:alpine` has none. Tailwind runs inside Vite (PostCSS): editing a template,
   a TS file or a PHP file regenerates the utilities (HMR). First load after a restart is slow (the CSS is compiled
   on demand) and unstyled for a second or two: Vite injects the CSS with JavaScript in dev only.
@@ -83,7 +82,7 @@ Go back to the pinned version with `docker compose up -d node`. Do not run `npm 
 
 ## Updating or extending the design system
 
-Anything shared and reusable (a component, a variant, a token) belongs in the DS repo, **not** in `app.scss`:
+Anything shared and reusable (a component, a variant, a token) belongs in the DS repo, not in a platform stylesheet:
 
 1. Edit `src/components/*.css` (or `tokens.css`, `tailwind.preset.js`) in `../keres-design-system`, add the markup to
    `styleguide/index.html`, check it with the local checkout above.
@@ -116,8 +115,9 @@ The DS needs `@tailwindcss/typography`, `tailwindcss`, `postcss`, `autoprefixer`
   `btn btn--primary`, reset is `btn btn--outline`; pass `btn--danger`, `btn--sm`… in `attr.class` to change it.
 - **Language / i18n / `trans`**: unchanged. Keep `{% trans_default_domain %}` and the en/fr rule of `AGENTS.md`.
 - **Responsive**: Tailwind breakpoints `sm 640 · md 768 · lg 1024 · xl 1280 · 2xl 1536`; the navbar switches at
-  `lg`; Bulma's `columns` stack below 769px, so use `md:` where you had `columns`.
-- **Spacing**: Tailwind's scale is not Bulma's (see the table); `gap-*` on a grid/flex beats margins on children.
+  `lg`; stack on phones with `grid-cols-1` and widen with `md:`.
+- **Spacing**: Tailwind's scale (`*-4` = 1 rem, `*-6` = 1.5 rem, `*-8` = 2 rem); `gap-*` on a grid/flex beats margins
+  on children.
 - **Typography and resets** (Tailwind preflight + the DS base layer replace Bulma's reset): a bare `<h1>` is the
   hero title (6–8 rem, `font-title`): use `page-title` for a page title and `card__title` inside a card; `h2…h6`
   are 3 rem → 1 rem by element, `p` has `mb-4`, `a` is gold and underlined on hover, `strong` is `text-soft`. Lists
@@ -125,57 +125,29 @@ The DS needs `@tailwindcss/typography`, `tailwindcss`, `postcss`, `autoprefixer`
   `.btn` is 13 rem wide by default (`--k-btn-min`): add `btn--sm`, `btn--icon` or `min-w-0` in tight places.
 - **Board**: `assets/board.css` only, as before. The game page (`_play_board.html.twig`, `play*.html.twig`, `app.ts`) is
   styled by the DS `game.css` (same class names as the markup; arrangements chosen by container queries on `.game-container`).
+  The admin board editor and the opening tree are DS components too (`admin.css`, `data.css`).
 - **Page-specific styles** you cannot express with utilities: first look for a DS component, then add one to the DS,
-  then (platform-only) `assets/design-system.css`. Do not add to `app.scss`; move what you migrate out of it.
-- **Commits**: `git add` explicit paths and `git commit -m … -- <paths>`; never `git add -A` (other workers share the tree).
+  then (platform-only) `assets/design-system.css` below the `@import`. There is no other stylesheet.
 
-## Migration status and coexistence with Bulma
+## Things that bite
 
-Migrated (foundation): `templates/base.html.twig` (navbar, burger, notification bell, language switcher, flash
-messages, confirm modal, footer), `templates/admin/base.html.twig` (side menu), the TwigBundle error page,
-`templates/_language_switcher.html.twig`, the Symfony form theme, and their TypeScript. Their rules are gone from
-`app.scss` (navbar, footer, modal, bell, flash, global typography, `@font-face`, error page, lightbox).
+- **Everything is Tailwind now**: a utility only exists if its full name is written in a scanned file (see above).
+  A class that is neither a DS component nor a Tailwind utility silently does nothing.
+- **Grids**: write `grid grid-cols-1 md:grid-cols-N`. A bare `grid` has an implicit auto column that grows with its
+  content (long table, canvas, nowrap text) and makes the page scroll sideways on a phone.
+- **Long labels**: `.btn` does not wrap (`whitespace-nowrap`) and is 13 rem wide at least (`--k-btn-min`, never more
+  than 100%). A translated label that can exceed a phone's width needs `btn--wrap` (form submit buttons get it from
+  `ds_layout`); check the French text at 390 px.
+- **Class names built from strings** (`'text-' ~ x`) are invisible to Tailwind (DS component variants are fine).
+- The dev CSS is injected by JavaScript: a screenshot taken right after load can show UA-default link colours.
+- **After a DS release**: bump the tag in `package.json`, `npm install` in the node container, commit both files; if
+  `public/fonts` changed in the DS copy the new files.
 
-Admin and settings are migrated too: `templates/admin/**`, `templates/actions/settings/**`, the SidusDataGrid /
-SidusAdmin overrides under `templates/bundles/` (datagrid = `card` > `toolbar` + `pagination` + `table-wrap`,
-filters = `field`/`input-group`, pager, edit/delete action), `assets/typescript/src/admin/**` and the Chart.js
-colours (read from the `--k-*` tokens).
+## Appendix: Bulma → DS vocabulary
 
-The game page is migrated as well: `templates/actions/_play_board.html.twig`, `play.html.twig`, `play_guest.html.twig` and
-the TypeScript that drives them (`app.ts`: status banner `status-banner is-*`, unstack/feedback modals `modal__*`, `hidden`
-instead of `is-hidden`, `btn--primary` toggling). Everything of it is in `game.css` (player cards, clocks, material bar,
-eval bar, status banner, moves panel, piece info, settings popover + `segmented`, feedback banner, page fullscreen);
-`app.scss` has nothing of it left (nor `--site-navbar-height`: the sizing reads `--k-navbar-h`).
-
-Still Bulma (to migrate, page by page): whatever other workers have not moved yet: check with
-`grep -rnE "\b(button|box|columns?|notification|is-[a-z]+|has-text-[a-z-]+)\b" templates src assets/typescript/src`.
-
-While both are loaded (**`@use 'bulma/sass'` in `app.scss` and `import "./app.scss"` in `app.js` are
-TEMPORARY**):
-
-- the DS loads **after** Bulma, so where a class exists in both, the DS rule wins. Same-named classes whose DS
-  look differs from Bulma's, so an unmigrated page may look half-and-half: `.field`, `.label`, `.help`, `.input`,
-  `.textarea`, `.select` (Bulma wraps the `<select>`, the DS styles the `<select>`: a `div.select` shows a double
-  box), `.checkbox`, `.radio`, `.tag`, `.tags`, `.tabs`, `.menu`, `.table`, `.progress`, `.pagination`, `.icon`,
-  `.modal`, `.section`, `.footer`, `.navbar`, `.lightbox`, `.error-page`, `.hero`, `.intro`, `.piece-*`;
-- Bulma-only classes (`box`, `columns`, `button`, `notification`, `title` …) keep their Bulma look;
-- `html[data-theme="dark"]` (in `base.html.twig`) and `body { color: inherit }` (end of the Bulma block in
-  `app.scss`) exist only for Bulma;
-- **Bulma's helper classes are `!important` and win over Tailwind utilities of the same name**: `m*-N`/`p*-N` (Bulma
-  scale, so `mb-6` = 3rem now but 1.5rem once Bulma is gone), and also `is-*`/`has-*` names. When checking a page's
-  spacing in the browser, run in the console `for (const s of document.styleSheets) for (let i = s.cssRules.length - 1; i >= 0; i--) { const r = s.cssRules[i]; if (/^\.(m|p)[trblxy]?-\d$/.test(r.selectorText) && r.cssText.includes('important')) s.deleteRule(i); }`
-  to see the final look. Bulma's `.grid` (v1) also sets `grid-template-columns` on Tailwind's `grid`: add
-  `grid-cols-1` next to `md:grid-cols-N` until Bulma is removed. Bulma's `.tabs a` rules make `.tab` look off.
-- the CSS is ~930 kB (Bulma ≈ 800 kB + the DS ≈ 130 kB) until Bulma goes. Final removal (whoever finishes): delete
-  `@use 'bulma/sass'`, the "Bulma compatibility" block and the remaining page sections of `app.scss`, `app.scss`
-  itself, `import "./app.scss"` in `app.js`, `data-theme="dark"`, `bulma` and `sass` in `package.json`; grep
-  `\b(button|box|columns?|notification|is-[a-z]+|has-text-[a-z-]+)\b` in `templates/`, `src/`, `assets/typescript/src/`.
-- when you migrate a page, remove the matching sections from `app.scss` in the same commit.
-
-## Bulma → DS class mapping
-
-`→` = replacement. Utilities are Tailwind classes (generated from your templates), components are DS classes.
-Dynamic Bulma classes (`'is-' ~ x`) must become literal class names or a lookup table.
+The platform used Bulma until October 2026. Bulma is gone (no `bulma`/`sass` dependency, no `app.scss`), but old code,
+old commits and the marketing-site habits still speak it: this is the translation table. `→` = replacement.
+Utilities are Tailwind classes (generated from your templates), components are DS classes.
 
 ### Layout and surfaces
 
@@ -274,7 +246,7 @@ Dynamic Bulma classes (`'is-' ~ x`) must become literal class names or a lookup 
 | `is-fullwidth`, `is-expanded` (layout) | `w-full`, `flex-1` |
 | `m*-N` / `p*-N` | Bulma 0–4 = Tailwind 0–4 (0, .25, .5, .75, 1 rem): unchanged. **Bulma 5 (1.5rem) → `*-6`; Bulma 6 (3rem) → `*-12`.** `mx-auto`, `ml-auto` unchanged |
 | Sass `$keres-primary`, `-secondary`, `-light`, `-dark`, `-bg` | `primary`, `soft`, `fg`, `brand` (fills) or `line`/`edge` (borders), `canvas`; raw `#1a1a1a`/`#111` → `surface`/`sunken`/`panel`; `#2a2a2a`/`#1f1f1f` borders → `edge` |
-| CSS vars `--primary-color`, `--secondary-color`, `--light-color`, `--dark-color`, `--site-navbar-height` | `--k-primary`, `--k-soft`, `--k-fg`, `--k-brand`, `--k-navbar-h` (the old names still resolve while `app.scss` lives; the `--k-*` ones are RGB triplets: `rgb(var(--k-primary) / .5)`) |
+| CSS vars `--primary-color`, `--secondary-color`, `--light-color`, `--dark-color`, `--site-navbar-height` | `--k-primary`, `--k-soft`, `--k-fg`, `--k-brand`, `--k-navbar-h` (the `--k-*` ones are RGB triplets: `rgb(var(--k-primary) / .5)`) |
 
 Design tokens (Tailwind names, see `tailwind.preset.js`): colours `canvas sunken inactive surface surface-hover line
 line-hi line-lo edge fg soft muted subtle ink primary(-hover|-hi|-lo) secondary brand success danger danger-text
@@ -289,7 +261,7 @@ warning info turn turn-text panel popover tile-* piece-*`; fonts `font-sans|body
   `.is-hidden`: pick the closest DS component or a utility as above; if a real need appears, add it to the DS.
 - Admin tools (board editor palette `board-editor__*`, opening tree `tree`) live in the DS (`admin.css`, `data.css`).
 
-## Verifying a migrated page
+## Verifying a page
 
 ```bash
 docker compose exec php bin/console lint:twig templates
