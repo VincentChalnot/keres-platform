@@ -5,26 +5,22 @@
 
 {% block body %}
     <section class="section">
-        <div class="container">
-            <div class="columns is-centered">
-                <div class="column is-half">
-                    <div class="box">
-                        <h3 class="title">{{ 'register.title'|trans }}</h3>
-                        <p class="subtitle">{{ 'register.subtitle'|trans }}</p>
+        <div class="container-page container-page--narrow">
+            <div class="card">
+                <h1 class="page-title">{{ 'register.title'|trans }}</h1>
+                <p class="page-subtitle">{{ 'register.subtitle'|trans }}</p>
 
-                        {{ form_start(form) }}
-                            {{ form_widget(form) }}
-                        {{ form_end(form) }}
+                {{ form_start(form) }}
+                    {{ form_widget(form) }}
+                {{ form_end(form) }}
 
-                        <p class="is-size-7 has-text-grey mt-2">
-                            {{ 'register.trust_notice'|trans({url: (static_site_url ~ '/trust')|e('html_attr')})|raw }}
-                        </p>
+                <p class="mt-4 text-sm text-muted">
+                    {{ 'register.trust_notice'|trans({url: (static_site_url ~ '/trust')|e('html_attr')})|raw }}
+                </p>
 
-                        <p class="mt-3">
-                            {{ 'register.have_account'|trans({url: path('login')|e('html_attr')})|raw }}
-                        </p>
-                    </div>
-                </div>
+                <p class="mb-0 mt-4">
+                    {{ 'register.have_account'|trans({url: path('login')|e('html_attr')})|raw }}
+                </p>
             </div>
         </div>
     </section>
