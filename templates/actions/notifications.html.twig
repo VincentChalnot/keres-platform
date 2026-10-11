@@ -5,30 +5,26 @@
 
 {% block body %}
 <main class="section">
-    <div class="container">
-        <div class="level">
-            <div class="level-left">
-                <h1 class="title">{{ 'page.title'|trans }}</h1>
-            </div>
-            <div class="level-right">
-                {% if unread > 0 %}
-                    <button type="button" class="button is-rounded is-outlined is-light" data-notifications-read-all>{{ 'page.mark_all_read'|trans }}</button>
-                {% endif %}
-            </div>
+    <div class="container-page">
+        <div class="mb-6 flex flex-wrap items-center justify-between gap-4">
+            <h1 class="page-title !mb-0">{{ 'page.title'|trans }}</h1>
+            {% if unread > 0 %}
+                <button type="button" class="btn btn--outline btn--sm" data-notifications-read-all>{{ 'page.mark_all_read'|trans }}</button>
+            {% endif %}
         </div>
 
-        <div class="box">
+        <div class="card card--flush">
             {% if notifications|length > 0 %}
-                <ul class="notification-list" id="notification-page-list">
+                <ul class="notif-list" id="notification-page-list">
                     {% for n in notifications %}
-                        <li class="notification-list__item{{ n.read ? '' : ' is-unread' }}" data-uuid="{{ n.uuid }}">
-                            <a href="{{ n.url }}" class="notification-list__link" data-notification-link>
+                        <li class="notif{{ n.read ? '' : ' is-unread' }}" data-uuid="{{ n.uuid }}">
+                            <a href="{{ n.url }}" class="notif__link items-baseline" data-notification-link>
                                 <span class="icon"><i class="fa-solid {{ n.icon }}" aria-hidden="true"></i></span>
-                                <span class="notification-list__text">{{ n.text }}</span>
-                                <time class="notification-list__time" datetime="{{ n.createdAt }}">{{ n.createdAt|format_datetime('medium', 'short') }}</time>
+                                <span class="notif__text">{{ n.text }}</span>
+                                <time class="notif__time" datetime="{{ n.createdAt }}">{{ n.createdAt|format_datetime('medium', 'short') }}</time>
                             </a>
                             {% if not n.read %}
-                                <button type="button" class="button is-small is-text" data-notification-read title="{{ 'page.mark_read'|trans }}" aria-label="{{ 'page.mark_read'|trans }}">
+                                <button type="button" class="btn btn--text btn--sm notif__action" data-notification-read title="{{ 'page.mark_read'|trans }}" aria-label="{{ 'page.mark_read'|trans }}">
                                     <span class="icon"><i class="fa-solid fa-check" aria-hidden="true"></i></span>
                                 </button>
                             {% endif %}
@@ -36,19 +32,23 @@
                     {% endfor %}
                 </ul>
             {% else %}
-                <p class="has-text-grey">{{ 'page.empty'|trans }}</p>
+                <p class="notif-empty">{{ 'page.empty'|trans }}</p>
             {% endif %}
         </div>
 
         {% if pages > 1 %}
-            <nav class="pagination" role="navigation" aria-label="{{ 'page.pagination.label'|trans }}">
+            <nav class="pagination" aria-label="{{ 'page.pagination.label'|trans }}">
                 {% if page > 1 %}
-                    <a class="pagination-previous" href="{{ path('notifications', {page: page - 1}) }}">{{ 'page.pagination.previous'|trans }}</a>
+                    <a class="pagination__prev" href="{{ path('notifications', {page: page - 1}) }}">{{ 'page.pagination.previous'|trans }}</a>
+                {% else %}
+                    <span class="pagination__prev is-disabled" aria-disabled="true">{{ 'page.pagination.previous'|trans }}</span>
                 {% endif %}
+                <span class="pagination__list">{{ 'page.pagination.page_of'|trans({page: page, total: pages}) }}</span>
                 {% if page < pages %}
-                    <a class="pagination-next" href="{{ path('notifications', {page: page + 1}) }}">{{ 'page.pagination.next'|trans }}</a>
+                    <a class="pagination__next" href="{{ path('notifications', {page: page + 1}) }}">{{ 'page.pagination.next'|trans }}</a>
+                {% else %}
+                    <span class="pagination__next is-disabled" aria-disabled="true">{{ 'page.pagination.next'|trans }}</span>
                 {% endif %}
-                <span class="pagination-list ml-3">{{ 'page.pagination.page_of'|trans({page: page, total: pages}) }}</span>
             </nav>
         {% endif %}
         <p class="mt-4"><a href="{{ path('settings_notifications') }}">{{ 'page.preferences_link'|trans }}</a></p>
