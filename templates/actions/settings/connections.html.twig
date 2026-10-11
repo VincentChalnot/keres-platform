@@ -4,27 +4,27 @@
 {% block title %}{{ 'page_title'|trans({section: 'nav.connections'|trans}) }}{% endblock %}
 
 {% block settings_content %}
-    <div class="box">
-        <h2 class="title is-4">{{ 'connections.title'|trans }}</h2>
-        <p class="has-text-grey">{{ 'connections.intro'|trans }}</p>
+    <div class="card">
+        <h2 class="card__title">{{ 'connections.title'|trans }}</h2>
+        <p class="text-muted">{{ 'connections.intro'|trans }}</p>
         {% set providers = {google: 'fa-google', discord: 'fa-discord'} %}
         {% set linked = user.auths|map(auth => auth.provider) %}
-        <ul class="settings-providers">
+        <ul class="provider-list">
             {% for provider, icon in providers %}
-                <li class="settings-providers__row">
+                <li class="provider-row">
                     <span class="icon"><i class="fa-brands {{ icon }}" aria-hidden="true"></i></span>
                     <span>{{ provider|capitalize }}</span>
                     {% if provider in linked %}
-                        <span class="tag is-rounded is-primary ml-2">{{ 'connections.linked'|trans }}</span>
+                        <span class="tag tag--primary ml-2">{{ 'connections.linked'|trans }}</span>
                     {% else %}
-                        <span class="tag is-rounded is-dark ml-2">{{ 'connections.not_linked'|trans }}</span>
+                        <span class="tag tag--brand ml-2">{{ 'connections.not_linked'|trans }}</span>
                     {% endif %}
                 </li>
             {% endfor %}
             {% for auth in user.auths|filter(auth => auth.provider not in providers|keys) %}
-                <li class="settings-providers__row">
+                <li class="provider-row">
                     <span>{{ auth.provider|capitalize }}</span>
-                    <span class="tag is-rounded is-primary ml-2">{{ 'connections.linked'|trans }}</span>
+                    <span class="tag tag--primary ml-2">{{ 'connections.linked'|trans }}</span>
                 </li>
             {% endfor %}
         </ul>

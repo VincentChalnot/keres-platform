@@ -4,31 +4,29 @@
 {% block title %}{{ 'page_title'|trans({section: 'nav.notifications'|trans}) }}{% endblock %}
 
 {% block settings_content %}
-    {{ form_start(form, {attr: {novalidate: 'novalidate', class: 'box'}}) }}
-        <h2 class="title is-4">{{ 'notifications.title'|trans }}</h2>
+    {{ form_start(form, {attr: {novalidate: 'novalidate', class: 'card'}}) }}
+        <h2 class="card__title">{{ 'notifications.title'|trans }}</h2>
 
-        <h3 class="title is-5 mt-4">{{ 'notifications.in_app.title'|trans }}</h3>
-        <p class="has-text-grey"><span class="icon"><i class="fa-solid fa-bell" aria-hidden="true"></i></span> {{ 'notifications.in_app.intro'|trans }}</p>
+        <h3 class="card__title card__title--sm mt-4">{{ 'notifications.in_app.title'|trans }}</h3>
+        <p class="text-muted"><span class="icon"><i class="fa-solid fa-bell" aria-hidden="true"></i></span> {{ 'notifications.in_app.intro'|trans }}</p>
         {% for child in form.inApp %}
             {{ form_row(child) }}
         {% endfor %}
         {% do form.inApp.setRendered %}
 
-        <h3 class="title is-5 mt-5">{{ 'notifications.email.title'|trans }}</h3>
-        <p class="has-text-grey">{{ 'notifications.email.intro'|trans }}</p>
+        <h3 class="card__title card__title--sm mt-6">{{ 'notifications.email.title'|trans }}</h3>
+        <p class="text-muted">{{ 'notifications.email.intro'|trans }}</p>
         {% for child in form.email %}
             {{ form_row(child) }}
         {% endfor %}
         {% do form.email.setRendered %}
-        <p class="has-text-grey is-size-7">{{ 'notifications.email.unsubscribe'|trans }}</p>
+        <p class="text-muted text-xs">{{ 'notifications.email.unsubscribe'|trans }}</p>
 
-        <h3 class="title is-5 mt-5">{{ 'notifications.newsletter.title'|trans }}</h3>
+        <h3 class="card__title card__title--sm mt-6">{{ 'notifications.newsletter.title'|trans }}</h3>
         {{ form_row(form.newsletterOptIn) }}
 
-        <div class="field mt-5">
-            <div class="control">
-                {{ form_widget(form.submit, {attr: {class: 'button is-primary is-rounded'}}) }}
-            </div>
+        <div class="mt-6">
+            {{ form_widget(form.submit) }}
         </div>
     {{ form_end(form) }}
 {% endblock %}

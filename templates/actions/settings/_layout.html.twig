@@ -17,26 +17,24 @@
 
 {% block body %}
 <main class="section">
-    <div class="container">
-        <h1 class="title">{{ 'title'|trans }}</h1>
-        <div class="columns settings">
-            <div class="column is-3">
-                <aside class="menu settings-nav" aria-label="{{ 'nav.label'|trans }}">
-                    <ul class="menu-list">
-                        {% for item in settings_sections %}
-                            <li>
-                                <a href="{{ path(item.route) }}"
-                                   class="{{ item.key == section ? 'is-active' }}"
-                                   {% if item.key == section %}aria-current="page"{% endif %}>
-                                    <span class="icon"><i class="fa-solid {{ item.icon }}" aria-hidden="true"></i></span>
-                                    <span>{{ item.label }}</span>
-                                </a>
-                            </li>
-                        {% endfor %}
-                    </ul>
-                </aside>
-            </div>
-            <div class="column">
+    <div class="container-page">
+        <h1 class="page-title mb-6">{{ 'title'|trans }}</h1>
+        <div class="grid gap-6 md:grid-cols-[14rem_minmax(0,1fr)]">
+            <aside class="menu" aria-label="{{ 'nav.label'|trans }}">
+                <ul class="menu__list">
+                    {% for item in settings_sections %}
+                        <li>
+                            <a href="{{ path(item.route) }}"
+                               class="menu__link{{ item.key == section ? ' is-active' }}"
+                               {% if item.key == section %}aria-current="page"{% endif %}>
+                                <span class="icon"><i class="fa-solid {{ item.icon }}" aria-hidden="true"></i></span>
+                                <span>{{ item.label }}</span>
+                            </a>
+                        </li>
+                    {% endfor %}
+                </ul>
+            </aside>
+            <div class="min-w-0">
                 {% block settings_content %}{% endblock %}
             </div>
         </div>
