@@ -222,6 +222,8 @@ export class GameController {
             // move a second time.
             if (this.gameState.getMoveList().length > pliesBefore) {
                 this.gameState.setBoardLocked(this.computeInputLocked());
+                // Draw it now: the listeners of `moveSubmitted` (the hotseat board flip) must find the move already on the board, or it would arrive with the flip and never slide.
+                await this.renderBoard();
                 window.dispatchEvent(new CustomEvent('moveSubmitted'));
                 return;
             }

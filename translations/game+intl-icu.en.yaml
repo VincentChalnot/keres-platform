@@ -173,6 +173,10 @@ play:
             coordinates: Coordinates
             threats: Threats on hover
             rotate: Upside-down opponent pieces
+            animation: Piece movement
+            animation_instant: Instant
+            animation_fast: Fast
+            animation_slow: Slow
             hint: Your defaults apply to every new game.
             save_defaults: Save as my defaults
         history:

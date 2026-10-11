@@ -14,6 +14,7 @@ import {PageFullscreen} from './utils/pageFullscreen';
 import {EvalBar, formatEvaluation} from './views/EvalBar';
 import {describeGameOver, gameOverOutcome} from './utils/gameOverText';
 import {t} from './i18n';
+import {ANIMATION_SPEEDS, AnimationSpeed} from './models/types';
 
 /** Display defaults of a visitor without an account (guest games, anonymous spectators); signed-in players keep theirs in Settings. */
 const BOARD_DEFAULTS_KEY = 'keres.boardDefaults';
@@ -32,6 +33,7 @@ interface BoardDefaults {
     showCoordinates: boolean;
     showThreats: boolean;
     rotateOpponentPieces: boolean;
+    animationSpeed: AnimationSpeed;
 }
 
 /** One player card (app.scss `.player-card`): which of the two sits on top follows the board orientation. */
@@ -138,6 +140,7 @@ class KeresGame {
     private coordsSwitch: HTMLInputElement;
     private threatsSwitch: HTMLInputElement;
     private rotateSwitch: HTMLInputElement;
+    private animationButtons: HTMLButtonElement[];
     private saveDefaultsBtn: HTMLButtonElement;
     private saveDefaultsStatus: HTMLElement;
     private pieceInfoBody: HTMLElement;
@@ -149,6 +152,7 @@ class KeresGame {
     private guestRecord: GuestGameRecord | null = null; // browser-only game without an account
     private coordsVisible: boolean = true;
     private opponentRotated: boolean = false;
+    private animationSpeed: AnimationSpeed = 'fast';
     private clockTimer: number | null = null;
     // Piece the info panel currently describes ("square:piece"), so hovering the same piece does not rebuild it.
     private pieceInfoKey: string | null = null;
@@ -192,6 +196,7 @@ class KeresGame {
         this.coordsSwitch = document.getElementById('setting-coords') as HTMLInputElement;
         this.threatsSwitch = document.getElementById('setting-threats') as HTMLInputElement;
         this.rotateSwitch = document.getElementById('setting-rotate') as HTMLInputElement;
+        this.animationButtons = Array.from(document.querySelectorAll<HTMLButtonElement>('#setting-animation [data-animation-speed]'));
         this.saveDefaultsBtn = document.getElementById('save-board-defaults-btn') as HTMLButtonElement;
         this.saveDefaultsStatus = document.getElementById('save-board-defaults-status') as HTMLElement;
         this.pieceInfoBody = document.getElementById('piece-info-body') as HTMLElement;
@@ -368,6 +373,7 @@ class KeresGame {
         this.setCoordinatesVisible(defaults.showCoordinates);
         this.setShowThreats(defaults.showThreats);
         this.setOpponentRotated(defaults.rotateOpponentPieces);
+        this.setAnimationSpeed(defaults.animationSpeed);
 
         // Setup UI event listeners
         this.setupEventListeners();
@@ -413,22 +419,28 @@ class KeresGame {
             showCoordinates: this.boardContainer.getAttribute('data-show-coordinates') !== 'false',
             showThreats: this.boardContainer.getAttribute('data-show-threats') !== 'false',
             rotateOpponentPieces: this.boardContainer.getAttribute('data-rotate-opponent') === 'true',
+            animationSpeed: this.parseAnimationSpeed(this.boardContainer.getAttribute('data-animation-speed')) ?? 'fast',
         };
         if (this.signedIn) return defaults;
 
         try {
             const stored: unknown = JSON.parse(window.localStorage.getItem(BOARD_DEFAULTS_KEY) ?? 'null');
             if (null !== stored && 'object' === typeof stored) {
-                for (const key of Object.keys(defaults) as Array<keyof BoardDefaults>) {
-                    const value = (stored as Record<string, unknown>)[key];
-                    if ('boolean' === typeof value) defaults[key] = value;
+                const record = stored as Record<string, unknown>;
+                for (const key of ['showCoordinates', 'showThreats', 'rotateOpponentPieces'] as const) {
+                    if ('boolean' === typeof record[key]) defaults[key] = record[key];
                 }
+                defaults.animationSpeed = this.parseAnimationSpeed(record.animationSpeed) ?? defaults.animationSpeed;
             }
         } catch {
             // Unreadable entry: the built-in defaults stand.
         }
 
         return defaults;
+    }
+
+    private parseAnimationSpeed(value: unknown): AnimationSpeed | null {
+        return ANIMATION_SPEEDS.find(speed => speed === value) ?? null;
     }
 
     /**
@@ -500,6 +512,9 @@ class KeresGame {
         this.coordsSwitch.addEventListener('change', () => this.setCoordinatesVisible(this.coordsSwitch.checked));
         this.threatsSwitch.addEventListener('change', () => this.setShowThreats(this.threatsSwitch.checked));
         this.rotateSwitch.addEventListener('change', () => this.setOpponentRotated(this.rotateSwitch.checked));
+        for (const button of this.animationButtons) {
+            button.addEventListener('click', () => this.setAnimationSpeed(this.parseAnimationSpeed(button.dataset.animationSpeed) ?? this.animationSpeed));
+        }
         this.saveDefaultsBtn.addEventListener('click', () => void this.saveBoardDefaults());
         document.addEventListener('click', (event) => {
             if (!this.settingsMenu.hidden && !(event.target as Element).closest('.board-settings')) {
@@ -529,6 +544,8 @@ class KeresGame {
         // Auto-rotate board in hotseat mode after each submitted move
         window.addEventListener('moveSubmitted', async () => {
             if (this.gameMode === OPPONENT_TYPE_HOTSEAT) {
+                // Let the move finish its trip before the board turns around (the flip is drawn at once)
+                await this.view.whenSettled?.();
                 await this.controller.flipBoard();
                 this.applyOrientation();
             }
@@ -752,12 +769,22 @@ class KeresGame {
         this.view.setOpponentRotated?.(rotated);
     }
 
+    /** How fast pieces slide to their square (CSS transition; `instant` draws the new position at once). */
+    private setAnimationSpeed(speed: AnimationSpeed): void {
+        this.animationSpeed = speed;
+        for (const button of this.animationButtons) {
+            button.setAttribute('aria-pressed', String(button.dataset.animationSpeed === speed));
+        }
+        this.view.setAnimationSpeed?.(speed);
+    }
+
     /** "Save as my defaults": the current switches become how every new game opens (the account for a signed-in player, this browser otherwise). */
     private async saveBoardDefaults(): Promise<void> {
         const defaults: BoardDefaults = {
             showCoordinates: this.coordsVisible,
             showThreats: this.controller.isShowThreats(),
             rotateOpponentPieces: this.opponentRotated,
+            animationSpeed: this.animationSpeed,
         };
         this.saveDefaultsBtn.disabled = true;
         this.saveDefaultsStatus.textContent = '';

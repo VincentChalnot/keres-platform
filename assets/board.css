@@ -58,3 +58,43 @@ svg.keres-board {
     touch-action: pinch-zoom;
 }
 
+
+/* ─── Piece movement animation ──────────────────────────────────────────────
+   SVGBoardView places every piece with an inline `transform: translate()` and
+   only changes it when a piece moves: the browser does the animating. The speed
+   ("Piece movement" preference: instant / fast / slow) is the data-anim-speed
+   attribute of the board <svg>; no attribute or `instant` = 0s = no animation. */
+svg[data-anim-speed="fast"] {
+    --piece-move-duration: 0.2s;
+}
+
+svg[data-anim-speed="slow"] {
+    --piece-move-duration: 0.6s;
+}
+
+#pieces-layer .piece {
+    transition:
+        transform var(--piece-move-duration, 0s) ease-in-out,
+        filter var(--piece-move-duration, 0s) ease-in-out;
+}
+
+/* A captured piece stays under the capturer until it arrives, then is gone
+   (SVGBoardView removes it on animationend); an undone capture fades back in. */
+#pieces-layer .piece-captured {
+    pointer-events: none;
+    animation: piece-fade-out var(--piece-move-duration, 0s) linear forwards;
+}
+
+#pieces-layer .piece-revived {
+    animation: piece-fade-in var(--piece-move-duration, 0s) linear;
+}
+
+@keyframes piece-fade-out {
+    0%, 60% { opacity: 1; }
+    100% { opacity: 0; }
+}
+
+@keyframes piece-fade-in {
+    0%, 40% { opacity: 0; }
+    100% { opacity: 1; }
+}

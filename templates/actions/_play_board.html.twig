@@ -3,7 +3,7 @@
     guest games (play_guest.html.twig). Variables:
       opponentType (int), moves (base64), gameUuid (?string), playerWhite (bool),
       spectator (bool), guest (bool), gameOver (bool),
-      gameStateBootstrap (?string, JSON), showCoordinates (bool), showThreats (bool), rotateOpponent (bool),
+      gameStateBootstrap (?string, JSON), showCoordinates (bool), showThreats (bool), rotateOpponent (bool), animationSpeed (string: instant|fast|slow),
       gameHeader (?\App\Model\GameHeader - players with avatar/rating + option badges; undefined for guest games),
       liveEvaluation (bool, optional - the evaluation bar was requested at creation; unrated games only)
 
@@ -94,6 +94,7 @@
                          data-show-coordinates="{{ showCoordinates ?? true ? 'true' : 'false' }}"
                          data-show-threats="{{ showThreats ?? true ? 'true' : 'false' }}"
                          data-rotate-opponent="{{ rotateOpponent ?? false ? 'true' : 'false' }}"
+                         data-animation-speed="{{ animationSpeed ?? 'fast' }}"
                          data-live-evaluation="{{ liveEvaluation ?? false ? 'true' : 'false' }}"
                          data-can-evaluate="{{ app.user ? 'true' : 'false' }}"
                          data-game-over-label="{{ 'play.board.game_over'|trans }}"></div>
@@ -130,6 +131,14 @@
                                         <span>{{ 'play.board.settings.rotate'|trans }}</span>
                                         <input type="checkbox" role="switch" id="setting-rotate">
                                     </label>
+                                    <div class="board-settings__row">
+                                        <span id="setting-animation-label">{{ 'play.board.settings.animation'|trans }}</span>
+                                        <div class="segmented" id="setting-animation" role="group" aria-labelledby="setting-animation-label">
+                                            <button type="button" class="segmented__option" data-animation-speed="instant" aria-pressed="false">{{ 'play.board.settings.animation_instant'|trans }}</button>
+                                            <button type="button" class="segmented__option" data-animation-speed="fast" aria-pressed="false">{{ 'play.board.settings.animation_fast'|trans }}</button>
+                                            <button type="button" class="segmented__option" data-animation-speed="slow" aria-pressed="false">{{ 'play.board.settings.animation_slow'|trans }}</button>
+                                        </div>
+                                    </div>
                                     <p class="board-settings__hint">{{ 'play.board.settings.hint'|trans }}</p>
                                     <button type="button" class="game-button is-small" id="save-board-defaults-btn">{{ 'play.board.settings.save_defaults'|trans }}</button>
                                     <p class="board-settings__status" id="save-board-defaults-status" role="status" aria-live="polite"></p>

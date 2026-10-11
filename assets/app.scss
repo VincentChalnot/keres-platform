@@ -1428,6 +1428,49 @@ a.player-card__name:hover {
     display: none;
 }
 
+// A label with a segmented choice under it (piece movement speed).
+.board-settings__row {
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+}
+
+// Mutually exclusive buttons side by side; the pressed one is filled.
+.segmented {
+    display: flex;
+    background: #3a352d;
+    border-radius: $game-radius;
+    padding: 0.15rem;
+    gap: 0.15rem;
+}
+
+.segmented__option {
+    flex: 1 1 0;
+    padding: 0.35em 0.5em;
+    border: 0;
+    border-radius: calc(#{$game-radius} - 0.1rem);
+    background: transparent;
+    color: rgba($keres-light, 0.75);
+    font: inherit;
+    font-size: 0.8rem;
+    cursor: pointer;
+    transition: background-color 0.15s ease, color 0.15s ease;
+
+    &:hover {
+        color: $keres-light;
+    }
+
+    &[aria-pressed="true"] {
+        background: $keres-teal;
+        color: #fff;
+    }
+
+    &:focus-visible {
+        outline: 2px solid $keres-teal;
+        outline-offset: 2px;
+    }
+}
+
 // A checkbox drawn as an on/off switch.
 .switch-row {
     display: flex;

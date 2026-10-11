@@ -1,3 +1,5 @@
+import type {AnimationSpeed} from '../models/types';
+
 /**
  * Interface for board rendering
  * This abstraction allows switching between different rendering engines (2D sprites, 3D, etc.)
@@ -57,6 +59,17 @@ export interface IBoardView {
      * Draw the opponent's (top side's) piece icons upside down when true, upright when false (optional)
      */
     setOpponentRotated?(rotated: boolean): void;
+
+    /**
+     * How fast a piece slides to its square when the displayed position moves on by one ply; 'instant' draws
+     * the new position at once (optional)
+     */
+    setAnimationSpeed?(speed: AnimationSpeed): void;
+
+    /**
+     * Resolves once the piece movement started by the last render has finished (immediately when nothing moves) (optional)
+     */
+    whenSettled?(): Promise<void>;
 }
 
 export interface TileHighlight {

@@ -7,6 +7,7 @@ namespace App\Action;
 use App\Engine\GameEngine;
 use App\Entity\User;
 use App\Message\ProcessAiMoveMessage;
+use App\Model\AnimationSpeed;
 use App\Model\OpponentType;
 use App\Model\PieceColor;
 use App\Repository\GameRepository;
@@ -104,6 +105,7 @@ class PlayAction extends AbstractController
             'showCoordinates' => $preferences?->isShowBoardCoordinates() ?? true,
             'showThreats' => $preferences?->isShowOpponentThreatsOnHover() ?? true,
             'rotateOpponent' => $preferences?->isRotateOpponentPieces() ?? false,
+            'animationSpeed' => ($preferences?->getPieceAnimationSpeed() ?? AnimationSpeed::FAST)->value,
             'game' => $game,
             'moves' => $movesBase64,
             'playerWhite' => PieceColor::WHITE === $playerColor,

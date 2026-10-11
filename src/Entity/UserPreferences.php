@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Entity;
 
+use App\Model\AnimationSpeed;
 use App\Repository\UserPreferencesRepository;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
@@ -45,6 +46,9 @@ class UserPreferences
 
     #[ORM\Column(type: Types::BOOLEAN, options: ['default' => false])]
     private bool $rotateOpponentPieces = false;
+
+    #[ORM\Column(type: Types::STRING, length: 16, enumType: AnimationSpeed::class, options: ['default' => 'fast'])]
+    private AnimationSpeed $pieceAnimationSpeed = AnimationSpeed::FAST;
 
     #[ORM\Column(type: Types::BOOLEAN)]
     private bool $allowContactByEmail = true;
@@ -144,6 +148,16 @@ class UserPreferences
     public function setRotateOpponentPieces(bool $rotateOpponentPieces): void
     {
         $this->rotateOpponentPieces = $rotateOpponentPieces;
+    }
+
+    public function getPieceAnimationSpeed(): AnimationSpeed
+    {
+        return $this->pieceAnimationSpeed;
+    }
+
+    public function setPieceAnimationSpeed(AnimationSpeed $pieceAnimationSpeed): void
+    {
+        $this->pieceAnimationSpeed = $pieceAnimationSpeed;
     }
 
     public function isAllowContactByEmail(): bool

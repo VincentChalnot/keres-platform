@@ -80,6 +80,28 @@ knowledge (piece names, SVG representations, movement descriptions).
 | `src/i18n/`                         | `t()` + ICU-subset formatter over the server-rendered catalogue (see Internationalisation) |
 | `src/views/ThreeJSBoardView.ts`     | Inactive renderer — do not modify unless explicitly asked                       |
 
+### Board display preferences & piece animation
+
+The game page's display switches (coordinates, threats on hover, upside-down opponent pieces, **piece
+movement speed**) start from the viewer's defaults and can be changed in the in-game gear menu
+(this page only) until "Save as my defaults": signed-in players keep them in
+`UserPreferences` (Settings → Board & gameplay, `POST /settings/board/defaults`, rendered into
+`#board-container[data-*]` by `PlayAction`), everyone else in `localStorage` (`keres.boardDefaults`).
+A new preference goes through all of those places (entity + migration, `BoardSettingsType`,
+`SettingsBoardDefaultsAction`, `PlayAction`, `_play_board.html.twig`, `BoardDefaults` in `app.ts`).
+
+Piece movement speed is `AnimationSpeed` (`instant` | `fast` 0.2 s | `slow` 0.6 s; PHP enum
+`App\Model\AnimationSpeed`, TS `models/types.ts`; default `fast`). The animation is **CSS only**:
+`SVGBoardView` positions every piece with an inline `transform: translate()` (not x/y, which CSS cannot
+transition), `assets/board.css` maps the `data-anim-speed` attribute of the board `<svg>` to
+`--piece-move-duration` and puts a `transition` on `.piece`. JS only moves DOM state: on a one-ply
+change of the position (a move, an undo, a history step) `slidePieces()` matches the old and new
+pieces of the (at most two) changed squares by colour/type/stack role, **reuses** the moving elements
+(re-appended last so they fly above the others) and just sets their new transform; captured pieces
+get `.piece-captured` (CSS fade, removed on `animationend`). Anything else (first render, board flip,
+jumps over several plies, a piece just dropped by drag & drop) is redrawn at once. The hotseat auto-flip
+waits for `view.whenSettled()` so the move is seen before the board turns.
+
 ### Board styling: `assets/board.css` and nowhere else
 
 **SVG board styling lives in `assets/board.css` and nowhere else.** Every rule that targets something

@@ -5,8 +5,10 @@ declare(strict_types=1);
 namespace App\Form;
 
 use App\Entity\UserPreferences;
+use App\Model\AnimationSpeed;
 use Symfony\Component\Form\AbstractType;
 use Symfony\Component\Form\Extension\Core\Type\CheckboxType;
+use Symfony\Component\Form\Extension\Core\Type\EnumType;
 use Symfony\Component\Form\Extension\Core\Type\SubmitType;
 use Symfony\Component\Form\FormBuilderInterface;
 use Symfony\Component\OptionsResolver\OptionsResolver;
@@ -28,6 +30,13 @@ class BoardSettingsType extends AbstractType
             ->add('rotateOpponentPieces', CheckboxType::class, [
                 'label' => 'board_settings.rotate_opponent',
                 'required' => false,
+            ])
+            ->add('pieceAnimationSpeed', EnumType::class, [
+                'class' => AnimationSpeed::class,
+                'label' => 'board_settings.animation_speed',
+                'help' => 'board_settings.animation_speed_help',
+                'choice_label' => static fn (AnimationSpeed $speed): string => 'board_settings.animation_speed_'.$speed->value,
+                'expanded' => true,
             ])
             ->add('submit', SubmitType::class, [
                 'label' => 'common.save_changes',

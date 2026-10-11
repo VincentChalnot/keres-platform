@@ -173,6 +173,10 @@ play:
             coordinates: Coordonnées
             threats: Menaces au survol
             rotate: Pièces adverses à l’envers
+            animation: Déplacement des pièces
+            animation_instant: Instantané
+            animation_fast: Rapide
+            animation_slow: Lent
             hint: Vos réglages par défaut s’appliquent à chaque nouvelle partie.
             save_defaults: Enregistrer par défaut
         history:

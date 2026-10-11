@@ -15,7 +15,7 @@ profile:
     email_help: Your sign-in email. It can’t be changed here.
 board:
     title: Board & gameplay
-    intro: How the board opens in your games. You can still toggle both from the game page.
+    intro: How the board opens in your games. You can still change these from the game page.
 notifications:
     title: Notifications
     in_app:

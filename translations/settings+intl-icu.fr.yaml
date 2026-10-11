@@ -15,7 +15,7 @@ profile:
     email_help: Votre adresse de connexion. Elle ne peut pas être modifiée ici.
 board:
     title: Plateau et jeu
-    intro: Comment le plateau s’affiche à l’ouverture de vos parties. Vous pouvez toujours modifier ces deux options depuis la page de la partie.
+    intro: Comment le plateau s’affiche à l’ouverture de vos parties. Vous pouvez toujours les modifier depuis la page de la partie.
 notifications:
     title: Notifications
     in_app:

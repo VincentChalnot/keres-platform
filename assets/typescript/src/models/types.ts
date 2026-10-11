@@ -40,6 +40,10 @@ export interface TileState {
 export const BOARD_SIZE = 9;
 export const LAST_BOARD_INDEX = (BOARD_SIZE * BOARD_SIZE) - 1;
 
+/** How fast a piece slides to its square (the user's "Piece movement" preference; durations live in board.css). */
+export const ANIMATION_SPEEDS = ['instant', 'fast', 'slow'] as const;
+export type AnimationSpeed = typeof ANIMATION_SPEEDS[number];
+
 export const PIECE_CODE: Record<number, string> = {
     0b001: 'soldier',
     0b010: 'bishop',

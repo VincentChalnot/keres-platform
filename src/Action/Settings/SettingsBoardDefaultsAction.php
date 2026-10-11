@@ -6,6 +6,7 @@ namespace App\Action\Settings;
 
 use App\Entity\User;
 use App\Http\ApiResponse;
+use App\Model\AnimationSpeed;
 use App\Model\ApiErrorCode;
 use App\Service\UserPreferencesManager;
 use Doctrine\ORM\EntityManagerInterface;
@@ -54,6 +55,12 @@ readonly class SettingsBoardDefaultsAction
             }
         }
 
+        $animationSpeed = \is_string($data['animationSpeed'] ?? null) ? AnimationSpeed::tryFrom($data['animationSpeed']) : null;
+
+        if (null === $animationSpeed) {
+            $violations[] = ['field' => 'animationSpeed', 'constraint' => 'choice', 'message' => 'This value should be one of: '.implode(', ', array_column(AnimationSpeed::cases(), 'value')).'.'];
+        }
+
         if ([] !== $violations) {
             return ApiResponse::error(ApiErrorCode::VALIDATION_FAILED, 'Request payload failed validation.', ['violations' => $violations]);
         }
@@ -62,6 +69,7 @@ readonly class SettingsBoardDefaultsAction
         $preferences->setShowBoardCoordinates($data['showCoordinates']);
         $preferences->setShowOpponentThreatsOnHover($data['showThreats']);
         $preferences->setRotateOpponentPieces($data['rotateOpponentPieces']);
+        $preferences->setPieceAnimationSpeed($animationSpeed);
         $preferences->touch();
         $this->entityManager->flush();
 
@@ -69,6 +77,7 @@ readonly class SettingsBoardDefaultsAction
             'showCoordinates' => $data['showCoordinates'],
             'showThreats' => $data['showThreats'],
             'rotateOpponentPieces' => $data['rotateOpponentPieces'],
+            'animationSpeed' => $animationSpeed->value,
         ]);
     }
 }

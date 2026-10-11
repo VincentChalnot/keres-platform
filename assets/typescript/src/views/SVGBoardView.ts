@@ -1,5 +1,5 @@
 import {IBoardView, TileHighlight} from './IBoardView';
-import {BOARD_SIZE, LAST_BOARD_INDEX} from '../models/types';
+import {AnimationSpeed, BOARD_SIZE, LAST_BOARD_INDEX} from '../models/types';
 import {GameState} from '../models/GameState';
 import {decodePiece} from "../utils/boardUtils";
 import {injectBoardCss} from './boardCss';
@@ -66,6 +66,12 @@ export default class SVGBoardView implements IBoardView {
     // Whether the opponent's piece icons are drawn upside down (off by default)
     private opponentRotated: boolean = false;
 
+    // How pieces travel to their square (board.css owns the durations); instant until the page says otherwise
+    private animationSpeed: AnimationSpeed = 'instant';
+
+    // The move the user just made by drag & drop: the ghost already showed it, so the piece must not travel again
+    private droppedMove: {from: number; to: number} | null = null;
+
     // Bound event handler references for proper cleanup
     private boundHandleClick: ((e: MouseEvent) => void) | null = null;
     private boundHandleMouseMove: ((e: MouseEvent) => void) | null = null;
@@ -87,6 +93,7 @@ export default class SVGBoardView implements IBoardView {
         this.svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
         this.applyViewBox();
         this.svg.classList.add('keres-board');
+        this.svg.setAttribute('data-anim-speed', this.animationSpeed);
 
         // Inline the sprite sheet symbols/defs directly into the SVG
         await this.inlineSpriteDefs(this.svg);
@@ -248,9 +255,12 @@ export default class SVGBoardView implements IBoardView {
         // Check if board orientation changed
         const orientationChanged = this.currentFlipped !== flipped;
 
-        // If this is the first render or orientation changed, recreate all pieces
+        // A capture that is still fading out belongs to the previous position
+        this.discardCapturedPieces();
+
+        // If this is the first render or orientation changed, recreate all pieces (never animated)
         if (!this.currentBoardData || orientationChanged) {
-            await this.recreateAllPieces(boardData, flipped);
+            this.recreateAllPieces(boardData, flipped);
             if (orientationChanged) {
                 this.createCoordinates(flipped);
             }
@@ -266,17 +276,39 @@ export default class SVGBoardView implements IBoardView {
                 changes.push(i);
             }
         }
+        if (changes.length === 0) return;
 
-        // Update only changed positions
-        for (const index of changes) {
-            await this.updatePieceAtIndex(index, boardData[index], flipped);
+        const droppedMove = this.droppedMove;
+        this.droppedMove = null;
+
+        // One ply: the moving pieces slide (CSS transition) while the others stay.
+        // Anything else (jump over several plies, loading a game): redraw the changed tiles at once.
+        if (!this.slidePieces(this.currentBoardData, boardData, changes, flipped, droppedMove)) {
+            for (const index of changes) {
+                this.updatePieceAtIndex(index, boardData[index], flipped);
+            }
         }
 
         // Update cached board state
         this.currentBoardData = new Uint8Array(boardData);
     }
 
-    private async recreateAllPieces(boardData: Uint8Array, flipped: boolean): Promise<void> {
+    /**
+     * Resolves when the piece movement (and capture fade) started by the last render is over.
+     * Only observes the CSS transitions/animations - nothing here drives them.
+     */
+    async whenSettled(): Promise<void> {
+        const running = this.piecesGroup?.getAnimations({subtree: true}) ?? [];
+        await Promise.allSettled(running.map(animation => animation.finished));
+    }
+
+    setAnimationSpeed(speed: AnimationSpeed): void {
+        this.animationSpeed = speed;
+        // board.css maps the attribute to --piece-move-duration
+        this.svg?.setAttribute('data-anim-speed', speed);
+    }
+
+    private recreateAllPieces(boardData: Uint8Array, flipped: boolean): void {
         // Clear existing pieces
         while (this.piecesGroup.firstChild) {
             this.piecesGroup.removeChild(this.piecesGroup.firstChild);
@@ -286,26 +318,35 @@ export default class SVGBoardView implements IBoardView {
         for (let i = 0; i <= LAST_BOARD_INDEX; i++) {
             const pieceVal = boardData[i];
             if (pieceVal === 0) continue;
-            
-            await this.updatePieceAtIndex(i, pieceVal, flipped);
+
+            this.updatePieceAtIndex(i, pieceVal, flipped);
         }
     }
 
-    private async createPieceUse(x: number, y: number, pieceType: string, color: boolean, reversed: boolean, tileIndex: number, isTopPiece: boolean): Promise<void> {
+    /**
+     * Pieces are positioned with a CSS transform (x/y attributes of <use> cannot be transitioned);
+     * board.css animates it. A piece element keeps its tile/role in data attributes.
+     */
+    private placePiece(use: SVGElement, tileIndex: number, isTopPiece: boolean): void {
+        const {x, y} = this.getTilePosition(tileIndex);
+        use.style.transform = `translate(${x}px, ${y - (isTopPiece ? STACKED_OFFSET : 0)}px)`;
+        use.dataset.tileIndex = tileIndex.toString();
+        use.dataset.isTopPiece = isTopPiece.toString();
+    }
+
+    private createPieceUse(pieceType: string, color: boolean, reversed: boolean, tileIndex: number, isTopPiece: boolean): SVGUseElement {
         // Use <use> referencing the inlined sprite symbol
         const colorClass = color ? 'p-w' : 'p-b';
         const reversedClass = this.opponentRotated && color === reversed ? 'p-r' : '';
         const use = document.createElementNS('http://www.w3.org/2000/svg', 'use');
         use.setAttribute('href', `#piece-${pieceType}`);
         use.setAttribute('class', `piece ${colorClass} ${reversedClass}`);
-        use.setAttribute('x', x.toString());
-        use.setAttribute('y', y.toString());
-        use.dataset.tileIndex = tileIndex.toString();
-        use.dataset.isTopPiece = isTopPiece.toString();
+        this.placePiece(use, tileIndex, isTopPiece);
         this.piecesGroup.appendChild(use);
+        return use;
     }
 
-    private async updatePieceAtIndex(index: number, pieceVal: number, flipped: boolean): Promise<void> {
+    private updatePieceAtIndex(index: number, pieceVal: number, flipped: boolean): void {
         // Remove existing pieces at this position
         this.removePiecesAtIndex(index);
 
@@ -313,30 +354,12 @@ export default class SVGBoardView implements IBoardView {
         const piece = decodePiece(pieceVal);
         if (!piece) return;
 
-        const {x, y} = this.getTilePosition(index);
-        // Use raw x/y, no PIECE_X_OFFSET or PIECE_Y_OFFSET
         // Render bottom piece
-        await this.createPieceUse(
-            x,
-            y,
-            piece.bottom,
-            piece.color,
-            flipped,
-            index,
-            false
-        );
+        this.createPieceUse(piece.bottom, piece.color, flipped, index, false);
 
         // Render top piece if stacked
         if (piece.top) {
-            await this.createPieceUse(
-                x,
-                y - STACKED_OFFSET,
-                piece.top,
-                piece.color,
-                flipped,
-                index,
-                true
-            );
+            this.createPieceUse(piece.top, piece.color, flipped, index, true);
         }
     }
 
@@ -344,6 +367,135 @@ export default class SVGBoardView implements IBoardView {
         // Find and remove all piece elements at this tile index
         const pieces = this.piecesGroup.querySelectorAll(`[data-tile-index="${index}"]`);
         pieces.forEach(piece => piece.remove());
+    }
+
+    private discardCapturedPieces(): void {
+        this.piecesGroup?.querySelectorAll('.piece-captured').forEach(piece => piece.remove());
+    }
+
+    /**
+     * Applies a one-ply change of the position by moving the existing piece elements, so that the
+     * CSS transition on `transform` slides them to their new square.
+     *
+     * Elements are matched between the old and the new position per changed tile: the piece that stays
+     * on its square (same colour/type/role) is kept; the others are paired by colour + type, preferring
+     * the same stack role; a leftover of the same colour is the mover that promoted (type changes on
+     * arrival). Old elements nobody claims are captured (faded out), new pieces nobody claims are
+     * revived by an undo (faded in on the square the mover leaves).
+     *
+     * Returns false - nothing touched - when the change is not one piece/stack travelling from one
+     * square to another (first/last jump, loading a game...): the caller redraws instead.
+     */
+    private slidePieces(previous: Uint8Array, next: Uint8Array, changes: number[], flipped: boolean, droppedMove: {from: number; to: number} | null): boolean {
+        if (changes.length > 2) return false;
+
+        interface Slot {
+            tile: number;
+            type: string;
+            color: boolean;
+            top: boolean;
+            el: SVGUseElement | null;
+            partner: Slot | null;
+        }
+        const olds: Slot[] = [];
+        const news: Slot[] = [];
+        for (const tile of changes) {
+            for (const [board, slots] of [[previous, olds], [next, news]] as const) {
+                const piece = decodePiece(board[tile]);
+                if (!piece) continue;
+                const parts: Array<[string, boolean]> = [[piece.bottom, false]];
+                if (piece.top) parts.push([piece.top, true]);
+                for (const [type, top] of parts) {
+                    slots.push({tile, type, color: piece.color, top, el: null, partner: null});
+                }
+            }
+        }
+        for (const old of olds) {
+            old.el = this.piecesGroup.querySelector<SVGUseElement>(`.piece[data-tile-index="${old.tile}"][data-is-top-piece="${old.top}"]`);
+            if (!old.el) return false;
+        }
+
+        const passes: Array<(o: Slot, n: Slot) => boolean> = [
+            (o, n) => o.tile === n.tile && o.type === n.type && o.color === n.color && o.top === n.top,
+            (o, n) => o.tile === n.tile && o.type === n.type && o.color === n.color,
+            (o, n) => o.tile !== n.tile && o.type === n.type && o.color === n.color && o.top === n.top,
+            (o, n) => o.tile !== n.tile && o.type === n.type && o.color === n.color,
+            (o, n) => o.color === n.color,
+        ];
+        for (const matches of passes) {
+            for (const old of olds) {
+                if (old.partner) continue;
+                const candidate = news.find(n => !n.partner && matches(old, n));
+                if (candidate) {
+                    old.partner = candidate;
+                    candidate.partner = old;
+                }
+            }
+        }
+
+        const moved = olds.filter(o => o.partner && o.partner.tile !== o.tile);
+        if (moved.length === 0) return false;
+        const source = moved[0].tile;
+        const destination = moved[0].partner!.tile;
+        if (!moved.every(o => o.tile === source && o.partner!.tile === destination)) return false;
+        const captured = olds.filter(o => !o.partner);
+        const revived = news.filter(n => !n.partner);
+        if (captured.some(o => o.tile !== destination) || revived.some(n => n.tile !== source)) return false;
+
+        // The piece the user just dragged is already on its square (the drag ghost): no second trip
+        const animate = this.animationSpeed !== 'instant' && !(droppedMove && droppedMove.from === source && droppedMove.to === destination);
+
+        for (const old of captured) {
+            const el = old.el!;
+            delete el.dataset.tileIndex;
+            if (animate) {
+                el.classList.add('piece-captured');
+                el.addEventListener('animationend', () => el.remove(), {once: true});
+            } else {
+                el.remove();
+            }
+        }
+        for (const slot of revived) {
+            const el = this.createPieceUse(slot.type, slot.color, flipped, slot.tile, slot.top);
+            if (animate) {
+                el.classList.add('piece-revived');
+                el.addEventListener('animationend', () => el.classList.remove('piece-revived'), {once: true});
+            }
+        }
+        for (const old of olds) {
+            const slot = old.partner;
+            if (!slot || slot.tile !== old.tile) continue;
+            // Stays on its square (it may still change role)
+            this.placePiece(old.el!, slot.tile, slot.top);
+        }
+
+        // Moving pieces are drawn above the static ones, bottom of a stack first. Re-inserting a node cancels
+        // its running transition, so keep its current look as the starting point and let the browser
+        // compute that style before the new transform is set.
+        moved.sort((a, b) => Number(a.partner!.top) - Number(b.partner!.top));
+        for (const old of moved) {
+            const el = old.el!;
+            const current = getComputedStyle(el).transform;
+            this.piecesGroup.appendChild(el);
+            if (current && current !== 'none') el.style.transform = current;
+        }
+        for (const old of moved) {
+            void getComputedStyle(old.el!).transform;
+        }
+        for (const old of moved) {
+            const el = old.el!;
+            const slot = old.partner!;
+            if (slot.type !== old.type) el.setAttribute('href', `#piece-${slot.type}`);
+            el.style.visibility = ''; // a piece hidden for a drag that this move interrupted must not stay invisible
+            if (!animate) el.style.transition = 'none';
+            this.placePiece(el, slot.tile, slot.top);
+            if (!animate) {
+                void getComputedStyle(el).transform;
+                el.style.transition = '';
+            }
+        }
+
+        return true;
     }
 
     updateOverlays(highlights: TileHighlight[]): void {
@@ -423,6 +575,7 @@ export default class SVGBoardView implements IBoardView {
         if (event.button !== 0) return;
         const pos = this.getPosFromMouseEvent(event);
         if (pos === null) return;
+        this.droppedMove = null;
         this.dragState.from = pos;
         this.dragState.startX = event.clientX;
         this.dragState.startY = event.clientY;
@@ -471,6 +624,7 @@ export default class SVGBoardView implements IBoardView {
         const touch = event.touches[0];
         const pos = this.getPosFromTouch(touch);
         if (pos === null) return;
+        this.droppedMove = null;
         this.dragState.from = pos;
         this.dragState.startX = touch.clientX;
         this.dragState.startY = touch.clientY;
@@ -545,6 +699,7 @@ export default class SVGBoardView implements IBoardView {
         sourcePieces.forEach(el => (el as SVGElement).style.visibility = '');
 
         if (to !== null && to !== from && this.dragMoveHandler) {
+            this.droppedMove = {from, to};
             this.dragMoveHandler(from, to, shiftKey);
         } else if (this.clickHandler) {
             // Cancel: deselect by clicking the same position
