@@ -21,16 +21,16 @@
 {% block title %}{{ error_title }} - Keres{% endblock %}
 
 {% block body %}
-    <section class="section error-page">
-        <div class="container has-text-centered error-page__content">
+    <section class="error-page container-page">
+        <div class="error-page__content">
             <p class="error-page__code">{{ status_code }}</p>
             <h2>{{ error_title }}</h2>
             <p class="error-page__message">{{ error_message }}</p>
-            <div class="buttons is-centered">
+            <div class="btn-group btn-group--center">
                 {% if app.user %}
-                    <a href="{{ path('lobby') }}" class="button is-primary is-rounded">{{ 'error.back_to_games'|trans }}</a>
+                    <a href="{{ path('lobby') }}" class="btn btn--primary">{{ 'error.back_to_games'|trans }}</a>
                 {% else %}
-                    <a href="{{ static_site_url }}/" class="button is-primary is-rounded">{{ 'error.back_to_home'|trans }}</a>
+                    <a href="{{ static_site_url }}/" class="btn btn--primary">{{ 'error.back_to_home'|trans }}</a>
                 {% endif %}
             </div>
         </div>

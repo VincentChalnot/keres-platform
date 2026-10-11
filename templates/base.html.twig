@@ -1,5 +1,6 @@
 {% trans_default_domain 'navigation' %}
 <!DOCTYPE html>
+{# data-theme="dark" only feeds Bulma's dark scheme: drop it with Bulma (docs/design-system.md). The DS is dark by itself (color-scheme: dark). #}
 <html lang="{{ app.request.locale }}" data-theme="dark">
 <head>
     {% block head %}
@@ -23,106 +24,105 @@
 </head>
 <body>
 {% block topnav %}
-    <nav class="navbar site-navbar" role="navigation" aria-label="{{ 'nav.main_label'|trans }}">
-        <div class="container">
-            <div class="navbar-brand">
-                <a class="navbar-item site-navbar__logo" href="{{ static_site_url }}/" aria-label="{{ 'brand.home_label'|trans }}">
+    <nav class="navbar" role="navigation" aria-label="{{ 'nav.main_label'|trans }}">
+        <div class="container-page navbar__inner">
+            <div class="navbar__brand">
+                <a class="navbar__logo" href="{{ static_site_url }}/" aria-label="{{ 'brand.home_label'|trans }}">
                     <img src="{{ asset('logo.svg') }}" alt="" width="32" height="32" aria-hidden="true">
-                    <span class="site-navbar__logo-text">Keres</span>
+                    <span class="navbar__logo-text">Keres</span>
                 </a>
-                <button type="button" class="navbar-burger" id="navbar-burger" aria-label="{{ 'nav.toggle_menu'|trans }}" aria-expanded="false" aria-controls="navbar-menu">
+                <button type="button" class="navbar__burger" id="navbar-burger" aria-label="{{ 'nav.toggle_menu'|trans }}" aria-expanded="false" aria-controls="navbar-menu">
                     <span aria-hidden="true"></span>
                     <span aria-hidden="true"></span>
                     <span aria-hidden="true"></span>
                     <span aria-hidden="true"></span>
                 </button>
             </div>
-            <div class="navbar-menu" id="navbar-menu">
-                <div class="navbar-start">
+            <div class="navbar__menu" id="navbar-menu">
+                <div class="navbar__start">
                     {% block nav_extra %}
                         {% if app.user %}
-                            <a href="{{ path('dashboard') }}" class="navbar-item site-navbar__row">
-                                <span class="icon site-navbar__icon is-mobile-only"><i class="fa-solid fa-chart-line" aria-hidden="true"></i></span>
+                            <a href="{{ path('dashboard') }}" class="navbar__link">
+                                <span class="navbar__icon is-mobile-only"><i class="fa-solid fa-chart-line" aria-hidden="true"></i></span>
                                 <span>{{ 'nav.dashboard'|trans }}</span>
                             </a>
-                            <a href="{{ path('friends') }}" class="navbar-item site-navbar__row">
-                                <span class="icon site-navbar__icon is-mobile-only"><i class="fa-solid fa-users" aria-hidden="true"></i></span>
+                            <a href="{{ path('friends') }}" class="navbar__link">
+                                <span class="navbar__icon is-mobile-only"><i class="fa-solid fa-users" aria-hidden="true"></i></span>
                                 <span>{{ 'nav.friends'|trans }}</span>
                             </a>
                         {% endif %}
                     {% endblock %}
-                    <a href="{{ static_site_url }}/rules" class="navbar-item site-navbar__row">
-                        <span class="icon site-navbar__icon is-mobile-only"><i class="fa-solid fa-list-check" aria-hidden="true"></i></span>
+                    <a href="{{ static_site_url }}/rules" class="navbar__link">
+                        <span class="navbar__icon is-mobile-only"><i class="fa-solid fa-list-check" aria-hidden="true"></i></span>
                         <span>{{ 'nav.rules'|trans }}</span>
                     </a>
                 </div>
-                <div class="navbar-end">
-                    <div class="navbar-item">
-                        <a href="{{ path('lobby') }}" class="button is-primary is-rounded is-small site-navbar__row site-navbar__play">
-                            <span class="icon site-navbar__icon is-mobile-only">{{ include('_icon_king.html.twig') }}</span>
-                            <span>{{ 'nav.play'|trans }}</span>
-                        </a>
-                    </div>
-                    <div class="navbar-item site-navbar__actions">
-                        {% if app.user %}
-                            {% set unread = unread_notification_count() %}
-                            <div class="notification-bell site-navbar__row-wrap mr-2" id="notification-bell"
-                                 data-user-uuid="{{ app.user.id }}"
-                                 data-mercure-url="{{ mercure() }}">
-                                <button type="button" class="notification-bell__toggle site-navbar__row" id="notification-bell-toggle"
-                                        aria-haspopup="true" aria-expanded="false" aria-controls="notification-bell-panel"
-                                        aria-label="{{ 'notifications.bell_label'|trans({count: unread}) }}" title="{{ 'notifications.title'|trans }}">
-                                    <span class="icon site-navbar__icon">
-                                        <i class="fa-solid fa-bell" aria-hidden="true"></i>
-                                        <span class="notification-bell__badge" id="notification-bell-badge" {% if unread == 0 %}hidden{% endif %}>{{ unread >= 100 ? '99+' : unread }}</span>
-                                    </span>
-                                    <span class="is-mobile-only" aria-hidden="true">{{ 'notifications.title'|trans }}</span>
-                                </button>
-                                <div class="notification-bell__panel" id="notification-bell-panel" hidden>
-                                    <div class="notification-bell__header">
-                                        <strong>{{ 'notifications.title'|trans }}</strong>
-                                        <button type="button" class="button is-small is-text" id="notification-bell-read-all">{{ 'notifications.mark_all_read'|trans }}</button>
-                                    </div>
-                                    <ul class="notification-bell__list" id="notification-bell-list">
-                                        <li class="notification-bell__empty">{{ 'notifications.loading'|trans }}</li>
-                                    </ul>
-                                    <a href="{{ path('notifications') }}" class="notification-bell__footer">{{ 'notifications.see_all'|trans }}</a>
+                <div class="navbar__end">
+                    <a href="{{ path('lobby') }}" class="btn btn--primary btn--sm navbar__link navbar__play">
+                        <span class="navbar__icon is-mobile-only">{{ include('_icon_king.html.twig') }}</span>
+                        <span>{{ 'nav.play'|trans }}</span>
+                    </a>
+                    {% if app.user %}
+                        {% set unread = unread_notification_count() %}
+                        <div class="bell" id="notification-bell"
+                             data-user-uuid="{{ app.user.id }}"
+                             data-mercure-url="{{ mercure() }}">
+                            <button type="button" class="bell__toggle navbar__link" id="notification-bell-toggle"
+                                    aria-haspopup="true" aria-expanded="false" aria-controls="notification-bell-panel"
+                                    aria-label="{{ 'notifications.bell_label'|trans({count: unread}) }}" title="{{ 'notifications.title'|trans }}">
+                                <span class="navbar__icon relative">
+                                    <i class="fa-solid fa-bell" aria-hidden="true"></i>
+                                    <span class="bell__badge" id="notification-bell-badge" {% if unread == 0 %}hidden{% endif %}>{{ unread >= 100 ? '99+' : unread }}</span>
+                                </span>
+                                <span class="is-mobile-only" aria-hidden="true">{{ 'notifications.title'|trans }}</span>
+                            </button>
+                            <div class="bell__panel" id="notification-bell-panel" hidden>
+                                <div class="bell__header">
+                                    <strong>{{ 'notifications.title'|trans }}</strong>
+                                    <button type="button" class="btn btn--text btn--sm" id="notification-bell-read-all">{{ 'notifications.mark_all_read'|trans }}</button>
                                 </div>
+                                <ul class="bell__list" id="notification-bell-list">
+                                    <li class="notif-empty">{{ 'notifications.loading'|trans }}</li>
+                                </ul>
+                                <a href="{{ path('notifications') }}" class="bell__footer">{{ 'notifications.see_all'|trans }}</a>
                             </div>
-                            <a href="{{ path('settings') }}" class="site-navbar__row mr-2" aria-label="{{ 'nav.settings'|trans }}" title="{{ 'nav.settings'|trans }}">
-                                <span class="icon site-navbar__icon"><i class="fa-solid fa-gear" aria-hidden="true"></i></span>
-                                <span class="is-mobile-only" aria-hidden="true">{{ 'nav.settings'|trans }}</span>
-                            </a>
-                            <a href="{{ path('profile', {username: app.user.username}) }}" class="site-navbar__row site-navbar__username">
-                                {% if app.user.avatarUrl %}
-                                    <span class="icon site-navbar__icon"><img src="{{ app.user.avatarUrl }}" alt="" class="site-navbar__avatar"></span>
-                                {% else %}
-                                    <span class="icon site-navbar__icon"><i class="fa-solid fa-circle-user" aria-hidden="true"></i></span>
-                                {% endif %}
-                                <span>{{ app.user.displayName ?? app.user.username }}</span>
-                            </a>
-                            <a href="{{ path('logout') }}" class="button is-small is-rounded is-outlined is-light site-navbar__row site-navbar__logout">
-                                <span class="icon site-navbar__icon"><i class="fa-solid fa-right-from-bracket" aria-hidden="true"></i></span>
-                                <span>{{ 'nav.logout'|trans }}</span>
-                            </a>
-                        {% else %}
-                            {{ include('_language_switcher.html.twig', {variant: 'navbar'}) }}
-                            <a href="{{ path('login') }}" class="button is-small is-rounded is-outlined is-light site-navbar__row site-navbar__logout">
-                                <span class="icon site-navbar__icon"><i class="fa-solid fa-right-to-bracket" aria-hidden="true"></i></span>
-                                <span>{{ 'nav.login'|trans }}</span>
-                            </a>
-                        {% endif %}
-                    </div>
+                        </div>
+                        <a href="{{ path('settings') }}" class="navbar__link" aria-label="{{ 'nav.settings'|trans }}" title="{{ 'nav.settings'|trans }}">
+                            <span class="navbar__icon"><i class="fa-solid fa-gear" aria-hidden="true"></i></span>
+                            <span class="is-mobile-only" aria-hidden="true">{{ 'nav.settings'|trans }}</span>
+                        </a>
+                        <a href="{{ path('profile', {username: app.user.username}) }}" class="navbar__link navbar__user">
+                            {% if app.user.avatarUrl %}
+                                <img src="{{ app.user.avatarUrl }}" alt="" class="navbar__avatar">
+                            {% else %}
+                                <span class="navbar__icon"><i class="fa-solid fa-circle-user" aria-hidden="true"></i></span>
+                            {% endif %}
+                            <span>{{ app.user.displayName ?? app.user.username }}</span>
+                        </a>
+                        <a href="{{ path('logout') }}" class="btn btn--outline btn--sm navbar__link navbar__ghost">
+                            <span class="navbar__icon"><i class="fa-solid fa-right-from-bracket" aria-hidden="true"></i></span>
+                            <span>{{ 'nav.logout'|trans }}</span>
+                        </a>
+                    {% else %}
+                        {{ include('_language_switcher.html.twig', {variant: 'navbar'}) }}
+                        <a href="{{ path('login') }}" class="btn btn--outline btn--sm navbar__link navbar__ghost">
+                            <span class="navbar__icon"><i class="fa-solid fa-right-to-bracket" aria-hidden="true"></i></span>
+                            <span>{{ 'nav.login'|trans }}</span>
+                        </a>
+                    {% endif %}
                 </div>
             </div>
         </div>
     </nav>
 {% endblock %}
 {% block flash_messages %}
+    {# Flash types raised by the app: success, error. Anything else falls back to the neutral info alert. #}
+    {% set alert_kinds = {success: 'success', error: 'danger', danger: 'danger', warning: 'warning', info: 'info'} %}
     {% for type, messages in app.flashes %}
         {% for message in messages %}
-            <div class="container mt-4">
-                <div class="notification is-{{ type == 'error' ? 'danger' : type }} is-light">
+            {% set kind = alert_kinds[type] ?? 'info' %}
+            <div class="container-page mt-4">
+                <div class="alert alert--{{ kind }}" role="{{ 'danger' == kind ? 'alert' : 'status' }}">
                     {{ message }}
                 </div>
             </div>
@@ -131,35 +131,33 @@
 {% endblock %}
 {% block body %}{% endblock %}
 {% block modals %}
-    <div class="modal" id="app-confirm-modal">
-        <div class="modal-background"></div>
-        <div class="modal-card">
-            <header class="modal-card-head">
-                <p class="modal-card-title" id="app-confirm-modal-title">{{ 'confirm_modal.title'|trans }}</p>
+    <div class="modal" id="app-confirm-modal" role="dialog" aria-modal="true" aria-labelledby="app-confirm-modal-title">
+        <div class="modal__backdrop"></div>
+        <div class="modal__card">
+            <header class="modal__head">
+                <p class="modal__title" id="app-confirm-modal-title">{{ 'confirm_modal.title'|trans }}</p>
             </header>
-            <section class="modal-card-body" id="app-confirm-modal-body"></section>
-            <footer class="modal-card-foot">
-                <button type="button" class="button is-rounded is-primary" id="app-confirm-modal-ok">{{ 'confirm_modal.confirm'|trans }}</button>
-                <button type="button" class="button is-rounded is-outlined is-light" id="app-confirm-modal-cancel">{{ 'confirm_modal.cancel'|trans }}</button>
+            <section class="modal__body" id="app-confirm-modal-body"></section>
+            <footer class="modal__foot">
+                <button type="button" class="btn btn--primary" id="app-confirm-modal-ok">{{ 'confirm_modal.confirm'|trans }}</button>
+                <button type="button" class="btn btn--outline" id="app-confirm-modal-cancel">{{ 'confirm_modal.cancel'|trans }}</button>
             </footer>
         </div>
     </div>
 {% endblock %}
 {% block footer %}
 <footer class="footer">
-    <div class="content has-text-centered">
-        <p>&copy; Keres 2025-2026 <span class="has-text-grey is-size-7">{{ app_version }}</span></p>
-        {{ include('_language_switcher.html.twig', {variant: 'footer'}) }}
-        <nav>
-            <a href="{{ static_site_url }}/legal-notice">{{ 'footer.legal_notice'|trans }}</a>
-            <a href="{{ static_site_url }}/terms-of-use">{{ 'footer.terms'|trans }}</a>
-            <a href="{{ static_site_url }}/privacy-policy">{{ 'footer.privacy'|trans }}</a>
-            <a href="{{ static_site_url }}/contact">{{ 'footer.contact'|trans }}</a>
-            {% if app.user %}
-                <a href="{{ path('feedback') }}">{{ 'footer.feedback'|trans }}</a>
-            {% endif %}
-        </nav>
-    </div>
+    <p class="mb-2">&copy; Keres 2025-2026 <span class="footer__meta">{{ app_version }}</span></p>
+    {{ include('_language_switcher.html.twig', {variant: 'footer'}) }}
+    <nav>
+        <a href="{{ static_site_url }}/legal-notice">{{ 'footer.legal_notice'|trans }}</a>
+        <a href="{{ static_site_url }}/terms-of-use">{{ 'footer.terms'|trans }}</a>
+        <a href="{{ static_site_url }}/privacy-policy">{{ 'footer.privacy'|trans }}</a>
+        <a href="{{ static_site_url }}/contact">{{ 'footer.contact'|trans }}</a>
+        {% if app.user %}
+            <a href="{{ path('feedback') }}">{{ 'footer.feedback'|trans }}</a>
+        {% endif %}
+    </nav>
 </footer>
 {% endblock %}
 {% block end_javascripts %}{% endblock %}

@@ -11,7 +11,7 @@ export interface ConfirmOptions {
     title?: string;
     confirmLabel?: string;
     cancelLabel?: string;
-    /** Renders the confirm button as `is-danger` (destructive actions like resign). */
+    /** Renders the confirm button as `btn--danger` (destructive actions like resign). */
     danger?: boolean;
 }
 
@@ -52,7 +52,7 @@ function openModal(message: string, title: string, okLabel: string, okDanger: bo
         titleEl.textContent = title;
         body.textContent = message;
         okBtn.textContent = okLabel;
-        okBtn.className = `button is-rounded ${okDanger ? 'is-danger' : 'is-primary'}`;
+        okBtn.className = `btn ${okDanger ? 'btn--danger' : 'btn--primary'}`;
         cancelBtn.textContent = cancelLabel;
         cancelBtn.style.display = showCancel ? '' : 'none';
 
@@ -65,7 +65,7 @@ function openModal(message: string, title: string, okLabel: string, okDanger: bo
 
         okBtn.addEventListener('click', () => close(true), {signal: controller.signal});
         cancelBtn.addEventListener('click', () => close(false), {signal: controller.signal});
-        modal.querySelector('.modal-background')?.addEventListener('click', () => close(false), {signal: controller.signal});
+        modal.querySelector('.modal__backdrop')?.addEventListener('click', () => close(false), {signal: controller.signal});
         document.addEventListener('keydown', (event) => {
             if ('Escape' === event.key) close(false);
         }, {signal: controller.signal});

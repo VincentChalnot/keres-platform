@@ -4,8 +4,8 @@
 // part that does not depend on the view.
 import boardCss from './boardCss';
 
-/** What the board sits on in the app: `html { background-color: $keres-bg }` (app.scss). The coordinate labels are #ddbd90 and unreadable on white. */
-const PAGE_BACKGROUND = '#010101';
+/** What the board sits on in the app: `html { background-color: rgb(var(--k-canvas)) }` (design system, tokens.css). The file has no stylesheet of the DS, hence the literal. The coordinate labels are #ddbd90 and unreadable on white. */
+const PAGE_BACKGROUND = '#0d110f';
 
 /** Attributes that only serve interaction or the live view's bookkeeping; the file is static. */
 const INTERACTION_ATTRIBUTES = ['data-anim-speed', 'data-tile-index', 'data-from', 'data-to', 'pointer-events'];

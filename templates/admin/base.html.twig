@@ -3,65 +3,36 @@
 {% block title %}Admin — {% block admin_title %}Panel{% endblock %}{% endblock %}
 
 {% block body %}
+    {# Side menu: the entry whose path prefixes the current one is highlighted (src/components/navigation.css `.menu`). #}
+    {% set current_path = app.request.pathInfo %}
+    {% set admin_menu = [
+        {path: path('admin_dashboard'), icon: 'fa-gauge', label: 'Dashboard', exact: true},
+        {path: admin_path('Feedback', 'list'), icon: 'fa-comment-dots', label: 'Feedback'},
+        {path: admin_path('User', 'list'), icon: 'fa-users', label: 'Users'},
+        {path: admin_path('Game', 'list'), icon: 'fa-chess-pawn', label: 'Games'},
+        {path: admin_path('MailerError', 'list'), icon: 'fa-envelope-circle-check', label: 'Mailer errors'},
+        {path: path('admin_opening_explorer'), icon: 'fa-chess-board', label: 'Opening explorer'},
+        {path: path('admin_bot_tournament'), icon: 'fa-robot', label: 'Bot tournament'},
+        {path: path('admin_board_editor'), icon: 'fa-pen-ruler', label: 'Board editor'},
+    ] %}
     <section class="section">
-        <div class="container is-fluid">
-            <div class="columns">
-                <div class="column is-2">
-                    <aside class="menu">
-                        <p class="menu-label">Admin</p>
-                        <ul class="menu-list">
+        <div class="container-page container-page--fluid">
+            <div class="grid gap-6 lg:grid-cols-[14rem_minmax(0,1fr)]">
+                <aside class="menu">
+                    <p class="menu__label">Admin</p>
+                    <ul class="menu__list">
+                        {% for item in admin_menu %}
+                            {% set active = item.exact|default(false) ? current_path|trim('/') == 'admin' : current_path starts with item.path %}
                             <li>
-                                <a href="{{ path('admin_dashboard') }}">
-                                    <span class="icon"><i class="fa-solid fa-gauge" aria-hidden="true"></i></span>
-                                    <span>Dashboard</span>
+                                <a href="{{ item.path }}" class="menu__link{{ active ? ' is-active' }}"{% if active %} aria-current="page"{% endif %}>
+                                    <span class="icon"><i class="fa-solid {{ item.icon }}" aria-hidden="true"></i></span>
+                                    <span>{{ item.label }}</span>
                                 </a>
                             </li>
-                            <li>
-                                <a href="{{ admin_path('Feedback', 'list') }}">
-                                    <span class="icon"><i class="fa-solid fa-comment-dots" aria-hidden="true"></i></span>
-                                    <span>Feedback</span>
-                                </a>
-                            </li>
-                            <li>
-                                <a href="{{ admin_path('User', 'list') }}">
-                                    <span class="icon"><i class="fa-solid fa-users" aria-hidden="true"></i></span>
-                                    <span>Users</span>
-                                </a>
-                            </li>
-                            <li>
-                                <a href="{{ admin_path('Game', 'list') }}">
-                                    <span class="icon"><i class="fa-solid fa-chess-pawn" aria-hidden="true"></i></span>
-                                    <span>Games</span>
-                                </a>
-                            </li>
-                            <li>
-                                <a href="{{ admin_path('MailerError', 'list') }}">
-                                    <span class="icon"><i class="fa-solid fa-envelope-circle-check" aria-hidden="true"></i></span>
-                                    <span>Mailer errors</span>
-                                </a>
-                            </li>
-                            <li>
-                                <a href="{{ path('admin_opening_explorer') }}">
-                                    <span class="icon"><i class="fa-solid fa-chess-board" aria-hidden="true"></i></span>
-                                    <span>Opening explorer</span>
-                                </a>
-                            </li>
-                            <li>
-                                <a href="{{ path('admin_bot_tournament') }}">
-                                    <span class="icon"><i class="fa-solid fa-robot" aria-hidden="true"></i></span>
-                                    <span>Bot tournament</span>
-                                </a>
-                            </li>
-                            <li>
-                                <a href="{{ path('admin_board_editor') }}">
-                                    <span class="icon"><i class="fa-solid fa-pen-ruler" aria-hidden="true"></i></span>
-                                    <span>Board editor</span>
-                                </a>
-                            </li>
-                        </ul>
-                    </aside>
-                </div>
-                <div class="column">
+                        {% endfor %}
+                    </ul>
+                </aside>
+                <div>
                     {% block container %}{% endblock %}
                 </div>
             </div>

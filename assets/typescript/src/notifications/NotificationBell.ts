@@ -181,12 +181,12 @@ export class NotificationBell {
 
     private buildItem(row: NotificationRow): HTMLLIElement {
         const item = document.createElement('li');
-        item.className = `notification-bell__item${row.read ? '' : ' is-unread'}`;
+        item.className = `notif${row.read ? '' : ' is-unread'}`;
         item.dataset.uuid = row.uuid;
 
         const link = document.createElement('a');
         link.href = row.url;
-        link.className = 'notification-bell__link';
+        link.className = 'notif__link';
 
         const icon = document.createElement('span');
         icon.className = 'icon';
@@ -196,11 +196,11 @@ export class NotificationBell {
         icon.appendChild(glyph);
 
         const body = document.createElement('span');
-        body.className = 'notification-bell__body';
+        body.className = 'notif__body';
         const text = document.createElement('span');
         text.textContent = row.text;
         const time = document.createElement('time');
-        time.className = 'notification-bell__time';
+        time.className = 'notif__time';
         time.dateTime = row.createdAt;
         time.textContent = this.formatAge(row.createdAt);
         body.append(text, time);
@@ -211,7 +211,7 @@ export class NotificationBell {
         if (!row.read) {
             const readButton = document.createElement('button');
             readButton.type = 'button';
-            readButton.className = 'button is-small is-text notification-bell__read';
+            readButton.className = 'btn btn--text btn--sm notif__action';
             readButton.dataset.notificationRead = '';
             readButton.title = t('social.notifications.mark_read');
             readButton.setAttribute('aria-label', t('social.notifications.mark_read'));
@@ -224,7 +224,7 @@ export class NotificationBell {
 
     private emptyItem(message: string): HTMLLIElement {
         const item = document.createElement('li');
-        item.className = 'notification-bell__empty';
+        item.className = 'notif-empty';
         item.textContent = message;
 
         return item;
