@@ -41,7 +41,7 @@ knowledge (piece names, SVG representations, movement descriptions).
 - **Doctrine ORM 3** — PostgreSQL, migrations in `migrations/`
 - **Symfony Messenger** — async jobs via `async` transport
 - **Symfony Mercure** — server-sent events pushed to the frontend
-- **Vite + TypeScript** — vanilla TS, no framework, no Stimulus/Symfony UX
+- **Vite + TypeScript** — vanilla TS, no framework, no Stimulus/Symfony UX; styled by the Keres design system (Tailwind 3, see below)
 - **Docker Compose** — the sole dev environment, nothing runs on the host
 
 ## Architecture
@@ -81,6 +81,16 @@ knowledge (piece names, SVG representations, movement descriptions).
 | `src/views/BoardArrows.ts`          | Right-button analysis arrows of the board (state, geometry, mouse handling)    |
 | `src/i18n/`                         | `t()` + ICU-subset formatter over the server-rendered catalogue (see Internationalisation) |
 | `src/views/ThreeJSBoardView.ts`     | Inactive renderer — do not modify unless explicitly asked                       |
+
+### Front-end styling: the Keres design system
+
+All the UI is styled by `@keres/design-system` (Tailwind 3: tokens, base layer, components), a separate repo consumed
+as a pinned git dependency; `assets/design-system.css` is its entry, `tailwind.config.js` + `postcss.config.js` wire it
+into Vite. Bulma (`assets/app.scss`) is being phased out page by page and is loaded alongside it until the last page
+is migrated. **Read [`docs/design-system.md`](docs/design-system.md) before touching any template, form or CSS**: how
+it is installed in dev/CI/production, how to update it, the conventions (tokens only, `is-*` JS state classes, Font
+Awesome icons, form theme `form/ds_layout.html.twig`) and the Bulma → DS class mapping table. A reusable component
+belongs in the DS repo, not in `app.scss`.
 
 ### Board display preferences & piece animation
 
@@ -157,7 +167,7 @@ English only, like the admin screens (no translation keys). The export is entire
 for every kind of game at any displayed ply and never changes the live board or the selection. File name
 `keres-board-<first 8 chars of the game uuid>-ply<N>.html`, `keres-board.html` without a game id (guest games).
 
-The file is ONE `<style>` (`boardCss` verbatim + a few lines of page CSS: the app's `html` background `#010101`,
+The file is ONE `<style>` (`boardCss` verbatim + a few lines of page CSS: the app's `html` background `#0d110f`,
 the board centred and scaled to the window at the viewBox's aspect ratio) and ONE `<svg>`; no script, no request.
 `buildBoardHtml(svg, {title, prepare?})` works on a CLONE: the view's `freezeForExport()` (the `prepare` hook)
 removes the drag ghost, the transparent overlay rects and the `hovered` overlay (a mouse hover is not the
@@ -168,8 +178,9 @@ end states, so an export during a move shows the piece arrived), prunes the spri
 references (transitively, through `href`, `xlink:href` and `url(#…)` in attributes, `<style>` and board.css), and
 drops layout whitespace. What the *page* does to the board is carried over as declarations on the exported
 `<svg>`, read from the live SVG's computed style (`pageStyleOf`): the game-over dimming `filter` and the
-`text-rendering`/font smoothing that the coordinate labels inherit from Bulma (without them the labels are
-rasterised differently from the app). The "GAME OVER" stamp is a pseudo-element of the container, not part of the
+`text-rendering`/font smoothing that the coordinate labels inherit from the page (Bulma today, the design system's
+base layer once Bulma is gone; without them the labels are rasterised differently from the app). The "GAME OVER"
+stamp is a pseudo-element of the container, not part of the
 SVG, and is not exported. A new page-level style that reaches the board SVG (outside `board.css`) must be added
 to `PAGE_PROPERTIES` there, or the file will not be an exact copy of the board.
 
