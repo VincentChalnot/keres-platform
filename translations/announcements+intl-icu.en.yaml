@@ -1,6 +1,12 @@
 # Player-facing announcements (src/Service/Announcement/AnnouncementProvider.php).
 # One block per id listed in AnnouncementProvider::ENTRIES: title + body.
 items:
+    piece_animation:
+        title: Pieces now glide to their square
+        body: 'Pieces now slide to their destination when a move is played. Pick Instant, Fast or Slow in the board options, and save your choice as your default in Settings → Board & gameplay.'
+    board_arrows:
+        title: Draw arrows on the board
+        body: 'On desktop, hold the right mouse button and drag from one square to another to draw an arrow: orange by default, green with Shift, red with Ctrl. It works on any position, including past moves in the history, and arrows clear when a move is played.'
     french_translation:
         title: Keres now speaks French
         body: 'The whole site, the messages on the board and the e-mails are available in French. Switch language from the menu or in Settings → Profile; “Automatic” follows your browser.'

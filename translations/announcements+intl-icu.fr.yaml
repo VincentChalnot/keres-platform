@@ -1,6 +1,12 @@
 # Annonces destinées aux joueurs (src/Service/Announcement/AnnouncementProvider.php).
 # Un bloc par identifiant listé dans AnnouncementProvider::ENTRIES : title + body.
 items:
+    piece_animation:
+        title: Les pièces glissent jusqu’à leur case
+        body: 'Les pièces glissent désormais jusqu’à leur case quand un coup est joué. Choisissez Instantané, Rapide ou Lent dans les options du plateau, et enregistrez votre choix par défaut dans Paramètres → Plateau et jeu.'
+    board_arrows:
+        title: Dessinez des flèches sur le plateau
+        body: 'Sur ordinateur, maintenez le clic droit et glissez d’une case à l’autre pour tracer une flèche : orange par défaut, verte avec Maj, rouge avec Ctrl. Cela fonctionne sur toute position, y compris les coups passés de l’historique, et les flèches disparaissent dès qu’un coup est joué.'
     french_translation:
         title: Keres parle désormais français
         body: 'Tout le site, les messages du plateau et les e-mails sont disponibles en français. Changez de langue depuis le menu ou dans Paramètres → Profil ; « Automatique » suit votre navigateur.'
