@@ -6,20 +6,20 @@
         {% if player.username %}
             <a href="{{ path('profile', {username: player.username}) }}" class="game-header__name">{{ player.label }}</a>
         {% else %}
-            <span class="game-header__name {{ player.kind in ['ai', 'bot'] ? 'is-engine' : (player.kind == 'anonymous' ? 'has-text-grey' : '') }}">{{ player.label }}</span>
+            <span class="game-header__name {{ player.kind in ['ai', 'bot'] ? 'is-engine' : (player.kind == 'anonymous' ? 'is-anonymous' : '') }}">{{ player.label }}</span>
         {% endif %}
     </span>
 {% endmacro %}
 {% import _self as m %}
 <div class="game-header{{ compact ?? false ? ' game-header--compact' }}"{{ compact ?? false ? '' : ' id="game-header"' }}>
     <div class="game-header__players">
-        {{ m.seat(header.white, true, 'is-white') }}
-        <span class="has-text-grey-light">{{ 'header.versus'|trans }}</span>
-        {{ m.seat(header.black, false, 'is-dark') }}
+        {{ m.seat(header.white, true, 'tag--white') }}
+        <span class="text-muted">{{ 'header.versus'|trans }}</span>
+        {{ m.seat(header.black, false, 'tag--brand') }}
     </div>
-    <div class="tags game-header__badges{{ compact ?? false ? ' are-small' }}">
+    <div class="tag-group">
         {% for badge in header.badges %}
-            <span class="tag is-rounded {{ badge.tone }}"{% if badge.title %} title="{{ badge.title }}"{% endif %}>{{ badge.label }}</span>
+            <span class="tag{{ compact ?? false ? ' tag--sm' }} {{ badge.tone }}"{% if badge.title %} title="{{ badge.title }}"{% endif %}>{{ badge.label }}</span>
         {% endfor %}
     </div>
 </div>

@@ -122,20 +122,20 @@ final readonly class GameHeaderPresenter
         if ($game->isRated()) {
             $badges[] = new GameHeaderBadge(
                 $this->translator->trans('option.rated', [], 'game'),
-                'is-info',
+                'tag--soft tag--info',
                 $this->translator->trans('header.badge.rated_title', [], 'game'),
             );
         } else {
             $badges[] = new GameHeaderBadge(
                 $this->translator->trans('option.casual', [], 'game'),
-                'is-light',
+                '',
                 $this->translator->trans('header.badge.casual_title', [], 'game'),
             );
         }
 
         $badges[] = new GameHeaderBadge(
             $this->timeControlLabel($game->getTimeControl()),
-            'is-light',
+            '',
             $this->translator->trans('header.badge.time_control_title', [], 'game'),
         );
 
@@ -144,7 +144,7 @@ final readonly class GameHeaderPresenter
         if (null !== $speed) {
             $badges[] = new GameHeaderBadge(
                 $this->speedLabel($speed),
-                'is-light',
+                '',
                 $this->translator->trans('header.badge.speed_title', [], 'game'),
             );
         }
@@ -152,7 +152,7 @@ final readonly class GameHeaderPresenter
         if ($game->isLiveEvaluationEnabled()) {
             $badges[] = new GameHeaderBadge(
                 $this->translator->trans('option.live_evaluation', [], 'game'),
-                'is-warning is-light',
+                'tag--soft tag--warning',
                 $this->translator->trans('header.badge.live_evaluation_title', [], 'game'),
             );
         }
