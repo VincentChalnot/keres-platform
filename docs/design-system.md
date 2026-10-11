@@ -118,6 +118,11 @@ The DS needs `@tailwindcss/typography`, `tailwindcss`, `postcss`, `autoprefixer`
 - **Responsive**: Tailwind breakpoints `sm 640 · md 768 · lg 1024 · xl 1280 · 2xl 1536`; the navbar switches at
   `lg`; Bulma's `columns` stack below 769px, so use `md:` where you had `columns`.
 - **Spacing**: Tailwind's scale is not Bulma's (see the table); `gap-*` on a grid/flex beats margins on children.
+- **Typography and resets** (Tailwind preflight + the DS base layer replace Bulma's reset): a bare `<h1>` is the
+  hero title (6–8 rem, `font-title`): use `page-title` for a page title and `card__title` inside a card; `h2…h6`
+  are 3 rem → 1 rem by element, `p` has `mb-4`, `a` is gold and underlined on hover, `strong` is `text-soft`. Lists
+  have **no bullets** (preflight): add `list-disc` where you want them. `img`/`svg` are `display: block`.
+  `.btn` is 13 rem wide by default (`--k-btn-min`): add `btn--sm`, `btn--icon` or `min-w-0` in tight places.
 - **Board**: `assets/board.css` only, as before. The DS `game.css` mirrors `_play_board.html.twig` (same class
   names as the game-page sections of `app.scss`): migrating the game page = delete those sections of `app.scss`.
 - **Page-specific styles** you cannot express with utilities: first look for a DS component, then add one to the DS,
