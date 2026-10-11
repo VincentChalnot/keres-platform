@@ -99,6 +99,7 @@ export default class SVGBoardView implements IBoardView {
     private boundHandleMouseLeave: (() => void) | null = null;
     private boundHandleMouseDown: ((e: MouseEvent) => void) | null = null;
     private boundHandleMouseUp: ((e: MouseEvent) => void) | null = null;
+    private boundHandleWindowMouseUp: ((e: MouseEvent) => void) | null = null;
     private boundHandleTouchStart: ((e: TouchEvent) => void) | null = null;
     private boundHandleTouchMove: ((e: TouchEvent) => void) | null = null;
     private boundHandleTouchEnd: ((e: TouchEvent) => void) | null = null;
@@ -169,6 +170,7 @@ export default class SVGBoardView implements IBoardView {
         this.boundHandleTouchMove = (e: TouchEvent) => this.handleTouchMove(e);
         this.boundHandleTouchEnd = (e: TouchEvent) => this.handleTouchEnd(e);
         this.boundOnResize = () => this.onResize();
+        this.boundHandleWindowMouseUp = (e: MouseEvent) => this.handleWindowMouseUp(e);
 
         this.svg.addEventListener('click', this.boundHandleClick);
         this.svg.addEventListener('mousemove', this.boundHandleMouseMove);
@@ -180,6 +182,8 @@ export default class SVGBoardView implements IBoardView {
         this.svg.addEventListener('touchend', this.boundHandleTouchEnd);
 
         window.addEventListener('resize', this.boundOnResize);
+        // The board never sees a button released outside it: a drag would stay in the air (ghost shown, piece hidden)
+        window.addEventListener('mouseup', this.boundHandleWindowMouseUp);
         this.onResize();
     }
 
@@ -638,6 +642,18 @@ export default class SVGBoardView implements IBoardView {
         this.endDrag(to, event.shiftKey);
     }
 
+    /** The primary button went up somewhere the board did not see (handleMouseUp clears `from`): an active drag is dropped nowhere. */
+    private handleWindowMouseUp(event: MouseEvent): void {
+        if (event.button !== 0 || this.dragState.from < 0) return;
+        this.cancelLongPressTimer();
+        if (this.dragState.active) {
+            this.endDrag(null);
+            this.preventNextClick = false; // the click of this press went to something outside the board: none is left to swallow
+        } else {
+            this.dragState.from = -1;
+        }
+    }
+
     private handleTouchStart(event: TouchEvent): void {
         if (event.touches.length !== 1) return;
         const touch = event.touches[0];
@@ -837,7 +853,7 @@ export default class SVGBoardView implements IBoardView {
      */
     private startLongPressTimer(pos: number): void {
         this.cancelLongPressTimer();
-        if (!this.currentBoardData || this.currentBoardData[pos] === 0) return;
+        if (!this.pieceLongPressHandler || !this.currentBoardData || this.currentBoardData[pos] === 0) return;
         this.longPressTimer = setTimeout(() => {
             this.longPressTimer = null;
             // Neutralise drag state so a subsequent mousemove/touchmove can't start a drag
@@ -933,6 +949,9 @@ export default class SVGBoardView implements IBoardView {
         // Remove event listeners using stored references
         if (this.boundOnResize) {
             window.removeEventListener('resize', this.boundOnResize);
+        }
+        if (this.boundHandleWindowMouseUp) {
+            window.removeEventListener('mouseup', this.boundHandleWindowMouseUp);
         }
 
         if (this.svg) {

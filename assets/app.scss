@@ -2437,3 +2437,71 @@ html.is-game-fullscreen {
         }
     }
 }
+
+// ─── Admin board editor (templates/admin/board_editor.html.twig) ──────────────
+// Same rule as the game board: as wide as its column, never taller than the visible viewport, and the <svg> keeps
+// exactly the viewBox aspect ratio (hit-testing maps client coordinates onto it). No .game-container around here:
+// SVGBoardView publishes `--board-aspect` on this element itself (the value below only covers the time before the
+// script has run; it changes when the coordinate labels are toggled).
+.board-editor__board {
+    --board-aspect: 1.2252;
+    --board-min-width: 320px;
+    --board-max-height: calc(100dvh - var(--site-navbar-height) - 2rem);
+
+    width: min(100%, max(var(--board-min-width), calc(var(--board-max-height) * var(--board-aspect))));
+    // The tools column is taller than the viewport: the board stays under the navbar while it scrolls.
+    position: sticky;
+    top: calc(var(--site-navbar-height) + 1rem);
+
+    svg {
+        display: block;
+        width: 100%;
+        height: auto;
+    }
+}
+
+.board-editor__group + .board-editor__group {
+    margin-top: 0.5rem;
+}
+
+.board-editor__row {
+    display: grid;
+    grid-template-columns: repeat(8, minmax(0, 1fr));
+    gap: 0.25rem;
+}
+
+// White pieces sit on the board's dark tile colour, Black ones on the light one (board.css), so both read well.
+.board-editor__tool {
+    padding: 0.2rem;
+    line-height: 0;
+    cursor: pointer;
+    color: inherit;
+    background: #513a27;
+    border: 2px solid transparent;
+    border-radius: 4px;
+
+    svg {
+        display: block;
+        width: 100%;
+        height: auto;
+    }
+
+    .board-editor__row--black > & {
+        background: #ddbd90;
+    }
+
+    &[aria-pressed="true"] {
+        border-color: $keres-teal;
+        box-shadow: 0 0 0 2px rgba($keres-teal, 0.45);
+    }
+}
+
+.board-editor__tool--eraser {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    padding: 0.35rem 0.75rem;
+    line-height: 1.2;
+    background: transparent;
+    border-color: $game-border;
+}

@@ -173,6 +173,40 @@ rasterised differently from the app). The "GAME OVER" stamp is a pseudo-element 
 SVG, and is not exported. A new page-level style that reaches the board SVG (outside `board.css`) must be added
 to `PAGE_PROPERTIES` there, or the file will not be an exact copy of the board.
 
+### Admin board editor (`/admin/board-editor`)
+
+Admin-only (`^/admin` → `ROLE_ADMIN`, English only, link in the admin menu) tool to build a position from
+scratch on the game's own renderer, draw arrows on it and export it as static HTML (material for the in-app
+tutorial and puzzles). It is entirely client-side: `BoardEditorAction` (route `admin_board_editor`, template
+`admin/board_editor.html.twig`, entry in `config/packages/templating.yaml`) only serves the page and
+`src/admin/boardEditor.ts` (booted from `admin.ts` when `#board-editor` exists) does everything else - no
+endpoint, nothing stored, and no "create a game from this position" (the backend cannot start a game from a
+custom board).
+
+- **Same view as the game**: a plain `SVGBoardView(new GameState())` (the state only carries the orientation),
+  animation `instant`, no `GameController`, no engine call (the one exception: "Starting position" asks the
+  engine like a game does, `GameAPI.replayMoves([])` → `/api/replay-moves`), no Mercure, no long-press handler
+  (the view starts no long-press timer when nobody listens). `.board-editor__board` (`app.scss`) sizes the
+  board like the game's; the view publishes `--board-aspect` on that element as there is no `.game-container`.
+- **Board code**: the position is the 83-byte board of the wire format (flags fixed to "White to move",
+  no-capture counter 0). Its base64 (`encodeBoardToHash`) is shown in the page, accepted back when pasted
+  (`parseBoardCode`: base64, 83 bytes, every square empty or a piece that `encodePiece(decodePiece(b))` gives
+  back; anything else shows an error and changes nothing) and mirrored in `location.hash` with `replaceState`,
+  so a reload, a bookmark or a hand-edited hash restores it. Arrows are not in the code and survive every edit
+  (the view never clears them); only "Clear arrows" does. Undo/redo keep the previous byte arrays.
+- **Editing goes through the view's callbacks**: `onTileClick` applies the palette entry (a piece of either colour,
+  the king included, or the eraser) and `onDragMove` moves a piece onto another square (replacing it); the left
+  button edits, the right one draws arrows. The view also calls the click callback when a drag starts or is
+  cancelled (it "selects" the source tile), so the editor ignores callbacks received while the button is down,
+  and applies a drag a tick later (re-appending the dragged piece's element before the browser dispatches the
+  click suppresses that click, and the view would then swallow the next real one). A stack is a bottom piece
+  plus a top piece of one colour, never a king (what `encodePiece` can hold): choose "Stack on top of the piece
+  there" and click a square holding a same-colour piece (the top of an existing stack is replaced); "Replace what
+  is there" puts a lone piece.
+- **Export**: "Export HTML" is `downloadHtml(view.exportStaticHtml('Keres board'), 'keres-board.html')`
+  (`views/boardExport.ts`); the file is the board exactly as displayed (position, arrows, orientation,
+  coordinates, piece rotation).
+
 ## Domain Model
 
 ### Key Entities

@@ -1,5 +1,6 @@
 import {Chart, registerables} from 'chart.js';
 import {initOpeningExplorer} from './admin/openingExplorer';
+import {initBoardEditor} from './admin/boardEditor';
 
 Chart.register(...registerables);
 
@@ -54,3 +55,4 @@ function initDashboardCharts(): void {
 
 initDashboardCharts();
 void initOpeningExplorer();
+void initBoardEditor();
