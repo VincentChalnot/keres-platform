@@ -136,11 +136,13 @@ messages, confirm modal, footer), `templates/admin/base.html.twig` (side menu), 
 `templates/_language_switcher.html.twig`, the Symfony form theme, and their TypeScript. Their rules are gone from
 `app.scss` (navbar, footer, modal, bell, flash, global typography, `@font-face`, error page, lightbox).
 
-Still Bulma (to migrate, page by page): everything else: `templates/actions/**`, `security/**`, `admin/**` pages,
-the SidusDataGrid / SidusAdmin overrides under `templates/bundles/` (datagrid, pager, edit/delete action), the
-`new_local_game` / lobby / friends / settings / dashboard / profile pages, the game page chrome, and the TS that
-builds Bulma markup (`LobbyController`, `FriendsController`, `app.ts` modals/feedback notification,
-`admin/openingExplorer.ts`, `admin/boardEditor.ts`, `GameHeaderBadge::$tone`/`GameHeaderPresenter` tags).
+Admin and settings are migrated too: `templates/admin/**`, `templates/actions/settings/**`, the SidusDataGrid /
+SidusAdmin overrides under `templates/bundles/` (datagrid = `card` > `toolbar` + `pagination` + `table-wrap`,
+filters = `field`/`input-group`, pager, edit/delete action), `assets/typescript/src/admin/**` and the Chart.js
+colours (read from the `--k-*` tokens).
+
+Still Bulma (to migrate, page by page): whatever other workers have not moved yet: check with
+`grep -rnE "\b(button|box|columns?|notification|is-[a-z]+|has-text-[a-z-]+)\b" templates src assets/typescript/src`.
 
 While both are loaded (**`@use 'bulma/sass'` in `app.scss` and `import "./app.scss"` in `app.js` are
 TEMPORARY**):
@@ -274,8 +276,7 @@ warning info turn turn-text panel popover tile-* piece-*`; fonts `font-sans|body
 
 - `button is-success` (no green button), `control has-icons-left|right`, `breadcrumb`, `dropdown`, generic
   `.is-hidden`: pick the closest DS component or a utility as above; if a real need appears, add it to the DS.
-- Board editor tool palette (`board-editor__*`) and opening-explorer tree styling have no DS component yet: the
-  admin pages worker adds them to the DS (`data.css` already has `.tree`).
+- Admin tools (board editor palette `board-editor__*`, opening tree `tree`) live in the DS (`admin.css`, `data.css`).
 
 ## Verifying a migrated page
 
@@ -295,3 +296,6 @@ and 390 px wide. Hints:
 - The style guide is the reference; compare your markup with the `<section>` of the component in
   `node_modules/@keres/design-system/styleguide/index.html`.
 - An admin page needs `docker compose exec php bin/console app:user:promote <email>` and a new `/dev/login`.
+- Tabs of the shared Playwright browser share one cookie jar (`/dev/login` in one logs the others in as that user):
+  with several workers, open your own context (`browser_run_code_unsafe`: `page.context().browser().newContext()`)
+  and use a distinct dev-login email.
