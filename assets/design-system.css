@@ -11,3 +11,10 @@
  * The board SVG is NOT styled here: it lives in assets/board.css only (see AGENTS.md).
  */
 @import "@keres/design-system/keres.css";
+
+/* The canvas of the inactive Three.js board renderer (views/ThreeJSBoardView.ts); the SVG board is styled by board.css. */
+#board-canvas {
+  @apply block h-auto w-full cursor-pointer select-none;
+  touch-action: none;
+  -webkit-tap-highlight-color: transparent;
+}
