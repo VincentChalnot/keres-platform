@@ -5,32 +5,28 @@
 
 {% block body %}
     <section class="section">
-        <div class="container">
-            <div class="columns is-centered">
-                <div class="column is-half">
-                    <div class="box">
-                        {% if state == 'self_invite' %}
-                            <h3 class="title">{{ 'invite.self.title'|trans }}</h3>
-                            <p class="subtitle">{{ 'invite.self.text'|trans }}</p>
-                        {% elseif state == 'blocked' %}
-                            <h3 class="title">{{ 'invite.blocked.title'|trans }}</h3>
-                            <p class="subtitle">{{ 'invite.blocked.text'|trans }}</p>
-                        {% elseif state == 'rate_limited' %}
-                            <h3 class="title">{{ 'invite.rate_limited.title'|trans }}</h3>
-                            <p class="subtitle">{{ 'invite.rate_limited.text'|trans }}</p>
-                        {% elseif state == 'expired' %}
-                            <h3 class="title">{{ 'invite.expired.title'|trans }}</h3>
-                            <p class="subtitle">{{ 'invite.expired.text'|trans }}</p>
-                        {% else %}
-                            <h3 class="title">{{ 'invite.not_found.title'|trans }}</h3>
-                            <p class="subtitle">{{ 'invite.not_found.text'|trans }}</p>
-                        {% endif %}
+        <div class="container-page container-page--narrow">
+            <div class="card">
+                {% if state == 'self_invite' %}
+                    <h1 class="page-title">{{ 'invite.self.title'|trans }}</h1>
+                    <p class="page-subtitle">{{ 'invite.self.text'|trans }}</p>
+                {% elseif state == 'blocked' %}
+                    <h1 class="page-title">{{ 'invite.blocked.title'|trans }}</h1>
+                    <p class="page-subtitle">{{ 'invite.blocked.text'|trans }}</p>
+                {% elseif state == 'rate_limited' %}
+                    <h1 class="page-title">{{ 'invite.rate_limited.title'|trans }}</h1>
+                    <p class="page-subtitle">{{ 'invite.rate_limited.text'|trans }}</p>
+                {% elseif state == 'expired' %}
+                    <h1 class="page-title">{{ 'invite.expired.title'|trans }}</h1>
+                    <p class="page-subtitle">{{ 'invite.expired.text'|trans }}</p>
+                {% else %}
+                    <h1 class="page-title">{{ 'invite.not_found.title'|trans }}</h1>
+                    <p class="page-subtitle">{{ 'invite.not_found.text'|trans }}</p>
+                {% endif %}
 
-                        <p class="mt-3">
-                            <a href="{{ path('lobby') }}">{{ 'invite.back_to_lobby'|trans }}</a>
-                        </p>
-                    </div>
-                </div>
+                <p class="mb-0">
+                    <a href="{{ path('lobby') }}">{{ 'invite.back_to_lobby'|trans }}</a>
+                </p>
             </div>
         </div>
     </section>

@@ -11,12 +11,12 @@
                     <h1 class="page-title !text-5xl">{{ 'welcome.heading'|trans }}</h1>
                     <p class="page-subtitle">{{ 'welcome.subtitle'|trans }}</p>
 
-                    <div class="btn-group mb-3">
-                        <a href="{{ path('oidc_login', {provider: 'google'}) }}" class="btn btn--primary">
+                    <div class="mb-3 flex max-w-sm flex-col gap-3">
+                        <a href="{{ path('oidc_login', {provider: 'google'}) }}" class="btn btn--primary btn--block">
                             <span class="icon"><i class="fa-brands fa-google" aria-hidden="true"></i></span>
                             <span>{{ 'welcome.continue_google'|trans }}</span>
                         </a>
-                        <a href="{{ path('oidc_login', {provider: 'discord'}) }}" class="btn btn--primary">
+                        <a href="{{ path('oidc_login', {provider: 'discord'}) }}" class="btn btn--primary btn--block">
                             <span class="icon"><i class="fa-brands fa-discord" aria-hidden="true"></i></span>
                             <span>{{ 'welcome.continue_discord'|trans }}</span>
                         </a>

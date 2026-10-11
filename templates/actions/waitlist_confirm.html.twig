@@ -5,23 +5,19 @@
 
 {% block body %}
     <section class="section">
-        <div class="container">
-            <div class="columns is-centered">
-                <div class="column is-half">
-                    <div class="box">
-                        {% if confirmed %}
-                            <h3 class="title">{{ 'waitlist.confirmed_title'|trans }}</h3>
-                            <p class="subtitle">{{ 'waitlist.confirmed_text'|trans }}</p>
-                        {% else %}
-                            <h3 class="title">{{ 'waitlist.invalid_title'|trans }}</h3>
-                            <p class="subtitle">{{ 'waitlist.invalid_text'|trans }}</p>
-                        {% endif %}
+        <div class="container-page container-page--narrow">
+            <div class="card">
+                {% if confirmed %}
+                    <h1 class="page-title">{{ 'waitlist.confirmed_title'|trans }}</h1>
+                    <p class="page-subtitle">{{ 'waitlist.confirmed_text'|trans }}</p>
+                {% else %}
+                    <h1 class="page-title">{{ 'waitlist.invalid_title'|trans }}</h1>
+                    <p class="page-subtitle">{{ 'waitlist.invalid_text'|trans }}</p>
+                {% endif %}
 
-                        <p class="mt-3">
-                            <a href="{{ path('lobby') }}">{{ 'waitlist.back'|trans }}</a>
-                        </p>
-                    </div>
-                </div>
+                <p class="mb-0">
+                    <a href="{{ path('lobby') }}">{{ 'waitlist.back'|trans }}</a>
+                </p>
             </div>
         </div>
     </section>

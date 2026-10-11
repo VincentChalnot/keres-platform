@@ -65,7 +65,6 @@ class LocalGameType extends AbstractType
             ])
             ->add('submit', SubmitType::class, [
                 'label' => 'new_local_game.form.submit',
-                'attr' => ['class' => 'button is-primary'],
             ]);
     }
 
