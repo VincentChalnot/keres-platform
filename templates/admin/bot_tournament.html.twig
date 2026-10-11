@@ -3,31 +3,27 @@
 {% block admin_title %}Bot tournament{% endblock %}
 
 {% block container %}
-    <h2 class="title is-4">Bot tournament</h2>
+    <h1 class="page-title mb-6">Bot tournament</h1>
 
-    <div class="columns mb-5">
-        <div class="column is-3">
-            <div class="box has-text-centered">
-                <p class="heading">Queued (incl. running)</p>
-                <p class="title">{{ report.queued ?? 'n/a' }}</p>
-            </div>
+    <div class="grid gap-4 sm:grid-cols-2 xl:grid-cols-4 mb-6">
+        <div class="card stat !mb-0">
+            <p class="stat__label">Queued (incl. running)</p>
+            <p class="stat__value">{{ report.queued ?? 'n/a' }}</p>
         </div>
-        <div class="column is-3">
-            <div class="box has-text-centered">
-                <p class="heading">Games in progress</p>
-                <p class="title">{{ report.ongoing }}</p>
-            </div>
+        <div class="card stat !mb-0">
+            <p class="stat__label">Games in progress</p>
+            <p class="stat__value">{{ report.ongoing }}</p>
         </div>
     </div>
 
     {% if report.standings is empty %}
-        <div class="notification is-light has-text-centered has-text-grey">
+        <div class="alert alert--info text-center">
             No bot accounts yet. Run <code>bin/console app:bot-tournament</code> to queue a tournament.
         </div>
     {% else %}
-        <h3 class="title is-5">Standings</h3>
-        <div class="table-container mb-5">
-            <table class="table is-fullwidth is-hoverable">
+        <h2 class="card__title">Standings</h2>
+        <div class="table-wrap mb-8">
+            <table class="table table--hover">
                 <thead>
                     <tr>
                         <th>Level</th>
@@ -60,10 +56,10 @@
             </table>
         </div>
 
-        <h3 class="title is-5">Head-to-head</h3>
-        <p class="subtitle is-6">Row's score % against column (games played)</p>
-        <div class="table-container">
-            <table class="table is-fullwidth is-hoverable">
+        <h2 class="card__title">Head-to-head</h2>
+        <p class="text-muted">Row's score % against column (games played)</p>
+        <div class="table-wrap">
+            <table class="table table--hover">
                 <thead>
                     <tr>
                         <th>vs</th>

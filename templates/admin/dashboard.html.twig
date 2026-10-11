@@ -3,53 +3,41 @@
 {% block admin_title %}Dashboard{% endblock %}
 
 {% block container %}
-    <h2 class="title is-4">Dashboard</h2>
+    <h1 class="page-title mb-6">Dashboard</h1>
 
-    <div class="columns is-multiline mb-5">
-        <div class="column is-3">
-            <div class="box has-text-centered">
-                <p class="heading">Total players</p>
-                <p class="title">{{ totalPlayers }}</p>
-            </div>
+    <div class="grid gap-4 sm:grid-cols-2 xl:grid-cols-4 mb-2">
+        <div class="card stat !mb-0">
+            <p class="stat__label">Total players</p>
+            <p class="stat__value">{{ totalPlayers }}</p>
         </div>
-        <div class="column is-3">
-            <div class="box has-text-centered">
-                <p class="heading">Connected (last 5 min)</p>
-                <p class="title">{{ connectedPlayers }}</p>
-            </div>
+        <div class="card stat !mb-0">
+            <p class="stat__label">Connected (last 5 min)</p>
+            <p class="stat__value">{{ connectedPlayers }}</p>
         </div>
-        <div class="column is-3">
-            <div class="box has-text-centered">
-                <p class="heading">Finished games</p>
-                <p class="title">{{ outcomes.win + outcomes.lose + outcomes.draw }}</p>
-            </div>
+        <div class="card stat !mb-0">
+            <p class="stat__label">Finished games</p>
+            <p class="stat__value">{{ outcomes.win + outcomes.lose + outcomes.draw }}</p>
         </div>
-        <div class="column is-3">
-            <div class="box has-text-centered">
-                <p class="heading">Stale games (24h+)</p>
-                <p class="title{{ staleGames|length > 0 ? ' has-text-warning' }}">{{ staleGames|length }}</p>
-            </div>
+        <div class="card stat !mb-0">
+            <p class="stat__label">Stale games (24h+)</p>
+            <p class="stat__value{{ staleGames|length > 0 ? ' stat__value--warning' }}">{{ staleGames|length }}</p>
         </div>
     </div>
 
-    <div class="columns mb-5">
-        <div class="column is-6">
-            <div class="box">
-                <h3 class="title is-6">Game outcome distribution</h3>
-                <canvas id="admin-outcome-chart" height="200"></canvas>
-            </div>
+    <div class="grid gap-4 lg:grid-cols-2">
+        <div class="card !mb-0">
+            <h3 class="card__title card__title--sm">Game outcome distribution</h3>
+            <div class="mx-auto max-w-xs"><canvas id="admin-outcome-chart" height="200"></canvas></div>
         </div>
-        <div class="column is-6">
-            <div class="box">
-                <h3 class="title is-6">Move-count distribution</h3>
-                <canvas id="admin-move-count-chart" height="200"></canvas>
-            </div>
+        <div class="card !mb-0">
+            <h3 class="card__title card__title--sm">Move-count distribution</h3>
+            <canvas id="admin-move-count-chart" height="200"></canvas>
         </div>
     </div>
 
-    <h3 class="title is-5">Stale games</h3>
-    <div class="table-container">
-        <table class="table is-fullwidth is-hoverable">
+    <h2 class="card__title mt-8">Stale games</h2>
+    <div class="table-wrap">
+        <table class="table table--hover">
             <thead>
                 <tr>
                     <th>#</th>
@@ -72,11 +60,7 @@
                     </tr>
                 {% else %}
                     <tr>
-                        <td colspan="6">
-                            <div class="notification is-light has-text-centered has-text-grey m-4">
-                                No stale games
-                            </div>
-                        </td>
+                        <td colspan="6" class="empty">No stale games</td>
                     </tr>
                 {% endfor %}
             </tbody>

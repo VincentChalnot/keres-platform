@@ -1,4 +1,4 @@
-{# Bulma-flavoured replacement for Sidus\DataGridBundle's bundled "bootstrap4" datagrid
+{# Design-system replacement for Sidus\DataGridBundle's bundled "bootstrap4" datagrid
    template. Kept under the original filename on purpose (see Form/bootstrap4.html.twig
    override in this same bundle-override directory for the full rationale). #}
 {# @var datagrid \Sidus\DataGridBundle\Model\DataGrid #}
@@ -12,14 +12,16 @@
             {% form_theme form datagrid.formTheme %}
         {% endif %}
         {{ form_start(form) }}
+        <div class="card">
     {% endblock %}
 
     {% block filters %}
         {% if form.filters|length > 0 %}
             {% set num_columns = num_columns|default(3) %}
-            <div class="columns is-multiline">
+            {% set grid_columns = {1: 'md:grid-cols-1', 2: 'md:grid-cols-2', 3: 'md:grid-cols-2 xl:grid-cols-3', 4: 'md:grid-cols-2 xl:grid-cols-4'} %}
+            <div class="grid gap-x-4 {{ grid_columns[num_columns]|default('md:grid-cols-2 xl:grid-cols-3') }}">
                 {% for column in get_filter_columns(form.filters, num_columns) %}
-                    <div class="column is-{{ 12 // num_columns }}">
+                    <div>
                         {% for cell in column %}
                             {{ form_row(cell) }}
                         {% endfor %}
@@ -30,54 +32,48 @@
     {% endblock %}
 
     {% block action_menu %}
-        <div class="level mb-3">
-            <div class="level-left">
-                <div class="level-item">
-                    {% block datagrid_count %}
-                        <span class="tag is-white is-medium">
-                            {{ 'sidus.datagrid.results.label'|trans({
-                                '%length%': pager.currentPageResults|length,
-                                '%first%': pager.currentPageOffsetStart,
-                                '%last%': pager.currentPageOffsetEnd,
-                                '%count%': pager.count,
-                            }) }}
-                        </span>
-                    {% endblock %}
-                </div>
-                <div class="level-item">
-                    {% block datagrid_actions %}
-                        <div class="buttons">
-                            {% for action in datagrid.formView.actions %}
-                                {{ form_widget(action) }}
-                            {% endfor %}
-                        </div>
-                    {% endblock %}
-                </div>
-            </div>
-            <div class="level-item">
-                {% block pagination %}
-                    {% include '@SidusDataGrid/Pager/pager.html.twig' %}
+        <div class="toolbar">
+            <div class="toolbar__group">
+                {% block datagrid_count %}
+                    <span class="tag tag--white tag--lg">
+                        {{ 'sidus.datagrid.results.label'|trans({
+                            '%length%': pager.currentPageResults|length,
+                            '%first%': pager.currentPageOffsetStart,
+                            '%last%': pager.currentPageOffsetEnd,
+                            '%count%': pager.count,
+                        }) }}
+                    </span>
+                {% endblock %}
+                {% block datagrid_actions %}
+                    <div class="btn-group">
+                        {% for action in datagrid.formView.actions %}
+                            {{ form_widget(action, {attr: {class: 'btn--sm'}}) }}
+                        {% endfor %}
+                    </div>
                 {% endblock %}
             </div>
-            <div class="level-right">
+            <div class="toolbar__group">
                 {% block filters_actions %}
-                    <div class="buttons">
+                    <div class="btn-group">
                         {% if datagrid.formView.filterResetButton is defined %}
-                            {{ form_widget(datagrid.formView.filterResetButton) }}
+                            {{ form_widget(datagrid.formView.filterResetButton, {attr: {class: 'btn--outline btn--sm'}}) }}
                         {% endif %}
                         {% if datagrid.formView.filterSubmitButton is defined %}
-                            {{ form_widget(datagrid.formView.filterSubmitButton) }}
+                            {{ form_widget(datagrid.formView.filterSubmitButton, {attr: {class: 'btn--primary btn--sm'}}) }}
                         {% endif %}
                     </div>
                 {% endblock %}
             </div>
         </div>
+        {% block pagination %}
+            {% include '@SidusDataGrid/Pager/pager.html.twig' %}
+        {% endblock %}
     {% endblock %}
 
     {% block datagrid_table %}
         {% set sort = datagrid.formView.sortable %}
-        <div class="table-container">
-            <table{{ attributes(datagrid.attributes, {class: 'table is-fullwidth is-hoverable'}) }}>
+        <div class="table-wrap">
+            <table{{ attributes(datagrid.attributes, {class: 'table table--hover table--compact whitespace-nowrap'}) }}>
                 {% block datagrid_table_headers %}
                     {% include '@SidusDataGrid/partials/table_headers.html.twig' %}
                 {% endblock %}
@@ -97,11 +93,7 @@
                         </tr>
                     {% else %}
                         <tr>
-                            <td colspan="{{ datagrid.columns|length }}">
-                                <div class="notification is-light has-text-centered has-text-grey m-4">
-                                    No result
-                                </div>
-                            </td>
+                            <td colspan="{{ datagrid.columns|length }}" class="empty">No result</td>
                         </tr>
                     {% endfor %}
                     </tbody>
@@ -111,6 +103,7 @@
     {% endblock %}
 
     {% block form_end %}
+        </div>
         {{ form_end(form) }}
     {% endblock %}
 

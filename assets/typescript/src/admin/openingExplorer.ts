@@ -147,13 +147,13 @@ export async function initOpeningExplorer(): Promise<void> {
         }
         const total = stats.win + stats.lose + stats.draw + stats.inProgress;
         statsContainer.innerHTML = `
-            <p class="heading">Continuations reaching this position</p>
-            <div class="tags">
-                <span class="tag is-success">Win ${stats.win}</span>
-                <span class="tag is-danger">Loss ${stats.lose}</span>
-                <span class="tag is-light">Draw ${stats.draw}</span>
-                <span class="tag is-info">In progress ${stats.inProgress}</span>
-                <span class="tag is-white">Total ${total}</span>
+            <p class="eyebrow">Continuations reaching this position</p>
+            <div class="tag-group">
+                <span class="tag tag--soft tag--success">Win ${stats.win}</span>
+                <span class="tag tag--soft tag--danger">Loss ${stats.lose}</span>
+                <span class="tag">Draw ${stats.draw}</span>
+                <span class="tag tag--soft tag--info">In progress ${stats.inProgress}</span>
+                <span class="tag tag--white">Total ${total}</span>
             </div>
         `;
     }
@@ -171,7 +171,7 @@ export async function initOpeningExplorer(): Promise<void> {
         container.innerHTML = '';
         if (0 === children.length) {
             const empty = document.createElement('li');
-            empty.className = 'has-text-grey-light is-size-7';
+            empty.className = 'text-subtle text-xs';
             empty.textContent = 'No recorded continuations.';
             container.appendChild(empty);
             return;
@@ -189,7 +189,7 @@ export async function initOpeningExplorer(): Promise<void> {
         li.appendChild(link);
 
         const evalTag = document.createElement('span');
-        evalTag.className = 'tag is-light ml-2';
+        evalTag.className = 'tag tag--sm ml-2';
         evalTag.title = 'Engine evaluation (level 10), White\'s point of view';
         evalTag.textContent = evaluationTag(child.evaluation);
         li.appendChild(evalTag);
@@ -202,7 +202,6 @@ export async function initOpeningExplorer(): Promise<void> {
         }
 
         const childList = document.createElement('ul');
-        childList.className = 'pl-4';
         childList.style.display = 'none';
         li.appendChild(childList);
 
@@ -244,7 +243,7 @@ export async function initOpeningExplorer(): Promise<void> {
     await showPosition(rootPositionData);
     const rootChildren = await fetchTree(rootPositionId);
     const rootList = document.createElement('ul');
-    rootList.className = 'opening-tree-root';
+    rootList.className = 'tree';
     renderChildren(rootList, rootChildren, 1);
     treeContainer.innerHTML = '';
     treeContainer.appendChild(rootList);

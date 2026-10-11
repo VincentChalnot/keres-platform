@@ -1,14 +1,14 @@
 {% set category = column.renderValue(result) %}
-{% set categoryColors = {
-    bug: 'danger',
-    suggestion: 'info',
-    gameplay: 'primary',
-    other: 'light',
-    contact: 'warning',
-    data_export_request: 'link',
-    account_deletion_request: 'dark',
-    waitlist: 'success',
+{% set categoryTags = {
+    bug: 'tag--soft tag--danger',
+    suggestion: 'tag--soft tag--info',
+    gameplay: 'tag--soft tag--primary',
+    other: '',
+    contact: 'tag--soft tag--warning',
+    data_export_request: 'tag--soft tag--secondary',
+    account_deletion_request: 'tag--brand',
+    waitlist: 'tag--soft tag--success',
 } %}
-<span class="tag is-{{ categoryColors[category]|default('light') }}">
+<span class="tag {{ categoryTags[category]|default('') }}">
     {{ category }}
 </span>

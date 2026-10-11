@@ -197,8 +197,11 @@ custom board).
 - **Same view as the game**: a plain `SVGBoardView(new GameState())` (the state only carries the orientation),
   animation `instant`, no `GameController`, no engine call (the one exception: "Starting position" asks the
   engine like a game does, `GameAPI.replayMoves([])` → `/api/replay-moves`), no Mercure, no long-press handler
-  (the view starts no long-press timer when nobody listens). `.board-editor__board` (`app.scss`) sizes the
+  (the view starts no long-press timer when nobody listens). `.board-editor__board` (design system,
+  `src/components/admin.css`, together with the palette `.board-editor__group|row|tool`) sizes the
   board like the game's; the view publishes `--board-aspect` on that element as there is no `.game-container`.
+  The page is `templates/admin/board_editor.html.twig` (DS classes only; the selected placement mode and tool are
+  `aria-pressed`, an invalid board code is `.is-invalid`).
 - **Board code**: the position is the 83-byte board of the wire format (flags fixed to "White to move",
   no-capture counter 0). Its base64 (`encodeBoardToHash`) is shown in the page, accepted back when pasted
   (`parseBoardCode`: base64, 83 bytes, every square empty or a piece that `encodePiece(decodePiece(b))` gives

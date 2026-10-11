@@ -1,22 +1,20 @@
-{# Bulma-flavoured replacement for Sidus\AdminBundle's bundled edit/create/read action template. #}
+{# Design-system replacement for Sidus\AdminBundle's bundled edit/create/read action template. #}
 {# @var action \Sidus\AdminBundle\Model\Action #}
 {% extends action.baseTemplate %}
 
 {% block container %}
-    <div class="columns">
-        <div class="{{ form_container_class|default('column is-5') }}">
-            {{ block('title') }}
-            {{ form_start(form) }}
-            {{ block('message') }}
-            {{ form_widget(form) }}
-            {{ block('form_actions') }}
-            {{ form_end(form) }}
-        </div>
+    <div class="{{ form_container_class|default('max-w-xl') }}">
+        {{ block('title') }}
+        {{ form_start(form) }}
+        {{ block('message') }}
+        {{ form_widget(form) }}
+        {{ block('form_actions') }}
+        {{ form_end(form) }}
     </div>
 {% endblock %}
 
 {% block title %}
-    <h2 class="title is-4">
+    <h1 class="page-title mb-4">
         {{ tryTrans(
             [
                 'sidus.admin.'~admin.code~'.action.'~action.code~'.title',
@@ -26,7 +24,7 @@
             },
             admin.code|humanize~' - '~action.code|humanize
         ) }}
-    </h2>
+    </h1>
 {% endblock %}
 
 {% block message %}
@@ -39,12 +37,12 @@
         }
     ) %}
     {% if message %}
-        <div class="{{ message_class|default('notification is-info') }}">{{ message }}</div>
+        <div class="{{ message_class|default('alert alert--info') }}">{{ message }}</div>
     {% endif %}
 {% endblock %}
 
 {% block form_actions %}
-    <div class="field is-grouped">
+    <div class="btn-group">
         {{ block('back_button') }}
         {{ block('submit_button') }}
     </div>
@@ -52,34 +50,30 @@
 
 {% block back_button %}
     {% if listPath|default(false) %}
-        <div class="control">
-            <a href="{{ listPath }}" class="{{ back_class|default('button is-light') }}">
-                {{ tryTrans(
-                    [
-                        'sidus.admin.'~admin.code~'.action.'~action.code~'.button.back',
-                        'sidus.admin.action.'~action.code~'.button.back',
-                        'sidus.admin.button.back',
-                    ],
-                    {},
-                    'Back'
-                ) }}
-            </a>
-        </div>
+        <a href="{{ listPath }}" class="{{ back_class|default('btn btn--outline') }}">
+            {{ tryTrans(
+                [
+                    'sidus.admin.'~admin.code~'.action.'~action.code~'.button.back',
+                    'sidus.admin.action.'~action.code~'.button.back',
+                    'sidus.admin.button.back',
+                ],
+                {},
+                'Back'
+            ) }}
+        </a>
     {% endif %}
 {% endblock %}
 
 {% block submit_button %}
-    <div class="control">
-        <button type="submit" class="{{ submit_class|default('button is-primary') }}">
-            {{ tryTrans(
-                [
-                    'sidus.admin.'~admin.code~'.action.'~action.code~'.button.submit',
-                    'sidus.admin.action.'~action.code~'.button.submit',
-                    'sidus.admin.button.submit',
-                ],
-                {},
-                'Submit'
-            ) }}
-        </button>
-    </div>
+    <button type="submit" class="{{ submit_class|default('btn btn--primary') }}">
+        {{ tryTrans(
+            [
+                'sidus.admin.'~admin.code~'.action.'~action.code~'.button.submit',
+                'sidus.admin.action.'~action.code~'.button.submit',
+                'sidus.admin.button.submit',
+            ],
+            {},
+            'Submit'
+        ) }}
+    </button>
 {% endblock %}

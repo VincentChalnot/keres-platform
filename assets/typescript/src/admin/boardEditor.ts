@@ -142,7 +142,7 @@ export async function initBoardEditor(): Promise<void> {
 
     function setCodeError(message: string | null): void {
         codeError.textContent = message ?? '';
-        codeField.classList.toggle('is-danger', null !== message);
+        codeField.classList.toggle('is-invalid', null !== message);
     }
 
     /** Shows `position` everywhere it appears: the board, the code field, the URL, the undo buttons. */
@@ -286,7 +286,7 @@ export async function initBoardEditor(): Promise<void> {
         const group = document.createElement('div');
         group.className = 'board-editor__group';
         const heading = document.createElement('p');
-        heading.className = 'heading';
+        heading.className = 'eyebrow';
         heading.textContent = color ? 'White' : 'Black';
         const row = document.createElement('div');
         row.className = `board-editor__row board-editor__row--${color ? 'white' : 'black'}`;
@@ -321,7 +321,6 @@ export async function initBoardEditor(): Promise<void> {
             setStatus(null);
             for (const other of placementButtons) {
                 const selected = other === button;
-                other.classList.toggle('is-link', selected);
                 other.setAttribute('aria-pressed', String(selected));
             }
         });

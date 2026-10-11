@@ -3,27 +3,25 @@
 {% block admin_title %}Board editor{% endblock %}
 
 {% block container %}
-    <h2 class="title is-4">Board editor</h2>
-    <p class="subtitle is-6">
+    <h1 class="page-title">Board editor</h1>
+    <p class="page-subtitle">
         Build a position from scratch on the game's own board, draw arrows on it and export it as static HTML.
         Nothing is stored: the board code (also kept in the URL hash) is the position.
     </p>
 
-    <div class="columns" id="board-editor">
-        <div class="column is-7">
-            <div class="board-editor__board" id="board-editor-board"></div>
-        </div>
+    <div class="grid items-start gap-6 lg:grid-cols-[minmax(0,7fr)_minmax(0,5fr)]" id="board-editor">
+        <div class="board-editor__board" id="board-editor-board"></div>
 
-        <div class="column">
-            <div class="box">
-                <h3 class="title is-6">Pieces</h3>
-                <div class="board-editor__palette" id="board-editor-palette" role="group" aria-label="Piece palette"></div>
+        <div class="min-w-0">
+            <div class="card">
+                <h3 class="card__title card__title--sm">Pieces</h3>
+                <div id="board-editor-palette" role="group" aria-label="Piece palette"></div>
 
                 <div class="field mt-4">
-                    <label class="label is-small" id="board-editor-placement-label">Placing on a square</label>
-                    <div class="buttons has-addons mb-0" role="group" aria-labelledby="board-editor-placement-label">
-                        <button type="button" class="button is-small is-link" data-placement="replace" aria-pressed="true">Replace what is there</button>
-                        <button type="button" class="button is-small" data-placement="stack" aria-pressed="false">Stack on top of the piece there</button>
+                    <p class="label !text-sm" id="board-editor-placement-label">Placing on a square</p>
+                    <div class="btn-group" role="group" aria-labelledby="board-editor-placement-label">
+                        <button type="button" class="btn btn--outline btn--sm" data-placement="replace" aria-pressed="true">Replace what is there</button>
+                        <button type="button" class="btn btn--outline btn--sm" data-placement="stack" aria-pressed="false">Stack on top of the piece there</button>
                     </div>
                 </div>
 
@@ -32,17 +30,17 @@
                     A stack is a bottom piece plus a top piece of the same colour: place the bottom piece, then switch to "Stack on top" and place the top one.
                     Right-drag between two squares draws an arrow (Shift: green, Ctrl: red; the same arrow again removes it).
                 </p>
-                <p class="help is-danger" id="board-editor-status" role="status"></p>
+                <p class="help help--danger" id="board-editor-status" role="status"></p>
             </div>
 
-            <div class="box">
-                <h3 class="title is-6">Position</h3>
-                <div class="buttons">
-                    <button type="button" class="button is-small" id="board-editor-clear">Clear board</button>
-                    <button type="button" class="button is-small" id="board-editor-start">Starting position</button>
-                    <button type="button" class="button is-small" id="board-editor-flip">Flip board</button>
-                    <button type="button" class="button is-small" id="board-editor-undo" disabled>Undo</button>
-                    <button type="button" class="button is-small" id="board-editor-redo" disabled>Redo</button>
+            <div class="card">
+                <h3 class="card__title card__title--sm">Position</h3>
+                <div class="btn-group mb-4">
+                    <button type="button" class="btn btn--outline btn--sm" id="board-editor-clear">Clear board</button>
+                    <button type="button" class="btn btn--outline btn--sm" id="board-editor-start">Starting position</button>
+                    <button type="button" class="btn btn--outline btn--sm" id="board-editor-flip">Flip board</button>
+                    <button type="button" class="btn btn--outline btn--sm" id="board-editor-undo" disabled>Undo</button>
+                    <button type="button" class="btn btn--outline btn--sm" id="board-editor-redo" disabled>Redo</button>
                 </div>
                 <div class="field">
                     <label class="checkbox">
@@ -59,25 +57,23 @@
                 <p class="help">Coordinates, rotation and orientation apply to the board exactly as in a game, and to the export.</p>
             </div>
 
-            <div class="box">
-                <h3 class="title is-6">Board code</h3>
+            <div class="card">
+                <h3 class="card__title card__title--sm">Board code</h3>
                 <div class="field">
-                    <div class="control">
-                        <textarea class="textarea is-family-monospace is-small has-fixed-size" id="board-editor-code" rows="3" spellcheck="false" autocomplete="off" aria-label="Board code"></textarea>
-                    </div>
-                    <p class="help is-danger" id="board-editor-code-error" role="alert"></p>
+                    <textarea class="textarea font-mono text-sm resize-none" id="board-editor-code" rows="3" spellcheck="false" autocomplete="off" aria-label="Board code"></textarea>
+                    <p class="help help--danger" id="board-editor-code-error" role="alert"></p>
                 </div>
-                <div class="buttons">
-                    <button type="button" class="button is-small" id="board-editor-copy">Copy</button>
+                <div class="btn-group">
+                    <button type="button" class="btn btn--outline btn--sm" id="board-editor-copy">Copy</button>
                 </div>
                 <p class="help">Paste a code in the field to load that position. Arrows are not part of the code; White is to move, no-capture counter 0.</p>
             </div>
 
-            <div class="box">
-                <h3 class="title is-6">Arrows and export</h3>
-                <div class="buttons">
-                    <button type="button" class="button is-small" id="board-editor-clear-arrows">Clear arrows</button>
-                    <button type="button" class="button is-small is-primary" id="board-editor-export">Export HTML</button>
+            <div class="card !mb-0">
+                <h3 class="card__title card__title--sm">Arrows and export</h3>
+                <div class="btn-group">
+                    <button type="button" class="btn btn--outline btn--sm" id="board-editor-clear-arrows">Clear arrows</button>
+                    <button type="button" class="btn btn--primary btn--sm" id="board-editor-export">Export HTML</button>
                 </div>
                 <p class="help">The export is the board exactly as shown here: position, arrows, orientation, coordinates and piece rotation.</p>
             </div>

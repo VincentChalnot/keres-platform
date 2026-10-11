@@ -3,34 +3,30 @@
 {% block admin_title %}Opening Explorer{% endblock %}
 
 {% block container %}
-    <h2 class="title is-4">Opening Explorer</h2>
-    <p class="subtitle is-6">Most-played openings, up to 4 plies from the shared starting position.</p>
+    <h1 class="page-title">Opening Explorer</h1>
+    <p class="page-subtitle">Most-played openings, up to 4 plies from the shared starting position.</p>
 
     {% if rootPositionId is null %}
-        <div class="notification is-warning">
+        <div class="alert alert--warning">
             No games have been played yet — nothing to explore.
         </div>
     {% else %}
-        <div class="columns">
-            <div class="column is-7">
-                <div class="box">
-                    <h3 class="title is-6">Opening tree</h3>
-                    <div
-                        id="opening-tree"
-                        data-root-position-id="{{ rootPositionId }}"
-                        data-root-position-data="{{ rootPositionData }}"
-                    >
-                        <p class="has-text-grey">Loading…</p>
-                    </div>
+        <div class="grid gap-4 lg:grid-cols-[minmax(0,7fr)_minmax(0,5fr)]">
+            <div class="card !mb-0">
+                <h3 class="card__title card__title--sm">Opening tree</h3>
+                <div
+                    id="opening-tree"
+                    data-root-position-id="{{ rootPositionId }}"
+                    data-root-position-data="{{ rootPositionData }}"
+                >
+                    <p class="text-muted">Loading…</p>
                 </div>
             </div>
-            <div class="column is-5">
-                <div class="box">
-                    <h3 class="title is-6">Debug board</h3>
-                    <div id="opening-debug-board"></div>
-                    <p id="opening-eval" class="mt-3 has-text-grey"></p>
-                    <div id="opening-stats" class="mt-4"></div>
-                </div>
+            <div class="card !mb-0">
+                <h3 class="card__title card__title--sm">Debug board</h3>
+                <div id="opening-debug-board"></div>
+                <p id="opening-eval" class="mt-3 text-muted"></p>
+                <div id="opening-stats" class="mt-4"></div>
             </div>
         </div>
     {% endif %}
