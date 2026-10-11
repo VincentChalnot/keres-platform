@@ -8,11 +8,9 @@
     },
     "dependencies": {
         "@fortawesome/fontawesome-free": "^7.2.0",
-        "@keres/design-system": "github:VincentChalnot/keres-design-system#v0.3.2",
-        "bulma": "^1.0.4",
+        "@keres/design-system": "github:VincentChalnot/keres-design-system#v0.3.3",
         "chart.js": "^4.4.7",
         "cheerio": "^1.1.2",
-        "sass": "^1.97.3",
         "svgo": "^4.0.0",
         "three": "^0.181.0"
     },

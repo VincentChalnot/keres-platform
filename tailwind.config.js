@@ -26,9 +26,8 @@ export default {
     ],
 
     corePlugins: {
-        // The DS wrapper is `.container-page`. Tailwind's own `.container` would otherwise be
-        // generated for every `class="container"` still left in a template and override
-        // Bulma's while pages are being migrated.
+        // The DS wrapper is `.container-page` (centred, max-w-container, responsive padding).
+        // Tailwind's `.container` (fixed max-width per breakpoint, no padding) is not used.
         container: false,
     },
 };

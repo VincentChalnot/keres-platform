@@ -89,8 +89,8 @@ svg.keres-board { cursor: auto; }`;
 
 /**
  * What the page the board is displayed in does to it, as declarations for the exported SVG: the CSS the app sets on the
- * SVG itself (`filter`: the game-over dimming) and the text settings its labels inherit from the page (Bulma's
- * `text-rendering` / font smoothing). Without them the labels are rasterised differently and the board would only
+ * SVG itself (`filter`: the game-over dimming) and the text settings its labels inherit from the page (the base
+ * layer's `text-rendering` / font smoothing). Without them the labels are rasterised differently and the board would only
  * look like the one in the app. Read from the live SVG, so it follows whatever the page does.
  */
 function pageStyleOf(svg: SVGSVGElement): string {
