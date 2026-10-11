@@ -20,6 +20,12 @@ export default defineConfig({
         // Traefik's own Host() routing rule), so skip vite's Host-header
         // allowlist rather than trying to enumerate every internal alias.
         allowedHosts: true,
+        // Vite never watches node_modules. The design system lives there too, but when it is
+        // mounted from a local checkout (compose.design-system.yaml, docs/design-system.md) its
+        // edits must reload the CSS like our own files do.
+        watch: {
+            ignored: ['!**/node_modules/@keres/design-system/**'],
+        },
         // SERVER_NAME is the same bare dev domain compose.yaml derives every
         // other URL from (see .env.example) — keeps the domain defined once
         // instead of hardcoding it again here.

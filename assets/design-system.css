@@ -1,0 +1,13 @@
+/*
+ * Design system entry (see docs/design-system.md).
+ *
+ * @keres/design-system/keres.css is the whole DS: tokens (--k-*), Tailwind base (preflight) /
+ * components / utilities, and the DS components. PostCSS (postcss.config.js) runs Tailwind
+ * (tailwind.config.js) over it and generates the utilities the platform's templates use.
+ *
+ * Add platform-only styles below this import (an @import must come first). Prefer, in this
+ * order: a DS component / Tailwind utilities in the template; a new component in the
+ * design-system repo; only then a rule here, written with @apply and the DS tokens (no raw hex).
+ * The board SVG is NOT styled here: it lives in assets/board.css only (see AGENTS.md).
+ */
+@import "@keres/design-system/keres.css";

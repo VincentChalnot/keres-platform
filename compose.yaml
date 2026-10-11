@@ -174,7 +174,9 @@ services:
       SERVER_NAME: ${SERVER_NAME:-local.playkeres.com}
     volumes:
       - .:/app
-    command: ["sh", "-c", "npm install && npm run dev -- --host 0.0.0.0"]
+    # git: @keres/design-system is a git dependency (package.json), npm shells out to git for it
+    # and node:alpine ships none. See docs/design-system.md.
+    command: ["sh", "-c", "apk add --no-cache git && npm install && npm run dev -- --host 0.0.0.0"]
     networks: [default, proxy]
     labels:
       <<: *traefik-labels

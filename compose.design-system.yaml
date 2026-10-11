@@ -1,0 +1,14 @@
+# Optional override: work on the Keres design system from its sibling checkout instead of the
+# version pinned in package.json / package-lock.json (see docs/design-system.md).
+#
+#   docker compose -f compose.yaml -f compose.design-system.yaml up -d node
+#
+# ../keres-design-system is mounted over node_modules/@keres/design-system, so an edit to
+# tailwind.preset.js or src/**/*.css is picked up by Vite (HMR) at once. `npm install` is skipped
+# on purpose: it would try to replace the mounted directory with the pinned version.
+# Go back to the pinned version with `docker compose up -d node` (plain compose.yaml).
+services:
+  node:
+    volumes:
+      - ../keres-design-system:/app/node_modules/@keres/design-system
+    command: ["npm", "run", "dev", "--", "--host", "0.0.0.0"]

@@ -1,5 +1,8 @@
+// TEMPORARY: Bulma (compiled from app.scss) is kept only until every page is migrated to the
+// design system; it MUST stay before design-system.css so the DS wins where class names clash
+// (.tag, .field, .label, .icon, .modal, .table ...). See docs/design-system.md.
 import "./app.scss";
-import "./language-switcher.scss";
+import "./design-system.css";
 import "@fortawesome/fontawesome-free/css/fontawesome.min.css";
 import "@fortawesome/fontawesome-free/css/brands.min.css";
 import "@fortawesome/fontawesome-free/css/solid.min.css";
