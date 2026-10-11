@@ -1,3 +1,9 @@
+{#
+    Symfony form theme on the design system's form classes (src/components/forms.css):
+    .field > .label + .input|.textarea|.select|.checkbox|.radio + .help (+ .help--danger for errors),
+    buttons .btn (--primary for submit). Registered in config/packages/twig.yaml.
+    An invalid widget gets `.is-invalid` (red border/ring). Classes passed in `attr` are kept.
+#}
 {% use 'form_div_layout.html.twig' %}
 
 {# Rows #}
@@ -5,9 +11,7 @@
 {%- block form_row -%}
     <div class="field">
         {{- form_label(form) -}}
-        <div class="control">
-            {{- form_widget(form) -}}
-        </div>
+        {{- form_widget(form) -}}
         {{- form_errors(form) -}}
         {{- form_help(form) -}}
     </div>
@@ -15,24 +19,20 @@
 
 {%- block checkbox_row -%}
     <div class="field">
-        <div class="control">
-            {{- form_widget(form) -}}
-        </div>
+        {{- form_widget(form) -}}
         {{- form_errors(form) -}}
     </div>
 {%- endblock checkbox_row -%}
 
 {%- block radio_row -%}
     <div class="field">
-        <div class="control">
-            {{- form_widget(form) -}}
-        </div>
+        {{- form_widget(form) -}}
         {{- form_errors(form) -}}
     </div>
 {%- endblock radio_row -%}
 
 {%- block button_row -%}
-    <div class="control">
+    <div class="field">
         {{- form_widget(form) -}}
     </div>
 {%- endblock button_row -%}
@@ -55,7 +55,7 @@
 {%- block form_errors -%}
     {%- if errors|length > 0 -%}
         {%- for error in errors -%}
-            <p class="help is-danger">{{ error.message }}</p>
+            <p class="help help--danger">{{ error.message }}</p>
         {%- endfor -%}
     {%- endif -%}
 {%- endblock form_errors -%}
@@ -64,20 +64,20 @@
 
 {%- block form_widget_simple -%}
     {%- if type is not defined or type != 'hidden' -%}
-        {%- set attr = attr|merge({class: (attr.class|default('') ~ ' input')|trim}) -%}
+        {%- set attr = attr|merge({class: (attr.class|default('') ~ ' input' ~ (valid ? '' : ' is-invalid'))|trim}) -%}
     {%- endif -%}
     {{- parent() -}}
 {%- endblock form_widget_simple -%}
 
 {%- block textarea_widget -%}
-    {%- set attr = attr|merge({class: (attr.class|default('') ~ ' textarea')|trim}) -%}
+    {%- set attr = attr|merge({class: (attr.class|default('') ~ ' textarea' ~ (valid ? '' : ' is-invalid'))|trim}) -%}
     {{- parent() -}}
 {%- endblock textarea_widget -%}
 
+{# `.select` styles the <select> itself (no wrapper element, unlike Bulma). #}
 {%- block choice_widget_collapsed -%}
-    <div class="select{% if multiple %} is-multiple{% endif %}{% if fullwidth|default(false) %} is-fullwidth{% endif %}">
-        {{- parent() -}}
-    </div>
+    {%- set attr = attr|merge({class: (attr.class|default('') ~ ' select' ~ (valid ? '' : ' is-invalid'))|trim}) -%}
+    {{- parent() -}}
 {%- endblock choice_widget_collapsed -%}
 
 {%- block choice_widget_expanded -%}
@@ -102,17 +102,24 @@
     </label>
 {%- endblock radio_widget -%}
 
+{# Buttons: `btn` unless the caller already set it, submit defaults to the primary variant, reset to the outline one. #}
 {%- block button_widget -%}
-    {%- set attr = attr|merge({class: (attr.class|default('') ~ ' button')|trim}) -%}
+    {%- if 'btn' not in attr.class|default('')|split(' ') -%}
+        {%- set attr = attr|merge({class: ('btn ' ~ attr.class|default(''))|trim}) -%}
+    {%- endif -%}
     {{- parent() -}}
 {%- endblock button_widget -%}
 
 {%- block submit_widget -%}
-    {%- set attr = attr|merge({class: (attr.class|default('') ~ ' button is-primary')|trim}) -%}
+    {%- if 'btn--' not in attr.class|default('') -%}
+        {%- set attr = attr|merge({class: (attr.class|default('') ~ ' btn--primary')|trim}) -%}
+    {%- endif -%}
     {{- parent() -}}
 {%- endblock submit_widget -%}
 
 {%- block reset_widget -%}
-    {%- set attr = attr|merge({class: (attr.class|default('') ~ ' button is-light')|trim}) -%}
+    {%- if 'btn--' not in attr.class|default('') -%}
+        {%- set attr = attr|merge({class: (attr.class|default('') ~ ' btn--outline')|trim}) -%}
+    {%- endif -%}
     {{- parent() -}}
 {%- endblock reset_widget -%}
