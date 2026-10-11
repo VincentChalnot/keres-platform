@@ -161,6 +161,11 @@ TEMPORARY**):
 - Bulma-only classes (`box`, `columns`, `button`, `notification`, `title` …) keep their Bulma look;
 - `html[data-theme="dark"]` (in `base.html.twig`) and `body { color: inherit }` (end of the Bulma block in
   `app.scss`) exist only for Bulma;
+- **Bulma's helper classes are `!important` and win over Tailwind utilities of the same name**: `m*-N`/`p*-N` (Bulma
+  scale, so `mb-6` = 3rem now but 1.5rem once Bulma is gone), and also `is-*`/`has-*` names. When checking a page's
+  spacing in the browser, run in the console `for (const s of document.styleSheets) for (let i = s.cssRules.length - 1; i >= 0; i--) { const r = s.cssRules[i]; if (/^\.(m|p)[trblxy]?-\d$/.test(r.selectorText) && r.cssText.includes('important')) s.deleteRule(i); }`
+  to see the final look. Bulma's `.grid` (v1) also sets `grid-template-columns` on Tailwind's `grid`: add
+  `grid-cols-1` next to `md:grid-cols-N` until Bulma is removed. Bulma's `.tabs a` rules make `.tab` look off.
 - the CSS is ~930 kB (Bulma ≈ 800 kB + the DS ≈ 130 kB) until Bulma goes. Final removal (whoever finishes): delete
   `@use 'bulma/sass'`, the "Bulma compatibility" block and the remaining page sections of `app.scss`, `app.scss`
   itself, `import "./app.scss"` in `app.js`, `data-theme="dark"`, `bulma` and `sass` in `package.json`; grep
