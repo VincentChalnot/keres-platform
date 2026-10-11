@@ -123,8 +123,8 @@ The DS needs `@tailwindcss/typography`, `tailwindcss`, `postcss`, `autoprefixer`
   are 3 rem → 1 rem by element, `p` has `mb-4`, `a` is gold and underlined on hover, `strong` is `text-soft`. Lists
   have **no bullets** (preflight): add `list-disc` where you want them. `img`/`svg` are `display: block`.
   `.btn` is 13 rem wide by default (`--k-btn-min`): add `btn--sm`, `btn--icon` or `min-w-0` in tight places.
-- **Board**: `assets/board.css` only, as before. The DS `game.css` mirrors `_play_board.html.twig` (same class
-  names as the game-page sections of `app.scss`): migrating the game page = delete those sections of `app.scss`.
+- **Board**: `assets/board.css` only, as before. The game page (`_play_board.html.twig`, `play*.html.twig`, `app.ts`) is
+  styled by the DS `game.css` (same class names as the markup; arrangements chosen by container queries on `.game-container`).
 - **Page-specific styles** you cannot express with utilities: first look for a DS component, then add one to the DS,
   then (platform-only) `assets/design-system.css`. Do not add to `app.scss`; move what you migrate out of it.
 - **Commits**: `git add` explicit paths and `git commit -m … -- <paths>`; never `git add -A` (other workers share the tree).
@@ -140,6 +140,12 @@ Admin and settings are migrated too: `templates/admin/**`, `templates/actions/se
 SidusAdmin overrides under `templates/bundles/` (datagrid = `card` > `toolbar` + `pagination` + `table-wrap`,
 filters = `field`/`input-group`, pager, edit/delete action), `assets/typescript/src/admin/**` and the Chart.js
 colours (read from the `--k-*` tokens).
+
+The game page is migrated as well: `templates/actions/_play_board.html.twig`, `play.html.twig`, `play_guest.html.twig` and
+the TypeScript that drives them (`app.ts`: status banner `status-banner is-*`, unstack/feedback modals `modal__*`, `hidden`
+instead of `is-hidden`, `btn--primary` toggling). Everything of it is in `game.css` (player cards, clocks, material bar,
+eval bar, status banner, moves panel, piece info, settings popover + `segmented`, feedback banner, page fullscreen);
+`app.scss` has nothing of it left (nor `--site-navbar-height`: the sizing reads `--k-navbar-h`).
 
 Still Bulma (to migrate, page by page): whatever other workers have not moved yet: check with
 `grep -rnE "\b(button|box|columns?|notification|is-[a-z]+|has-text-[a-z-]+)\b" templates src assets/typescript/src`.

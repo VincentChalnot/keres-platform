@@ -121,8 +121,9 @@ inside the board `<svg>` (`.tile`, `.piece`, `.p-w`/`.p-b`/`.p-r`, `.piece-icon`
 `#pieces-layer` animation, `.arrow*`, …) goes there; it must stay self-contained (no dependency on the page:
 select by class/id of the SVG's own content, never by `#board-container` or other page chrome) so it alone
 renders the board identically in the game page, the admin pages (opening explorer) and a static export.
-`app.scss` keeps the page: the container's layout (`#board-container`, `.game-container`, `--board-aspect`
-sizing, responsive rules), the game-over dimming/stamp of the container, panels and cards (including the size
+The design system keeps the page (`src/components/game.css` of `@keres/design-system`, which mirrors
+`_play_board.html.twig` class for class): the container's layout (`#board-container`, `.game-container`, `--board-aspect`
+sizing, container-query arrangements), the game-over dimming/stamp of the container, panels and cards (including the size
 of the `<svg>`s of the material bar and piece-info panel, whose *colours* still come from `.p-w`/`.p-b` in
 `board.css`). The sprite sources (`assets/template.svg`, `assets/pieces/**`) carry no `<style>`; they only
 use the CSS variables (`--piece-bg`, `--piece-fg`, `--icon-rotation`) that `board.css` defines.
@@ -178,8 +179,8 @@ end states, so an export during a move shows the piece arrived), prunes the spri
 references (transitively, through `href`, `xlink:href` and `url(#…)` in attributes, `<style>` and board.css), and
 drops layout whitespace. What the *page* does to the board is carried over as declarations on the exported
 `<svg>`, read from the live SVG's computed style (`pageStyleOf`): the game-over dimming `filter` and the
-`text-rendering`/font smoothing that the coordinate labels inherit from the page (Bulma today, the design system's
-base layer once Bulma is gone; without them the labels are rasterised differently from the app). The "GAME OVER"
+`text-rendering`/font smoothing that the coordinate labels inherit from the page (the design system's
+base layer; without them the labels are rasterised differently from the app). The "GAME OVER"
 stamp is a pseudo-element of the container, not part of the
 SVG, and is not exported. A new page-level style that reaches the board SVG (outside `board.css`) must be added
 to `PAGE_PROPERTIES` there, or the file will not be an exact copy of the board.
