@@ -5,7 +5,7 @@
 {% block container %}
     <h1 class="page-title mb-6">Dashboard</h1>
 
-    <div class="grid gap-4 sm:grid-cols-2 xl:grid-cols-4 mb-2">
+    <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4 mb-2">
         <div class="card stat !mb-0">
             <p class="stat__label">Total players</p>
             <p class="stat__value">{{ totalPlayers }}</p>
@@ -24,7 +24,7 @@
         </div>
     </div>
 
-    <div class="grid gap-4 lg:grid-cols-2">
+    <div class="grid grid-cols-1 gap-4 lg:grid-cols-2">
         <div class="card !mb-0">
             <h3 class="card__title card__title--sm">Game outcome distribution</h3>
             <div class="mx-auto max-w-xs"><canvas id="admin-outcome-chart" height="200"></canvas></div>

@@ -26,7 +26,7 @@
             {{ form_errors(form.displayName) }}
         </div>
 
-        <div class="grid gap-x-4 md:grid-cols-2">
+        <div class="grid grid-cols-1 gap-x-4 md:grid-cols-2">
             <div class="field">
                 {{ form_label(form.firstName) }}
                 {{ form_widget(form.firstName) }}
@@ -45,7 +45,7 @@
             <p class="help">{{ 'profile.email_help'|trans }}</p>
         </div>
 
-        <div class="grid gap-x-4 md:grid-cols-2">
+        <div class="grid grid-cols-1 gap-x-4 md:grid-cols-2">
             <div class="field">
                 {{ form_label(form.locale) }}
                 {{ form_widget(form.locale) }}
