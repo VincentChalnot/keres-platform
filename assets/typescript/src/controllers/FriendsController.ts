@@ -136,14 +136,14 @@ export class FriendsController {
         list.innerHTML = '';
 
         if (0 === rows.length) {
-            list.innerHTML = `<li class="has-text-grey">${emptyMessage}</li>`;
+            list.innerHTML = `<li class="text-muted">${emptyMessage}</li>`;
 
             return;
         }
 
         for (const row of rows) {
             const li = document.createElement('li');
-            li.className = 'friends-list__row mb-2';
+            li.className = 'friend-row';
             li.dataset.username = row.username;
 
             const buttons = actions.map((action) => {
@@ -152,13 +152,13 @@ export class FriendsController {
                     'friend-decline': t('social.friends.decline'),
                     'friend-unblock': t('social.friends.unblock'),
                 }[action];
-                const cls = 'friend-accept' === action ? 'is-primary' : 'is-light';
+                const cls = 'friend-accept' === action ? 'btn--primary' : 'btn--outline';
 
-                return `<button type="button" class="button is-small is-rounded ${cls}" data-action="${action}" data-username="${this.escape(row.username)}">${this.escape(label)}</button>`;
+                return `<button type="button" class="btn btn--sm ${cls}" data-action="${action}" data-username="${this.escape(row.username)}">${this.escape(label)}</button>`;
             }).join(' ');
 
-            li.innerHTML = `<span>${this.escape(row.displayName ?? row.username)} <span class="has-text-grey">@${this.escape(row.username)}</span></span> `
-                + (staticLabel ? `<span class="tag is-light is-rounded">${staticLabel}</span>` : buttons);
+            li.innerHTML = `<span>${this.escape(row.displayName ?? row.username)} <span class="text-muted">@${this.escape(row.username)}</span></span> `
+                + (staticLabel ? `<span class="tag tag--sm tag--light">${staticLabel}</span>` : buttons);
 
             list.appendChild(li);
         }
@@ -168,18 +168,18 @@ export class FriendsController {
         this.friendsList.innerHTML = '';
 
         if (0 === rows.length) {
-            this.friendsList.innerHTML = `<li class="has-text-grey">${this.escape(t('social.friends.no_friends'))}</li>`;
+            this.friendsList.innerHTML = `<li class="text-muted">${this.escape(t('social.friends.no_friends'))}</li>`;
 
             return;
         }
 
         for (const row of rows) {
             const li = document.createElement('li');
-            li.className = 'friends-list__row mb-2';
+            li.className = 'friend-row';
             li.dataset.username = row.username;
-            const dot = row.online ? `<span class="tag is-success is-rounded is-small">${this.escape(t('social.friends.online'))}</span>` : '';
-            li.innerHTML = `<span>${this.escape(row.displayName ?? row.username)} <span class="has-text-grey">@${this.escape(row.username)}</span></span> ${dot} `
-                + `<button type="button" class="button is-small is-rounded is-light" data-action="friend-remove" data-username="${this.escape(row.username)}">${this.escape(t('social.friends.remove'))}</button>`;
+            const dot = row.online ? `<span class="tag tag--sm tag--soft tag--success">${this.escape(t('social.friends.online'))}</span>` : '';
+            li.innerHTML = `<span>${this.escape(row.displayName ?? row.username)} <span class="text-muted">@${this.escape(row.username)}</span></span> ${dot} `
+                + `<button type="button" class="btn btn--sm btn--outline" data-action="friend-remove" data-username="${this.escape(row.username)}">${this.escape(t('social.friends.remove'))}</button>`;
             this.friendsList.appendChild(li);
         }
     }
@@ -280,20 +280,20 @@ export class FriendsController {
         this.searchResults.innerHTML = '';
 
         if (0 === results.length) {
-            this.searchResults.innerHTML = `<p class="has-text-grey">${this.escape(t('social.friends.no_players'))}</p>`;
+            this.searchResults.innerHTML = `<p class="text-muted">${this.escape(t('social.friends.no_players'))}</p>`;
 
             return;
         }
 
         const list = document.createElement('ul');
-        list.className = 'friends-list';
+        list.className = 'friend-list';
 
         for (const player of results) {
             const li = document.createElement('li');
-            li.className = 'friends-list__row mb-2';
-            const dot = player.online ? `<span class="tag is-success is-rounded is-small">${this.escape(t('social.friends.online'))}</span>` : '';
+            li.className = 'friend-row';
+            const dot = player.online ? `<span class="tag tag--sm tag--soft tag--success">${this.escape(t('social.friends.online'))}</span>` : '';
             li.innerHTML = `<span>@${this.escape(player.username)}</span> ${dot} `
-                + `<button type="button" class="button is-small is-rounded is-primary" data-action="friend-request" data-username="${this.escape(player.username)}">${this.escape(t('social.friends.add'))}</button>`;
+                + `<button type="button" class="btn btn--sm btn--primary" data-action="friend-request" data-username="${this.escape(player.username)}">${this.escape(t('social.friends.add'))}</button>`;
             list.appendChild(li);
         }
 

@@ -6,7 +6,7 @@
 {% block body %}
     <section class="section">
         <div class="container-page">
-            <h1 class="page-title">{{ 'game_list.heading'|trans }}</h1>
+            <h1 class="page-title mb-6">{{ 'game_list.heading'|trans }}</h1>
 
             <div class="tabs">
                 <a class="tab{{ status == 'in_progress' ? ' is-active' }}" href="{{ path('game_list', {status: 'in_progress'}) }}">{{ 'game_list.tab.in_progress'|trans }}</a>

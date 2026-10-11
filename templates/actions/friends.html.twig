@@ -10,44 +10,38 @@
 
 {% block body %}
     <section class="section">
-        <div class="container">
-            <h1 class="title">{{ 'friends.title'|trans }}</h1>
+        <div class="container-page">
+            <h1 class="page-title mb-6">{{ 'friends.title'|trans }}</h1>
 
             <div id="friends-root" data-user-uuid="{{ userUuid }}">
                 <script type="application/json" id="friends-bootstrap">{{ friendsBootstrap|raw }}</script>
 
-                <div class="box">
-                    <h3 class="title is-5">{{ 'friends.search.title'|trans }}</h3>
+                <div class="card">
+                    <h2 class="card__title">{{ 'friends.search.title'|trans }}</h2>
                     <div class="field">
-                        <div class="control">
-                            <input class="input" type="text" id="friends-search-input" placeholder="{{ 'friends.search.placeholder'|trans }}" autocomplete="off">
-                        </div>
+                        <input class="input" type="text" id="friends-search-input" placeholder="{{ 'friends.search.placeholder'|trans }}" autocomplete="off">
                     </div>
                     <div id="friends-search-results"></div>
                 </div>
 
-                <div class="columns is-multiline">
-                    <div class="column is-half">
-                        <div class="box">
-                            <h3 class="title is-5">{{ 'friends.incoming_title'|trans }}</h3>
-                            <ul id="friends-incoming-list" class="friends-list"></ul>
-                        </div>
+                <div class="mb-4 grid grid-cols-1 gap-4 md:grid-cols-2">
+                    <div class="card !mb-0">
+                        <h2 class="card__title">{{ 'friends.incoming_title'|trans }}</h2>
+                        <ul id="friends-incoming-list" class="friend-list"></ul>
                     </div>
-                    <div class="column is-half">
-                        <div class="box">
-                            <h3 class="title is-5">{{ 'friends.outgoing_title'|trans }}</h3>
-                            <ul id="friends-outgoing-list" class="friends-list"></ul>
-                        </div>
+                    <div class="card !mb-0">
+                        <h2 class="card__title">{{ 'friends.outgoing_title'|trans }}</h2>
+                        <ul id="friends-outgoing-list" class="friend-list"></ul>
                     </div>
                 </div>
 
-                <div class="box">
-                    <h3 class="title is-5">{{ 'friends.accepted_title'|trans }}</h3>
-                    <ul id="friends-accepted-list" class="friends-list"></ul>
+                <div class="card">
+                    <h2 class="card__title">{{ 'friends.accepted_title'|trans }}</h2>
+                    <ul id="friends-accepted-list" class="friend-list"></ul>
                 </div>
 
                 {% set privacy_link %}<a href="{{ path('settings_privacy') }}">{{ 'friends.blocked_note_link'|trans }}</a>{% endset %}
-                <p class="has-text-grey">{{ 'friends.blocked_note'|trans({link: privacy_link})|raw }}</p>
+                <p class="text-muted">{{ 'friends.blocked_note'|trans({link: privacy_link})|raw }}</p>
             </div>
         </div>
     </section>

@@ -5,64 +5,58 @@
 
 {% block body %}
     <section class="section">
-        <div class="container">
+        <div class="container-page">
             <div id="profile-root" data-username="{{ subject.username }}" data-is-self="{{ isSelf ? 'true' : 'false' }}">
-                <div class="box">
-                    <div class="columns is-vcentered">
-                        <div class="column is-narrow">
-                            {% if subject.avatarUrl %}
-                                <figure class="image is-64x64">
-                                    <img class="is-rounded" src="{{ subject.avatarUrl }}" alt="">
-                                </figure>
-                            {% else %}
-                                <span class="icon is-large">
-                                    <i class="fa-solid fa-circle-user fa-3x" aria-hidden="true"></i>
-                                </span>
-                            {% endif %}
-                        </div>
-                        <div class="column">
-                            <h1 class="title mb-1">
+                <div class="card">
+                    <div class="flex flex-wrap items-center gap-4">
+                        {% if subject.avatarUrl %}
+                            <img class="avatar avatar--lg" src="{{ subject.avatarUrl }}" alt="">
+                        {% else %}
+                            <i class="fa-solid fa-circle-user text-6xl leading-none text-muted" aria-hidden="true"></i>
+                        {% endif %}
+                        <div class="min-w-[12rem] flex-1">
+                            <h1 class="page-title !mb-0 !text-3xl break-words">
                                 {{ subject.displayName ?? subject.username }}
                                 {% if online %}
-                                    <span class="tag is-success is-rounded ml-2">{{ 'profile.online'|trans }}</span>
+                                    <span class="tag tag--soft tag--success ml-2 align-middle">{{ 'profile.online'|trans }}</span>
                                 {% endif %}
                             </h1>
-                            <p class="subtitle is-6 has-text-grey">
+                            <p class="mb-0 text-muted">
                                 @{{ subject.username }} &middot; {{ 'profile.member_since'|trans({date: subject.createdAt|format_date(pattern: 'LLLL y')}) }}
                             </p>
                         </div>
-                        <div class="column is-narrow buttons">
+                        <div class="btn-group">
                             {% if isSelf %}
-                                <a href="{{ path('settings_profile') }}" class="button is-rounded is-light">{{ 'profile.edit'|trans }}</a>
+                                <a href="{{ path('settings_profile') }}" class="btn btn--outline btn--sm">{{ 'profile.edit'|trans }}</a>
                             {% endif %}
 
                             {% if not isSelf and relationship is not null %}
                                 {% if relationship.value == 'none' %}
-                                    <button type="button" class="button is-rounded is-primary" data-action="friend-request">{{ 'profile.action.add_friend'|trans }}</button>
+                                    <button type="button" class="btn btn--primary btn--sm" data-action="friend-request">{{ 'profile.action.add_friend'|trans }}</button>
                                 {% elseif relationship.value == 'pending_out' %}
-                                    <span class="tag is-light is-rounded">{{ 'profile.action.request_sent'|trans }}</span>
+                                    <span class="tag tag--light">{{ 'profile.action.request_sent'|trans }}</span>
                                 {% elseif relationship.value == 'pending_in' %}
-                                    <button type="button" class="button is-rounded is-primary" data-action="friend-accept">{{ 'profile.action.accept'|trans }}</button>
-                                    <button type="button" class="button is-rounded is-light" data-action="friend-decline">{{ 'profile.action.decline'|trans }}</button>
+                                    <button type="button" class="btn btn--primary btn--sm" data-action="friend-accept">{{ 'profile.action.accept'|trans }}</button>
+                                    <button type="button" class="btn btn--outline btn--sm" data-action="friend-decline">{{ 'profile.action.decline'|trans }}</button>
                                 {% elseif relationship.value == 'friends' %}
-                                    <button type="button" class="button is-rounded is-light" data-action="friend-remove">{{ 'profile.action.unfriend'|trans }}</button>
+                                    <button type="button" class="btn btn--outline btn--sm" data-action="friend-remove">{{ 'profile.action.unfriend'|trans }}</button>
                                 {% endif %}
 
                                 {% if relationship.value == 'blocked_by_me' %}
-                                    <button type="button" class="button is-rounded is-light" data-action="friend-unblock">{{ 'profile.action.unblock'|trans }}</button>
+                                    <button type="button" class="btn btn--outline btn--sm" data-action="friend-unblock">{{ 'profile.action.unblock'|trans }}</button>
                                 {% else %}
-                                    <button type="button" class="button is-rounded is-danger is-light" data-action="friend-block">{{ 'profile.action.block'|trans }}</button>
+                                    <button type="button" class="btn btn--danger-soft btn--sm" data-action="friend-block">{{ 'profile.action.block'|trans }}</button>
                                 {% endif %}
                             {% endif %}
                         </div>
                     </div>
                 </div>
 
-                <div class="columns is-multiline">
-                    <div class="column is-half">
-                        <div class="box">
-                            <h3 class="title is-5">{{ 'profile.ratings.title'|trans }}</h3>
-                            <table class="table is-fullwidth">
+                <div class="mb-4 grid grid-cols-1 gap-4 md:grid-cols-2">
+                    <div class="card !mb-0">
+                        <h2 class="card__title">{{ 'profile.ratings.title'|trans }}</h2>
+                        <div class="table-wrap">
+                            <table class="table">
                                 <thead>
                                 <tr>
                                     <th>{{ 'profile.ratings.category'|trans }}</th>
@@ -74,7 +68,7 @@
                                 {% for category, rating in ratings %}
                                     <tr>
                                         <td>{{ ('profile.ratings.categories.' ~ category)|trans }}</td>
-                                        <td class="{{ rating.provisional ? 'has-text-grey' : '' }}">
+                                        <td class="{{ rating.provisional ? 'text-muted' : '' }}">
                                             {{ rating.rating|format_number }}{% if rating.provisional %}<span title="{{ 'profile.ratings.provisional_hint'|trans }}">?</span>{% endif %}
                                         </td>
                                         <td>{{ rating.games|format_number }}</td>
@@ -84,55 +78,47 @@
                             </table>
                         </div>
                     </div>
-                    <div class="column is-half">
-                        <div class="box">
-                            <h3 class="title is-5">{{ 'profile.record.title'|trans }}</h3>
-                            <div class="level is-mobile">
-                                <div class="level-item has-text-centered">
-                                    <div>
-                                        <p class="heading">{{ 'profile.record.wins'|trans }}</p>
-                                        <p class="title">{{ stats.wins|format_number }}</p>
-                                    </div>
-                                </div>
-                                <div class="level-item has-text-centered">
-                                    <div>
-                                        <p class="heading">{{ 'profile.record.losses'|trans }}</p>
-                                        <p class="title">{{ stats.losses|format_number }}</p>
-                                    </div>
-                                </div>
-                                <div class="level-item has-text-centered">
-                                    <div>
-                                        <p class="heading">{{ 'profile.record.draws'|trans }}</p>
-                                        <p class="title">{{ stats.draws|format_number }}</p>
-                                    </div>
-                                </div>
+                    <div class="card !mb-0">
+                        <h2 class="card__title">{{ 'profile.record.title'|trans }}</h2>
+                        <div class="stat-row">
+                            <div class="stat">
+                                <p class="stat__label">{{ 'profile.record.wins'|trans }}</p>
+                                <p class="stat__value">{{ stats.wins|format_number }}</p>
+                            </div>
+                            <div class="stat">
+                                <p class="stat__label">{{ 'profile.record.losses'|trans }}</p>
+                                <p class="stat__value">{{ stats.losses|format_number }}</p>
+                            </div>
+                            <div class="stat">
+                                <p class="stat__label">{{ 'profile.record.draws'|trans }}</p>
+                                <p class="stat__value">{{ stats.draws|format_number }}</p>
                             </div>
                         </div>
                     </div>
                 </div>
 
-                <h2 class="title is-4">{{ 'profile.games.title'|trans }}</h2>
+                <h2 class="mb-4 mt-8 font-title text-2xl">{{ 'profile.games.title'|trans }}</h2>
 
                 {% for game in games %}
                     {# @var game \App\Entity\Game #}
                     {% include 'actions/_game_row.html.twig' with {row: game_list_row(game, subject, isSelf, app.user), isSelf: isSelf} %}
                 {% else %}
-                    <p class="has-text-grey">{{ (isSelf ? 'profile.games.empty_self' : 'profile.games.empty_other')|trans }}</p>
+                    <p class="text-muted">{{ (isSelf ? 'profile.games.empty_self' : 'profile.games.empty_other')|trans }}</p>
                 {% endfor %}
 
                 {% if games.haveToPaginate %}
-                    <nav class="pagination" role="navigation" aria-label="{{ 'profile.pagination.label'|trans }}">
+                    <nav class="pagination" aria-label="{{ 'profile.pagination.label'|trans }}">
                         {% if games.hasPreviousPage %}
-                            <a class="pagination-previous" href="{{ path('profile', {username: subject.username, page: games.previousPage}) }}">{{ 'profile.pagination.previous'|trans }}</a>
+                            <a class="pagination__prev" href="{{ path('profile', {username: subject.username, page: games.previousPage}) }}">{{ 'profile.pagination.previous'|trans }}</a>
                         {% else %}
-                            <a class="pagination-previous" disabled>{{ 'profile.pagination.previous'|trans }}</a>
+                            <span class="pagination__prev is-disabled" aria-disabled="true">{{ 'profile.pagination.previous'|trans }}</span>
                         {% endif %}
+                        <span class="pagination__list">{{ 'profile.pagination.page_of'|trans({page: games.currentPage, total: games.nbPages}) }}</span>
                         {% if games.hasNextPage %}
-                            <a class="pagination-next" href="{{ path('profile', {username: subject.username, page: games.nextPage}) }}">{{ 'profile.pagination.next'|trans }}</a>
+                            <a class="pagination__next" href="{{ path('profile', {username: subject.username, page: games.nextPage}) }}">{{ 'profile.pagination.next'|trans }}</a>
                         {% else %}
-                            <a class="pagination-next" disabled>{{ 'profile.pagination.next'|trans }}</a>
+                            <span class="pagination__next is-disabled" aria-disabled="true">{{ 'profile.pagination.next'|trans }}</span>
                         {% endif %}
-                        <span class="pagination-list ml-3">{{ 'profile.pagination.page_of'|trans({page: games.currentPage, total: games.nbPages}) }}</span>
                     </nav>
                 {% endif %}
             </div>
