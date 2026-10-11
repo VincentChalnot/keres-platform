@@ -4,8 +4,8 @@
 {% block title %}{{ 'play_guest.page_title'|trans }}{% endblock %}
 
 {% block body %}
-    <div class="container mt-4">
-        <div class="notification is-dark is-light guest-game-notice">
+    <div class="container-page mt-4">
+        <div class="alert alert--brand mb-0 guest-game-notice">
             {{ 'play_guest.notice.intro'|trans }}
             <a href="{{ path('login') }}">{{ 'play_guest.notice.sign_in'|trans }}</a> {{ 'play_guest.notice.or'|trans }} <a href="{{ path('register') }}">{{ 'play_guest.notice.create_account'|trans }}</a> {{ 'play_guest.notice.outro'|trans }}
         </div>

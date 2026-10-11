@@ -482,7 +482,7 @@ class KeresGame {
         this.selectInsteadBtn.addEventListener('click', () => this.handleSelectInstead());
 
         // Modal background close
-        const modalBackground = this.unstackModal.querySelector('.modal-background');
+        const modalBackground = this.unstackModal.querySelector('.modal__backdrop');
         if (modalBackground) {
             modalBackground.addEventListener('click', () => this.handleModalClose());
         }
@@ -492,7 +492,7 @@ class KeresGame {
         this.undoBtn?.addEventListener('click', () => void this.handleUndo());
         this.feedbackBtn?.addEventListener('click', () => void this.openFeedbackModal());
         this.feedbackModalClose.addEventListener('click', () => this.closeFeedbackModal());
-        this.feedbackModal.querySelector('.modal-background')?.addEventListener('click', () => this.closeFeedbackModal());
+        this.feedbackModal.querySelector('.modal__backdrop')?.addEventListener('click', () => this.closeFeedbackModal());
 
         // Move history: the list itself (one button per move) and the step buttons under it
         this.moveHistoryBody.addEventListener('click', (event) => {
@@ -625,11 +625,11 @@ class KeresGame {
             this.unstackModalText.textContent = t('play.stack_modal.choose_text');
             this.moveStackBtn.textContent = t('play.stack_modal.move_full_stack');
         }
-        this.moveStackBtn.classList.toggle('is-hidden', !full);
-        this.moveUnstackBtn.classList.toggle('is-hidden', !top);
-        this.selectInsteadBtn.classList.toggle('is-hidden', !selectInstead);
-        this.moveStackBtn.classList.toggle('is-primary', full);
-        this.moveUnstackBtn.classList.toggle('is-primary', !full && top);
+        this.moveStackBtn.hidden = !full;
+        this.moveUnstackBtn.hidden = !top;
+        this.selectInsteadBtn.hidden = !selectInstead;
+        this.moveStackBtn.classList.toggle('btn--primary', full);
+        this.moveUnstackBtn.classList.toggle('btn--primary', !full && top);
         this.unstackModal.classList.add('is-active');
         (full ? this.moveStackBtn : this.moveUnstackBtn).focus();
     }
@@ -683,7 +683,7 @@ class KeresGame {
 
     private async openFeedbackModal(): Promise<void> {
         this.feedbackModal.classList.add('is-active');
-        this.feedbackModalBody.innerHTML = '<progress class="progress is-small is-primary" max="100"></progress>';
+        this.feedbackModalBody.innerHTML = '<progress class="progress progress--sm" max="100"></progress>';
         this.feedbackModalBody.firstElementChild!.textContent = t('common.loading');
 
         try {
@@ -733,7 +733,7 @@ class KeresGame {
 
             if (contentType.includes('application/json')) {
                 const notification = document.createElement('div');
-                notification.className = 'notification is-success';
+                notification.className = 'alert alert--success mb-0';
                 const strong = document.createElement('strong');
                 strong.textContent = t('play.feedback.thanks_title');
                 notification.append(strong, ` ${t('play.feedback.thanks_text')}`);
@@ -1018,7 +1018,7 @@ class KeresGame {
 
     private setBanner(text: string, tone: 'muted' | 'your-turn' | 'game-over'): void {
         this.gameStatusBanner.textContent = text;
-        this.gameStatusBanner.classList.remove('is-hidden', 'is-muted', 'is-your-turn', 'is-won', 'is-lost', 'is-drawn', 'is-neutral-result');
+        this.gameStatusBanner.classList.remove('is-muted', 'is-your-turn', 'is-won', 'is-lost', 'is-drawn', 'is-neutral-result');
         if ('game-over' === tone) {
             this.gameStatusBanner.classList.add(`is-${this.gameOverOutcome()}`);
         } else {

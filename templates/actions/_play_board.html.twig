@@ -7,7 +7,7 @@
       gameHeader (?\App\Model\GameHeader - players with avatar/rating + option badges; undefined for guest games),
       liveEvaluation (bool, optional - the evaluation bar was requested at creation; unrated games only)
 
-    Layout (app.scss, .game-layout): player cards | board | moves panel on wide
+    Layout (@keres/design-system game.css, .game-layout): player cards | board | moves panel on wide
     screens; the cards turn into slim rows above/below the board and the panel
     drops under it on narrower ones. The cards are one per colour: the stylesheet
     puts Black on top unless the layout carries `is-flipped` (set by app.ts).
@@ -68,9 +68,9 @@
             {% endfor %}
 
             <div class="game-info">
-                <div class="game-status-banner is-muted" id="game-status-banner" role="status" aria-live="polite">{{ 'play.board.loading'|trans }}</div>
+                <div class="status-banner is-muted" id="game-status-banner" role="status" aria-live="polite">{{ 'play.board.loading'|trans }}</div>
                 {% if header and header.badges is not empty %}
-                    <div class="tags game-info__badges">
+                    <div class="game-info__badges">
                         {% for badge in header.badges %}
                             <span class="tag {{ badge.tone }}"{% if badge.title %} title="{{ badge.title }}"{% endif %}>{{ badge.label }}</span>
                         {% endfor %}
@@ -197,32 +197,32 @@
         {% endif %}
     </div>
 
-    <div class="modal" id="unstack-modal">
-        <div class="modal-background"></div>
-        <div class="modal-card">
-            <header class="modal-card-head">
-                <p class="modal-card-title" id="unstack-modal-title">{{ 'play.board.unstack_modal.title'|trans }}</p>
+    <div class="modal" id="unstack-modal" role="dialog" aria-modal="true" aria-labelledby="unstack-modal-title">
+        <div class="modal__backdrop"></div>
+        <div class="modal__card">
+            <header class="modal__head">
+                <p class="modal__title" id="unstack-modal-title">{{ 'play.board.unstack_modal.title'|trans }}</p>
             </header>
-            <section class="modal-card-body">
+            <section class="modal__body">
                 <p id="unstack-modal-text">{{ 'play.board.unstack_modal.text'|trans }}</p>
             </section>
-            <footer class="modal-card-foot is-flex-wrap-wrap" style="gap: 0.5rem;">
-                <button class="button is-primary" id="move-stack">{{ 'play.board.unstack_modal.move_stack'|trans }}</button>
-                <button class="button" id="move-unstack">{{ 'play.board.unstack_modal.move_unstack'|trans }}</button>
-                <button class="button is-hidden" id="select-instead">{{ 'play.board.unstack_modal.select_instead'|trans }}</button>
+            <footer class="modal__foot">
+                <button type="button" class="btn btn--primary" id="move-stack">{{ 'play.board.unstack_modal.move_stack'|trans }}</button>
+                <button type="button" class="btn" id="move-unstack">{{ 'play.board.unstack_modal.move_unstack'|trans }}</button>
+                <button type="button" class="btn btn--outline" id="select-instead" hidden>{{ 'play.board.unstack_modal.select_instead'|trans }}</button>
             </footer>
         </div>
     </div>
 
-    <div class="modal" id="feedback-modal">
-        <div class="modal-background"></div>
-        <div class="modal-card">
-            <header class="modal-card-head">
-                <p class="modal-card-title">{{ 'play.board.feedback_modal.title'|trans }}</p>
-                <button class="delete" aria-label="{{ 'play.board.feedback_modal.close'|trans }}" id="feedback-modal-close"></button>
+    <div class="modal" id="feedback-modal" role="dialog" aria-modal="true" aria-labelledby="feedback-modal-title">
+        <div class="modal__backdrop"></div>
+        <div class="modal__card">
+            <header class="modal__head">
+                <p class="modal__title" id="feedback-modal-title">{{ 'play.board.feedback_modal.title'|trans }}</p>
+                <button type="button" class="btn-close" aria-label="{{ 'play.board.feedback_modal.close'|trans }}" id="feedback-modal-close"></button>
             </header>
-            <section class="modal-card-body" id="feedback-modal-body">
-                <progress class="progress is-small is-primary" max="100">{{ 'play.board.feedback_modal.loading'|trans }}</progress>
+            <section class="modal__body" id="feedback-modal-body">
+                <progress class="progress progress--sm" max="100">{{ 'play.board.feedback_modal.loading'|trans }}</progress>
             </section>
         </div>
     </div>
