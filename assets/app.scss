@@ -32,9 +32,6 @@ $keres-bg: #010101;
     --light-color: #{$keres-light};
     --dark-color: #{$keres-dark};
     --spacing: 1rem;
-    // Height of the sticky navbar: the board is sized to the space left under it. The design
-    // system owns the value (--k-navbar-h); only the admin board editor below still reads this name.
-    --site-navbar-height: var(--k-navbar-h);
 }
 
 // ─── TEMPORARY: Bulma compatibility (delete together with Bulma) ──────────────
@@ -191,13 +188,6 @@ body {
 .movement-table tr:nth-child(even) td:nth-child(odd) {
     background: $keres-secondary;
 }
-
-// ─── Leftovers of the game page, still read by the admin board editor below ───
-// The game page itself is styled by the design system (game.css). Delete these two together with
-// the `.board-editor__*` rules that use them, when that page is migrated.
-
-$keres-teal: #1faba3;
-$game-border: rgba($keres-secondary, 0.16);
 
 // ─── Utility ─────────────────────────────────────────────────────────────────
 
