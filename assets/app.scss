@@ -46,48 +46,6 @@ body {
     color: inherit;
 }
 
-// ─── Hero (landing page) ──────────────────────────────────────────────────────
-
-.hero-header {
-    text-align: center;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    margin-bottom: 2em;
-
-    .button {
-        box-shadow: 1px 1px 12px #000;
-    }
-}
-
-.hero-baseline {
-    font-family: 'RomanSerif', serif;
-    font-size: 1.5rem;
-    margin: 0 0 1.2em;
-    text-shadow: -1px 1px 4px #0a0a0a;
-}
-
-.hero-img {
-    z-index: -10;
-    pointer-events: none;
-    display: flex;
-    align-items: center;
-
-    img {
-        display: block;
-        width: 100%;
-        max-width: 1900px;
-        min-height: 800px;
-        object-fit: cover;
-        margin: -130px 0 -200px;
-    }
-}
-
-.hero-content {
-    max-width: 60ch;
-    padding: 0 2em;
-}
-
 // ─── Sections ─────────────────────────────────────────────────────────────────
 // Bulma's .section handles padding; we add the layout on top.
 
@@ -1675,56 +1633,6 @@ html.is-game-fullscreen {
     @page { margin: 1cm; }
 }
 
-// ─── Lobby: "New seek" panel ──────────────────────────────────────────────────
-
-// Bulma's `.column`/`.help` display rules would otherwise beat `[hidden]`.
-.lobby-new-seek [hidden] {
-    display: none !important;
-}
-
-.lobby-presets {
-    flex-wrap: wrap;
-
-    .button.button.button {
-        // Bulma toggles the border width between states (0/1px, focus ring);
-        // our padding overrides don't compensate, so pin it to avoid layout shifts.
-        --bulma-button-border-width: 1px;
-        flex-direction: column;
-        height: auto;
-        min-width: 7.5rem;
-        padding-top: 0.45em;
-        padding-bottom: 0.45em;
-        line-height: 1.2;
-    }
-}
-
-// Bulma's plain `.tag.is-light` (the "light" palette colour) renders white text
-// on the cream background; force the dark brand colour for contrast.
-.tag:not(body).is-light {
-    color: $keres-dark;
-}
-
-// Unselected presets: subtle background on hover (same tint as other lobby rows).
-.lobby-presets .button.is-outlined:hover {
-    background-color: rgba(255, 255, 255, 0.08);
-}
-
-// The selected preset keeps its accent while hovered/focused.
-.lobby-presets .button.is-primary:not(.is-outlined) {
-    &:hover,
-    &:focus,
-    &:active {
-        background-color: $keres-primary;
-        color: #1a1208;
-    }
-}
-
-.lobby-presets__value {
-    font-size: 0.8em;
-    opacity: 0.8;
-    font-variant-numeric: tabular-nums;
-}
-
 // ─── Settings ─────────────────────────────────────────────────────────────────
 
 .settings-nav .menu-list a {
@@ -1754,11 +1662,6 @@ html.is-game-fullscreen {
     display: flex;
     align-items: center;
     gap: 0.4rem;
-}
-
-.lobby-hero__image {
-    max-width: 100%;
-    border-radius: 0.6em;
 }
 
 // ─── Admin board editor (templates/admin/board_editor.html.twig) ──────────────

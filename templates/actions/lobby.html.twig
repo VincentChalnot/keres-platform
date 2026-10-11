@@ -10,22 +10,22 @@
 
 {% block body %}
     <section class="section">
-        <div class="container">
-            <h1 class="title">{{ 'lobby.heading'|trans }}</h1>
-            <p class="subtitle">{{ 'lobby.subtitle'|trans }}</p>
+        <div class="container-page">
+            <h1 class="page-title">{{ 'lobby.heading'|trans }}</h1>
+            <p class="page-subtitle">{{ 'lobby.subtitle'|trans }}</p>
 
             <div id="lobby-root" data-user-uuid="{{ app.user.id }}">
                 <script type="application/json" id="lobby-bootstrap">{{ seeksBootstrap|raw }}</script>
 
-                <div class="box lobby-new-seek">
-                    <h3 class="title is-5">{{ 'lobby.new_seek.title'|trans }}</h3>
+                <div class="card">
+                    <h2 class="card__title">{{ 'lobby.new_seek.title'|trans }}</h2>
                     <form id="lobby-seek-form" data-default-preset="{{ defaultPreset }}">
                         <div class="field">
-                            <label class="label" id="lobby-preset-label">{{ 'lobby.new_seek.format'|trans }}</label>
-                            <div class="buttons lobby-presets" role="group" aria-labelledby="lobby-preset-label">
+                            <span class="label" id="lobby-preset-label">{{ 'lobby.new_seek.format'|trans }}</span>
+                            <div class="btn-group" role="group" aria-labelledby="lobby-preset-label">
                                 {% for key, preset in presets %}
                                     <button type="button"
-                                            class="button is-rounded is-outlined is-light"
+                                            class="btn btn--outline btn--stack"
                                             aria-pressed="false"
                                             data-preset="{{ key }}"
                                             data-kind="{{ preset.kind }}"
@@ -36,7 +36,7 @@
                                                 data-hours-per-move="{{ preset.hoursPerMove }}"
                                             {% endif %}>
                                         <span>{{ preset.label|trans }}</span>
-                                        <span class="lobby-presets__value">
+                                        <span class="btn__value">
                                             {%- if preset.kind == 'realtime' -%}
                                                 {{ 'time_control.realtime'|trans({initial: preset.initialMinutes, increment: preset.incrementSeconds}) }}
                                             {%- else -%}
@@ -49,125 +49,89 @@
                             <p class="help">{{ 'lobby.new_seek.format_help'|trans }}</p>
                         </div>
 
-                        <div class="columns is-multiline">
-                            <div class="column is-one-third">
-                                <div class="field">
-                                    <label class="label" for="lobby-seek-kind">{{ 'lobby.new_seek.time_control'|trans }}</label>
-                                    <div class="control">
-                                        <div class="select is-fullwidth">
-                                            <select name="kind" id="lobby-seek-kind">
-                                                <option value="realtime">{{ 'time_control.kind.realtime'|trans }}</option>
-                                                <option value="correspondence">{{ 'time_control.kind.correspondence'|trans }}</option>
-                                                <option value="unlimited">{{ 'time_control.kind.unlimited'|trans }}</option>
-                                            </select>
-                                        </div>
-                                    </div>
-                                </div>
+                        <div class="grid grid-cols-1 gap-x-4 md:grid-cols-3">
+                            <div class="field">
+                                <label class="label" for="lobby-seek-kind">{{ 'lobby.new_seek.time_control'|trans }}</label>
+                                <select class="select" name="kind" id="lobby-seek-kind">
+                                    <option value="realtime">{{ 'time_control.kind.realtime'|trans }}</option>
+                                    <option value="correspondence">{{ 'time_control.kind.correspondence'|trans }}</option>
+                                    <option value="unlimited">{{ 'time_control.kind.unlimited'|trans }}</option>
+                                </select>
                             </div>
-                            <div class="column is-one-third" data-field="realtime">
-                                <div class="field">
-                                    <label class="label" for="lobby-seek-initial">{{ 'lobby.new_seek.initial_minutes'|trans }}</label>
-                                    <div class="control">
-                                        <input class="input" type="number" id="lobby-seek-initial" name="initialMinutes" min="1" max="180" step="1" required>
-                                    </div>
-                                </div>
+                            <div class="field" data-field="realtime">
+                                <label class="label" for="lobby-seek-initial">{{ 'lobby.new_seek.initial_minutes'|trans }}</label>
+                                <input class="input" type="number" id="lobby-seek-initial" name="initialMinutes" min="1" max="180" step="1" required>
                             </div>
-                            <div class="column is-one-third" data-field="realtime">
-                                <div class="field">
-                                    <label class="label" for="lobby-seek-increment">{{ 'lobby.new_seek.increment_seconds'|trans }}</label>
-                                    <div class="control">
-                                        <input class="input" type="number" id="lobby-seek-increment" name="incrementSeconds" min="0" max="180" step="1" required>
-                                    </div>
-                                </div>
+                            <div class="field" data-field="realtime">
+                                <label class="label" for="lobby-seek-increment">{{ 'lobby.new_seek.increment_seconds'|trans }}</label>
+                                <input class="input" type="number" id="lobby-seek-increment" name="incrementSeconds" min="0" max="180" step="1" required>
                             </div>
-                            <div class="column is-one-third" data-field="correspondence" hidden>
-                                <div class="field">
-                                    <label class="label" for="lobby-seek-hours">{{ 'lobby.new_seek.time_per_move'|trans }}</label>
-                                    <div class="control">
-                                        <div class="select is-fullwidth">
-                                            <select name="hoursPerMove" id="lobby-seek-hours">
-                                                <option value="6">{{ 'time_control.hours_option'|trans({hours: 6}) }}</option>
-                                                <option value="12">{{ 'time_control.hours_option'|trans({hours: 12}) }}</option>
-                                                <option value="24" selected>{{ 'time_control.hours_option'|trans({hours: 24}) }}</option>
-                                                <option value="48">{{ 'time_control.hours_option'|trans({hours: 48}) }}</option>
-                                                <option value="72">{{ 'time_control.hours_option'|trans({hours: 72}) }}</option>
-                                            </select>
-                                        </div>
-                                    </div>
-                                </div>
+                            <div class="field" data-field="correspondence" hidden>
+                                <label class="label" for="lobby-seek-hours">{{ 'lobby.new_seek.time_per_move'|trans }}</label>
+                                <select class="select" name="hoursPerMove" id="lobby-seek-hours">
+                                    <option value="6">{{ 'time_control.hours_option'|trans({hours: 6}) }}</option>
+                                    <option value="12">{{ 'time_control.hours_option'|trans({hours: 12}) }}</option>
+                                    <option value="24" selected>{{ 'time_control.hours_option'|trans({hours: 24}) }}</option>
+                                    <option value="48">{{ 'time_control.hours_option'|trans({hours: 48}) }}</option>
+                                    <option value="72">{{ 'time_control.hours_option'|trans({hours: 72}) }}</option>
+                                </select>
                             </div>
-                            <div class="column is-one-third">
-                                <div class="field">
-                                    <label class="label" for="lobby-seek-color">{{ 'lobby.new_seek.colour'|trans }}</label>
-                                    <div class="control">
-                                        <div class="select is-fullwidth">
-                                            <select name="colorPreference" id="lobby-seek-color">
-                                                <option value="random">{{ 'color.random'|trans }}</option>
-                                                <option value="white">{{ 'color.white'|trans }}</option>
-                                                <option value="black">{{ 'color.black'|trans }}</option>
-                                            </select>
-                                        </div>
-                                    </div>
-                                </div>
+                            <div class="field">
+                                <label class="label" for="lobby-seek-color">{{ 'lobby.new_seek.colour'|trans }}</label>
+                                <select class="select" name="colorPreference" id="lobby-seek-color">
+                                    <option value="random">{{ 'color.random'|trans }}</option>
+                                    <option value="white">{{ 'color.white'|trans }}</option>
+                                    <option value="black">{{ 'color.black'|trans }}</option>
+                                </select>
                             </div>
-                            <div class="column is-one-third">
-                                <div class="field">
-                                    <label class="label" for="lobby-seek-rated">{{ 'lobby.new_seek.rated'|trans }}</label>
-                                    <div class="control">
-                                        <div class="select is-fullwidth">
-                                            <select name="rated" id="lobby-seek-rated">
-                                                <option value="true">{{ 'option.rated'|trans }}</option>
-                                                <option value="false">{{ 'option.casual'|trans }}</option>
-                                            </select>
-                                        </div>
-                                    </div>
-                                    <p class="help" data-field="unlimited" hidden>{{ 'lobby.new_seek.unlimited_help'|trans }}</p>
-                                </div>
+                            <div class="field">
+                                <label class="label" for="lobby-seek-rated">{{ 'lobby.new_seek.rated'|trans }}</label>
+                                <select class="select" name="rated" id="lobby-seek-rated">
+                                    <option value="true">{{ 'option.rated'|trans }}</option>
+                                    <option value="false">{{ 'option.casual'|trans }}</option>
+                                </select>
+                                <p class="help" data-field="unlimited" hidden>{{ 'lobby.new_seek.unlimited_help'|trans }}</p>
                             </div>
                         </div>
 
-                        <div class="field is-grouped is-grouped-multiline">
-                            <div class="control">
-                                <button type="submit" class="button is-primary is-rounded">{{ 'lobby.new_seek.post'|trans }}</button>
-                            </div>
-                            <div class="control">
-                                <button type="button" id="lobby-invite-btn" class="button is-outlined is-light is-rounded">{{ 'lobby.new_seek.invite'|trans }}</button>
-                            </div>
+                        <div class="btn-group">
+                            <button type="submit" class="btn btn--primary">{{ 'lobby.new_seek.post'|trans }}</button>
+                            <button type="button" id="lobby-invite-btn" class="btn btn--outline">{{ 'lobby.new_seek.invite'|trans }}</button>
                         </div>
                         <p class="help">{{ 'lobby.new_seek.invite_help'|trans }}</p>
                     </form>
                 </div>
 
-                <div class="box">
-                    <h3 class="title is-5">{{ 'lobby.open_seeks.title'|trans }} <span class="has-text-grey-light" id="lobby-pool-size"></span></h3>
-                    <div class="table-container">
-                    <table class="table is-fullwidth" id="lobby-seek-table">
-                        <thead>
-                        <tr>
-                            <th>{{ 'lobby.open_seeks.player'|trans }}</th>
-                            <th>{{ 'lobby.open_seeks.time_control'|trans }}</th>
-                            <th>{{ 'lobby.open_seeks.rated'|trans }}</th>
-                            <th>{{ 'lobby.open_seeks.colour'|trans }}</th>
-                            <th></th>
-                        </tr>
-                        </thead>
-                        <tbody id="lobby-seek-table-body"></tbody>
-                    </table>
+                <div class="card">
+                    <h2 class="card__title">{{ 'lobby.open_seeks.title'|trans }} <span class="text-muted" id="lobby-pool-size"></span></h2>
+                    <div class="table-wrap">
+                        <table class="table" id="lobby-seek-table">
+                            <thead>
+                            <tr>
+                                <th>{{ 'lobby.open_seeks.player'|trans }}</th>
+                                <th>{{ 'lobby.open_seeks.time_control'|trans }}</th>
+                                <th>{{ 'lobby.open_seeks.rated'|trans }}</th>
+                                <th>{{ 'lobby.open_seeks.colour'|trans }}</th>
+                                <th></th>
+                            </tr>
+                            </thead>
+                            <tbody id="lobby-seek-table-body"></tbody>
+                        </table>
                     </div>
                 </div>
 
-                <div class="box">
-                    <h3 class="title is-5">{{ 'lobby.local.title'|trans }}</h3>
-                    <a href="{{ path('new_local_game') }}" class="button is-rounded is-outlined is-light">{{ 'lobby.local.button'|trans }}</a>
+                <div class="card">
+                    <h2 class="card__title">{{ 'lobby.local.title'|trans }}</h2>
+                    <a href="{{ path('new_local_game') }}" class="btn btn--outline">{{ 'lobby.local.button'|trans }}</a>
                 </div>
 
-                <div class="box">
-                    <h3 class="title is-5">{{ 'lobby.your_games.title'|trans }}</h3>
+                <div class="card">
+                    <h2 class="card__title">{{ 'lobby.your_games.title'|trans }}</h2>
                     {% for game in ongoingGames %}
                         {# @var game \App\Entity\Game #}
                         {% include 'actions/_game_row.html.twig' with {row: game_list_row(game, app.user, true), isSelf: true} %}
                     {% else %}
-                        <p class="has-text-grey">{{ 'game_list.empty.in_progress'|trans }}</p>
+                        <p class="text-muted">{{ 'game_list.empty.in_progress'|trans }}</p>
                     {% endfor %}
                     {% if ongoingGamesCount > ongoingGames|length %}
                         <p><a href="{{ path('game_list') }}">{{ 'game_list.view_all'|trans({count: ongoingGamesCount}) }}</a></p>

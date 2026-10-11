@@ -182,20 +182,20 @@ export class LobbyController {
         if (true === seek.self) {
             const cancelButton = document.createElement('button');
             cancelButton.type = 'button';
-            cancelButton.className = 'button is-small is-rounded is-danger is-outlined';
+            cancelButton.className = 'btn btn--sm btn--danger-soft';
             cancelButton.textContent = t('common.cancel');
             cancelButton.addEventListener('click', () => void this.cancel(seek.uuid));
             action.appendChild(cancelButton);
         } else if (true === seek.playable) {
             const playButton = document.createElement('button');
             playButton.type = 'button';
-            playButton.className = 'button is-small is-rounded is-primary';
+            playButton.className = 'btn btn--sm btn--primary';
             playButton.textContent = t('lobby.seek.play');
             playButton.addEventListener('click', () => void this.accept(seek.uuid));
             action.appendChild(playButton);
         } else if (null !== seek.playable) {
             const disabled = document.createElement('span');
-            disabled.className = 'has-text-grey-light';
+            disabled.className = 'text-subtle';
             disabled.textContent = t('lobby.seek.unavailable');
             action.appendChild(disabled);
         }
@@ -267,9 +267,6 @@ export class LobbyController {
         const markPreset = (active: HTMLButtonElement | null): void => {
             for (const button of presetButtons) {
                 const isActive = button === active;
-                button.classList.toggle('is-primary', isActive);
-                button.classList.toggle('is-outlined', !isActive);
-                button.classList.toggle('is-light', !isActive);
                 button.setAttribute('aria-pressed', isActive ? 'true' : 'false');
             }
         };
