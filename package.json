@@ -4,11 +4,12 @@
     "scripts": {
         "dev": "vite",
         "build": "vite build",
-        "type-check": "tsc --noEmit -p assets/typescript/tsconfig.json"
+        "type-check": "tsc --noEmit -p assets/typescript/tsconfig.json",
+        "check:front": "node scripts/check-front.mjs"
     },
     "dependencies": {
         "@fortawesome/fontawesome-free": "^7.2.0",
-        "@keres/design-system": "github:VincentChalnot/keres-design-system#v0.3.3",
+        "@keres/design-system": "github:VincentChalnot/keres-design-system#v0.4.0",
         "chart.js": "^4.4.7",
         "cheerio": "^1.1.2",
         "svgo": "^4.0.0",

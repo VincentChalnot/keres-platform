@@ -108,6 +108,10 @@ jobs:
       - name: npm run type-check
         run: npm run type-check
 
+      - name: npm run check:front
+        # Bulma/unknown state classes, grid without grid-cols-*, Font Awesome styles not imported
+        run: npm run check:front
+
   build:
     name: Build Images
     runs-on: ubuntu-latest
