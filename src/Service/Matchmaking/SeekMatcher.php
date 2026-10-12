@@ -137,6 +137,25 @@ final readonly class SeekMatcher
                 throw new \LogicException('Locked seek row has no corresponding entity.');
             }
 
+            // A rematch: the parent game's row is the lock that serialises "who creates the rematch";
+            // a game that already has one (uniq_game_parent) means this pairing must not create another.
+            $parent = $selfSeek->getRematchOfGame();
+
+            if (null !== $parent && $parent === $candidateSeek->getRematchOfGame()) {
+                $this->connection->executeQuery('SELECT id FROM game WHERE id = :id FOR UPDATE', ['id' => $parent->getId()]);
+                $existingId = $this->connection->fetchOne('SELECT id FROM game WHERE parent_game_id = :id', ['id' => $parent->getId()]);
+
+                if (false !== $existingId) {
+                    $this->connection->executeStatement(
+                        'UPDATE seek SET status_value = 2 WHERE id IN (:selfId, :candidateId) AND status_value = 0',
+                        ['selfId' => $selfSeek->getId(), 'candidateId' => $candidateSeek->getId()],
+                    );
+                    $this->connection->commit();
+
+                    return new PairOutcome($this->entityManager->find(Game::class, (int) $existingId), false);
+                }
+            }
+
             // Read before creation - T6 "first game started" is a count of games
             // that already existed, and this new one isn't persisted yet either way.
             $isFirstGameSelf = 0 === $this->gameRepository->countForUser($selfSeek->getUser());

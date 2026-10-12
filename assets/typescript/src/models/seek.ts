@@ -33,6 +33,8 @@ export interface SeekSummary {
     ratingRange: {min: number | null; max: number | null};
     autoWiden: boolean;
     createdAt: number;
+    /** A rematch request of a finished game: only ever listed to its owner, who waits for the opponent's answer. */
+    rematch: boolean;
     /** null for an anonymous viewer */
     self: boolean | null;
     /** null for an anonymous viewer */

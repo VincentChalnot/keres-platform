@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Service\Matchmaking;
 
+use App\Entity\Game;
 use App\Entity\Seek;
 use App\Entity\User;
 use App\Message\ExpireSeekMessage;
@@ -89,21 +90,25 @@ final readonly class SeekCreationService
         ?int $ratingMin,
         ?int $ratingMax,
         bool $inviteOnly = false,
+        ?Game $rematchOf = null,
     ): SeekCreationResult {
         $now = $this->clock->now();
+        // A rematch request is addressed to one player and never listed to anyone else: invite-only by construction.
+        $inviteOnly = $inviteOnly || null !== $rematchOf;
         $ttl = match (true) {
+            null !== $rematchOf => MultiplayerLimits::REMATCH_TTL_SECONDS,
             $inviteOnly => MultiplayerLimits::INVITE_TTL_SECONDS,
             TimeControlKind::CORRESPONDENCE === $timeControl->getKind() => MultiplayerLimits::CHALLENGE_TTL_SECONDS,
             default => MultiplayerLimits::SEEK_TTL_SECONDS,
         };
 
         try {
-            $result = $this->insertOrReplace($user, $timeControl, $rated, $colorPreference, $autoWiden, $ratingMin, $ratingMax, $now, $ttl, $inviteOnly);
+            $result = $this->insertOrReplace($user, $timeControl, $rated, $colorPreference, $autoWiden, $ratingMin, $ratingMax, $now, $ttl, $inviteOnly, $rematchOf);
         } catch (UniqueConstraintViolationException) {
             // sec 6.2: two concurrent first-ever creates both saw zero rows and locked
             // nothing; the loser's INSERT hit `seek_one_open_per_user`. One retry now
             // finds the winner's row and takes the dedupe/replace branch.
-            $result = $this->insertOrReplace($user, $timeControl, $rated, $colorPreference, $autoWiden, $ratingMin, $ratingMax, $now, $ttl, $inviteOnly);
+            $result = $this->insertOrReplace($user, $timeControl, $rated, $colorPreference, $autoWiden, $ratingMin, $ratingMax, $now, $ttl, $inviteOnly, $rematchOf);
         }
 
         if (null !== $result->replacedSeekUuid) {
@@ -135,9 +140,10 @@ final readonly class SeekCreationService
         \DateTimeImmutable $now,
         int $ttl,
         bool $inviteOnly,
+        ?Game $rematchOf,
     ): SeekCreationResult {
         return $this->entityManager->wrapInTransaction(
-            function (EntityManagerInterface $em) use ($user, $timeControl, $rated, $colorPreference, $autoWiden, $ratingMin, $ratingMax, $now, $ttl, $inviteOnly): SeekCreationResult {
+            function (EntityManagerInterface $em) use ($user, $timeControl, $rated, $colorPreference, $autoWiden, $ratingMin, $ratingMax, $now, $ttl, $inviteOnly, $rematchOf): SeekCreationResult {
                 $existing = $this->seekRepository->findOpenForUserForUpdate($user);
                 $category = $timeControl->speedCategory();
                 // 04-matchmaking.md sec 4 / 06-rating.md sec 4.3: server-side, frozen at
@@ -159,6 +165,7 @@ final readonly class SeekCreationService
                     $ratingMin,
                     $ratingMax,
                     $inviteOnly,
+                    $rematchOf,
                 );
 
                 if (null !== $existing && $existing->hasSameParameters($candidate)) {

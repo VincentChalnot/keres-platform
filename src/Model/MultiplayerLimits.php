@@ -33,6 +33,9 @@ final class MultiplayerLimits
     /** T11: how long an "Invite a friend" link stays open - a dedicated constant rather than reusing CHALLENGE_TTL_SECONDS, so the two can be tuned independently later. */
     public const int INVITE_TTL_SECONDS = 86400;
 
+    /** How long a rematch request stays open waiting for the opponent to accept it. */
+    public const int REMATCH_TTL_SECONDS = 86400;
+
     /** 04-matchmaking.md sec 4.2: a seek drops out of the pool/listing after this many seconds of silence. */
     public const int SEEK_STALE_AFTER_SECONDS = 25;
 

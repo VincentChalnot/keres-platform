@@ -5,6 +5,7 @@ seek:
     casual: Casual
     play: Play
     unavailable: Not available
+    rematch: Rematch – waiting for your opponent
 color:
     white: White
     black: Black

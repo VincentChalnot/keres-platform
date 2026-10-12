@@ -137,7 +137,10 @@ export class LobbyController {
         this.render(event.poolSize);
         this.syncHeartbeat();
 
-        if (this.seeks.size !== event.poolSize) {
+        // The viewer's own rematch request is shown on top of the pool, not counted in it.
+        const listed = [...this.seeks.values()].filter((seek) => !seek.rematch).length;
+
+        if (listed !== event.poolSize) {
             // sec 5.2: an event was missed - refetch rather than trust the running count.
             void this.refetch();
         }
@@ -162,7 +165,7 @@ export class LobbyController {
         row.dataset.seekUuid = seek.uuid;
 
         const player = document.createElement('td');
-        player.textContent = seek.user.username;
+        player.textContent = seek.rematch ? t('lobby.seek.rematch') : seek.user.username;
         row.appendChild(player);
 
         const timeControl = document.createElement('td');
@@ -485,7 +488,8 @@ export class LobbyController {
     }
 
     private cancelMySeekOnUnload(): void {
-        if (null === this.mySeekUuid) {
+        // A rematch request outlives the lobby page: the opponent may only get to it later.
+        if (null === this.mySeekUuid || this.seeks.get(this.mySeekUuid)?.rematch) {
             return;
         }
 

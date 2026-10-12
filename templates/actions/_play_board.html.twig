@@ -209,10 +209,23 @@
                 <div class="flex flex-col items-center gap-3 mt-6">
                     {% if not spectator and guest %}
                         <a class="btn btn--primary btn--block" id="gameover-modal-rematch" href="{{ path('new_local_game') }}"><i class="fa-solid fa-rotate" aria-hidden="true"></i>{{ 'play.board.gameover_modal.rematch'|trans }}</a>
-                    {% elseif not spectator and gameUuid and opponentType != 2 %}
-                        <form method="post" action="{{ path('rematch_game', {uuid: gameUuid}) }}" class="w-full">
-                            <button type="submit" class="btn btn--primary btn--block"><i class="fa-solid fa-rotate" aria-hidden="true"></i>{{ 'play.board.gameover_modal.rematch'|trans }}</button>
-                        </form>
+                    {% elseif not spectator and gameUuid %}
+                        {% set rematchState = rematch.state|default('none') %}
+                        {% if rematchState == 'started' %}
+                            <a class="btn btn--primary btn--block" href="{{ path('play', {uuid: rematch.gameUuid}) }}"><i class="fa-solid fa-rotate" aria-hidden="true"></i>{{ 'play.board.gameover_modal.rematch_started'|trans }}</a>
+                        {% else %}
+                            <form method="post" action="{{ path('rematch_game', {uuid: gameUuid}) }}" class="w-full">
+                                <button type="submit" class="btn btn--primary btn--block"><i class="fa-solid fa-rotate" aria-hidden="true"></i>
+                                    {%- if rematchState == 'offered' -%}
+                                        {{ 'play.board.gameover_modal.rematch_offered'|trans }}
+                                    {%- elseif rematchState == 'requested' -%}
+                                        {{ 'play.board.gameover_modal.rematch_requested'|trans }}
+                                    {%- else -%}
+                                        {{ 'play.board.gameover_modal.rematch'|trans }}
+                                    {%- endif -%}
+                                </button>
+                            </form>
+                        {% endif %}
                     {% endif %}
                     <a class="btn btn--block" href="{{ path('lobby') }}"><i class="fa-solid fa-chess-king" aria-hidden="true"></i>{{ 'play.board.gameover_modal.new_game'|trans }}</a>
                     <button type="button" class="btn btn--block" data-close><i class="fa-solid fa-clock-rotate-left" aria-hidden="true"></i>{{ 'play.board.gameover_modal.review'|trans }}</button>

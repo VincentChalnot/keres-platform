@@ -22,6 +22,7 @@ use Symfony\Component\Uid\Uuid;
 
 #[ORM\Entity(repositoryClass: GameRepository::class)]
 #[ORM\Table(name: 'game')]
+#[ORM\UniqueConstraint(name: 'uniq_game_parent', columns: ['parent_game_id'])]
 #[ORM\Index(
     name: 'idx_game_move_deadline',
     columns: ['move_deadline_at'],
@@ -119,6 +120,11 @@ class Game
     #[ORM\JoinColumn(name: 'created_by_id', nullable: false)]
     private User $createdBy;
 
+    /** The finished game this one is the rematch of; unique, so a game has at most one rematch. */
+    #[ORM\ManyToOne(targetEntity: self::class)]
+    #[ORM\JoinColumn(name: 'parent_game_id', nullable: true, onDelete: 'SET NULL')]
+    private ?self $parentGame = null;
+
     /**
      * @var Collection<int, GamePlayer>
      */
@@ -157,6 +163,17 @@ class Game
     public function getId(): ?int
     {
         return $this->id;
+    }
+
+    public function getParentGame(): ?self
+    {
+        return $this->parentGame;
+    }
+
+    /** Only before the game is first persisted (`GameFactory`). */
+    public function setParentGame(self $parentGame): void
+    {
+        $this->parentGame = $parentGame;
     }
 
     public function getUuid(): Uuid

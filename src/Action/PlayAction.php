@@ -5,18 +5,21 @@ declare(strict_types=1);
 namespace App\Action;
 
 use App\Engine\GameEngine;
+use App\Entity\Game;
 use App\Entity\User;
 use App\Message\ProcessAiMoveMessage;
 use App\Model\AnimationSpeed;
 use App\Model\OpponentType;
 use App\Model\PieceColor;
 use App\Repository\GameRepository;
+use App\Repository\SeekRepository;
 use App\Repository\UserPreferencesRepository;
 use App\Security\Voter\GameVoter;
 use App\Service\Game\ClockAdjudicator;
 use App\Service\Game\GameStatePayloadBuilder;
 use App\Service\Notification\NotificationCenter;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\Clock\ClockInterface;
 use Symfony\Component\HttpKernel\Attribute\AsController;
 use Symfony\Component\Messenger\MessageBusInterface;
 use Symfony\Component\Routing\Attribute\Route;
@@ -34,6 +37,8 @@ class PlayAction extends AbstractController
         private readonly GameStatePayloadBuilder $payloadBuilder,
         private readonly NotificationCenter $notificationCenter,
         private readonly UserPreferencesRepository $userPreferencesRepository,
+        private readonly SeekRepository $seekRepository,
+        private readonly ClockInterface $clock,
     ) {
     }
 
@@ -110,6 +115,41 @@ class PlayAction extends AbstractController
             'moves' => $movesBase64,
             'playerWhite' => PieceColor::WHITE === $playerColor,
             'gameStateBootstrap' => $this->payloadBuilder->encode($statePayload),
+            'rematch' => $this->rematchState($game, $user instanceof User ? $user : null),
         ];
+    }
+
+    /**
+     * Where the rematch of a finished game stands, for the game-over modal's button:
+     * `started` (with the new game's uuid), `offered` (the opponent asked, the viewer's click accepts),
+     * `requested` (the viewer asked, the opponent has not answered) or `none`.
+     *
+     * @return array{state: string, gameUuid: ?string}
+     */
+    private function rematchState(Game $game, ?User $user): array
+    {
+        if (!$game->isGameOver() || !$game->isParticipant($user)) {
+            return ['state' => 'none', 'gameUuid' => null];
+        }
+
+        $rematch = $this->gameRepository->findRematchOf($game);
+
+        if (null !== $rematch) {
+            return ['state' => 'started', 'gameUuid' => $rematch->getUuid()->toRfc4122()];
+        }
+
+        $opponent = $game->getOpponentOf($user);
+
+        if (null === $opponent) {
+            return ['state' => 'none', 'gameUuid' => null];
+        }
+
+        $now = $this->clock->now();
+
+        return match (true) {
+            null !== $this->seekRepository->findOpenRematchSeek($game, $opponent, $now) => ['state' => 'offered', 'gameUuid' => null],
+            null !== $this->seekRepository->findOpenRematchSeek($game, $user, $now) => ['state' => 'requested', 'gameUuid' => null],
+            default => ['state' => 'none', 'gameUuid' => null],
+        };
     }
 }

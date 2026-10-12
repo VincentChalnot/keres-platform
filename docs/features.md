@@ -103,6 +103,27 @@ the Seek uuid. Invite-only seeks are excluded from the public listing, from the
 anonymous pairing pool and from the dedupe/equality check (`matchesTuple`); keep all
 three guards when touching matchmaking.
 
+## Rematch
+
+The game-over modal (`#gameover-modal` of `_play_board.html.twig`, opened by `app.ts` when a game ends in the page and
+again by a click on the dimmed board) posts to `POST /play/{uuid}/rematch` (`RematchGameAction` → `RematchService`).
+A rematch is a game with `Game::$parentGame` set (unique, `uniq_game_parent`: a game has at most one rematch),
+the same parameters and the colours swapped; whoever asks first wins, the other click lands on the same game.
+
+- **AI / hot-seat**: created at once, under a lock on the parent row.
+- **Multiplayer**: needs both players. The first click inserts a rematch `Seek` (`Seek::$rematchOfGame`, invite-only
+  by construction, TTL `REMATCH_TTL_SECONDS`), notifies the opponent (`NotificationType::REMATCH_OFFERED`, link = the
+  finished game) and redirects to the lobby, which lists it to its owner only (`findOpenForListing($now, $viewer)`;
+  `rematch: true` in the summary, not counted in `poolSize`, not cancelled when the lobby page closes). The opponent's
+  click on the "Accept the rematch" button (state from `PlayAction::rematchState()`) pairs the two seeks through
+  `SeekMatcher::attemptPair($mine, restrictTo: $theirs)`, which creates the game with the parent and re-checks, under a
+  lock on the parent row, that none exists yet. Both players end up on the game: the acting one by redirect, the
+  waiting one by the lobby's usual "seek matched" path.
+- Guards to keep when touching matchmaking: a rematch seek is never offered by the lobby "accept" endpoint nor the
+  invite link, never paired by its heartbeat (only with the opponent's own request), and exempt from the stale-heartbeat
+  filter (the opponent may answer much later).
+- Guest games have no server game: the modal's link restarts `/play/guest` with the same kind/level and the other colour.
+
 ## AI difficulty and guests
 
 `Game::$aiLevel` (nullable, 1-10, form default 1 = weakest). `EngineApi::aiMove()`

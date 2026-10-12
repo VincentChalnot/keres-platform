@@ -26,6 +26,17 @@ class GameRepository extends ServiceEntityRepository
         parent::__construct($registry, Game::class);
     }
 
+    /** The game started as the rematch of `$parent`, if any (at most one: `uniq_game_parent`). */
+    public function findRematchOf(Game $parent): ?Game
+    {
+        return $this->createQueryBuilder('g')
+            ->andWhere('g.parentGame = :parent')
+            ->andWhere('g.deletedAt IS NULL')
+            ->setParameter('parent', $parent)
+            ->getQuery()
+            ->getOneOrNullResult();
+    }
+
     public function findByUuid(Uuid $uuid): ?Game
     {
         return $this->createQueryBuilder('g')

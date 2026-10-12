@@ -204,6 +204,9 @@ play:
         gameover_modal:
             close: Fermer
             rematch: Revanche rapide
+            rematch_offered: Accepter la revanche
+            rematch_requested: Revanche demandée – en attente de votre adversaire
+            rematch_started: Aller à la revanche
             preorder: Précommander la version physique
             new_game: Nouvelle partie
             review: Revoir la partie

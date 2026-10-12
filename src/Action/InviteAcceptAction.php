@@ -65,7 +65,7 @@ class InviteAcceptAction extends AbstractController
 
         $target = $this->seekRepository->findByUuid(Uuid::fromString($uuid));
 
-        if (null === $target || !$target->isInviteOnly()) {
+        if (null === $target || !$target->isInviteOnly() || null !== $target->getRematchOfGame()) {
             return ['state' => 'not_found'];
         }
 

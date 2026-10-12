@@ -71,7 +71,8 @@ readonly class AcceptSeekAction
 
         $target = $this->seekRepository->findByUuid(Uuid::fromString($uuid));
 
-        if (null === $target) {
+        // A rematch request is answered from the finished game (RematchGameAction), never by its seek's uuid.
+        if (null === $target || null !== $target->getRematchOfGame()) {
             return ApiResponse::error(ApiErrorCode::SEEK_NOT_FOUND, 'Seek not found.');
         }
 

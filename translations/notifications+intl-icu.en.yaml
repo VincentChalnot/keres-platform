@@ -15,6 +15,7 @@ text:
     friend_request: '{actor} sent you a friend request.'
     friend_accepted: '{actor} is now your friend.'
     seek_matched: '{actor} accepted your seek. Your game has started.'
+    rematch_offered: '{actor} wants a rematch. Open the game to accept.'
     your_turn: '{actor} played a move. It’s your turn.'
     game_finished:
         win: 'You won against {opponent}{reason, select, resignation { by resignation} timeout { on time} abandonment { by abandonment} draw_agreed { by agreement} other {}}.'
@@ -27,5 +28,6 @@ settings_type:
     friend_request: Someone sends me a friend request
     friend_accepted: Someone accepts my friend request
     seek_matched: Someone accepts my seek and a game starts
+    rematch_offered: My opponent asks for a rematch
     your_turn: My opponent plays a move in a correspondence or unlimited game
     game_finished: One of my games ends

@@ -89,6 +89,11 @@ class Seek
     #[ORM\JoinColumn(name: 'matched_game_id', nullable: true, onDelete: 'SET NULL')]
     private ?Game $matchedGame = null;
 
+    /** Set on a rematch seek: the finished game both players are asking to play again (see `RematchService`). */
+    #[ORM\ManyToOne(targetEntity: Game::class)]
+    #[ORM\JoinColumn(name: 'rematch_of_game_id', nullable: true, onDelete: 'CASCADE')]
+    private ?Game $rematchOfGame = null;
+
     public function __construct(
         User $user,
         TimeControl $timeControl,
@@ -101,6 +106,7 @@ class Seek
         ?int $ratingMin = null,
         ?int $ratingMax = null,
         bool $inviteOnly = false,
+        ?Game $rematchOfGame = null,
     ) {
         $this->uuid = Uuid::v4();
         $this->user = $user;
@@ -113,6 +119,7 @@ class Seek
         $this->ratingMin = $ratingMin;
         $this->ratingMax = $ratingMax;
         $this->inviteOnly = $inviteOnly;
+        $this->rematchOfGame = $rematchOfGame;
         $this->createdAt = $now;
         $this->expiresAt = $now->modify(\sprintf('+%d seconds', $ttlSeconds));
         $this->lastHeartbeatAt = $now;
@@ -208,6 +215,11 @@ class Seek
         return $this->inviteOnly;
     }
 
+    public function getRematchOfGame(): ?Game
+    {
+        return $this->rematchOfGame;
+    }
+
     /** True iff `$other` is the same (kind, initial, increment, days, rated) tuple - the create-time dedupe check (sec 6.2). */
     public function hasSameParameters(self $other): bool
     {
@@ -222,7 +234,8 @@ class Seek
             && $this->ratingMax === $other->ratingMax
             // T11: an invite and a public seek never dedupe against each other,
             // even with an identical tuple - they are different commitments.
-            && $this->inviteOnly === $other->inviteOnly;
+            && $this->inviteOnly === $other->inviteOnly
+            && $this->rematchOfGame === $other->rematchOfGame;
     }
 
     /** Owner-only, one-shot (sec 2). Anything else touching `status`/`matchedGame` is `SeekMatcher`'s raw-DBAL job. */

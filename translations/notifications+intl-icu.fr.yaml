@@ -15,6 +15,7 @@ text:
     friend_request: '{actor} vous a envoyé une demande d’ami.'
     friend_accepted: '{actor} fait désormais partie de vos amis.'
     seek_matched: '{actor} a accepté votre proposition. Votre partie a commencé.'
+    rematch_offered: '{actor} souhaite une revanche. Ouvrez la partie pour accepter.'
     your_turn: '{actor} a joué un coup. À vous de jouer.'
     game_finished:
         win: 'Vous avez gagné contre {opponent}{reason, select, resignation { par abandon} timeout { au temps} abandonment { par désertion} draw_agreed { par accord mutuel} other {}}.'
@@ -27,5 +28,6 @@ settings_type:
     friend_request: Quelqu’un m’envoie une demande d’ami
     friend_accepted: Quelqu’un accepte ma demande d’ami
     seek_matched: Quelqu’un accepte ma proposition et une partie commence
+    rematch_offered: Mon adversaire demande une revanche
     your_turn: Mon adversaire joue un coup dans une partie par correspondance ou sans limite de temps
     game_finished: Une de mes parties se termine

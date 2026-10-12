@@ -26,10 +26,15 @@ final class GameFactory
      * `$aiLevel` (1-10, T10) is only ever passed for `OpponentType::AI` -
      * callers pass null for HOTSEAT, where it is meaningless.
      */
-    public function createAiOrHotseatGame(User $creator, OpponentType $opponentType, ColorPreference $colorPreference, ?int $aiLevel = null, bool $liveEvaluation = false): Game
+    public function createAiOrHotseatGame(User $creator, OpponentType $opponentType, ColorPreference $colorPreference, ?int $aiLevel = null, bool $liveEvaluation = false, ?Game $parentGame = null): Game
     {
         $creatorColor = $this->resolveColor($colorPreference, ColorPreference::RANDOM);
         $game = new Game($creator, $opponentType, TimeControl::unlimited(), false, OpponentType::AI === $opponentType ? $aiLevel : null, $liveEvaluation);
+
+        if (null !== $parentGame) {
+            $game->setParentGame($parentGame);
+        }
+
         new GamePlayer($game, $creatorColor, $creator);
 
         if (OpponentType::AI === $opponentType) {
@@ -87,6 +92,12 @@ final class GameFactory
         $selfColor = $this->resolveColor($self->getColorPreference(), $candidate->getColorPreference());
 
         $game = new Game($self->getUser(), OpponentType::MULTIPLAYER, $self->getTimeControl(), $self->isRated());
+
+        // A rematch only when both players asked for the same one (RematchService).
+        if (null !== $self->getRematchOfGame() && $self->getRematchOfGame() === $candidate->getRematchOfGame()) {
+            $game->setParentGame($self->getRematchOfGame());
+        }
+
         new GamePlayer($game, $selfColor, $self->getUser());
         new GamePlayer($game, $selfColor->opposite(), $candidate->getUser());
 

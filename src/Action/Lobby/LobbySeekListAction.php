@@ -45,8 +45,10 @@ readonly class LobbySeekListAction
         $viewer = $user instanceof User ? $user : null;
         $now = $this->clock->now();
 
-        $seeks = $this->seekRepository->findOpenForListing($now);
+        $seeks = $this->seekRepository->findOpenForListing($now, $viewer);
+        // The pool is what everyone sees; the viewer's own rematch request is shown on top of it.
+        $poolSize = \count(array_filter($seeks, static fn ($seek): bool => null === $seek->getRematchOfGame()));
 
-        return ApiResponse::ok($this->seekPayloadBuilder->buildListing($seeks, $viewer, \count($seeks), $now));
+        return ApiResponse::ok($this->seekPayloadBuilder->buildListing($seeks, $viewer, $poolSize, $now));
     }
 }

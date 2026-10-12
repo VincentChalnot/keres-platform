@@ -73,8 +73,9 @@ class LobbyAction extends AbstractController
         }
 
         $now = $this->clock->now();
-        $seeks = $this->seekRepository->findOpenForListing($now);
-        $listing = $this->seekPayloadBuilder->buildListing($seeks, $user, \count($seeks), $now);
+        $seeks = $this->seekRepository->findOpenForListing($now, $user);
+        $poolSize = \count(array_filter($seeks, static fn ($seek): bool => null === $seek->getRematchOfGame()));
+        $listing = $this->seekPayloadBuilder->buildListing($seeks, $user, $poolSize, $now);
         $ongoingGames = $this->gameRepository->findOngoingForUser($user);
         $shownGames = \array_slice($ongoingGames, 0, self::OWN_GAMES_LIMIT);
         $this->gameRepository->preloadForListing($shownGames);

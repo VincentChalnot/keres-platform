@@ -59,6 +59,11 @@ final readonly class NotificationFormatter
                 $gameUrl,
                 'fa-chess-board',
             ],
+            NotificationType::REMATCH_OFFERED => [
+                $this->translator->trans('text.rematch_offered', ['actor' => $actor], 'notifications', $locale),
+                $gameUrl,
+                'fa-rotate',
+            ],
             NotificationType::YOUR_TURN => [
                 $this->translator->trans('text.your_turn', ['actor' => $actor], 'notifications', $locale),
                 $gameUrl,

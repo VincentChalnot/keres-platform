@@ -66,6 +66,7 @@ final readonly class SeekPayloadBuilder
             'ratingRange' => ['min' => $seek->getRatingMin(), 'max' => $seek->getRatingMax()],
             'autoWiden' => $seek->isAutoWiden(),
             'createdAt' => $this->micros($seek->getCreatedAt()),
+            'rematch' => null !== $seek->getRematchOfGame(),
             'self' => null === $viewer ? null : $self,
             'playable' => null === $viewer ? null : (!$self && $this->isPlayableFor($seek, $viewer, $now)),
         ];

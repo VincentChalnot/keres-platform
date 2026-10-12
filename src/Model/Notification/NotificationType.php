@@ -41,6 +41,7 @@ enum NotificationType: string
     case FRIEND_REQUEST = 'friend_request';
     case FRIEND_ACCEPTED = 'friend_accepted';
     case SEEK_MATCHED = 'seek_matched';
+    case REMATCH_OFFERED = 'rematch_offered';
     case YOUR_TURN = 'your_turn';
     case GAME_FINISHED = 'game_finished';
 }

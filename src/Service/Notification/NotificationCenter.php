@@ -100,6 +100,15 @@ final readonly class NotificationCenter
         }
     }
 
+    /** `RematchService`, post-commit: the other player of `$parent` is asked for a rematch. The link opens the finished game, where the rematch button accepts it. */
+    public function rematchOffered(User $recipient, User $requester, Game $parent): void
+    {
+        $this->notify($recipient, NotificationType::REMATCH_OFFERED, [
+            'actor' => self::actorRef($requester),
+            'gameUuid' => $parent->getUuid()->toRfc4122(),
+        ], self::gameSubject($parent));
+    }
+
     /**
      * `SubmitMoveAction`, post-commit. Correspondence and unlimited games
      * only: in a clocked real-time game the player is watching the board,

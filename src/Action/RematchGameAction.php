@@ -5,14 +5,11 @@ declare(strict_types=1);
 namespace App\Action;
 
 use App\Entity\User;
-use App\Model\ColorPreference;
 use App\Model\OpponentType;
-use App\Model\PieceColor;
+use App\Repository\FriendshipRepository;
 use App\Repository\GameRepository;
 use App\Security\Voter\GameVoter;
-use App\Service\Analytics\AnalyticsRecorder;
-use App\Service\GameFactory;
-use Doctrine\ORM\EntityManagerInterface;
+use App\Service\Game\RematchService;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpKernel\Attribute\AsController;
@@ -21,18 +18,18 @@ use Symfony\Component\Routing\Requirement\Requirement;
 use Symfony\Component\Uid\Uuid;
 
 /**
- * `POST /play/{uuid}/rematch` - "Quick rematch" of the game-over modal: a new AI or hot-seat game with the
- * parameters of the finished one (opponent type, AI level, live evaluation) and the colours swapped, then a
- * redirect to it. Multiplayer games are not covered: a rematch there needs the opponent's consent.
+ * `POST /play/{uuid}/rematch` - "Rematch" of the game-over modal (see `RematchService`). Redirects to the
+ * rematch game as soon as it exists (AI and hot-seat: at once; multiplayer: once both players have clicked,
+ * including a click on a rematch the other player already asked for), otherwise to the lobby, where the
+ * request waits for the opponent's answer like a posted seek.
  */
 #[AsController]
 class RematchGameAction extends AbstractController
 {
     public function __construct(
         private readonly GameRepository $gameRepository,
-        private readonly GameFactory $gameFactory,
-        private readonly EntityManagerInterface $entityManager,
-        private readonly AnalyticsRecorder $analyticsRecorder,
+        private readonly FriendshipRepository $friendshipRepository,
+        private readonly RematchService $rematchService,
     ) {
     }
 
@@ -53,24 +50,22 @@ class RematchGameAction extends AbstractController
         $user = $this->getUser();
         \assert($user instanceof User);
 
-        if (!$game->isGameOver() || OpponentType::MULTIPLAYER === $game->getOpponentType()) {
+        if (!$game->isGameOver()) {
             return $this->redirectToRoute('play', ['uuid' => $game->getUuid()]);
         }
 
-        $colorPreference = PieceColor::WHITE === $game->getCreatorColor() ? ColorPreference::BLACK : ColorPreference::WHITE;
-        $rematch = $this->gameFactory->createAiOrHotseatGame(
-            $user,
-            $game->getOpponentType(),
-            $colorPreference,
-            $game->getAiLevel(),
-            $game->isLiveEvaluationEnabled(),
-        );
+        if (OpponentType::MULTIPLAYER === $game->getOpponentType()) {
+            $opponent = $game->getOpponentOf($user);
 
-        $this->entityManager->persist($rematch);
-        $this->entityManager->flush();
+            if (null === $opponent || $this->friendshipRepository->isBlockedEitherWay($user, $opponent)) {
+                return $this->redirectToRoute('play', ['uuid' => $game->getUuid()]);
+            }
+        }
 
-        $this->analyticsRecorder->gameStarted($user, $rematch, $game->getOpponentType(), $game->getAiLevel());
+        $rematch = $this->rematchService->request($user, $game);
 
-        return $this->redirectToRoute('play', ['uuid' => $rematch->getUuid()]);
+        return null === $rematch
+            ? $this->redirectToRoute('lobby')
+            : $this->redirectToRoute('play', ['uuid' => $rematch->getUuid()]);
     }
 }

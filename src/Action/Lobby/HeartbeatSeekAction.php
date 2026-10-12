@@ -82,6 +82,11 @@ readonly class HeartbeatSeekAction
             ['now' => $now->format('Y-m-d H:i:s.uP'), 'id' => $seek->getId()],
         );
 
+        // A rematch request only ever pairs with the opponent's own request (RematchService), never with the pool.
+        if (null !== $seek->getRematchOfGame()) {
+            return ApiResponse::ok(['status' => 'open', 'gameUuid' => null, 'widenedTo' => null]);
+        }
+
         // Step 2: attemptPair - the widening retry (sec 3.1).
         $game = $this->seekMatcher->attemptPair((int) $seek->getId());
 

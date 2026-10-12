@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Repository;
 
+use App\Entity\Game;
 use App\Entity\Seek;
 use App\Entity\User;
 use App\Model\Matchmaking\SelfSeekParams;
@@ -48,24 +49,51 @@ class SeekRepository extends ServiceEntityRepository
     /**
      * The listing predicate is the pairing predicate minus viewer-specific
      * clauses (sec 5.1): a seek that cannot be paired must not be shown.
+     * The one exception is `$viewer`'s own open rematch request: addressed to a single
+     * opponent (never listed to anyone else), but its owner waits for the answer in the lobby.
      *
      * @return Seek[]
      */
-    public function findOpenForListing(\DateTimeImmutable $now): array
+    public function findOpenForListing(\DateTimeImmutable $now, ?User $viewer = null): array
     {
-        return $this->createQueryBuilder('s')
+        $qb = $this->createQueryBuilder('s')
             ->addSelect('u')
             ->join('s.user', 'u')
             ->andWhere('s.statusValue = 0')
-            ->andWhere('s.inviteOnly = false')
             ->andWhere('s.expiresAt > :now')
-            ->andWhere('s.lastHeartbeatAt > :staleThreshold')
             ->setParameter('now', $now)
-            ->setParameter('staleThreshold', $now->modify(\sprintf('-%d seconds', MultiplayerLimits::SEEK_STALE_AFTER_SECONDS)))
             ->orderBy('s.createdAt', 'ASC')
-            ->addOrderBy('s.id', 'ASC')
+            ->addOrderBy('s.id', 'ASC');
+
+        $public = $qb->expr()->andX(
+            's.inviteOnly = false',
+            's.lastHeartbeatAt > :staleThreshold',
+        );
+        $qb->setParameter('staleThreshold', $now->modify(\sprintf('-%d seconds', MultiplayerLimits::SEEK_STALE_AFTER_SECONDS)));
+
+        if (null === $viewer) {
+            $qb->andWhere($public);
+        } else {
+            $qb->andWhere($qb->expr()->orX($public, 's.rematchOfGame IS NOT NULL AND s.user = :viewer'))
+                ->setParameter('viewer', $viewer);
+        }
+
+        return $qb->getQuery()->getResult();
+    }
+
+    /** The open, unexpired rematch request `$owner` made for `$parent`, if any. */
+    public function findOpenRematchSeek(Game $parent, User $owner, \DateTimeImmutable $now): ?Seek
+    {
+        return $this->createQueryBuilder('s')
+            ->andWhere('s.rematchOfGame = :parent')
+            ->andWhere('s.user = :owner')
+            ->andWhere('s.statusValue = 0')
+            ->andWhere('s.expiresAt > :now')
+            ->setParameter('parent', $parent)
+            ->setParameter('owner', $owner)
+            ->setParameter('now', $now)
             ->getQuery()
-            ->getResult();
+            ->getOneOrNullResult();
     }
 
     /**
@@ -129,7 +157,7 @@ class SeekRepository extends ServiceEntityRepository
             AND c.rated = :selfRated
             AND (:selfColorPreferenceA = 2 OR c.color_preference_value <> :selfColorPreferenceB)
             AND c.expires_at > now()
-            AND (:selfKindB = 2 OR c.last_heartbeat_at > now() - make_interval(secs => :staleAfter))
+            AND (:selfKindB = 2 OR c.rematch_of_game_id IS NOT NULL OR c.last_heartbeat_at > now() - make_interval(secs => :staleAfter))
             AND (
                   CASE WHEN :selfAutoWiden
                        THEN abs(c.rating_snapshot - :selfRatingA) <= LEAST(

@@ -249,3 +249,8 @@ Consequences: hard to reverse (every template changed vocabulary). Gotchas are i
 Decision: `@vchalnot/keres-design-system` is installed from the npm registry (`^0.4.1`, published by the DS repo's CI through Trusted Publishing) instead of a git dependency; `git` was removed from the `node` service and the `node_builder` stage. Supersedes the "git dependency" part of the entry above.
 Rationale: no git in the images, normal semver ranges and integrity-checked lockfile.
 Reversibility: easy (point the dependency back at `github:VincentChalnot/keres-design-system#vX.Y.Z`).
+
+### Multiplayer rematch rides on the seek machinery
+Decision: a multiplayer rematch is a *rematch seek* (`Seek::$rematchOfGame`, invite-only, addressed to the one opponent) paired with the opponent's own rematch seek by `SeekMatcher`, which creates the game with `Game::$parentGame` (unique). The first click redirects to the lobby; the opponent is notified (`rematch_offered`) and accepts from the finished game. Rejected: creating the game on the first click and showing a "waiting for player" overlay on it (a game, clocks and ratings would exist before the opponent agreed).
+Rationale: reuses pairing, expiry, cancel and lobby plumbing instead of a second offer/accept state machine; the unique parent makes "who creates it" a database fact. Supersedes the unused `Game::$rematchOfferedByColor` of docs/multiplayer (still in the schema, still unused).
+Reversibility: easy (drop the two columns and `RematchService`).

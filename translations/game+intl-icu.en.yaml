@@ -204,6 +204,9 @@ play:
         gameover_modal:
             close: Close
             rematch: Quick rematch
+            rematch_offered: Accept the rematch
+            rematch_requested: Rematch requested – waiting for your opponent
+            rematch_started: Go to the rematch
             preorder: Pre-order physical version
             new_game: Play new game
             review: Review the game
