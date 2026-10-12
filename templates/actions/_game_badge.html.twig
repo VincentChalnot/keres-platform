@@ -1,0 +1,7 @@
+{#
+    One option tag of the game header (rated, casual, time control, speed, live evaluation).
+    `badge` is an App\Model\GameHeaderBadge; the only place that maps a tone to design-system classes.
+    Optional: `compact` (smaller tag).
+#}
+{% set tone_classes = {neutral: '', info: 'tag--soft tag--info', warning: 'tag--soft tag--warning'} %}
+<span class="tag{{ compact ?? false ? ' tag--sm' }} {{ tone_classes[badge.tone.value] }}"{% if badge.title %} title="{{ badge.title }}"{% endif %}>{{ badge.label }}</span>

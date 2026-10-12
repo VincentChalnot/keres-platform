@@ -72,7 +72,7 @@
                 {% if header and header.badges is not empty %}
                     <div class="game-info__badges">
                         {% for badge in header.badges %}
-                            <span class="tag {{ badge.tone }}"{% if badge.title %} title="{{ badge.title }}"{% endif %}>{{ badge.label }}</span>
+                            {% include 'actions/_game_badge.html.twig' with {badge: badge} only %}
                         {% endfor %}
                     </div>
                 {% endif %}

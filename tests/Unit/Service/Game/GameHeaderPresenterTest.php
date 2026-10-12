@@ -8,6 +8,7 @@ use App\Entity\Game;
 use App\Entity\GamePlayer;
 use App\Entity\User;
 use App\Model\GameHeaderBadge;
+use App\Model\GameHeaderBadgeTone;
 use App\Model\GameHeaderRating;
 use App\Model\OpponentType;
 use App\Model\PieceColor;
@@ -89,6 +90,10 @@ final class GameHeaderPresenterTest extends TestCase
         $labels = array_map(static fn (GameHeaderBadge $badge): string => $badge->label, $this->presenter()->present($game, $white)->badges);
 
         self::assertSame(['Rated', '5+3', 'Blitz'], $labels);
+        self::assertSame(
+            [GameHeaderBadgeTone::INFO, GameHeaderBadgeTone::NEUTRAL, GameHeaderBadgeTone::NEUTRAL],
+            array_map(static fn (GameHeaderBadge $badge): GameHeaderBadgeTone => $badge->tone, $this->presenter()->present($game, $white)->badges),
+        );
 
         $casual = new Game($white, OpponentType::AI, TimeControl::unlimited(), false, 2, true);
         new GamePlayer($casual, PieceColor::WHITE, $white);
@@ -97,6 +102,7 @@ final class GameHeaderPresenterTest extends TestCase
         $labels = array_map(static fn (GameHeaderBadge $badge): string => $badge->label, $this->presenter()->present($casual, $white)->badges);
 
         self::assertSame(['Casual', 'Unlimited', 'Live evaluation'], $labels);
+        self::assertSame(GameHeaderBadgeTone::WARNING, $this->presenter()->present($casual, $white)->badges[2]->tone);
     }
 
     public function testAvatarIsFilledForHumansAndBotsButNeverForAnonymousSeats(): void

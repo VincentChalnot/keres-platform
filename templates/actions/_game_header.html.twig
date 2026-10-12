@@ -19,7 +19,7 @@
     </div>
     <div class="tag-group">
         {% for badge in header.badges %}
-            <span class="tag{{ compact ?? false ? ' tag--sm' }} {{ badge.tone }}"{% if badge.title %} title="{{ badge.title }}"{% endif %}>{{ badge.label }}</span>
+            {% include 'actions/_game_badge.html.twig' with {badge: badge, compact: compact ?? false} only %}
         {% endfor %}
     </div>
 </div>

@@ -9,6 +9,7 @@ use App\Entity\GamePlayer;
 use App\Entity\User;
 use App\Model\GameHeader;
 use App\Model\GameHeaderBadge;
+use App\Model\GameHeaderBadgeTone;
 use App\Model\GameHeaderPlayer;
 use App\Model\GameHeaderRating;
 use App\Model\OpponentType;
@@ -122,20 +123,20 @@ final readonly class GameHeaderPresenter
         if ($game->isRated()) {
             $badges[] = new GameHeaderBadge(
                 $this->translator->trans('option.rated', [], 'game'),
-                'tag--soft tag--info',
+                GameHeaderBadgeTone::INFO,
                 $this->translator->trans('header.badge.rated_title', [], 'game'),
             );
         } else {
             $badges[] = new GameHeaderBadge(
                 $this->translator->trans('option.casual', [], 'game'),
-                '',
+                GameHeaderBadgeTone::NEUTRAL,
                 $this->translator->trans('header.badge.casual_title', [], 'game'),
             );
         }
 
         $badges[] = new GameHeaderBadge(
             $this->timeControlLabel($game->getTimeControl()),
-            '',
+            GameHeaderBadgeTone::NEUTRAL,
             $this->translator->trans('header.badge.time_control_title', [], 'game'),
         );
 
@@ -144,7 +145,7 @@ final readonly class GameHeaderPresenter
         if (null !== $speed) {
             $badges[] = new GameHeaderBadge(
                 $this->speedLabel($speed),
-                '',
+                GameHeaderBadgeTone::NEUTRAL,
                 $this->translator->trans('header.badge.speed_title', [], 'game'),
             );
         }
@@ -152,7 +153,7 @@ final readonly class GameHeaderPresenter
         if ($game->isLiveEvaluationEnabled()) {
             $badges[] = new GameHeaderBadge(
                 $this->translator->trans('option.live_evaluation', [], 'game'),
-                'tag--soft tag--warning',
+                GameHeaderBadgeTone::WARNING,
                 $this->translator->trans('header.badge.live_evaluation_title', [], 'game'),
             );
         }
