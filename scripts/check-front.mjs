@@ -12,7 +12,7 @@ import {readdirSync, readFileSync, statSync} from 'node:fs';
 import {join, relative} from 'node:path';
 
 const ROOT = new URL('..', import.meta.url).pathname;
-const DS_SRC = join(ROOT, 'node_modules/@keres/design-system/src');
+const DS_SRC = join(ROOT, 'node_modules/@vchalnot/keres-design-system/src');
 
 /** Class names of the old Bulma markup that mean nothing here (the design system's equivalents are in the docs). */
 const BULMA = new Set(`button buttons box notification columns column control field-label field-body level level-left

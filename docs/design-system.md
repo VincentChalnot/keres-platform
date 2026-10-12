@@ -1,4 +1,4 @@
-# Design system (`@keres/design-system`)
+# Design system (`@vchalnot/keres-design-system`)
 
 The platform is styled by the Keres design system, a separate repository
 ([keres-design-system](https://github.com/VincentChalnot/keres-design-system), checked out next to this one
@@ -18,12 +18,12 @@ Contents: [How it is wired](#how-it-is-wired) · [Running it](#running-it-dev-ci
 
 | Piece | Where | Role |
 |---|---|---|
-| Dependency | `package.json`: `"@keres/design-system": "github:VincentChalnot/keres-design-system#vX.Y.Z"` | A **git dependency pinned to a tag**; `package-lock.json` pins the exact commit. The repo is public, no token needed. |
-| Tailwind config | `tailwind.config.js` | `presets: [@keres/design-system/tailwind.preset]`, `content` globs, `corePlugins.container: false`. |
+| Dependency | `package.json`: `"@vchalnot/keres-design-system": "^X.Y.Z"` | The package published on npm (Trusted Publishing from the DS repo); `package-lock.json` pins version and integrity. No git needed. |
+| Tailwind config | `tailwind.config.js` | `presets: [@vchalnot/keres-design-system/tailwind.preset]`, `content` globs, `corePlugins.container: false`. |
 | PostCSS | `postcss.config.js` | `tailwindcss` + `autoprefixer` (Vite inlines `@import` itself, no `postcss-import`). |
-| CSS entry | `assets/design-system.css` | `@import "@keres/design-system/keres.css"`: tokens, Tailwind base/components/utilities, DS components. Platform-only rules would go below it. |
+| CSS entry | `assets/design-system.css` | `@import "@vchalnot/keres-design-system/keres.css"`: tokens, Tailwind base/components/utilities, DS components. Platform-only rules would go below it. |
 | JS entry | `assets/app.js` | imports `design-system.css` and the Font Awesome CSS (the only stylesheets of the site). |
-| Fonts | `public/fonts/` | The DS `@font-face` rules point at `/fonts/*` (Carolingia, RomanSerif, Source Serif 4). Copy of `node_modules/@keres/design-system/styleguide/fonts/*`. |
+| Fonts | `public/fonts/` | The DS `@font-face` rules point at `/fonts/*` (Carolingia, RomanSerif, Source Serif 4). Copy of `node_modules/@vchalnot/keres-design-system/styleguide/fonts/*`. |
 | Form theme | `templates/form/ds_layout.html.twig`, registered in `config/packages/twig.yaml` | Symfony forms render with the DS form classes. |
 | Layout | `templates/base.html.twig`, `templates/admin/base.html.twig`, `templates/_language_switcher.html.twig` | Navbar, flash messages, confirm modal, footer. |
 | Behaviour | `assets/typescript/src/navbar-toggle.ts`, `notifications/NotificationBell.ts`, `utils/modal.ts` | Toggle the DS state classes (`is-active`, `is-unread`…) and `hidden`. |
@@ -42,7 +42,7 @@ Tailwind generates a utility only if its **complete** name appears as a word in 
   that spells every class out);
 - a class built in PHP (`GameHeaderBadge::$tone`, `Form` `attr`) works as long as the string is in `src/`;
 - the DS components (`btn--primary`, `alert--danger`, `tag--soft` …) are always there, whatever you build
-  dynamically: the DS sources are in `content` too (`node_modules/@keres/design-system/src/**/*.css`), so
+  dynamically: the DS sources are in `content` too (`node_modules/@vchalnot/keres-design-system/src/**/*.css`), so
   `'alert--' ~ kind` and `` `btn--${variant}` `` are fine. Only **utilities** need the literal.
 
 `corePlugins.container` is disabled: the DS wrapper is `.container-page`; Tailwind's own `.container` is not used.
@@ -52,20 +52,19 @@ Tailwind generates a utility only if its **complete** name appears as a word in 
 Nothing new to learn: everything stays in Docker (`AGENTS.md`).
 
 ```bash
-docker compose up -d node                    # installs deps (incl. the DS, needs git: apk add git is in the command) and runs Vite
+docker compose up -d node                    # installs deps (incl. the DS from npm) and runs Vite
 docker compose exec node npm run build       # production build → public/build/
 docker compose exec node npm run type-check
 ```
 
-- **Dev**: the `node` service runs `command -v git || apk add git; npm install && npm run dev`. `git` is needed because
-  npm fetches the DS with it and `node:alpine` has none. Tailwind runs inside Vite (PostCSS): editing a template,
+- **Dev**: the `node` service runs `npm install && npm run dev`. Tailwind runs inside Vite (PostCSS): editing a template,
   a TS file or a PHP file regenerates the utilities (HMR). First load after a restart is slow (the CSS is compiled
   on demand) and unstyled for a second or two: Vite injects the CSS with JavaScript in dev only.
-- **Production image** (`Dockerfile`, stage `node_builder`): installs `git`, `npm ci`, copies `assets`,
+- **Production image** (`Dockerfile`, stage `node_builder`): `npm ci`, copies `assets`,
   `templates`, `src`, `config`, `translations` (Tailwind scans them), `vite.config.js`, `postcss.config.js`,
-  `tailwind.config.js`, then `npm run build`. The build needs network access to github.com (the DS), nothing else.
+  `tailwind.config.js`, then `npm run build`. The build needs network access to the npm registry, nothing else.
   A new directory that holds class names must be added to **both** `tailwind.config.js` (`content`) and that `COPY` list.
-- **CI** (`.github/workflows/ci.yaml`): `npm ci` on `ubuntu-latest` (git present) in the `lint` job, then the
+- **CI** (`.github/workflows/ci.yaml`): `npm ci` in the `lint` job, then the
   image build above. No workflow change was needed.
 - **A fresh checkout** needs nothing but `docker compose up -d` (and `public/fonts` is committed).
 
@@ -76,7 +75,7 @@ docker compose exec node npm run type-check
 docker compose -f compose.yaml -f compose.design-system.yaml up -d node
 ```
 
-mounts `../keres-design-system` over `node_modules/@keres/design-system` and skips `npm install`; an edit of
+mounts `../keres-design-system` over `node_modules/@vchalnot/keres-design-system` and skips `npm install`; an edit of
 `tailwind.preset.js` or `src/**/*.css` reloads the CSS like one of ours (`vite.config.js` un-ignores that path).
 Go back to the pinned version with `docker compose up -d node`. Do not run `npm install` while the mount is active.
 
@@ -86,11 +85,11 @@ Anything shared and reusable (a component, a variant, a token) belongs in the DS
 
 1. Edit `src/components/*.css` (or `tokens.css`, `tailwind.preset.js`) in `../keres-design-system`, add the markup to
    `styleguide/index.html`, check it with the local checkout above.
-2. Commit there (conventional commit), bump `version` in its `package.json` (+ lock), `git tag -a vX.Y.Z`,
-   `git push origin main --follow-tags`.
-3. In the platform: change the tag in `package.json` (`#vX.Y.Z`), then
-   `docker compose exec node npm install` and commit `package.json` + `package-lock.json`.
-4. If the DS ships new font files, copy them to `public/fonts/` (`cp node_modules/@keres/design-system/styleguide/fonts/* public/fonts/`).
+2. Release it from the DS repo: `npm version patch|minor|major`, `git push --follow-tags` (CI publishes to npm; steps,
+   changelog and failure handling are in the DS `RELEASING.md`).
+3. In the platform: `docker compose exec node npm install @vchalnot/keres-design-system@^X.Y.Z`, run `npm run build`,
+   `npm run check:front`, `npm run type-check`, commit `package.json` + `package-lock.json`.
+4. If the DS ships new font files, copy them to `public/fonts/` (`cp node_modules/@vchalnot/keres-design-system/styleguide/fonts/* public/fonts/`).
 
 Platform-only CSS (rare) goes in `assets/design-system.css` below the `@import`, written with `@apply` and tokens.
 The DS needs `@tailwindcss/typography`, `tailwindcss`, `postcss`, `autoprefixer` in the platform's `devDependencies` (they are).
@@ -284,7 +283,7 @@ and 390 px wide. Hints:
 - Vite in dev injects the CSS with JavaScript, so a screenshot taken straight after load can show UA-default link
   colours: wait a few seconds or run `document.getAnimations().forEach(a => a.finish())` first.
 - The style guide is the reference; compare your markup with the `<section>` of the component in
-  `node_modules/@keres/design-system/styleguide/index.html`.
+  `node_modules/@vchalnot/keres-design-system/styleguide/index.html`.
 - An admin page needs `docker compose exec php bin/console app:user:promote <email>` and a new `/dev/login`.
 - Tabs of the shared Playwright browser share one cookie jar (`/dev/login` in one logs the others in as that user):
   with several workers, open your own context (`browser_run_code_unsafe`: `page.context().browser().newContext()`)

@@ -1,7 +1,7 @@
 /*
  * Design system entry (see docs/design-system.md).
  *
- * @keres/design-system/keres.css is the whole DS: tokens (--k-*), Tailwind base (preflight) /
+ * @vchalnot/keres-design-system/keres.css is the whole DS: tokens (--k-*), Tailwind base (preflight) /
  * components / utilities, and the DS components. PostCSS (postcss.config.js) runs Tailwind
  * (tailwind.config.js) over it and generates the utilities the platform's templates use.
  *
@@ -10,7 +10,7 @@
  * design-system repo; only then a rule here, written with @apply and the DS tokens (no raw hex).
  * The board SVG is NOT styled here: it lives in assets/board.css only (see AGENTS.md).
  */
-@import "@keres/design-system/keres.css";
+@import "@vchalnot/keres-design-system/keres.css";
 
 /* The canvas of the inactive Three.js board renderer (views/ThreeJSBoardView.ts); the SVG board is styled by board.css. */
 #board-canvas {

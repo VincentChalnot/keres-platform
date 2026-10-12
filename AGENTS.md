@@ -84,8 +84,8 @@ knowledge (piece names, SVG representations, movement descriptions).
 
 ### Front-end styling: the Keres design system
 
-All the UI is styled by `@keres/design-system` (Tailwind 3: tokens, base layer, components), a separate repo consumed
-as a pinned git dependency; `assets/design-system.css` is its entry (the only stylesheet besides Font Awesome and the
+All the UI is styled by `@vchalnot/keres-design-system` (Tailwind 3: tokens, base layer, components), a separate repo consumed
+as an npm package (`@vchalnot/keres-design-system`); `assets/design-system.css` is its entry (the only stylesheet besides Font Awesome and the
 board's `assets/board.css`), `tailwind.config.js` + `postcss.config.js` wire it into Vite. There is no Bulma and no Sass.
 **Read [`docs/design-system.md`](docs/design-system.md) before touching any template, form or CSS**: how it is
 installed in dev/CI/production, how to update it, the conventions (tokens only, `is-*` JS state classes, Font
@@ -121,7 +121,7 @@ inside the board `<svg>` (`.tile`, `.piece`, `.p-w`/`.p-b`/`.p-r`, `.piece-icon`
 `#pieces-layer` animation, `.arrow*`, …) goes there; it must stay self-contained (no dependency on the page:
 select by class/id of the SVG's own content, never by `#board-container` or other page chrome) so it alone
 renders the board identically in the game page, the admin pages (opening explorer) and a static export.
-The design system keeps the page (`src/components/game.css` of `@keres/design-system`, which mirrors
+The design system keeps the page (`src/components/game.css` of `@vchalnot/keres-design-system`, which mirrors
 `_play_board.html.twig` class for class): the container's layout (`#board-container`, `.game-container`, `--board-aspect`
 sizing, container-query arrangements), the game-over dimming/stamp of the container, panels and cards (including the size
 of the `<svg>`s of the material bar and piece-info panel, whose *colours* still come from `.p-w`/`.p-b` in

@@ -24,7 +24,7 @@ export default defineConfig({
         // mounted from a local checkout (compose.design-system.yaml, docs/design-system.md) its
         // edits must reload the CSS like our own files do.
         watch: {
-            ignored: ['!**/node_modules/@keres/design-system/**'],
+            ignored: ['!**/node_modules/@vchalnot/keres-design-system/**'],
         },
         // SERVER_NAME is the same bare dev domain compose.yaml derives every
         // other URL from (see .env.example) — keeps the domain defined once

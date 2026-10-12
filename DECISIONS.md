@@ -231,7 +231,7 @@ until the GDPR position on IP retention is settled.
 Context: Bulma 1.0 plus a 2,500-line `assets/app.scss`, with the palette duplicated from
 the marketing site.
 
-Decision: `@keres/design-system` (own repo, Tailwind 3 preset + CSS entry) consumed as a git
+Decision: `@vchalnot/keres-design-system` (own repo, Tailwind 3 preset + CSS entry) consumed as a git
 dependency pinned to a tag (the lockfile pins the commit) and compiled by the platform's
 own Tailwind through Vite/PostCSS, so utilities come from the platform's templates. A git
 dependency (rather than a sibling checkout, a tarball URL or a prebuilt `dist`) works
@@ -244,3 +244,8 @@ to ≈ 220 kB (44 kB gzipped).
 
 Consequences: hard to reverse (every template changed vocabulary). Gotchas are in
 [`docs/design-system.md`](docs/design-system.md) ("Things that bite").
+
+### Front-end — design system now consumed from npm
+Decision: `@vchalnot/keres-design-system` is installed from the npm registry (`^0.4.1`, published by the DS repo's CI through Trusted Publishing) instead of a git dependency; `git` was removed from the `node` service and the `node_builder` stage. Supersedes the "git dependency" part of the entry above.
+Rationale: no git in the images, normal semver ranges and integrity-checked lockfile.
+Reversibility: easy (point the dependency back at `github:VincentChalnot/keres-design-system#vX.Y.Z`).

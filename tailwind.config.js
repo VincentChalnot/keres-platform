@@ -1,10 +1,10 @@
 /**
  * Tailwind 3 configuration of the platform. Every colour, font, radius and shadow comes from
- * the Keres design system (@keres/design-system, see docs/design-system.md): the preset maps
+ * the Keres design system (@vchalnot/keres-design-system, see docs/design-system.md): the preset maps
  * its tokens to Tailwind names, the DS stylesheet (assets/design-system.css) carries the
  * components (.btn, .card, .alert, .navbar ...).
  */
-import keresPreset from '@keres/design-system/tailwind.preset';
+import keresPreset from '@vchalnot/keres-design-system/tailwind.preset';
 
 /** @type {import('tailwindcss').Config} */
 export default {
@@ -22,7 +22,7 @@ export default {
         './config/admin/**/*.yaml',
         './config/datagrid/**/*.yaml',
         './translations/**/*.yaml',
-        './node_modules/@keres/design-system/src/**/*.css',
+        './node_modules/@vchalnot/keres-design-system/src/**/*.css',
     ],
 
     corePlugins: {

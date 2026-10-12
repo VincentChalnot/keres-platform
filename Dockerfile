@@ -40,10 +40,6 @@ FROM node:24-alpine AS node_builder
 
 WORKDIR /app
 
-# git: @keres/design-system (the Keres design system) is a git dependency in package.json, npm
-# shells out to git to fetch it and node:alpine ships none. See docs/design-system.md.
-RUN apk add --no-cache git
-
 # Install dependencies first (layer-cached independently of source changes)
 COPY --link package.json package-lock.json ./
 RUN npm ci
