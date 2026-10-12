@@ -26,10 +26,12 @@ final class GameVoter extends Voter
     {
         $user = $token->getUser();
         $member = $user instanceof User && $subject->isParticipant($user);
+        // Admins may look at any game (support, moderation), never play in it: PARTICIPATE and MANAGE stay members-only.
+        $admin = \in_array('ROLE_ADMIN', $token->getRoleNames(), true);
 
         return match ($attribute) {
             self::VIEW => null === $subject->getDeletedAt()
-                && (OpponentType::MULTIPLAYER === $subject->getOpponentType() || $member),
+                && (OpponentType::MULTIPLAYER === $subject->getOpponentType() || $member || $admin),
             self::PARTICIPATE => null === $subject->getDeletedAt() && $member,
             self::MANAGE => $member,
         };
