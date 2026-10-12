@@ -201,6 +201,13 @@ play:
             title: Feedback
             close: Close
             loading: Loading
+        gameover_modal:
+            close: Close
+            rematch: Quick rematch
+            preorder: Pre-order physical version
+            new_game: Play new game
+            review: Review the game
+            feedback: Leave feedback
 
 play_guest:
     page_title: Guest game - Keres

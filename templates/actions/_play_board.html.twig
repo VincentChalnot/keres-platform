@@ -197,6 +197,32 @@
         {% endif %}
     </div>
 
+    <div class="modal" id="gameover-modal" role="dialog" aria-modal="true" aria-labelledby="gameover-modal-title">
+        <div class="modal__backdrop" data-close></div>
+        <div class="modal__card" style="max-width:26rem">
+            <header class="modal__head !justify-center !border-0 !pb-0 relative">
+                <button type="button" class="btn-close absolute right-4 top-4" aria-label="{{ 'play.board.gameover_modal.close'|trans }}" data-close></button>
+            </header>
+            <section class="modal__body text-center">
+                <h3 class="!text-h2 !mb-1" id="gameover-modal-title">{{ 'play.board.game_over'|trans }}</h3>
+                <p class="eyebrow !text-primary !tracking-[0.3em]" id="gameover-modal-reason"></p>
+                <div class="flex flex-col items-center gap-3 mt-6">
+                    {% if not spectator and guest %}
+                        <a class="btn btn--primary btn--block" id="gameover-modal-rematch" href="{{ path('new_local_game') }}"><i class="fa-solid fa-rotate" aria-hidden="true"></i>{{ 'play.board.gameover_modal.rematch'|trans }}</a>
+                    {% elseif not spectator and gameUuid and opponentType != 2 %}
+                        <form method="post" action="{{ path('rematch_game', {uuid: gameUuid}) }}" class="w-full">
+                            <button type="submit" class="btn btn--primary btn--block"><i class="fa-solid fa-rotate" aria-hidden="true"></i>{{ 'play.board.gameover_modal.rematch'|trans }}</button>
+                        </form>
+                    {% endif %}
+                    <a class="btn btn--block" href="{{ path('lobby') }}"><i class="fa-solid fa-chess-king" aria-hidden="true"></i>{{ 'play.board.gameover_modal.new_game'|trans }}</a>
+                    <button type="button" class="btn btn--block" data-close><i class="fa-solid fa-clock-rotate-left" aria-hidden="true"></i>{{ 'play.board.gameover_modal.review'|trans }}</button>
+                    <button type="button" class="btn btn--block" id="gameover-modal-feedback"><i class="fa-solid fa-pen" aria-hidden="true"></i>{{ 'play.board.gameover_modal.feedback'|trans }}</button>
+                    <a class="btn btn--secondary btn--block" href="{{ static_site_url }}/physical-edition/"><i class="fa-solid fa-chess-board" aria-hidden="true"></i>{{ 'play.board.gameover_modal.preorder'|trans }}</a>
+                </div>
+            </section>
+        </div>
+    </div>
+
     <div class="modal" id="unstack-modal" role="dialog" aria-modal="true" aria-labelledby="unstack-modal-title">
         <div class="modal__backdrop"></div>
         <div class="modal__card">

@@ -201,6 +201,13 @@ play:
             title: Avis
             close: Fermer
             loading: Chargement
+        gameover_modal:
+            close: Fermer
+            rematch: Revanche rapide
+            preorder: Précommander la version physique
+            new_game: Nouvelle partie
+            review: Revoir la partie
+            feedback: Donner son avis
 
 play_guest:
     page_title: Partie d’invité - Keres

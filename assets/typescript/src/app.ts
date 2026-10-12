@@ -134,6 +134,9 @@ class KeresGame {
     private resignBtn: HTMLButtonElement | null;
     private feedbackBtn: HTMLButtonElement | null;
     private feedbackModal: HTMLDivElement;
+    private gameOverModal: HTMLElement | null = document.getElementById('gameover-modal');
+    /** True once the game-over modal has been shown (or the game was already over when the page loaded). */
+    private gameOverAnnounced = false;
     private feedbackModalBody: HTMLElement;
     private feedbackModalClose: HTMLButtonElement;
     private settingsBtn: HTMLButtonElement;
@@ -378,8 +381,10 @@ class KeresGame {
 
         // Setup UI event listeners
         this.setupEventListeners();
+        this.setupGameOverModal();
 
         // Update UI
+        this.gameOverAnnounced = this.controller.isGameOver();
         this.refreshUI();
 
         // Live-ticking clocks: the server only pushes a new snapshot on
@@ -887,6 +892,7 @@ class KeresGame {
         this.updatePlayerTurn();
         this.applyOrientation();
         this.applyGameOverVisuals();
+        this.announceGameOver();
         this.renderClocks();
         this.updateEvaluation();
     }
@@ -1040,6 +1046,51 @@ class KeresGame {
         // Fallback for the rare case the authoritative endReason/result
         // hasn't arrived yet - the board binary's own engine verdict.
         return text ?? (this.gameState.getBoard()?.getGameResult() || t('play.banner.game_over'));
+    }
+
+    private announceGameOver(): void {
+        if (this.gameOverAnnounced || !this.controller.isGameOver()) return;
+        this.gameOverAnnounced = true;
+        this.showGameOverModal();
+    }
+
+    private showGameOverModal(): void {
+        if (!this.gameOverModal) return;
+
+        const reason = this.gameOverModal.querySelector('#gameover-modal-reason');
+        if (reason) reason.textContent = this.describeGameOver();
+
+        // Guest game: the rematch restarts the same kind of game on the other colour (see resolveGuestRecord()).
+        const rematch = this.gameOverModal.querySelector('#gameover-modal-rematch');
+        if (rematch instanceof HTMLAnchorElement && this.guestRecord) {
+            const params = new URLSearchParams({
+                new: this.guestRecord.opponentType === OPPONENT_TYPE_HOTSEAT ? 'hotseat' : 'ai',
+                side: this.guestRecord.playerWhite ? 'black' : 'white',
+                level: String(this.guestRecord.aiLevel ?? 1),
+            });
+            rematch.href = `/play/guest?${params.toString()}`;
+        }
+
+        this.gameOverModal.classList.add('is-active');
+    }
+
+    private setupGameOverModal(): void {
+        const modal = this.gameOverModal;
+        if (!modal) return;
+
+        const close = (): void => modal.classList.remove('is-active');
+        modal.querySelectorAll('[data-close]').forEach((el) => el.addEventListener('click', close));
+        document.addEventListener('keydown', (event) => {
+            if ('Escape' === event.key) close();
+        });
+        modal.querySelector('#gameover-modal-feedback')?.addEventListener('click', () => {
+            close();
+            void this.openFeedbackModal();
+        });
+        // The finished board is dimmed and click-through (game.css), so a click on it lands on the container.
+        this.boardContainer.addEventListener('click', () => {
+            if (this.controller.isGameOver()) this.showGameOverModal();
+        });
     }
 
     /** Saturates + disables all pointer interaction on the board once the game ends. */
