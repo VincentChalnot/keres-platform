@@ -9,6 +9,7 @@ use App\Entity\Seek;
 use App\Entity\User;
 use App\Model\Matchmaking\SelfSeekParams;
 use App\Model\MultiplayerLimits;
+use App\Model\TimeControlKind;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\DBAL\LockMode;
 use Doctrine\DBAL\ParameterType;
@@ -65,10 +66,16 @@ class SeekRepository extends ServiceEntityRepository
             ->orderBy('s.createdAt', 'ASC')
             ->addOrderBy('s.id', 'ASC');
 
+        // A correspondence seek outlives its author's visit to the lobby, so it is exempt from the heartbeat
+        // (the pairing query makes the same exemption, see candidateWhereClause()).
         $public = $qb->expr()->andX(
             's.inviteOnly = false',
-            's.lastHeartbeatAt > :staleThreshold',
+            $qb->expr()->orX(
+                's.timeControl.kindValue = :correspondence',
+                's.lastHeartbeatAt > :staleThreshold',
+            ),
         );
+        $qb->setParameter('correspondence', TimeControlKind::CORRESPONDENCE->value);
         $qb->setParameter('staleThreshold', $now->modify(\sprintf('-%d seconds', MultiplayerLimits::SEEK_STALE_AFTER_SECONDS)));
 
         if (null === $viewer) {
