@@ -6,6 +6,7 @@ import "@fortawesome/fontawesome-free/css/solid.min.css";
 import "@fortawesome/fontawesome-free/css/regular.min.css";
 import {initNotifications} from "./typescript/src/notifications/NotificationBell";
 import {initializeNavbarToggle} from "./typescript/src/navbar-toggle";
+import {initializeMenuToggles} from "./typescript/src/menu-toggle";
 
 // ─── Mobile navigation burger (every page) ───────────────────────────────────
 
@@ -13,6 +14,14 @@ if (document.readyState === "loading") {
     document.addEventListener("DOMContentLoaded", initializeNavbarToggle);
 } else {
     initializeNavbarToggle();
+}
+
+// ─── Collapsible side menus (admin) ──────────────────────────────────────────
+
+if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", initializeMenuToggles);
+} else {
+    initializeMenuToggles();
 }
 
 // ─── Notification bell (every signed-in page) ────────────────────────────────

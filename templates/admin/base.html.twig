@@ -18,9 +18,18 @@
     <section class="section">
         <div class="container-page container-page--fluid">
             <div class="grid grid-cols-1 gap-6 lg:grid-cols-[14rem_minmax(0,1fr)]">
-                <aside class="menu">
+                {% set current_label = 'Admin' %}
+                {% for item in admin_menu %}
+                    {% if item.exact|default(false) ? current_path|trim('/') == 'admin' : current_path starts with item.path %}{% set current_label = item.label %}{% endif %}
+                {% endfor %}
+                {# Collapsed behind a toggle below lg (menu-toggle.ts), always open from lg up. #}
+                <aside class="menu menu--collapsible">
+                    <button type="button" class="menu__toggle" data-menu-toggle aria-expanded="false" aria-controls="admin-menu-list">
+                        <span>Admin · {{ current_label }}</span>
+                        <span class="icon"><i class="fa-solid fa-chevron-down" aria-hidden="true"></i></span>
+                    </button>
                     <p class="menu__label">Admin</p>
-                    <ul class="menu__list">
+                    <ul class="menu__list" id="admin-menu-list">
                         {% for item in admin_menu %}
                             {% set active = item.exact|default(false) ? current_path|trim('/') == 'admin' : current_path starts with item.path %}
                             <li>

@@ -18,8 +18,8 @@
     {% block filters %}
         {% if form.filters|length > 0 %}
             {% set num_columns = num_columns|default(3) %}
-            {% set grid_columns = {1: 'md:grid-cols-1', 2: 'md:grid-cols-2', 3: 'md:grid-cols-2 xl:grid-cols-3', 4: 'md:grid-cols-2 xl:grid-cols-4'} %}
-            <div class="grid grid-cols-1 gap-x-4 {{ grid_columns[num_columns]|default('md:grid-cols-2 xl:grid-cols-3') }}">
+            {% set grid_columns = {1: 'md:grid-cols-1', 2: 'md:grid-cols-2', 3: 'md:grid-cols-2 2xl:grid-cols-3', 4: 'md:grid-cols-2 2xl:grid-cols-4'} %}
+            <div class="grid grid-cols-1 gap-x-4 {{ grid_columns[num_columns]|default('md:grid-cols-2 2xl:grid-cols-3') }}">
                 {% for column in get_filter_columns(form.filters, num_columns) %}
                     <div>
                         {% for cell in column %}

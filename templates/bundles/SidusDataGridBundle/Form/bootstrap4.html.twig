@@ -29,9 +29,9 @@
                 {{ block('global_form_errors') }}
             {% endif %}
             <div class="input-group">
-                {{ form_widget(form.startDate, {attr: {class: '!px-2 text-sm'}}) }}
+                {{ form_widget(form.startDate, {attr: {class: '!px-1.5 text-xs sm:!px-2 sm:text-sm min-w-0'}}) }}
                 <span class="btn btn--static min-w-0">{{ 'sidus.filter.date_range.to'|trans }}</span>
-                {{ form_widget(form.endDate, {attr: {class: '!px-2 text-sm'}}) }}
+                {{ form_widget(form.endDate, {attr: {class: '!px-1.5 text-xs sm:!px-2 sm:text-sm min-w-0'}}) }}
             </div>
             {{ form_errors(form.startDate) }}
             {{ form_errors(form.endDate) }}
