@@ -8,7 +8,7 @@
 import {formatNumber, t} from '../i18n';
 
 /** |score| from which the engine reports a forced result rather than a material edge. */
-const DECIDED_SCORE = 500;
+export const DECIDED_SCORE = 500;
 /** Score at which the bar sits at ~73% / 27%: four soldiers' worth. */
 const BAR_SCALE = 40;
 const MIN_SHARE = 3;

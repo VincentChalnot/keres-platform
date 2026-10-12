@@ -47,6 +47,7 @@ fullscreen:
     exit: Quitter le plein écran
 eval:
     label: 'Évaluation du moteur : {value}'
+    after_move: 'Évaluation après ce coup : {value}'
 feedback:
     thanks_title: Merci pour votre avis !
     thanks_text: Nous lisons chaque message.

@@ -47,6 +47,7 @@ fullscreen:
     exit: Exit Fullscreen
 eval:
     label: 'Engine evaluation: {value}'
+    after_move: 'Evaluation after this move: {value}'
 feedback:
     thanks_title: Thank you for your feedback!
     thanks_text: We review every submission.
@@ -68,26 +69,26 @@ error:
 # Piece info panel (hover, selection or long press on a piece). `movement` lines are separated by a line break.
 piece:
     soldier:
-        name: Soldier
+        name: Soldier (S)
         movement: "1 square diagonally forward\n→ Promotes to Paladin"
     bishop:
-        name: Bishop
+        name: Bishop (B)
         movement: Unlimited diagonally
     rook:
-        name: Rook
+        name: Rook (R)
         movement: Unlimited orthogonally
     paladin:
-        name: Paladin
+        name: Paladin (P)
         movement: 1 or 2 squares orthogonally
     guard:
-        name: Guard
+        name: Guard (G)
         movement: 1 or 2 squares diagonally
     knight:
-        name: Knight
+        name: Knight (N)
         movement: "L-shaped move\nCan jump over pieces"
     ballista:
-        name: Ballista
+        name: Ballista (L)
         movement: "Unlimited forward only\n→ Promotes to Rook"
     king:
-        name: King
+        name: King (K)
         movement: "1 square in any direction\nCannot be stacked"

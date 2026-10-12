@@ -11,11 +11,12 @@ import {computeMaterialDiff, renderMaterialHTML} from './models/materialDiff';
 import {pieceRule} from './models/pieceRules';
 import {alertModal, confirmModal} from './utils/modal';
 import {PageFullscreen} from './utils/pageFullscreen';
-import {EvalBar, formatEvaluation} from './views/EvalBar';
+import {DECIDED_SCORE, EvalBar, formatEvaluation} from './views/EvalBar';
+import {EvalGraph} from './views/EvalGraph';
 import {describeGameOver, gameOverOutcome} from './utils/gameOverText';
-import {t} from './i18n';
+import {formatNumber, t} from './i18n';
 import {ANIMATION_SPEEDS, AnimationSpeed} from './models/types';
-import {downloadHtml} from './views/boardExport';
+import {downloadFile} from './views/boardExport';
 
 /** Display defaults of a visitor without an account (guest games, anonymous spectators); signed-in players keep theirs in Settings. */
 const BOARD_DEFAULTS_KEY = 'keres.boardDefaults';
@@ -25,6 +26,9 @@ const OPPONENT_TYPE_MULTIPLAYER = 2;
 
 /** Server timestamps in the game-state payload are Uu-format microseconds. */
 const CLOCK_TICK_MS = 250;
+/** A move that lowers its own side's evaluation by this much (engine units: 10 = a soldier) is flagged, by this much a blunder. */
+const MOVE_LOSS = -10;
+const MOVE_BLUNDER = -30;
 
 type Side = 'white' | 'black';
 const SIDES: Side[] = ['white', 'black'];
@@ -165,6 +169,7 @@ class KeresGame {
     // Seeded from the page bootstrap, then pushed by the server over Mercure
     // as the worker computes each one: the page never waits for the engine.
     private evalBar: EvalBar | null = null;
+    private evalGraph: EvalGraph | null = null;
     private liveEvaluation: boolean = false;
     private evaluations: Map<number, number> = new Map();
     private evaluationsRequestedIn: 'live' | 'over' | null = null;
@@ -223,6 +228,11 @@ class KeresGame {
         const evalLabel = document.getElementById('eval-bar-label');
         if (canEvaluate && evalRoot && evalWhite && evalLabel) {
             this.evalBar = new EvalBar(evalRoot, evalWhite, evalLabel, document.getElementById('board-with-eval'));
+        }
+        const graphRoot = document.getElementById('eval-graph');
+        if (canEvaluate && graphRoot) {
+            this.evalGraph = new EvalGraph(graphRoot);
+            this.evalGraph.onSelectPly((ply) => void this.controller.goToPly(ply));
         }
 
         if (this.boardContainer.getAttribute('data-guest') === 'true') {
@@ -664,7 +674,7 @@ class KeresGame {
         const gameUuid = this.boardContainer.getAttribute('data-game-uuid');
         const ply = this.controller.getDisplayedPly();
         const html = this.view.exportStaticHtml(gameUuid ? `Keres board - game ${gameUuid}, ply ${ply}` : `Keres board - ply ${ply}`);
-        downloadHtml(html, gameUuid ? `keres-board-${gameUuid.slice(0, 8)}-ply${ply}.html` : 'keres-board.html');
+        downloadFile(html, gameUuid ? `keres-board-${gameUuid.slice(0, 8)}-ply${ply}.html` : 'keres-board.html', 'text/html');
     }
 
     /** The player cards and the evaluation bar follow the board: the side at the bottom of the board has its card at the bottom. */
@@ -672,6 +682,7 @@ class KeresGame {
         const flipped = this.gameState.isBoardFlipped();
         this.gameLayout.classList.toggle('is-flipped', flipped);
         this.evalBar?.setFlipped(flipped);
+        this.evalGraph?.setFlipped(flipped);
     }
 
     private async handleResign(): Promise<void> {
@@ -906,7 +917,7 @@ class KeresGame {
     private isEvaluationVisible(): boolean {
         if (!this.evalBar || !this.api.hasEvaluationEndpoint()) return false;
 
-        return this.liveEvaluation || this.controller.isGameOver();
+        return this.liveEvaluation || this.controller.isGameFinished();
     }
 
     /**
@@ -927,11 +938,13 @@ class KeresGame {
 
         const visible = this.isEvaluationVisible();
         bar.setVisible(visible);
+        this.evalGraph?.setVisible(visible);
         if (!visible) return;
 
         bar.setFlipped(this.gameState.isBoardFlipped());
         const ply = this.controller.getDisplayedPly();
         bar.setScore(0 === ply ? 0 : (this.evaluations.get(ply) ?? null));
+        this.evalGraph?.render(this.evaluations, total, ply);
 
         void this.requestMissingEvaluations(total);
     }
@@ -953,7 +966,7 @@ class KeresGame {
      * each move would only queue the search that is already queued.
      */
     private async requestMissingEvaluations(total: number): Promise<void> {
-        const phase = this.controller.isGameOver() ? 'over' : 'live';
+        const phase = this.controller.isGameFinished() ? 'over' : 'live';
         if (this.evaluationsRequestedIn === phase) return;
 
         this.evaluationsRequestedIn = phase;
@@ -1175,13 +1188,32 @@ class KeresGame {
         }
     }
 
+    /**
+     * What the move did to the evaluation, from the point of view of whoever played it: "+0.4" gained, "-2.1" lost
+     * (a loss of a point is flagged, of three a blunder). Nothing when either verdict is not in yet. Once a result is
+     * forced the difference means nothing, so the verdict itself is shown ("1-0").
+     */
     private appendMoveEvaluation(cell: HTMLElement, ply: number): void {
-        const value = this.isEvaluationVisible() ? this.evaluations.get(ply) : undefined;
-        if (undefined === value) return;
+        if (!this.isEvaluationVisible()) return;
+
+        const after = this.evaluations.get(ply);
+        const before = 1 === ply ? 0 : this.evaluations.get(ply - 1);
+        if (undefined === after || undefined === before) return;
 
         const span = document.createElement('span');
         span.className = 'move-eval';
-        span.textContent = formatEvaluation(value);
+        span.title = t('play.eval.after_move', {value: formatEvaluation(after)});
+
+        if (Math.abs(after) >= DECIDED_SCORE || Math.abs(before) >= DECIDED_SCORE) {
+            span.textContent = formatEvaluation(after);
+        } else {
+            // Scores are White's point of view and White plays the odd plies
+            const delta = 1 === ply % 2 ? after - before : before - after;
+            span.textContent = formatNumber(delta / 10, {minimumFractionDigits: 1, maximumFractionDigits: 1, signDisplay: 'exceptZero'});
+            span.classList.toggle('is-loss', delta <= MOVE_LOSS);
+            span.classList.toggle('is-blunder', delta <= MOVE_BLUNDER);
+        }
+
         cell.appendChild(span);
     }
 
