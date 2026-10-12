@@ -15,6 +15,11 @@
         <meta name="mercure-cookie-ttl" content="{{ mercure_cookie_ttl }}">
         {# Front-end strings (translations domains frontend*) for assets/typescript/src/i18n #}
         <script type="application/json" id="app-i18n">{{ frontend_i18n() }}</script>
+        {% if 'dev' == vite_mode() %}
+            {# Dev only: Vite injects the CSS with JavaScript, so the page would paint unstyled first. A direct, render-blocking
+               request to the dev server (it answers a <link> with plain CSS) avoids that flash. Same host convention as vite.config.js. #}
+            <link rel="stylesheet" href="https://vite.{{ app.request.host }}/build/assets/design-system.css">
+        {% endif %}
         {{ vite_entry_link_tags('app') }}
         {% block javascripts %}
             {{ vite_entry_script_tags('app') }}
