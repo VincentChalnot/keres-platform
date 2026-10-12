@@ -9,6 +9,7 @@ use App\Model\TimeControl;
 use App\Service\BotTournament\BotAccounts;
 use App\Service\BotTournament\BotGamePlayer;
 use App\Service\BotTournament\BotTournamentReport;
+use App\Service\BotTournament\BotTournamentReset;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputArgument;
@@ -35,6 +36,7 @@ class BotTournamentCommand extends Command
     public function __construct(
         private readonly BotAccounts $botAccounts,
         private readonly BotTournamentReport $report,
+        private readonly BotTournamentReset $reset,
         private readonly BotGamePlayer $botGamePlayer,
         private readonly MessageBusInterface $messageBus,
     ) {
@@ -45,13 +47,14 @@ class BotTournamentCommand extends Command
     {
         $this
             ->addArgument('games-per-pair', InputArgument::OPTIONAL, 'Games per pair of levels (both colours combined; split evenly between the two colour assignments)', '10')
-            ->addOption('min-level', null, InputOption::VALUE_REQUIRED, 'Lowest AI level to include', '5')
+            ->addOption('min-level', null, InputOption::VALUE_REQUIRED, 'Lowest AI level to include', '1')
             ->addOption('max-level', null, InputOption::VALUE_REQUIRED, 'Highest AI level to include', '10')
             ->addOption('initial-seconds', null, InputOption::VALUE_REQUIRED, 'Real-time clock, initial seconds per side (the clock is what makes the games rated)', '900')
             ->addOption('increment-seconds', null, InputOption::VALUE_REQUIRED, 'Real-time clock, increment per move', '5')
             ->addOption('max-plies', null, InputOption::VALUE_REQUIRED, 'Abort (unrated, not counted) a game that goes past this many plies', '800')
             ->addOption('force', null, InputOption::VALUE_NONE, 'Enqueue even if games from a previous run are still queued')
-            ->addOption('dry-run', null, InputOption::VALUE_NONE, 'Show how many games would be queued, without creating accounts or queueing anything');
+            ->addOption('reset', null, InputOption::VALUE_NONE, 'First delete every game played between bots and every bot rating, then play the tournament from scratch')
+            ->addOption('dry-run', null, InputOption::VALUE_NONE, 'Show how many games would be queued (and, with --reset, removed), without creating accounts or changing anything');
     }
 
     protected function execute(InputInterface $input, OutputInterface $output): int
@@ -65,6 +68,7 @@ class BotTournamentCommand extends Command
         $initialSeconds = (int) $input->getOption('initial-seconds');
         $incrementSeconds = (int) $input->getOption('increment-seconds');
         $dryRun = (bool) $input->getOption('dry-run');
+        $reset = (bool) $input->getOption('reset');
 
         if ($gamesPerPair < 1 || $minLevel < 1 || $maxLevel > 10 || $minLevel >= $maxLevel || $maxPlies < 1) {
             $io->error('Need games-per-pair >= 1, 1 <= min-level < max-level <= 10 and max-plies >= 1.');
@@ -80,10 +84,29 @@ class BotTournamentCommand extends Command
             return Command::INVALID;
         }
 
+        $queued = $this->report->queuedGames();
+
+        if ($reset) {
+            $existing = $this->botAccounts->allIds();
+            $counts = $this->reset->counts($existing);
+            $io->text(\sprintf('%s %d games between bots and %d bot ratings.', $dryRun ? 'Would delete' : 'Deleting', $counts['games'], $counts['ratings']));
+
+            if (!$dryRun) {
+                if (!$input->getOption('force') && null !== $queued && $queued > 0) {
+                    $io->error(\sprintf('%d tournament games are still queued or being played; resetting now would pull the rug from under them. Wait for them to finish, or use --force.', $queued));
+
+                    return Command::FAILURE;
+                }
+
+                $this->reset->reset($existing);
+            }
+        }
+
         $levels = range($minLevel, $maxLevel);
         $botIds = $dryRun ? $this->botAccounts->existingIds($levels) : $this->botAccounts->ensure($levels);
 
-        $tasks = $this->plan($levels, $gamesPerPair, $botIds);
+        // A dry run of a reset plans on an empty slate: what exists now would be deleted.
+        $tasks = $this->plan($levels, $gamesPerPair, $botIds, $dryRun && $reset);
         $totalPairs = \count($levels) * (\count($levels) - 1) / 2;
 
         $io->title('Keres bot tournament');
@@ -108,8 +131,6 @@ class BotTournamentCommand extends Command
         if ($dryRun) {
             return Command::SUCCESS;
         }
-
-        $queued = $this->report->queuedGames();
 
         if (!$input->getOption('force') && null !== $queued && $queued > 0) {
             $io->error(\sprintf('%d tournament games are still queued or being played; enqueueing again now would duplicate them. Wait for them to finish, or use --force.', $queued));
@@ -148,14 +169,15 @@ class BotTournamentCommand extends Command
      *
      * @param list<int> $levels
      * @param array<int, string> $botIds
+     * @param bool $ignoreDone plan as if no game had been played yet
      *
      * @return list<array{int, int}>
      */
-    private function plan(array $levels, int $gamesPerPair, array $botIds): array
+    private function plan(array $levels, int $gamesPerPair, array $botIds, bool $ignoreDone = false): array
     {
         $done = [];
 
-        foreach ($this->report->finishedGames($botIds) as $row) {
+        foreach ($ignoreDone ? [] : $this->report->finishedGames($botIds) as $row) {
             $done[(string) $row['white']][(string) $row['black']] = ($done[(string) $row['white']][(string) $row['black']] ?? 0) + (int) $row['n'];
         }
 

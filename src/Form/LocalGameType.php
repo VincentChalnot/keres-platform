@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Form;
 
+use App\Action\Lobby\LobbyAction;
 use App\Model\OpponentType;
 use Symfony\Component\Form\AbstractType;
 use Symfony\Component\Form\Extension\Core\Type\CheckboxType;
@@ -11,18 +12,28 @@ use Symfony\Component\Form\Extension\Core\Type\ChoiceType;
 use Symfony\Component\Form\Extension\Core\Type\SubmitType;
 use Symfony\Component\Form\FormBuilderInterface;
 use Symfony\Component\OptionsResolver\OptionsResolver;
+use Symfony\Contracts\Translation\TranslatorInterface;
 
 /**
  * Renamed from `NewGameType`, deliberately narrowed
  * (04-matchmaking.md sec 9.3): `opponentType` keeps exactly AI and HOTSEAT.
  * `HUMAN`/`MULTIPLAYER` must never be addable here - a networked game is
  * only ever constructed by `GameFactory` from a matched seek or an accepted
- * challenge, never this form.
+ * challenge, never this form. The one exception is a rated game against a bot account (`rated` + `cadence`): it is a
+ * multiplayer game, but always against one of `BotAccounts`, created by `GameFactory::createBotGame()`.
  */
 class LocalGameType extends AbstractType
 {
     /** Highest AI level an anonymous visitor may play (levels above need an account). */
     public const int GUEST_MAX_AI_LEVEL = 4;
+
+    /** The real-time presets of the lobby a rated game against a bot can be played at. */
+    public const array BOT_CADENCES = ['bullet', 'blitz', 'rapid', 'classical'];
+
+    public function __construct(
+        private readonly TranslatorInterface $translator,
+    ) {
+    }
 
     public function buildForm(FormBuilderInterface $builder, array $options): void
     {
@@ -63,6 +74,22 @@ class LocalGameType extends AbstractType
                 'disabled' => $guest, // A disabled field ignores the submitted value: guests never get the bar.
                 'data' => false,
             ])
+            ->add('rated', CheckboxType::class, [
+                'label' => 'new_local_game.form.rated',
+                'help' => $guest ? 'new_local_game.form.rated_guest_help' : 'new_local_game.form.rated_help',
+                'required' => false,
+                'disabled' => $guest, // Ratings belong to accounts: guests only play casual games.
+                'data' => false,
+            ])
+            ->add('cadence', ChoiceType::class, [
+                'label' => 'new_local_game.form.cadence',
+                'choices' => array_combine(
+                    array_map(fn (string $speed): string => $this->cadenceLabel($speed), self::BOT_CADENCES),
+                    self::BOT_CADENCES,
+                ),
+                'choice_translation_domain' => false,
+                'data' => 'rapid',
+            ])
             ->add('submit', SubmitType::class, [
                 'label' => 'new_local_game.form.submit',
             ]);
@@ -73,5 +100,17 @@ class LocalGameType extends AbstractType
         $resolver->setDefault('translation_domain', 'game');
         $resolver->setDefault('guest', false);
         $resolver->setAllowedTypes('guest', 'bool');
+    }
+
+    /** "Blitz 7+5", like the lobby's presets. */
+    private function cadenceLabel(string $speed): string
+    {
+        $preset = LobbyAction::PRESETS[$speed];
+
+        return \sprintf(
+            '%s %s',
+            $this->translator->trans($preset['label'], [], 'game'),
+            $this->translator->trans('time_control.realtime', ['initial' => $preset['initialMinutes'], 'increment' => $preset['incrementSeconds']], 'game'),
+        );
     }
 }

@@ -1,0 +1,11 @@
+{# A ready-made AI or hot-seat game posted to /play/new (the page of the same form validates it like any other submission).
+   Parameters: quickGame (the LocalGameType form view), opponent ('ai' | 'hotseat'), level (AI level), label, class (button classes). #}
+{% set wanted = opponent == 'ai' ? enum('App\\Model\\OpponentType').AI : enum('App\\Model\\OpponentType').HOTSEAT %}
+<form method="post" action="{{ path('new_local_game') }}" class="m-0">
+    <input type="hidden" name="{{ quickGame.playerSide.vars.full_name }}" value="random">
+    <input type="hidden" name="{{ quickGame.opponentType.vars.full_name }}" value="{{ (quickGame.opponentType.vars.choices|filter(c => c.data == wanted)|first).value }}">
+    <input type="hidden" name="{{ quickGame.aiLevel.vars.full_name }}" value="{{ level|default(1) }}">
+    {# Not form_widget(): the lobby renders this partial twice from one form view, which only renders a field once. #}
+    <input type="hidden" name="{{ quickGame._token.vars.full_name }}" value="{{ quickGame._token.vars.value }}">
+    <button type="submit" class="{{ class|default('btn btn--primary') }}">{{ label }}</button>
+</form>

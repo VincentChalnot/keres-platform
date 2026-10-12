@@ -101,6 +101,8 @@
                 </div>
             </div>
 
+            <div class="eval-graph" id="eval-graph" hidden role="img" aria-label="{{ 'play.board.eval_graph'|trans }}"></div>
+
             <aside class="game-panel" aria-labelledby="game-panel-title">
                 <div class="game-panel__inner">
                     <div class="game-moves">
@@ -209,7 +211,8 @@
                 <div class="flex flex-col items-center gap-3 mt-6">
                     {% if not spectator and guest %}
                         <a class="btn btn--primary btn--block" id="gameover-modal-rematch" href="{{ path('new_local_game') }}"><i class="fa-solid fa-rotate" aria-hidden="true"></i>{{ 'play.board.gameover_modal.rematch'|trans }}</a>
-                    {% elseif not spectator and gameUuid %}
+                    {% elseif not spectator and gameUuid and not botGame|default(false) %}
+                        {# No rematch against a bot: the request would sit unanswered for a day. #}
                         {% set rematchState = rematch.state|default('none') %}
                         {% if rematchState == 'started' %}
                             <a class="btn btn--primary btn--block" href="{{ path('play', {uuid: rematch.gameUuid}) }}"><i class="fa-solid fa-rotate" aria-hidden="true"></i>{{ 'play.board.gameover_modal.rematch_started'|trans }}</a>

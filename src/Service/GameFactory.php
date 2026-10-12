@@ -58,6 +58,8 @@ final class GameFactory
      * both browser tabs before starting the 30s "did anyone turn up" timer.
      * Call `arm()` once ready. Never expose `$arm` outside dev/test tooling
      * - every real caller (Phase 3 matchmaking) arms immediately.
+     *
+     * `$aiLevel` marks a game against a bot account (`Game::isBotGame()`), see `createBotGame()`.
      */
     public function createMultiplayerGame(
         User $creator,
@@ -66,8 +68,9 @@ final class GameFactory
         ?TimeControl $timeControl = null,
         bool $rated = false,
         bool $arm = true,
+        ?int $aiLevel = null,
     ): Game {
-        $game = new Game($creator, OpponentType::MULTIPLAYER, $timeControl ?? TimeControl::unlimited(), $rated);
+        $game = new Game($creator, OpponentType::MULTIPLAYER, $timeControl ?? TimeControl::unlimited(), $rated, $aiLevel);
         new GamePlayer($game, $creatorColor, $creator);
         new GamePlayer($game, $creatorColor->opposite(), $opponent);
 
@@ -76,6 +79,17 @@ final class GameFactory
         }
 
         return $game;
+    }
+
+    /**
+     * A rated, clocked game of a human against the bot account of engine level `$level`: a multiplayer game (clock,
+     * Glicko rating, history, no undo) whose bot side is answered by the engine after every move.
+     */
+    public function createBotGame(User $human, User $bot, int $level, ColorPreference $colorPreference, TimeControl $timeControl): Game
+    {
+        $humanColor = $this->resolveColor($colorPreference, ColorPreference::RANDOM);
+
+        return $this->createMultiplayerGame($human, $bot, $humanColor, $timeControl, true, true, $level);
     }
 
     /**

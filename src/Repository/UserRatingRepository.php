@@ -8,6 +8,7 @@ use App\Entity\User;
 use App\Entity\UserRating;
 use App\Model\MultiplayerLimits;
 use App\Model\SpeedCategory;
+use App\Service\BotTournament\BotAccounts;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\DBAL\LockMode;
 use Doctrine\ORM\QueryBuilder;
@@ -55,6 +56,9 @@ class UserRatingRepository extends ServiceEntityRepository
             ->andWhere('ur.categoryValue = :category')
             ->andWhere('ur.gamesPlayed >= :minGames')
             ->andWhere('ur.lastRatedAt > :recencyThreshold')
+            // The bots (BotAccounts) are the ladder players climb, not players of it
+            ->andWhere('u.email NOT LIKE :botEmail')
+            ->setParameter('botEmail', BotAccounts::EMAIL_LIKE)
             ->setParameter('category', $category->value)
             ->setParameter('minGames', MultiplayerLimits::LEADERBOARD_MIN_GAMES)
             ->setParameter('recencyThreshold', new \DateTimeImmutable(\sprintf('-%d days', MultiplayerLimits::LEADERBOARD_ACTIVE_DAYS)))

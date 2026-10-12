@@ -1,0 +1,7 @@
+{% trans_default_domain 'game' %}
+{# Two players on one screen, no account needed. Parameter: quickGame. #}
+<div class="card">
+    <h2 class="card__title">{{ 'lobby.hotseat.title'|trans }}</h2>
+    <p>{{ 'lobby.hotseat.text'|trans }}</p>
+    {% include 'actions/_quick_game_form.html.twig' with {quickGame: quickGame, opponent: 'hotseat', label: 'lobby.hotseat.button'|trans, class: 'btn btn--outline'} only %}
+</div>

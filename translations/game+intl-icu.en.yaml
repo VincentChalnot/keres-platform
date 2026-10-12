@@ -74,6 +74,8 @@ lobby:
     subtitle: Post a seek, or join someone else’s.
     new_seek:
         title: New seek
+        open: New game
+        close: Close
         format: Format
         format_help: A format fills in the form below. Adjust anything, then post your seek.
         time_control: Time control
@@ -92,9 +94,17 @@ lobby:
         time_control: Time control
         rated: Rated
         colour: Colour
-    local:
-        title: Prefer a computer or a local opponent?
-        button: Play AI or hot-seat
+    next_bot:
+        title: Beat the next bot!
+        name: 'Bot level {level}'
+        help: A casual game, no clock. Win without taking a move back to unlock the next level.
+        play: Play
+        custom: Choose the level, your side, or play a rated game
+        capped: Create an account to face levels 5 to 10.
+    hotseat:
+        title: Two players, one screen
+        text: Play both sides on this device, no account needed.
+        button: Play hot-seat
     your_games:
         title: Your games
 
@@ -140,7 +150,6 @@ welcome:
     create_account: Create an account
     sign_in: Sign in
     try_it: Just want to try it?
-    try_button: Play the AI or hot-seat without an account
     guest_help: 'Guest games live in this browser only: they aren’t rated or saved to an account.'
     image_alt: A Keres game in progress
     announcements:
@@ -156,6 +165,7 @@ play:
     page_title: Play Game - Keres
     board:
         eval_bar: Engine evaluation
+        eval_graph: Engine evaluation over the game
         game_over: Game over
         loading: Loading…
         fullscreen: Fullscreen
@@ -223,7 +233,7 @@ play_guest:
 
 new_local_game:
     page_title: New Local Game - Keres
-    title: Play AI or hot-seat
+    title: Play against the AI
     subtitle:
         before: Want to play another person online instead? Head to the
         link: lobby
@@ -242,6 +252,11 @@ new_local_game:
         ai_level_guest_help: 'Only applies against the AI. Guests can play levels 1 to 4; sign in to unlock levels 5 to 10.'
         live_evaluation_guest_help: Sign in to unlock the live evaluation bar.
         ai_level_guest_error: Sign in to play against this level.
+        rated: Rated game
+        rated_help: A clocked game against the bot of that level. It moves your rating and the bot’s; no undo, no evaluation bar.
+        rated_guest_help: Sign in to play rated games against the bots.
+        cadence: Time control
+        bot_unavailable: This bot is not available right now.
         submit: Start Game
 
 invite:

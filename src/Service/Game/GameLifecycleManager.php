@@ -8,6 +8,7 @@ use App\Entity\Game;
 use App\Model\GameEndReason;
 use App\Model\PieceColor;
 use App\Service\Analytics\AnalyticsRecorder;
+use App\Service\Ladder\AiLadder;
 use App\Service\Notification\NotificationCenter;
 use App\Service\Rating\RatingUpdater;
 
@@ -31,6 +32,7 @@ final readonly class GameLifecycleManager
         private RatingUpdater $ratingUpdater,
         private NotificationCenter $notificationCenter,
         private AnalyticsRecorder $analyticsRecorder,
+        private AiLadder $aiLadder,
     ) {
     }
 
@@ -39,6 +41,7 @@ final readonly class GameLifecycleManager
     {
         $winner = $draw ? null : ($whiteWins ? PieceColor::WHITE : PieceColor::BLACK);
         $game->finish(GameEndReason::ENGINE, $winner, $engineEndCode);
+        $this->aiLadder->recordFinishedGame($game);
         $this->ratingUpdater->applyForFinishedGame($game);
         $this->notificationCenter->gameFinished($game);
         $this->analyticsRecorder->gameFinished($game);
@@ -48,6 +51,7 @@ final readonly class GameLifecycleManager
     public function resign(Game $game, PieceColor $resigner): void
     {
         $game->finish(GameEndReason::RESIGNATION, $resigner->opposite());
+        $this->aiLadder->recordFinishedGame($game);
         $this->ratingUpdater->applyForFinishedGame($game);
         $this->notificationCenter->gameFinished($game, $resigner);
         $this->analyticsRecorder->gameFinished($game);
@@ -57,6 +61,7 @@ final readonly class GameLifecycleManager
     public function finaliseTimeout(Game $game, PieceColor $loser): void
     {
         $game->finish(GameEndReason::TIMEOUT, $loser->opposite());
+        $this->aiLadder->recordFinishedGame($game);
         $this->ratingUpdater->applyForFinishedGame($game);
         $this->notificationCenter->gameFinished($game);
         $this->analyticsRecorder->gameFinished($game);

@@ -145,7 +145,7 @@ readonly class SubmitMoveAction
             $this->notificationCenter->movePlayed($game, $user);
         }
 
-        if (!$game->isGameOver() && OpponentType::AI === $game->getOpponentType()) {
+        if (!$game->isGameOver() && (OpponentType::AI === $game->getOpponentType() || $game->isBotGame())) {
             $this->messageBus->dispatch(
                 new ProcessAiMoveMessage(
                     $uuid,

@@ -4,12 +4,16 @@ declare(strict_types=1);
 
 namespace App\Action;
 
+use App\Action\Lobby\LobbyAction;
 use App\Entity\User;
 use App\Form\LocalGameType;
 use App\Model\ColorPreference;
 use App\Model\OpponentType;
+use App\Model\TimeControl;
 use App\Repository\GameRepository;
+use App\Repository\UserRepository;
 use App\Service\Analytics\AnalyticsRecorder;
+use App\Service\BotTournament\BotAccounts;
 use App\Service\GameFactory;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -33,6 +37,8 @@ class NewLocalGameAction extends AbstractController
         private readonly EntityManagerInterface $entityManager,
         private readonly GameFactory $gameFactory,
         private readonly GameRepository $gameRepository,
+        private readonly UserRepository $userRepository,
+        private readonly BotAccounts $botAccounts,
         private readonly AnalyticsRecorder $analyticsRecorder,
         private readonly TranslatorInterface $translator,
     ) {
@@ -47,6 +53,18 @@ class NewLocalGameAction extends AbstractController
 
         if ($guest && $form->isSubmitted() && OpponentType::AI === $form->get('opponentType')->getData() && $form->get('aiLevel')->getData() > LocalGameType::GUEST_MAX_AI_LEVEL) {
             $form->get('aiLevel')->addError(new FormError($this->translator->trans('new_local_game.form.ai_level_guest_error', [], 'game')));
+        }
+
+        // A rated game against a bot is a multiplayer game against that level's bot account.
+        $bot = null;
+
+        if ($form->isSubmitted() && !$guest && OpponentType::AI === $form->get('opponentType')->getData() && $form->get('rated')->getData()) {
+            $botId = $this->botAccounts->allIds()[$form->get('aiLevel')->getData()] ?? null;
+            $bot = null !== $botId ? $this->userRepository->find($botId) : null;
+
+            if (null === $bot) {
+                $form->get('aiLevel')->addError(new FormError($this->translator->trans('new_local_game.form.bot_unavailable', [], 'game')));
+            }
         }
 
         if ($form->isSubmitted() && $form->isValid()) {
@@ -73,7 +91,13 @@ class NewLocalGameAction extends AbstractController
             $aiLevel = OpponentType::AI === $data['opponentType'] ? $data['aiLevel'] : null;
 
             $isFirstGame = 0 === $this->gameRepository->countForUser($user);
-            $game = $this->gameFactory->createAiOrHotseatGame($user, $data['opponentType'], $colorPreference, $aiLevel, (bool) $data['liveEvaluation']);
+
+            if (null !== $bot) {
+                $preset = LobbyAction::PRESETS[$data['cadence']];
+                $game = $this->gameFactory->createBotGame($user, $bot, $aiLevel, $colorPreference, TimeControl::realtime($preset['initialMinutes'] * 60, $preset['incrementSeconds']));
+            } else {
+                $game = $this->gameFactory->createAiOrHotseatGame($user, $data['opponentType'], $colorPreference, $aiLevel, (bool) $data['liveEvaluation']);
+            }
 
             $this->entityManager->persist($game);
             $this->entityManager->flush();

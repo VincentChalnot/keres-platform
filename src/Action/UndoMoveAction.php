@@ -81,6 +81,7 @@ readonly class UndoMoveAction
                 }
             }
             $game->reopenForUndo();
+            $game->markUndoUsed();
             $em->persist($game);
         });
 

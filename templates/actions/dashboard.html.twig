@@ -6,6 +6,7 @@
 {% block body %}
 <main class="section">
     <div class="container-page">
+        {% include '_onboarding_banner.html.twig' %}
         <h1 class="page-title mb-6">{{ app.user.displayName ? 'dashboard.welcome_named'|trans({name: app.user.displayName}) : 'dashboard.welcome'|trans }}</h1>
 
         <div class="grid grid-cols-1 items-start gap-4 lg:grid-cols-[1fr_22rem] [&>.card]:!mb-0">

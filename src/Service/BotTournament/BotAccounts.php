@@ -10,6 +10,7 @@ use App\Model\Notification\NotificationType;
 use App\Repository\UserRepository;
 use Doctrine\DBAL\Connection;
 use Doctrine\ORM\EntityManagerInterface;
+use Symfony\Component\DependencyInjection\Attribute\Autowire;
 
 /**
  * The dedicated accounts (one per engine AI level) the bot tournament plays
@@ -17,6 +18,9 @@ use Doctrine\ORM\EntityManagerInterface;
  */
 class BotAccounts
 {
+    /** SQL `LIKE` pattern matching every bot account's e-mail (the bots are not players: leaderboards leave them out). */
+    public const string EMAIL_LIKE = 'bot-level-%@playkeres.com';
+
     private const string EMAIL_PATTERN = 'bot-level-%d@playkeres.com';
     private const string USERNAME_PATTERN = 'keres-bot-%d';
 
@@ -24,7 +28,21 @@ class BotAccounts
         private readonly UserRepository $userRepository,
         private readonly EntityManagerInterface $entityManager,
         private readonly Connection $connection,
+        #[Autowire('%kernel.project_dir%')]
+        private readonly string $projectDir,
     ) {
+    }
+
+    /** Where the portrait of a bot level is served from (`public/images/bots/level-N.webp`, square, supplied by the operator). */
+    public static function avatarPath(int $level): string
+    {
+        return \sprintf('/images/bots/level-%d.webp', $level);
+    }
+
+    /** The portrait of a bot level, null while its file has not been dropped in `public/`. */
+    public function avatarUrl(int $level): ?string
+    {
+        return is_file($this->projectDir.'/public'.self::avatarPath($level)) ? self::avatarPath($level) : null;
     }
 
     /** The AI level a bot account (`bot-level-N@playkeres.com`) plays at; null for any other user. */
@@ -45,7 +63,7 @@ class BotAccounts
 
     /**
      * Creates missing accounts (and silences their notifications: fake
-     * mailbox, empty bell).
+     * mailbox, empty bell), and points every requested account at its portrait.
      *
      * @param list<int> $levels
      *
@@ -64,6 +82,8 @@ class BotAccounts
                 $user->setDisplayName(\sprintf('Keres Bot (level %d)', $level));
                 $this->entityManager->persist($user);
             }
+
+            $user->setAvatarUrl($this->avatarUrl($level));
 
             $enabled = array_fill_keys(array_map(static fn (NotificationType $t): string => $t->value, NotificationType::cases()), false);
             NotificationPreferences::fromUser($user)->withEmail($enabled)->withInApp($enabled)->applyTo($user);
@@ -109,7 +129,7 @@ class BotAccounts
         $suffix = '@playkeres.com';
         $rows = $this->connection->fetchAllAssociative(
             'SELECT id, email FROM "user" WHERE email LIKE :pattern',
-            ['pattern' => $prefix.'%'.$suffix],
+            ['pattern' => self::EMAIL_LIKE],
         );
 
         $ids = [];

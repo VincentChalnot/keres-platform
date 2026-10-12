@@ -1,0 +1,19 @@
+{% trans_default_domain 'game' %}
+{# The bot to beat next (NextBot): its portrait (or a robot while the file is missing), its level, one click to play it.
+   Parameters: nextBot, quickGame. #}
+<div class="flex flex-wrap items-center gap-4">
+    {% if nextBot.avatarUrl %}
+        <img class="avatar avatar--lg" src="{{ nextBot.avatarUrl }}" alt="" width="64" height="64">
+    {% else %}
+        <span class="avatar avatar--lg inline-flex items-center justify-center bg-surface-hover text-primary" aria-hidden="true"><i class="fa-solid fa-robot"></i></span>
+    {% endif %}
+    <div class="min-w-0 flex-1">
+        <p class="mb-1 font-title text-xl">{{ 'lobby.next_bot.name'|trans({level: nextBot.level}) }}</p>
+        <p class="help mb-0">{{ 'lobby.next_bot.help'|trans }}</p>
+    </div>
+    {% include 'actions/_quick_game_form.html.twig' with {quickGame: quickGame, opponent: 'ai', level: nextBot.level, label: 'lobby.next_bot.play'|trans} only %}
+</div>
+{% if nextBot.capped %}
+    <p class="help mt-3 mb-0">{{ 'lobby.next_bot.capped'|trans }}</p>
+{% endif %}
+<p class="mb-0 mt-3"><a href="{{ path('new_local_game') }}">{{ 'lobby.next_bot.custom'|trans }}</a></p>

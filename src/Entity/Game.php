@@ -109,6 +109,10 @@ class Game
     #[ORM\Column(type: Types::BOOLEAN)]
     private bool $draw = false;
 
+    /** An AI game where the player took a move back: its result no longer counts for the AI ladder (`AiLadder`). */
+    #[ORM\Column(type: Types::BOOLEAN, options: ['default' => false])]
+    private bool $undoUsed = false;
+
     #[ORM\Version]
     #[ORM\Column(type: Types::INTEGER)]
     private int $version = 1;
@@ -196,6 +200,15 @@ class Game
         $this->opponentTypeValue = $opponentType->value;
 
         return $this;
+    }
+
+    /**
+     * A multiplayer game against one of the engine's bot accounts (`BotAccounts`): two real accounts, a clock and a
+     * rating like any rated game, but one side is played by the engine at `getAiLevel()` (`ProcessAiMoveMessage`).
+     */
+    public function isBotGame(): bool
+    {
+        return OpponentType::MULTIPLAYER === $this->getOpponentType() && null !== $this->aiLevel;
     }
 
     public function getAiLevel(): ?int
@@ -365,6 +378,16 @@ class Game
     public function isDraw(): bool
     {
         return $this->draw;
+    }
+
+    public function isUndoUsed(): bool
+    {
+        return $this->undoUsed;
+    }
+
+    public function markUndoUsed(): void
+    {
+        $this->undoUsed = true;
     }
 
     public function getVersion(): int

@@ -74,9 +74,12 @@ class PlayAction extends AbstractController
         $colors = $game->getColorsForUser($user instanceof User ? $user : null);
         $playerColor = $colors[0] ?? PieceColor::WHITE;
 
-        // AI auto-move trigger logic
+        // AI auto-move trigger logic. Participants only: an admin looking at somebody else's AI game must not
+        // make the AI answer for the player (a non-participant defaults to White above).
         if (
-            OpponentType::AI === $game->getOpponentType()
+            (OpponentType::AI === $game->getOpponentType() || $game->isBotGame())
+            && $user instanceof User
+            && $game->isParticipant($user)
             && !$game->isGameOver()
             && $game->isWhiteTurn() !== (PieceColor::WHITE === $playerColor)
         ) {

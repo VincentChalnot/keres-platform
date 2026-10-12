@@ -3,6 +3,7 @@ import {decodeMove, encodeMove, encodeMoveListToBase64, encodeMoveListToBinary} 
 import {GameAPI, GameStatePayload} from './GameAPI';
 import {GameUpdate} from './MercureClient';
 import {t} from '../i18n';
+import {recordGuestAiWin} from '../utils/cookies';
 
 const OPPONENT_TYPE_AI = 0;
 
@@ -14,6 +15,8 @@ export interface GuestGameRecord {
     aiLevel?: number;
     moves: number[];
     resignedColor: 'white' | 'black' | null;
+    /** A move was taken back: the result no longer counts for the AI ladder. Absent in games saved before it existed. */
+    undoUsed?: boolean;
 }
 
 const STORAGE_KEY = 'keres.guestGame.v1';
@@ -51,6 +54,7 @@ export class LocalGameAPI extends GameAPI {
                 aiLevel: typeof parsed.aiLevel === 'number' ? parsed.aiLevel : 1,
                 moves: parsed.moves.filter((m): m is number => typeof m === 'number'),
                 resignedColor: parsed.resignedColor === 'white' || parsed.resignedColor === 'black' ? parsed.resignedColor : null,
+                undoUsed: parsed.undoUsed === true,
             };
         } catch {
             return null;
@@ -97,6 +101,7 @@ export class LocalGameAPI extends GameAPI {
         }
 
         this.record.moves.pop();
+        this.record.undoUsed = true;
 
         // Against the AI, take back to the player's own turn (mirrors UndoMoveAction).
         if (OPPONENT_TYPE_AI === this.record.opponentType && this.isAiTurn(this.record.moves.length) && this.record.moves.length > 0) {
@@ -209,6 +214,11 @@ export class LocalGameAPI extends GameAPI {
         const gameOver = board.isGameOver();
         const engineEndCode = gameOver && null === resigned ? await this.fetchGameOverReason(this.getMoves()) : null;
         const result = !gameOver ? null : (board.draw ? 'draw' : (board.whiteWins ? 'white' : 'black'));
+
+        // The AI ladder of a guest lives in a cookie (copied to the account at sign-up): a win without undo counts
+        if (OPPONENT_TYPE_AI === this.record.opponentType && true !== this.record.undoUsed && result === (this.record.playerWhite ? 'white' : 'black')) {
+            recordGuestAiWin(this.record.aiLevel ?? 1);
+        }
 
         return {
             board,

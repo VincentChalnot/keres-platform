@@ -14,6 +14,7 @@
         gameUuid: game.uuid,
         spectator: not game.isParticipant(app.user),
         guest: false,
+        botGame: game.botGame,
         gameOver: game.gameOver,
         gameHeader: game_board_header(game, app.user),
         liveEvaluation: game.liveEvaluationEnabled,

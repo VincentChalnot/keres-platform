@@ -5,22 +5,26 @@ declare(strict_types=1);
 namespace App\Action\Lobby;
 
 use App\Entity\User;
+use App\Form\LocalGameType;
 use App\Repository\GameRepository;
 use App\Repository\SeekRepository;
 use App\Service\Announcement\AnnouncementProvider;
+use App\Service\Ladder\NextBot;
 use App\Service\Matchmaking\SeekPayloadBuilder;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\Clock\ClockInterface;
+use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\Attribute\AsController;
 use Symfony\Component\Routing\Attribute\Route;
 
 /**
  * `GET /lobby` (04-matchmaking.md sec 9.2) - the multiplayer front door.
- * Signed-in players get the "New seek" panel, the live seek table
- * (server-rendered once, then kept live by `LobbyController`) and their
- * in-progress games. Anonymous visitors get the sign-in prompt instead,
- * with playing the AI or hot-seat without an account as the fallback.
+ * Signed-in players get the next-bot card, the live seek table (server-rendered
+ * once, then kept live by `LobbyController`) with the "New game" modal holding the
+ * seek form, their in-progress games and the hot-seat card. Anonymous visitors get
+ * the sign-in prompt instead, with the next-bot card and hot-seat as the fallback.
+ * The two cards post a ready-made game to `/play/new` (see `_quick_game_form`).
  */
 #[AsController]
 class LobbyAction extends AbstractController
@@ -54,13 +58,16 @@ class LobbyAction extends AbstractController
         private readonly GameRepository $gameRepository,
         private readonly ClockInterface $clock,
         private readonly AnnouncementProvider $announcementProvider,
+        private readonly NextBot $nextBot,
     ) {
     }
 
     #[Route(path: '/lobby', name: 'lobby', methods: ['GET'])]
-    public function __invoke(): array|Response
+    public function __invoke(Request $request): array|Response
     {
         $user = $this->getUser();
+        $quickGame = $this->createForm(LocalGameType::class, null, ['guest' => !$user instanceof User])->createView();
+        $nextBot = $this->nextBot->forRequest($user instanceof User ? $user : null, $request);
 
         if (!$user instanceof User) {
             $publicGames = $this->gameRepository->findRecentPubliclyFinishedGames(self::PUBLIC_GAMES_LIMIT);
@@ -69,6 +76,8 @@ class LobbyAction extends AbstractController
             return $this->render('actions/play_welcome.html.twig', [
                 'announcements' => $this->announcementProvider->latest(),
                 'publicGames' => $publicGames,
+                'quickGame' => $quickGame,
+                'nextBot' => $nextBot,
             ]);
         }
 
@@ -86,6 +95,8 @@ class LobbyAction extends AbstractController
             'seeksBootstrap' => $this->seekPayloadBuilder->encode($listing),
             'ongoingGames' => $shownGames,
             'ongoingGamesCount' => \count($ongoingGames),
+            'quickGame' => $quickGame,
+            'nextBot' => $nextBot,
         ];
     }
 }
