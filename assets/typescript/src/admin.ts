@@ -4,11 +4,31 @@ import {initBoardEditor} from './admin/boardEditor';
 
 Chart.register(...registerables);
 
-/** A design-system colour token (`--k-*` holds an RGB triplet) as a CSS colour Chart.js understands. */
-function token(name: string): string {
-    const triplet = getComputedStyle(document.documentElement).getPropertyValue(`--k-${name}`).trim().split(/\s+/);
+const probe = document.createElement('canvas').getContext('2d', {willReadFrequently: true});
 
-    return `rgb(${triplet.join(', ')})`;
+/**
+ * A design-system colour token (`--k-*`, a base RGB triplet or a derived CSS colour, see the design system README)
+ * as an `rgb()` string Chart.js understands: the token is resolved by the browser and read back from one canvas pixel.
+ */
+function token(name: string): string {
+    const value = getComputedStyle(document.documentElement).getPropertyValue(`--k-${name}`).trim();
+    const element = document.createElement('span');
+    // Base tokens are RGB triplets ("196 147 74"), derived ones full colours.
+    element.style.color = /^\d+ \d+ \d+$/.test(value) ? `rgb(${value})` : value;
+    document.body.appendChild(element);
+    const resolved = getComputedStyle(element).color;
+    element.remove();
+
+    if (null === probe) {
+        return resolved;
+    }
+    probe.clearRect(0, 0, 1, 1);
+    probe.fillStyle = '#000';
+    probe.fillStyle = resolved;
+    probe.fillRect(0, 0, 1, 1);
+    const [r, g, b] = probe.getImageData(0, 0, 1, 1).data;
+
+    return `rgb(${r}, ${g}, ${b})`;
 }
 
 interface AdminStats {
