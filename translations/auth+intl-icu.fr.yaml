@@ -21,6 +21,10 @@ register:
     subtitle: Inscrivez-vous avec une adresse e-mail et un mot de passe
     trust_notice: 'Avant de vous inscrire, lisez <a href="{url}">nos engagements envers vous</a>.'
     have_account: 'Vous avez déjà un compte ? <a href="{url}">Connectez-vous</a>.'
+accept_terms:
+    title: Conditions d’utilisation
+    subtitle: Avant de continuer, veuillez accepter nos conditions d’utilisation.
+    logout: Se déconnecter
 reset_password:
     title: Réinitialiser votre mot de passe
     subtitle: Choisissez un nouveau mot de passe pour {email}

@@ -51,6 +51,9 @@ register:
     password: Mot de passe
     password_repeat: Répétez le mot de passe
     submit: Créer mon compte
+terms:
+    accept: 'J’ai lu et j’accepte les <a href="{url}" target="_blank" rel="noopener">conditions d’utilisation</a>.'
+    continue: Continuer
 reset_password:
     password: Nouveau mot de passe
     password_repeat: Répétez le nouveau mot de passe

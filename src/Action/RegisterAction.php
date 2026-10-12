@@ -6,6 +6,7 @@ namespace App\Action;
 
 use App\Entity\User;
 use App\Form\RegisterType;
+use App\Model\TermsOfUse;
 use App\Repository\UserRepository;
 use App\Service\Analytics\AnalyticsRecorder;
 use App\Service\UserMailer;
@@ -67,6 +68,7 @@ class RegisterAction extends AbstractController
                 $user = new User($email);
                 $user->setUsername($this->usernameGenerator->generate(null, $email));
                 $user->setPassword($this->passwordHasher->hashPassword($user, $form->get('password')->getData()));
+                $user->acceptTerms(TermsOfUse::CURRENT_VERSION, new \DateTimeImmutable());
                 $this->entityManager->persist($user);
                 $this->entityManager->flush();
                 $this->analyticsRecorder->accountCreated($user);

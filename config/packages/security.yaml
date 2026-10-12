@@ -39,6 +39,7 @@ security:
         - { path: ^/play, roles: ROLE_USER }
         - { path: ^/settings, roles: ROLE_USER }
         - { path: ^/notifications, roles: ROLE_USER }
+        - { path: ^/terms, roles: ROLE_USER }
         - { path: ^/feedback, roles: ROLE_USER }
         - { path: ^/preferences, roles: ROLE_USER }
         - { path: ^/dashboard, roles: ROLE_USER }

@@ -1,0 +1,23 @@
+{% extends 'base.html.twig' %}
+{% trans_default_domain 'auth' %}
+
+{% block title %}{{ 'accept_terms.title'|trans }}{% endblock %}
+
+{% block body %}
+    <section class="section">
+        <div class="container-page container-page--narrow">
+            <div class="card">
+                <h1 class="page-title">{{ 'accept_terms.title'|trans }}</h1>
+                <p class="page-subtitle">{{ 'accept_terms.subtitle'|trans }}</p>
+
+                {{ form_start(form) }}
+                    {{ form_widget(form) }}
+                {{ form_end(form) }}
+
+                <p class="mb-0 mt-4">
+                    <a href="{{ path('logout') }}">{{ 'accept_terms.logout'|trans }}</a>
+                </p>
+            </div>
+        </div>
+    </section>
+{% endblock %}

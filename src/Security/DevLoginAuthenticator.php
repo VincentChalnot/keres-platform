@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Security;
 
 use App\Entity\User;
+use App\Model\TermsOfUse;
 use App\Repository\UserRepository;
 use App\Service\Analytics\AnalyticsRecorder;
 use App\Service\UsernameGenerator;
@@ -72,6 +73,12 @@ class DevLoginAuthenticator extends AbstractAuthenticator
                 $this->entityManager->persist($user);
                 $this->entityManager->flush();
                 $this->analyticsRecorder->accountCreated($user);
+            }
+
+            // Dev accounts never see the terms page: it would break every scripted browser flow.
+            if (!$user->hasAcceptedTerms(TermsOfUse::CURRENT_VERSION)) {
+                $user->acceptTerms(TermsOfUse::CURRENT_VERSION, new \DateTimeImmutable());
+                $this->entityManager->flush();
             }
 
             return $user;

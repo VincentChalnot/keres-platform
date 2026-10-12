@@ -21,6 +21,10 @@ register:
     subtitle: Sign up with email & password
     trust_notice: 'Read our <a href="{url}">commitments to you</a> before signing up.'
     have_account: 'Already have an account? <a href="{url}">Log in</a>.'
+accept_terms:
+    title: Terms of use
+    subtitle: Before you continue, please accept our terms of use.
+    logout: Log out
 reset_password:
     title: Reset your password
     subtitle: Choose a new password for {email}

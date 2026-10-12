@@ -44,6 +44,7 @@ class RegisterType extends AbstractType
                     new Length(min: self::PASSWORD_MIN_LENGTH, minMessage: 'password.too_short'),
                 ],
             ])
+            ->add('acceptTerms', TermsCheckboxType::class)
             ->add('submit', SubmitType::class, [
                 'label' => 'register.submit',
             ]);

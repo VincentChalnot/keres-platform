@@ -15,6 +15,8 @@ password:
     too_short: Your password must be at least {limit} characters.
 register:
     email_blank: Please enter your email address.
+terms:
+    required: You must accept the terms of use to continue.
 feedback:
     category_blank: Please select a category.
     message_blank: Please enter your feedback.

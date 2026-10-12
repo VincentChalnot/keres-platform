@@ -51,6 +51,9 @@ register:
     password: Password
     password_repeat: Repeat password
     submit: Create account
+terms:
+    accept: 'I have read and accept the <a href="{url}" target="_blank" rel="noopener">terms of use</a>.'
+    continue: Continue
 reset_password:
     password: New password
     password_repeat: Repeat new password

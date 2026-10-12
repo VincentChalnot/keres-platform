@@ -69,6 +69,21 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\Column(type: Types::DATETIME_IMMUTABLE)]
     private \DateTimeImmutable $createdAt;
 
+    /** Version of the terms of use (`TermsOfUse::CURRENT_VERSION` at the time) the user accepted; NULL = never accepted. */
+    #[ORM\Column(type: Types::STRING, length: 32, nullable: true)]
+    private ?string $termsAcceptedVersion = null;
+
+    #[ORM\Column(type: Types::DATETIMETZ_IMMUTABLE, nullable: true)]
+    private ?\DateTimeImmutable $termsAcceptedAt = null;
+
+    /** The highest engine level (1-10) the user beat, see `AiLadder`; NULL = none yet. */
+    #[ORM\Column(type: Types::SMALLINT, nullable: true)]
+    private ?int $highestAiLevelBeaten = null;
+
+    /** When the user finished (or dismissed) the tutorial, in this browser or an earlier anonymous visit; NULL = not yet. */
+    #[ORM\Column(type: Types::DATETIMETZ_IMMUTABLE, nullable: true)]
+    private ?\DateTimeImmutable $onboardedAt = null;
+
     /** @var Collection<UserAuth> */
     #[ORM\OneToMany(
         targetEntity: UserAuth::class,
@@ -253,6 +268,39 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     public function getCreatedAt(): \DateTimeImmutable
     {
         return $this->createdAt;
+    }
+
+    public function acceptTerms(string $version, \DateTimeImmutable $at): void
+    {
+        $this->termsAcceptedVersion = $version;
+        $this->termsAcceptedAt = $at;
+    }
+
+    public function hasAcceptedTerms(string $version): bool
+    {
+        return $this->termsAcceptedVersion === $version;
+    }
+
+    public function getHighestAiLevelBeaten(): ?int
+    {
+        return $this->highestAiLevelBeaten;
+    }
+
+    /** Keeps the maximum: beating a lower level later changes nothing. */
+    public function recordAiLevelBeaten(int $level): void
+    {
+        $this->highestAiLevelBeaten = max($this->highestAiLevelBeaten ?? 0, $level);
+    }
+
+    public function getOnboardedAt(): ?\DateTimeImmutable
+    {
+        return $this->onboardedAt;
+    }
+
+    /** No-op when already onboarded: the first completion date is kept. */
+    public function markOnboarded(\DateTimeImmutable $at): void
+    {
+        $this->onboardedAt ??= $at;
     }
 
     public function getUserIdentifier(): string

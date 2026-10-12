@@ -15,6 +15,8 @@ password:
     too_short: Votre mot de passe doit contenir au moins {limit} caractères.
 register:
     email_blank: Veuillez saisir votre adresse e-mail.
+terms:
+    required: Vous devez accepter les conditions d’utilisation pour continuer.
 feedback:
     category_blank: Veuillez choisir une catégorie.
     message_blank: Veuillez saisir votre avis.
