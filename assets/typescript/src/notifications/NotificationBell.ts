@@ -31,7 +31,7 @@ export class NotificationBell {
     init(): void {
         this.toggle.addEventListener('click', (event) => {
             event.stopPropagation();
-            this.setOpen(this.panel.hidden);
+            this.setOpen(this.panel.hidden === true);
         });
         document.addEventListener('click', (event) => {
             if (!this.panel.hidden && event.target instanceof Node && !this.root.contains(event.target)) {

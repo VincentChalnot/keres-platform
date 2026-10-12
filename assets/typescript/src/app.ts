@@ -515,7 +515,7 @@ class KeresGame {
         document.getElementById('flip-board-btn')?.addEventListener('click', () => void this.handleFlipBoard());
         document.getElementById('export-board-btn')?.addEventListener('click', () => this.handleExportBoard());
         new PageFullscreen(document.getElementById('toggle-fullscreen-btn') as HTMLButtonElement);
-        this.settingsBtn.addEventListener('click', () => this.setSettingsOpen(this.settingsMenu.hidden));
+        this.settingsBtn.addEventListener('click', () => this.setSettingsOpen(this.settingsMenu.hidden === true));
         this.coordsSwitch.addEventListener('change', () => this.setCoordinatesVisible(this.coordsSwitch.checked));
         this.threatsSwitch.addEventListener('change', () => this.setShowThreats(this.threatsSwitch.checked));
         this.rotateSwitch.addEventListener('change', () => this.setOpponentRotated(this.rotateSwitch.checked));
