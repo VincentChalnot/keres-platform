@@ -2,14 +2,14 @@ import {GameAPI} from '../network/GameAPI';
 import {GameState} from '../models/GameState';
 import {Board, LAST_BOARD_INDEX, PIECE_CODE, Piece} from '../models/types';
 import {
-    decodeBoardFromHash,
     decodePiece,
     encodeBoardToBinary,
     encodeBoardToHash,
     encodePiece,
+    parseBoardCode,
     posToAlgebraic,
 } from '../utils/boardUtils';
-import {downloadHtml} from '../views/boardExport';
+import {downloadFile} from '../views/boardExport';
 import SVGBoardView from '../views/SVGBoardView';
 
 /**
@@ -26,13 +26,12 @@ const KING = 'king';
 /** Every piece the sprite sheet draws: the king, then the seven stackable types of the wire format. */
 const PIECE_TYPES: string[] = [KING, ...Object.values(PIECE_CODE)];
 
-/** 81 squares, the flags byte, the no-capture counter (AGENTS.md, "Binary Wire Format"). */
-const BOARD_BYTES = 83;
 const SQUARE_COUNT = LAST_BOARD_INDEX + 1;
 
 const HISTORY_LIMIT = 200;
 const EXPORT_TITLE = 'Keres board';
 const EXPORT_FILENAME = 'keres-board.html';
+const EXPORT_SVG_FILENAME = 'keres-board.svg';
 const COPIED_LABEL_MS = 1500;
 
 type Tool = {kind: 'eraser'} | {kind: 'piece'; color: boolean; type: string};
@@ -50,35 +49,11 @@ function withEditorFlags(bytes: Uint8Array): Uint8Array {
     return position;
 }
 
-/** A board code as typed or pasted: the base64 of the 83-byte board, every square an encodable piece (or empty). */
-function parseBoardCode(text: string): {position: Uint8Array} | {error: string} {
-    const code = text.trim();
-    if ('' === code) {
-        return {error: 'The board code is empty.'};
-    }
-    // atob() also tolerates whitespace and rejects only some malformed lengths; be strict, and quiet about garbage
-    if (!/^[A-Za-z0-9+/]+={0,2}$/.test(code) || 1 === code.replace(/=+$/, '').length % 4) {
-        return {error: 'Not a board code (it is a base64 text of 112 characters).'};
-    }
-    const bytes = decodeBoardFromHash(`#${code}`);
-    if (!bytes) {
-        return {error: 'Not a board code (it is a base64 text of 112 characters).'};
-    }
-    if (BOARD_BYTES !== bytes.length) {
-        return {error: `A board code is ${BOARD_BYTES} bytes long, this one has ${bytes.length}.`};
-    }
-    for (let index = 0; index < SQUARE_COUNT; index++) {
-        const byte = bytes[index];
-        if (0 === byte) {
-            continue;
-        }
-        const piece = decodePiece(byte);
-        if (!piece || encodePiece(piece) !== byte) {
-            return {error: `Square ${posToAlgebraic(index)} holds something that is not a piece (byte ${byte}).`};
-        }
-    }
+/** A board code as typed or pasted, normalised to the editor's flags and counter. */
+function parseEditorCode(text: string): {position: Uint8Array} | {error: string} {
+    const parsed = parseBoardCode(text);
 
-    return {position: withEditorFlags(bytes)};
+    return 'error' in parsed ? parsed : {position: withEditorFlags(parsed.bytes)};
 }
 
 /** The code in the URL hash, percent-decoded (a link pasted through a chat tool may have its `=` escaped). */
@@ -365,7 +340,7 @@ export async function initBoardEditor(): Promise<void> {
 
     // ── Board code ──
     codeField.addEventListener('input', () => {
-        const parsed = parseBoardCode(codeField.value);
+        const parsed = parseEditorCode(codeField.value);
         if ('error' in parsed) {
             setCodeError(`${parsed.error} The board is unchanged.`);
             return;
@@ -394,7 +369,7 @@ export async function initBoardEditor(): Promise<void> {
     // A bookmark, a back/forward step or a hand-edited URL changes the hash without reloading the page
     window.addEventListener('hashchange', () => {
         const code = readHashCode();
-        const parsed = parseBoardCode(code);
+        const parsed = parseEditorCode(code);
         if ('error' in parsed) {
             // The position on screen stays; the URL goes back to describing it
             window.history.replaceState(null, '', `#${encodeBoardToHash(position)}`);
@@ -411,7 +386,14 @@ export async function initBoardEditor(): Promise<void> {
     requireElement<HTMLButtonElement>('board-editor-clear-arrows').addEventListener('click', () => view.clearArrows());
     requireElement<HTMLButtonElement>('board-editor-export').addEventListener('click', () => {
         try {
-            downloadHtml(view.exportStaticHtml(EXPORT_TITLE), EXPORT_FILENAME);
+            downloadFile(view.exportStaticHtml(EXPORT_TITLE), EXPORT_FILENAME, 'text/html');
+        } catch (error) {
+            setStatus(`Export failed: ${error instanceof Error ? error.message : String(error)}`);
+        }
+    });
+    requireElement<HTMLButtonElement>('board-editor-export-svg').addEventListener('click', () => {
+        try {
+            downloadFile(view.exportStaticSvg(), EXPORT_SVG_FILENAME, 'image/svg+xml');
         } catch (error) {
             setStatus(`Export failed: ${error instanceof Error ? error.message : String(error)}`);
         }
@@ -421,7 +403,7 @@ export async function initBoardEditor(): Promise<void> {
     const initialCode = readHashCode();
     let initialError: string | null = null;
     if ('' !== initialCode) {
-        const parsed = parseBoardCode(initialCode);
+        const parsed = parseEditorCode(initialCode);
         if ('error' in parsed) {
             initialError = `The board code in the URL was ignored: ${parsed.error}`;
         } else {

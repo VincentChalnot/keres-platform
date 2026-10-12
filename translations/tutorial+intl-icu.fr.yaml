@@ -1,0 +1,20 @@
+# La page /tutorial (templates/actions/tutorial.html.twig) : légendes des diapositives et choix de fin.
+page:
+    title: Apprendre à jouer à Keres
+nav:
+    previous: Précédent
+    next: Suivant
+slides:
+    board: Voici Keres
+    like_chess: Cela ressemble un peu aux échecs
+    chess_pieces: Vous reconnaîtrez certaines pièces
+    new_pieces: Et d’autres sont nouvelles
+    chess_only: Ce qui compte dans Keres, c’est…
+    stacking: Vous pouvez empiler vos pièces
+    stack_moves: Une pile peut se déplacer comme l’une ou l’autre de ses pièces
+end:
+    title: Et maintenant ?
+    create_account: Créer un compte
+    play_guest: 'Jouer en invité contre le bot niveau {level}'
+    play_bot: 'Affronter le bot niveau {level}'
+    lobby: Aller au salon

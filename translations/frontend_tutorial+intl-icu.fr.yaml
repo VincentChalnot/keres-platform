@@ -1,0 +1,11 @@
+# Tutoriel (assets/typescript/src/tutorial.ts) : navigation des diapositives et problème guidé.
+slide:
+    progress: '{current} / {total}'
+    to_puzzle: À vous de jouer
+puzzle:
+    carry: Elle peut ainsi transporter une pièce lente à l’autre bout du plateau
+    unstack_fork: Puis vous pouvez désempiler la pièce du dessus pour porter une attaque dévastatrice
+    legal_blunder: Mettre son propre roi en échec, ou le laisser sans défense, est un coup légal
+    capture_king: Capturez le roi pour gagner la partie.
+    try_again: Ce n’est pas le bon coup, essayez encore.
+    invalid: Le problème n’a pas pu être chargé.

@@ -56,6 +56,7 @@ export default defineConfig({
                 play: "./assets/typescript/src/app.ts",
                 admin: "./assets/typescript/src/admin.ts",
                 lobby: "./assets/typescript/src/lobby.ts",
+                tutorial: "./assets/typescript/src/tutorial.ts",
             },
         },
     },

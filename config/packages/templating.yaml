@@ -24,6 +24,10 @@ sidus_template:
             template: 'admin/actions/user_read.html.twig'
         register:
             template: 'security/register.html.twig'
+        tutorial:
+            template: 'actions/tutorial.html.twig'
+        terms_accept:
+            template: 'security/accept_terms.html.twig'
         lost_password:
             template: 'security/lost_password.html.twig'
         reset_password:

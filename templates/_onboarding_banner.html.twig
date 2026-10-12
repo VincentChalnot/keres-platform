@@ -1,0 +1,9 @@
+{% trans_default_domain 'navigation' %}
+{# The invitation to the tutorial (no redirect: it never gets in the way). Dismissed by assets/app.js. #}
+{% if onboarding_pending() %}
+    <div class="alert alert--brand relative flex flex-wrap items-center gap-3 pr-12" id="onboarding-banner" role="note">
+        <span class="font-medium">{{ 'onboarding.banner.text'|trans }}</span>
+        <a href="{{ path('tutorial') }}" class="btn btn--primary btn--sm">{{ 'onboarding.banner.cta'|trans }}</a>
+        <button type="button" class="btn-close alert__close" data-onboarding-dismiss aria-label="{{ 'onboarding.banner.dismiss'|trans }}"></button>
+    </div>
+{% endif %}

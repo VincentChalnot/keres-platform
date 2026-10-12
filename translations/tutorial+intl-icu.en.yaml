@@ -1,0 +1,20 @@
+# The /tutorial page (templates/actions/tutorial.html.twig): slide captions and the closing choices.
+page:
+    title: Learn to play Keres
+nav:
+    previous: Previous
+    next: Next
+slides:
+    board: This is Keres
+    like_chess: It’s a little bit like chess
+    chess_pieces: You might recognize those pieces
+    new_pieces: And some new ones
+    chess_only: The important thing about Keres is…
+    stacking: You can stack your pieces
+    stack_moves: A stack has the potential to move with either piece’s movement
+end:
+    title: What now?
+    create_account: Create an account
+    play_guest: 'Play as a guest against bot level {level}'
+    play_bot: 'Face bot level {level}'
+    lobby: Go to the lobby

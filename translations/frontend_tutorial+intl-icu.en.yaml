@@ -1,0 +1,11 @@
+# Tutorial (assets/typescript/src/tutorial.ts): slide navigation and the guided problem.
+slide:
+    progress: '{current} / {total}'
+    to_puzzle: Try it yourself
+puzzle:
+    carry: So it can carry a slow piece across the board
+    unstack_fork: And then you can unstack the top piece to carry out a devastating attack
+    legal_blunder: Putting your own king in check or letting it hang is a legal move
+    capture_king: Capture the king to win the game.
+    try_again: Not that one, try again.
+    invalid: The problem could not be loaded.

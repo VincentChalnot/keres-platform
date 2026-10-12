@@ -9,10 +9,16 @@ nav:
     dashboard: Tableau de bord
     friends: Amis
     rules: Règles
+    tutorial: Tutoriel
     play: Jouer
     settings: Paramètres
     login: Connexion
     logout: Déconnexion
+onboarding:
+    banner:
+        text: Nouveau sur Keres ? Découvrez le jeu en deux minutes.
+        cta: Lancer le tutoriel
+        dismiss: Fermer
 notifications:
     title: Notifications
     bell_label: '{count, plural, =0 {Notifications} one {Notifications (# non lue)} other {Notifications (# non lues)}}'

@@ -73,3 +73,13 @@ document.addEventListener("DOMContentLoaded", () => {
     });
 });
 
+
+// ─── Tutorial invitation banner (dismiss: remembered in the browser and, signed in, on the account) ───────────────
+
+document.addEventListener("click", (event) => {
+    const button = event.target instanceof Element ? event.target.closest("[data-onboarding-dismiss]") : null;
+    if (!button) return;
+
+    document.getElementById("onboarding-banner")?.remove();
+    fetch("/onboarding/complete", {method: "POST"}).catch(() => {});
+});

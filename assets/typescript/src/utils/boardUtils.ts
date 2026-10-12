@@ -2,7 +2,7 @@
  * Utility functions for board coordinate conversions and binary encoding/decoding
  */
 
-import {BOARD_SIZE, Piece, PIECE_CODE, Board, PotentialMove, Move} from "../models/types";
+import {BOARD_SIZE, LAST_BOARD_INDEX, Piece, PIECE_CODE, Board, PotentialMove, Move} from "../models/types";
 
 /**
  * Convert position index (0-80) to algebraic notation (A1-I9)
@@ -52,6 +52,43 @@ export function decodeBoardFromHash(hash: string): Uint8Array | null {
         console.error("Failed to decode board from hash", e);
         return null;
     }
+}
+
+/** 81 squares, the flags byte, the no-capture counter (AGENTS.md, "Binary Wire Format"). */
+const BOARD_BYTES = 83;
+
+/**
+ * A board code as typed, pasted or authored in a file: the base64 of the 83-byte board, every square empty or a piece
+ * that `encodePiece(decodePiece(byte))` gives back. Strict on purpose; the flags and the counter are returned as found.
+ */
+export function parseBoardCode(text: string): {bytes: Uint8Array} | {error: string} {
+    const code = text.trim();
+    if ('' === code) {
+        return {error: 'The board code is empty.'};
+    }
+    // atob() also tolerates whitespace and rejects only some malformed lengths; be strict, and quiet about garbage
+    if (!/^[A-Za-z0-9+/]+={0,2}$/.test(code) || 1 === code.replace(/=+$/, '').length % 4) {
+        return {error: 'Not a board code (it is a base64 text of 112 characters).'};
+    }
+    const bytes = decodeBoardFromHash(`#${code}`);
+    if (!bytes) {
+        return {error: 'Not a board code (it is a base64 text of 112 characters).'};
+    }
+    if (BOARD_BYTES !== bytes.length) {
+        return {error: `A board code is ${BOARD_BYTES} bytes long, this one has ${bytes.length}.`};
+    }
+    for (let index = 0; index <= LAST_BOARD_INDEX; index++) {
+        const byte = bytes[index];
+        if (0 === byte) {
+            continue;
+        }
+        const piece = decodePiece(byte);
+        if (!piece || encodePiece(piece) !== byte) {
+            return {error: `Square ${posToAlgebraic(index)} holds something that is not a piece (byte ${byte}).`};
+        }
+    }
+
+    return {bytes};
 }
 
 /**

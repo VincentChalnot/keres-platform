@@ -1,7 +1,8 @@
-// Static export of a board SVG: one self-contained HTML file holding `assets/board.css` (verbatim, the one
-// stylesheet of the board) and the board `<svg>` exactly as it is displayed - no script, no external request.
-// Admin-only tool (English only); `SVGBoardView.exportStaticHtml()` is the entry point, this module is the
-// part that does not depend on the view.
+// Static export of a board SVG, in its current state, with `assets/board.css` verbatim (the one stylesheet of the
+// board) and no script or external request: either one self-contained HTML file (`buildBoardHtml`) or one standalone
+// SVG image (`buildBoardSvg`, usable in an `<img>`, e.g. the tutorial slides). Admin-only tool (English only);
+// `SVGBoardView.exportStaticHtml()` / `exportStaticSvg()` are the entry points, this module is the part that does not
+// depend on the view.
 import boardCss from './boardCss';
 
 /** What the board sits on in the app: `html { background-color: rgb(var(--k-canvas)) }` (design system, tokens.css). The file has no stylesheet of the DS, hence the literal. The coordinate labels are #ddbd90 and unreadable on white. */
@@ -15,9 +16,7 @@ const URL_REFERENCE = /url\(\s*['"]?#([^'")\s]+)['"]?\s*\)/g;
 /** Properties of the app's page that reach the board SVG: set on the SVG itself, or inherited by its text. See `pageStyleOf`. */
 const PAGE_PROPERTIES = ['filter', 'text-rendering', '-webkit-font-smoothing', '-moz-osx-font-smoothing'];
 
-export interface BoardHtmlOptions {
-    /** Document title. */
-    title: string;
+export interface BoardExportOptions {
     /**
      * Called with the working copy of the SVG, before the generic clean-up: the place for state that only the caller
      * understands (a drag in progress, a hover). The copy is thrown away afterwards; the SVG passed in is never modified.
@@ -25,15 +24,45 @@ export interface BoardHtmlOptions {
     prepare?: (clone: SVGSVGElement) => void;
 }
 
-/** Builds the complete HTML document of `svg` in its current state. `svg` is only read. */
-export function buildBoardHtml(svg: SVGSVGElement, options: BoardHtmlOptions): string {
-    const applied = pageStyleOf(svg);
+export interface BoardHtmlOptions extends BoardExportOptions {
+    /** Document title. */
+    title: string;
+}
+
+/**
+ * The working copy every export starts from: `prepare`d by the caller, stripped of the live view's animation and
+ * interaction state, pruned of the unused sprites. `svg` is only read.
+ */
+function cleanCopy(svg: SVGSVGElement, options: BoardExportOptions): SVGSVGElement {
     const clone = svg.cloneNode(true) as SVGSVGElement;
     options.prepare?.(clone);
     stripTransientState(clone);
     pruneDefinitions(clone);
     stripLayoutWhitespace(clone);
 
+    return clone;
+}
+
+/** Builds a standalone SVG document (XML prolog included) of `svg` in its current state, without background. `svg` is only read. */
+export function buildBoardSvg(svg: SVGSVGElement, options: BoardExportOptions = {}): string {
+    const applied = pageStyleOf(svg);
+    const clone = cleanCopy(svg, options);
+
+    // The board's styles travel inside the image; `svg.keres-board` says cursor: pointer, which means nothing there.
+    const style = clone.ownerDocument.createElementNS('http://www.w3.org/2000/svg', 'style');
+    style.textContent = `${boardCss}\nsvg.keres-board { cursor: auto; }`;
+    clone.insertBefore(style, clone.firstChild);
+    if ('' !== applied) {
+        clone.setAttribute('style', `${clone.getAttribute('style') ?? ''}${applied}`.trim());
+    }
+
+    return `<?xml version="1.0" encoding="UTF-8"?>\n${new XMLSerializer().serializeToString(clone)}\n`;
+}
+
+/** Builds the complete HTML document of `svg` in its current state. `svg` is only read. */
+export function buildBoardHtml(svg: SVGSVGElement, options: BoardHtmlOptions): string {
+    const applied = pageStyleOf(svg);
+    const clone = cleanCopy(svg, options);
     const markup = new XMLSerializer().serializeToString(clone);
 
     return `<!doctype html>
@@ -55,9 +84,9 @@ ${markup}
 `;
 }
 
-/** Hands `html` to the browser as a file download. */
-export function downloadHtml(html: string, filename: string): void {
-    const url = URL.createObjectURL(new Blob([html], {type: 'text/html;charset=utf-8'}));
+/** Hands `content` to the browser as a file download. */
+export function downloadFile(content: string, filename: string, mimeType: string): void {
+    const url = URL.createObjectURL(new Blob([content], {type: `${mimeType};charset=utf-8`}));
     const link = document.createElement('a');
     link.href = url;
     link.download = filename;

@@ -9,10 +9,16 @@ nav:
     dashboard: Dashboard
     friends: Friends
     rules: Rules
+    tutorial: Tutorial
     play: Play
     settings: Settings
     login: Login
     logout: Logout
+onboarding:
+    banner:
+        text: New to Keres? Learn the game in two minutes.
+        cta: Start the tutorial
+        dismiss: Dismiss
 notifications:
     title: Notifications
     bell_label: '{count, plural, =0 {Notifications} other {Notifications (# unread)}}'

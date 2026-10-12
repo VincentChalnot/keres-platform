@@ -93,6 +93,9 @@ export interface IBoardView {
      * request). Admin tooling; never changes what the live board shows (optional)
      */
     exportStaticHtml?(title: string): string;
+
+    /** The board as currently displayed, as a standalone SVG image (board CSS inside, no background). Admin tooling (optional) */
+    exportStaticSvg?(): string;
 }
 
 export interface TileHighlight {
