@@ -1,252 +1,246 @@
-# Decisions Log
+# Decisions
 
-Judgment calls made during the v1-integration run. Hard/consequential calls
-are asked of the orchestrator directly and recorded here once answered;
-minor/reversible style choices are made unilaterally and logged here too.
+Design, domain and technical decisions that are not obvious from the code, in
+ADR-lite form. **Oldest first; append new entries at the bottom.** Status is
+`Accepted`, `Superseded by …` or `Open` (needs an operator decision). How the
+features work is in [`docs/features.md`](docs/features.md), the conventions
+in [`AGENTS.md`](AGENTS.md), open work in [`TODO.md`](TODO.md), unanswered
+questions in [`QUESTIONS.md`](QUESTIONS.md).
+
+Entry template:
+
+```
+## DNN - Title
+Date - Status
+Context: the problem and the constraints.
+Decision: what was chosen (and what was rejected).
+Consequences: what it commits us to, what to watch.
+```
+
+Older code comments cite the entries by their original run numbers (T1-T14 of the
+v1.0 batch); they are given as "formerly Tn" below.
 
 ---
 
-### T1 — Does `SendEmailMessage` need routing to `async`, or is Sentry's Messenger failure integration a real gap?
-Decision: Routed `Symfony\Component\Mailer\Messenger\SendEmailMessage` to `async` in `config/packages/messenger.yaml`. Verified (by inspecting the compiled `--env=prod` container's actual `addListener` calls, not just `debug:container`'s uncompiled service-tag view, which is misleading) that `Sentry\SentryBundle\EventListener\MessengerListener` is already auto-registered on `WorkerMessageFailedEvent` at priority 50 whenever the bundle loads with any `SENTRY_DSN` value including empty string (which `Dockerfile`'s prod build-time placeholder block always provides) — `capture_soft_fails` defaults to `true`, so it already reports every Messenger failure, not just ones that exhaust retries. No Sentry code change was needed; this was not a real gap, contrary to the initial task brief's inference.
-Rationale: Avoid duplicating an already-correct, bundle-provided integration; a stray, ad-hoc `--env=prod` cache built without `SENTRY_DSN` set at all (unlike the real Docker build) initially looked like the listener was missing, until a cache rebuild with the DSN key present (even empty) proved it wires up correctly, matching the real build process.
-Reversibility: trivial (routing.yaml entry, no schema/behavior lock-in).
+## D01 - Outgoing mail goes through the `async` Messenger transport
+2026-09-28 - Accepted (formerly T1)
 
-### T1 — `SendEmailMessage` routed to `async` breaks the `test` env's implicit no-DB assumption
-Decision: Enabled the previously-commented-out `when@test:` override in `messenger.yaml`, pointing `async` at `in-memory://` for the `test` environment only.
-Rationale: `LostPasswordActionTest`'s success-path cases exercise the real `MailerInterface` (not a mock) and its docblock explicitly assumes no live DB connection is available; without this override, routing mail to the real `async` (Doctrine) transport in `test` would attempt a DB write during a test written to expect none. `in-memory://` reproduces the previous (pre-T1) effectively-synchronous, no-I/O behavior for tests.
-Reversibility: trivial.
+Context: `SendEmailMessage` had no routing entry, so every `MailerInterface::send()`
+ran in-process and blocked the HTTP response on SMTP/Scaleway.
 
-### T1 — `phpunit.dist.xml` was missing `KERNEL_CLASS`, blocking any functional test run
-Decision: Added `<server name="KERNEL_CLASS" value="App\Kernel" force="true" />` to `phpunit.dist.xml`.
-Rationale: Pre-existing gap (unrelated to T1) that made `bin/phpunit` unusable for `WebTestCase`-based tests (`LostPasswordActionTest`, added by an earlier commit). Needed to actually prove T1 didn't regress that suite; a one-line, safe, standard Symfony config addition.
-Reversibility: trivial.
+Decision: route `Symfony\Component\Mailer\Messenger\SendEmailMessage` to `async`
+(`config/packages/messenger.yaml`), delivered by `php-worker`. In `when@test`, `async`
+(and `evaluation`) are `in-memory://`, so mail-sending functional tests keep needing no
+database. No Sentry change: the bundle's Messenger listener already reports every
+failed message (checked on the compiled prod container; `debug:container` on an
+uncompiled one is misleading, and a prod cache built without any `SENTRY_DSN` key
+looks as if the listener were missing).
 
-### T1 — `UserMailer`'s redacted-HTTP-body failure logging becomes unreachable for real transport failures once mail is async
-Decision: Left `UserMailer::send()`'s try/catch (added very recently for a real Sentry issue, PHP-SYMFONY-3) unchanged rather than moving its response-body redaction into `MailerFailureListener`/`FailedMessageEvent`.
-Rationale: Once `SendEmailMessage` is queued instead of sent in-process, a real transport failure happens later, inside the worker's `MessageHandler`, entirely outside `UserMailer::send()`'s try/catch — so that specific redacted-body log line will no longer fire for genuine Scaleway failures (only for exceptions thrown at *enqueue* time, e.g. a malformed DSN). This is not a silent gap: `MailerFailureListener` (unrelated pre-existing code, fires on the transport-agnostic `FailedMessageEvent` regardless of sync/async) still persists every real failure as an admin-visible `MailerError` row (class, message, subject, recipients), and Sentry's Messenger integration (see above) still reports it — verified live in this session: a real Scaleway 400 during testing produced three `MailerError` rows exactly as expected. The only loss is the extra redacted-HTTP-response-body detail UserMailer specifically added; class+message+subject+recipient is judged sufficient for admin triage. Flagged to Main in the T1 report rather than treated as silently resolved, since it touches another very recent, deliberate piece of work.
-Reversibility: moderate (would require moving the redaction helper into `MailerFailureListener` and updating `MailerError`/its 3 existing unit tests + `UserMailerTest` if reconsidered).
+Consequences: a real transport failure now happens in the worker, outside the
+`try/catch` of `UserMailer::send()` & co., so their redacted-response-body log line only
+fires for enqueue-time errors. Failures are still visible as `MailerError` rows
+(`MailerFailureListener`) and in Sentry. Restoring the response-body detail would mean
+moving the redaction helper into `MailerFailureListener` (see `TODO.md`).
 
-### T2 — Visual design for the email layout (colors, layout shape, font fallback)
-Decision: Table-based layout, dark header banner (`#1a1a1a`) with the "KERES" wordmark in `#e19e5b` (keres-primary), cream content card (`#f8f0e6`), gold pill CTA buttons (`background:#e19e5b; color:#1a1208`, matching `assets/app.scss`'s existing on-primary-button convention), muted footer (`#8a7a63`). Font fallback: `Georgia, 'Times New Roman', Times, serif`.
-Rationale: No design spec was given beyond "match approximately" + the palette/font names; picked the closest web-safe serif to the site's two custom serif webfonts (Carolingia/RomanSerif have no email-safe loading path per the brief), and reused color roles (dark surface for chrome, primary for accent/CTA, light for readable body) already established both on the marketing site and in this repo's own `assets/app.scss`, rather than inventing a new pairing. A light body (not the site's near-black `#010101` page background) was chosen deliberately: email clients frequently strip `background-color` while keeping inline text `color`, so a dark-background design risks unreadable near-invisible text in clients that drop the background; this is a standard transactional-email pattern (dark brand header, light content) precisely to avoid that failure mode.
-Reversibility: trivial (CSS values only, no structural/schema lock-in).
+## D02 - Transactional email: one inline-styled layout, one mailer per feature
+2026-09-28 - Accepted (formerly T2, T7, T9)
 
-### T2 — Where should the "unsubscribe" hook live if neither current mail uses it?
-Decision: `_layout.html.twig`/`_layout.txt.twig` accept an optional `unsubscribe_url` context variable and only render the footer line when it's truthy; neither `reset_password` nor `account_exists` passes it. Documented in both layout files' leading comment that it must point at `/settings/notifications` (`settings_notifications` route) for a future non-critical mail, since all recipients are logged-in users (no anonymous unsubscribe-token system needed).
-Reversibility: trivial.
+Decision: a single table-based, fully inline-styled layout (`templates/email/_layout.*`)
+with a web-safe serif stack and a light content card (email clients often strip
+`background-color` but keep text colour, so a dark body risks unreadable text).
+`unsubscribe_url` is an optional context variable rendering the footer line, so the
+layout works for critical mail (no unsubscribe) and notification mail alike.
+Each feature has its own mailer (`UserMailer` is reserved for the two auth mails);
+`WaitlistMailer` duplicates the ~10-line try/catch of `UserMailer` instead of
+generalising it, because a waitlist recipient has no `User`. Sender is
+`noreply@<SERVER_NAME>`, no `Reply-To`.
 
-### T3 — CGV → CGU repurpose: slug, i18n key prefix, and shortcode rename
-Decision: Deleted `content/{fr,en}/terms-of-sale.md` and `layouts/shortcodes/i18n_terms.html` (all `terms_*` i18n keys) in `keres-website`; replaced with `content/{fr,en}/terms-of-use.md` (FR slug `conditions-generales-d-utilisation`) and `layouts/shortcodes/i18n_cgu.html` (all `cgu_*` keys), entirely new terms-of-use content (no store/sale language — account creation, conduct, IP, availability, account deletion cross-linking the new privacy policy, liability, French law/mediation).
-Rationale: Directed explicitly by the orchestrator (the platform has no store/payment/stock; the old CGV — pre-order, 45€ Collector's Edition, 14-day withdrawal right, delivery — described a product that doesn't exist in scope). Renaming the i18n key prefix (not just the page content) avoids a stale "terms_" prefix implying "terms of sale" for a future maintainer.
-Reversibility: moderate (content + slug + i18n key rename; URLs change, so any external link to the old `/terms-of-sale`/`/conditions-generales-de-vente` slugs now 404s — acceptable since this is a pre-launch content fix, not a live page with inbound links to preserve).
+Consequences: a new mail type gets a new or existing feature mailer and extends the
+layout; do not fold new mailers into `UserMailer`. Extract a shared base only when a
+third mailer needs it.
 
-### T3 — New Privacy Policy page: English translated in full vs. FR-only + note
-Decision: Wrote the English `privacy-policy.md`/`i18n_privacy.html` content as a full translation, not a "governed by French law, see the French version" stub.
-Rationale: The brief left this open ("your call, log it either way"). Full translation keeps the `en.toml`/`fr.toml` key-count lockstep convention (`AGENTS.md`: "keep en.toml and fr.toml in lockstep") intact and gives English-reading users (the platform's own UI is English-first) the actual policy rather than a language-gated stub.
-Reversibility: trivial (translation text only).
+## D03 - GDPR requests are an intake queue, not self-service
+2026-09-28 - Accepted; implementation of the actual export/deletion is open (see `TODO.md`) (formerly T5)
 
-### T3 — IONOS legal-entity/address verification path
-Decision: Cited "IONOS SE, Elgendorfer Straße 57, 56410 Montabaur, Germany" in the legal notice.
-Rationale: `ionos.de/impressum` (the exact retail Impressum) is a client-side-rendered Next.js page — my fetch tool returned the page shell/title ("Impressum | IONOS SE", confirming the entity name) but not the JS-hydrated address block. I directly read a second IONOS-owned first-party page, `ionos-group.com/imprint.html`, which explicitly states the identical street address for the sibling/parent entity at the same registered office. Combined with the web-search tool's own citation extraction (sourced from ionos.de/impressum directly, quoting the same address), this is corroborated first-party confirmation, not a guess — not marked `{{TODO}}`. Flagging the caveat here per the brief's "don't rely on memory" instruction, in case Main wants a stricter single-page confirmation.
-Reversibility: trivial (one address line).
+Context: `User` has no deletion or anonymisation logic, and the privacy policy (on the
+marketing site) promises a 30-day human-processed response.
 
-### T4 — Trust page slug and placement of the registration-screen link
-Decision: Slug `/trust` (EN, filename-based) / `/fr/engagements/` (FR `slug: engagements`), matching the URL the brief itself suggested. On `templates/security/register.html.twig`, placed the link as a small muted line ("Read our commitments to you") directly below the submit button, above the existing "Already have an account?" line.
-Rationale: `/trust` was explicitly named in the brief. Placement is a minor, reversible styling call — fine print near the submit button, per the brief's own suggested options, not intrusive on the form itself.
-Reversibility: trivial.
+Decision: Settings → Privacy only files a request: a `Feedback` row
+(`DATA_EXPORT_REQUEST` / `ACCOUNT_DELETION_REQUEST`) plus an admin email to
+`ADMIN_NOTIFICATION_EMAIL`. Two single-purpose POST actions (the codebase convention
+"one invokable action per file") share a `GdprRequestType`; the acting user comes from
+the security context, the displayed email field is never read back. The admin email
+address is blank by default and the notification then no-ops (logs at info), so intake
+works on a fresh install without that variable. No schema change: the category is a
+plain string column.
 
-### T4 — Fifth commitment: hard stop honored, placeholder only
-Decision: Did not draft any wording for the open-source-if-abandoned commitment. No licence name, no trigger condition, nothing resembling a rough attempt. Rendered a visually distinct box (dashed border, "COMING SOON"/"À VENIR" badge) under a heading that only restates the *topic* the orchestrator already named in the task brief itself ("open-sourcing the code if the project is ever abandoned") — not new legal content.
-Rationale: Explicit hard stop in this task's brief and the run's §3 rules. Logged as an informational (non-blocking) entry in `BLOCKED.md` per instruction — ships alongside the other four real commitments in the same commit.
-Reversibility: trivial (placeholder swap once wording is settled).
+Consequences: someone must read the admin queue (or set `ADMIN_NOTIFICATION_EMAIL`).
+The policy also states that games of deleted accounts are kept in irreversibly
+anonymised form; nothing implements that yet.
 
-### T4 — "No advertising other than the author's own projects" claim verified before asserting it
-Decision: Asserted the claim as true.
-Rationale: Grepped both repos for any ad-network/analytics/tracking script (adsense, gtag, googletagmanager, doubleclick, facebook-pixel, hotjar, matomo, generic "analytics") before writing the page — zero matches (the one "analytics" hit in `AGENTS.md` refers to the internal `BoardPosition` ML-training tree, unrelated to third-party ad/analytics services). No ad network exists today, so the claim holds without qualification.
-Reversibility: n/a (factual verification, not a design choice).
+## D04 - The waitlist has its own entity until the address is confirmed
+2026-09-29 - Accepted (formerly T7)
 
-### T5 — Two dedicated single-purpose actions vs. one combined action for the GDPR forms
-Decision: `SettingsPrivacyDataExportAction`/`SettingsPrivacyAccountDeletionAction`, each `POST`-only, each rendered by `SettingsPrivacyAction` via a shared `GdprRequestType` with an explicit `action` URL option — `SettingsPrivacyAction` itself never handles their submission.
-Rationale: Matches the codebase's established "one invokable action per file" convention (`AGENTS.md`) rather than cramming three separate form-submission branches into one controller. The disabled/unmapped `email` field on `GdprRequestType` is purely a "you're submitting this as `<email>`" confirmation display — never read back on submit; the acting `$user` (from the security context) is always the authoritative source for who the request is from.
-Reversibility: trivial.
+Decision: double opt-in state (unconfirmed email, token hash, expiry) lives in a new
+`waitlist_signup` table; the canonical `Feedback(WAITLIST)` row is created only when a
+valid token is clicked. Same token scheme as the password reset (random 32 bytes in the
+URL, only the sha256 stored). The link is valid 7 days (a waitlist confirmation has no
+security impact, unlike the 1-hour reset). `POST /api/waitlist` is separate from
+`/api/contact`: different required fields, and the confirmation step has no contact
+equivalent.
 
-### T5 — `ADMIN_NOTIFICATION_EMAIL` default: blank + no-op, not a derived address
-Decision: Blank by default in both `.env.example` files and both `compose.yaml`s (same "commented out, feature stays off until configured" pattern as `SENTRY_DSN`/`OIDC_*`), and `AdminNotificationMailer::sendGdprRequestNotification()` explicitly no-ops (logs at info level, returns) when the address is empty, rather than attempting `->to('')` and throwing.
-Rationale: Unlike `MAILER_FROM_ADDRESS`/`STATIC_SITE_URL` (legitimately derivable from `SERVER_NAME` — the domain the mail should look like it's from), there is no sensible *automatic* value for "the operator's personal inbox for GDPR alerts" that isn't either a fabricated-looking placeholder or an actual guess at a real address, and the brief explicitly said not to hardcode one. A silent no-op keeps the actual request-intake path (the part that matters — the `Feedback` row + confirmation flash) fully functional on a fresh install even before an admin address is configured, rather than 500ing on an unset var.
-Reversibility: trivial.
+Consequences: a replayed confirmation link cannot create a second `Feedback` row
+(`confirmedAt IS NULL` guard in `WaitlistSignupRepository::findByValidTokenHash()`).
 
-### T5 — New `FeedbackCategory` cases wired through every existing category surface
-Decision: Added `DATA_EXPORT_REQUEST`/`ACCOUNT_DELETION_REQUEST` not just to the enum but to every place the codebase already enumerates categories by hand: `FeedbackReviewType`'s (disabled) admin dropdown, the datagrid category-badge color map, and the datagrid's category filter choices.
-Rationale: `FeedbackReviewType`'s category `ChoiceType` is `disabled => true` but still needs the current value present in its `choices` list to render the selected option correctly - leaving the two new cases out would have made the admin edit screen behave oddly (empty/blank category shown) for exactly the rows this task creates. No schema migration needed: `#[ORM\Column(type: Types::STRING, enumType: ...)]` is a plain-string column with a PHP-side cast, not a native Postgres enum type or CHECK constraint (confirmed via `doctrine:schema:update --dump-sql`, which showed a large pre-existing unrelated drift but nothing touching `feedback.category`).
-Reversibility: trivial.
+## D05 - Analytics are an append-only event log, recorded asynchronously
+2026-09-29 - Accepted (formerly T6, T11)
 
-### T5 — Privacy policy wording check (asked explicitly in the brief)
-Decision: Made a small tweak. `privacy_retention_text2`: "If you delete your account, your data is erased..." → "When your account is deleted at your request, your data is erased..." (FR: "Si vous supprimez votre compte" → "Si votre compte est supprimé à votre demande"). Also extended `privacy_rights_text2` to mention the new self-service request buttons in Settings → Privacy as an additional path alongside the contact form (this second change goes slightly beyond what was strictly asked, since T5 itself is what makes that sentence more accurate/useful — flagging it here rather than treating it as silently in-scope).
-Rationale: The original phrasing read as if deletion were instant/self-service; T5 confirms it is always a *request* a human processes within 30 days (no `deletedAt`/anonymization code exists on `User` at all, confirmed by grep before starting). The "Vos droits"/"Your Rights" section already frames the 30-day process, so the retention section needed to match that framing rather than contradict it.
-Reversibility: trivial (wording only).
+Decision: `analytics_event` table written through `AnalyticsRecorder` →
+`RecordAnalyticsEventMessage` (`async`). "Game abandoned" is mapped to the existing
+`finaliseAbort()` / `ABORTED` path, not to `GameEndReason::ABANDONMENT`, which has no
+producer (there is no presence tracker). Dev-only throwaway users (`?_as=`) and the
+`CreateTestGameCommand` fixtures are not recorded. "First game" is computed with
+`GameRepository::countForUser()` at the two creation points (`NewLocalGameAction`,
+`SeekMatcher::tryPair()`), not in `GameFactory`, which never persists. Dispatch sits
+inside the game transaction (next to the rating and notification calls), except in
+`SeekMatcher`, whose explicit post-commit block it joins.
 
-### T6 — "Game abandoned" mapped to the existing `finaliseAbort()`/`ABORTED` path, not the unused `GameEndReason::ABANDONMENT` case
-Decision: `GameLifecycleManager::finaliseAbort()` dispatches `AnalyticsEventType::GAME_ABANDONED`. `GameEndReason::ABANDONMENT` (a distinct enum case, value 4) is left untouched - no analytics dispatch added for it.
-Rationale: Grepped the whole codebase for `GameEndReason::ABANDONMENT` before starting - it is used nowhere. There is no presence/disconnect tracker, no abandonment finaliser, nothing that ever constructs a game with that reason. The overview doc lists "opponent presence/disconnect indicator... drives abandonment adjudication" as in-scope but it hasn't been built yet (same category as the invite/challenge mechanism below - planned, not present). `finaliseAbort()` (games that vanish with no rating hit because nobody moved twice) is the only thing in the codebase a plain-English "game abandoned" can honestly refer to today. Wiring `ABANDONMENT` itself would mean inventing a call site that doesn't exist, which the brief's own guidance for the *other* two deferred event types (invite sent/accepted) explicitly says not to do.
-Reversibility: trivial (a future presence-tracker task can dispatch `GAME_ABANDONED` from wherever it lands too - same event type, no schema change).
+Consequences: dispatching inside an open transaction is safe because the Messenger
+Doctrine transport shares the DBAL connection: a rollback also drops the queued message
+(transactional outbox). The same property is relied on for `CheckClockExpiryMessage`
+and the `GAME_FINISHED` email (D07). Wire a new event next to the sibling calls.
 
-### T6 — `DevUserSwitchListener`'s user-creation path excluded from `ACCOUNT_CREATED`
-Decision: Instrumented exactly the three paths the brief named (`RegisterAction`, `OidcUserProvider`, `DevLoginAuthenticator`). Found a fourth `new User(...)` site during research - `DevUserSwitchListener` (the `?_as=` two-tab-testing impersonation shim, dev-only) - and deliberately did not instrument it.
-Rationale: It's a testing convenience that lazily creates a throwaway user as a side effect of impersonating an email that happens not to exist yet, not a moment any real visitor or the brief's three named flows produce. Including it would mean every multi-identity Playwright test run in this repo (including several already done in this session) inflates `account_created` counts with synthetic rows.
-Reversibility: trivial (one more call site if ever wanted).
+## D06 - Correspondence time control is counted in hours and swept every minute
+2026-09-29 - Accepted (formerly T8)
 
-### T6 — Where "first game started" is computed, and which call sites get it
-Decision: Added `GameRepository::countForUser()` (any status/type), called once per real game-creation call site - `NewLocalGameAction` (AI/hot-seat) and `SeekMatcher::tryPair()` (real matchmaking pairing, for *both* paired users) - immediately before the new game is persisted. `GameFactory` itself was not touched (it never persists/flushes - its callers do) and `CreateTestGameCommand` (the CLI dev-only test-fixture command, also calls `GameFactory` directly) was deliberately left uninstrumented, same reasoning as the dev-only account-creation path above.
-Rationale: The brief explicitly allows a plain count here ("low-frequency, not hot-path"). Computing it right at the two real user-facing creation points, rather than inside `GameFactory`, matches the existing architecture (the factory is a pure builder; its callers own persistence) and correctly treats "first game" as a per-user milestone - a `SeekMatcher` pairing can be either player's first game independently, so both are checked and either, both, or neither `FIRST_GAME_STARTED` event fires.
-Reversibility: trivial.
+Decision: `days_per_move` became `hours_per_move` on `game` and `seek` (migration
+`Version20260929120000`, existing values multiplied by 24). `app:games:sweep-deadlines`
+(Supervisor loop, every 60 s) forfeits expired games through `ClockAdjudicator` and
+sends a one-time warning 6 h before expiry, in two independent row-locked passes.
 
-### T6 — Dispatch placement: inside the transaction in `GameLifecycleManager`/`GameEngine`, strictly post-commit in `SeekMatcher`
-Decision: `GameLifecycleManager`'s four methods and `GameEngine::applyMove()` dispatch analytics *inside* the same transaction as the game write (same placement as the existing `RatingUpdater`/`NotificationCenter` calls they sit beside). `SeekMatcher::tryPair()` dispatches only after its manual `$this->connection->commit()`, alongside the existing "Step 7: publish, strictly post-commit" block.
-Rationale: Not a functional inconsistency - both are safe, since `RecordAnalyticsEventMessage`'s doctrine transport shares the app's single `default` DBAL connection, so a dispatch made *inside* an open transaction is itself rolled back if that transaction aborts (a correct, transactional-outbox property, not a bug). The difference is purely "match the file's own existing convention": `GameLifecycleManager`/`GameEngine` had no pre-existing sync-vs-async distinction to preserve, so the simplest placement (right next to the sibling calls) was used; `SeekMatcher` already has an explicit, commented "post-commit" zone for exactly this class of "only after the real DB work is certain" concern (`tryPair()` can roll back and retry), so the analytics calls join it there for consistency with the file's own stated intent, not because the transactional placement would have been wrong.
-Reversibility: trivial (placement only, no behavioral difference either way given the shared-connection property above).
+Consequences: the one migration that transforms existing data rather than adding
+columns; `docs/multiplayer/` still describes `days_per_move`.
 
-### T6 — `INVITE_SENT`/`INVITE_ACCEPTED`: no comment anchor exists, noted here instead
-Decision: Defined both enum cases now (so T11 doesn't touch `AnalyticsEventType`/the message/handler again) but added no `// TODO(T11): ...` code comment anywhere, since no invite/challenge file exists yet to anchor one in.
-Rationale: Confirmed via repo-wide search (per the brief's own instruction to check `05-social.md` and the actual code first) that no `Challenge`/`Invite` entity, action, route, repository, or voter exists anywhere - only doc mentions and an unused `Game.rematchOfferedByColor` column. A comment dropped into an unrelated file on the vague theory that "invites will probably live near here" would likely just be wrong and stale by the time T11 actually lands. Recorded here and in `PROGRESS.md` instead: T11 should dispatch `AnalyticsRecorder`-style calls for `AnalyticsEventType::INVITE_SENT`/`INVITE_ACCEPTED` from wherever it ends up creating/accepting the invite/challenge row.
-Reversibility: n/a (documentation-only choice).
+## D07 - Notification email is a second channel; `YOUR_TURN` is limited per game
+2026-09-29 - Accepted (formerly T9)
 
-### T7 — New `WaitlistSignup` entity instead of extending `Feedback` directly
-Decision: Double opt-in state (unconfirmed email, token hash, expiry) lives entirely in a new `waitlist_signup` table. The canonical `Feedback(WAITLIST, ...)` row is only created inside `WaitlistConfirmAction`, at the moment a valid token is clicked - never at submission time.
-Rationale: The brief requires double opt-in before anything reaches the admin review queue. `Feedback` has no notion of "pending"/"unverified" state and adding one would pollute a generic model used by three unrelated categories (contact, GDPR requests, now waitlist) with fields only this category needs (token hash, expiry). A second click on an already-confirmed link is rejected by `WaitlistSignupRepository::findByValidTokenHash()`'s `confirmedAt IS NULL` guard, so a replayed/shared confirmation URL cannot create a duplicate `Feedback` row - verified live (see below).
-Reversibility: moderate (a real schema + two new files), but fully additive - no existing table/entity touched.
+Decision: email is toggled independently of the in-app channel, per `NotificationType`
+(all on by default). `YOUR_TURN` emails are limited to one per game per hour
+(`Game::lastYourTurnEmailAt`, one column for both players: a per-recipient limit would
+need two columns or a side table). The `GAME_FINISHED` email is queued inside the
+finalising transaction rather than after each of the four callers' flush, on the
+transactional-outbox argument of D05. A new `NotificationMailer` rather than extending
+`UserMailer` (D02).
 
-### T7 — New `WaitlistMailer` instead of extending/reusing `UserMailer`
-Decision: Duplicated `UserMailer::send()`'s try/catch/redact-on-failure pattern (from PHP-SYMFONY-3) into a new `WaitlistMailer` rather than generalizing `UserMailer` to accept an email string.
-Rationale: `UserMailer` is hard-typed to a `User $user` (`->to($user->getEmail())`) throughout; a waitlist signup has no `User` row at all. Only two call sites share this pattern so far (T2's `reset_password`/`account_exists` mails via `UserMailer`, and this one) - extracting a shared base class now would be premature abstraction for a ~10-line try/catch.
-Reversibility: easy to consolidate later if a third emailless-recipient mailer appears.
+Consequences: with both players moving fast, at most one of them is emailed per hour for
+that game.
 
-### T7 — Confirmation link TTL: 7 days, not `LostPasswordAction`'s 1 hour
-Decision: `WaitlistSignup::expiresAt` is set to `+7 days` from submission, checked the same way (`repository query > :now`) as the password-reset token.
-Rationale: A password-reset link is a security control (short-lived on purpose, to limit account-takeover exposure if the email is intercepted). A waitlist confirmation is a low-stakes "prove you own this inbox" step with no account/security implication - a week gives a real visitor realistic time to check their email without meaningfully increasing risk (worst case of a stale unconfirmed row: it never becomes a `Feedback` entry at all, since expired tokens are simply rejected).
-Reversibility: trivial (one constant).
+## D08 - AI difficulty is a game property; guests are capped
+2026-09-29 (guest cap 2026-10-10) - Accepted (formerly T10)
 
-### T7 — Reused `LostPasswordAction`/`ResetPasswordAction`'s exact token scheme
-Decision: `bin2hex(random_bytes(32))` plain token embedded in the confirmation URL; `hash('sha256', $token)` is the only thing ever stored/queried against.
-Rationale: Explicitly directed by the brief ("look at how password reset tokens work and follow the same pattern") rather than inventing a signed-URL/JWT scheme for what is functionally the same "prove receipt of this email" problem already solved once in this codebase.
-Reversibility: n/a (matches existing precedent, no reason to deviate).
+Decision: nullable `game.ai_level` (1-10, form default 1 = weakest);
+`EngineApi::aiMove()` always calls `/engine-move-game/{level}`, never the bare endpoint,
+so no code path remains without a level. The difficulty select is always visible with a
+help text ("only against the AI") rather than JS-hidden for hot-seat (the form has no JS
+entry). Initially guest games ignored the level; since 2026-10-10 guests are limited to
+levels 1-4 without live evaluation (`LocalGameType::GUEST_MAX_AI_LEVEL`, enforced in the
+form, `NewLocalGameAction` and `GuestEngineMoveAction`).
 
-### T7 — Dedicated `POST /api/waitlist` action, not folded into `/api/contact`
-Decision: New `WaitlistSignupAction` / `waitlist_signup` rate limiter, entirely separate from `ContactAction`/`contact_limiter`.
-Rationale: Field sets differ (contact requires name+email+subject+message; waitlist requires only email, with name/note optional) and the double-opt-in step - the entire point of this task - has no contact-form equivalent. Folding them would mean branching contact's 4-required-field validation loop around an optional-fields case, plus threading a "send confirmation email instead of creating Feedback directly" branch through a form handler that otherwise never emails anyone. The brief allowed a new endpoint when genuinely different.
-Reversibility: moderate (route removal), but no shared code was bent to accommodate this, so no follow-on cost either way.
+Consequences: the engine image must serve the leveled route; a stale cached
+`backend:latest` answers 404 (AGENTS.md).
 
-### T7 — `collector.md` "Pre-order"/45€ language did not match this task's no-payment scope
-Decision: On `keres-website`, reframed the existing homepage "Collector's Edition" block (`content/{en,fr}/blocks/collector.md`) from "Pre-order the physical edition" / "Précommandez..." with a dead `url: "#"` button, to "A physical edition is in the works. Join the waitlist..." with the button now pointing at the new `/physical-edition/`/`/edition-physique/` page. Also removed the hardcoded `<p class="text-2xl font-bold">45€</p>` price line from `layouts/index.html`'s collector section entirely (not replaced with different text).
-Rationale: This block already existed as a dead, unlinked pre-order stub - clearly the intended integration point for this task (same board images, same "Collector's Edition" framing) but its purchase-implying copy and a hardcoded price directly contradict this task's explicit "no payment/store/stock logic" scope, exactly the same class of pre-existing-content/new-scope mismatch as T3's CGV→CGU fix. Removing the price rather than relabeling it avoids implying any commitment to a specific number before a real pricing/store decision is made.
-Reversibility: trivial (copy + one deleted line).
+## D09 - An invite is an invite-only `Seek` whose token is its UUID
+2026-10-01 - Accepted (formerly T11)
 
-### T7 — Fixed a pre-existing `keres-website` dev-server bug blocking live verification: Hugo's `--appendPort` default
-Decision: Added `--appendPort=false` to the `hugo server` command in `keres-website/compose.yaml`.
-Rationale: While live-testing the new waitlist form's cross-origin POST, the browser's fetch failed with a genuine CORS error. Root cause: Hugo's `server` subcommand appends its own `--port` to `.Site.BaseURL` by default unless told not to, turning every `layouts/partials/platform-url.html`-derived link (Play, Login, Contact, and now Waitlist) into `https://app.<domain>:80/...` - a URL Traefik has no matching HTTPS router for, so the request genuinely fails, not just an ugly link. This predates T7 (the partial and all three existing consumers are untouched) but had apparently never been exercised via a real browser fetch() in this dev environment before - only via server-rendered platform Twig pages, which don't go through Hugo's BaseURL at all. Fixing it was necessary to actually prove T7's live double opt-in flow, and incidentally fixes the same latent bug for Play/Login/Contact.
-Reversibility: trivial (one flag, dev-only compose file, no production/CI config touched - production `hugo --environment production` builds never run a server and were never affected).
+Decision: invites reuse the seek/matchmaking machinery: `Seek::$inviteOnly`, link
+`/invite/{seek uuid}`. No second hashed token: the v4 UUID is already unguessable and is
+what every seek endpoint uses (unlike D04, nothing requires the plaintext to be
+unrecoverable). Invite-only seeks are excluded from the public listing, from the
+anonymous pairing pool and from the mutual dedupe, each independently (a guard in a single
+layer yields either a dangling button or a wrong-actor pairing). Single use is the seek's
+OPEN → MATCHED transition. Analytics: `invite_sent` / `invite_accepted` (D05).
 
-### T9 — GAME_FINISHED email dispatched inside `gameFinished()`'s ambient transaction, not after the caller's flush
-Decision: `NotificationMailer::sendGameFinished()` is called directly from `NotificationCenter::gameFinished()`, which itself runs inside `GameLifecycleManager`'s still-open, unflushed transaction (the same place the in-app `record()` call already happens) - not deferred to after the flush point in each of `GameLifecycleManager`'s four external call sites (`GameEngine::applyMove()`, `ResignGameAction`, `ClockAdjudicator::adjudicate()`, `AbortGameAction`).
-Rationale: The brief asked for post-commit dispatch out of caution. But `$mailer->send()` (T1) enqueues `SendEmailMessage` through Messenger's Doctrine transport, which executes a raw `INSERT` on the *same* DBAL connection as the ambient transaction - exactly the same transactional-outbox property this codebase already relies on and explicitly documents for `CheckClockExpiryMessage`/`RecordAnalyticsEventMessage` dispatched from inside this exact method's transaction (`04-matchmaking.md` sec 3.5: "delayed messages ride the same connection, so they are transactional"; T6 DECISIONS.md made the identical call for `AnalyticsRecorder`). A rollback here rolls the queued email back with it; there is no window where a genuinely-aborted transaction still sends mail. Implementing literal post-commit dispatch would mean widening `GameEngine::applyMove()`'s return contract (a hot, already-complex path) plus three other call sites, for a safety property the outbox pattern already provides for free. Verified live: an aborted test game correctly produced exactly one `GAME_FINISHED` email per eligible player, delivered normally.
-Reversibility: moderate (would need `GameLifecycleManager`'s methods to return pending-email data and each of the 4 callers to dispatch it post-flush, if reconsidered) but no schema/API impact either way.
+Consequences: switching to a separate token later needs a column and a backfill.
 
-### T9 — YOUR_TURN rate limit is per-*game*, not per-recipient
-Decision: `Game.lastYourTurnEmailAt` is a single column checked/written regardless of which player is the email's recipient, matching the brief's literal wording ("at most one email per game per hour"). A game where both sides move in quick succession therefore emails at most one of them per hour-window, even though the second email's recipient differs from the first's.
-Rationale: Explicit brief wording; a per-recipient limit would need two columns (or a small side table) for a two-player game, more machinery than asked for. Verified live via a throwaway command (`RatingUpdater`-idempotence-guard-style, per the `keres-multiplayer-testing` skill's own precedent for testing something unreachable through two live plies) calling `sendYourTurn()` twice in immediate succession: Mailpit's count moved by exactly one.
-Reversibility: trivial (would move to two columns or a `(game_id, user_id)` table if a future task wants per-recipient granularity).
+## D10 - One game-row presenter, told from a subject
+2026-10-01 - Accepted (formerly T13)
 
-### T9 — `NotificationMailer` as a new dedicated service, not folded into `UserMailer`
-Decision: New `src/Service/NotificationMailer.php`, following the `WaitlistMailer`/`AdminNotificationMailer`/`CorrespondenceMailer` (T7/T5/T8) precedent of one mailer per feature area, per the brief's explicit instruction.
-Rationale: `UserMailer` is reserved for the two auth-flow mails (reset password, account-exists) per its own docblock; every subsequent feature has gotten its own mailer rather than growing `UserMailer` into a catch-all. Consistent with the established pattern, not a new one.
-Reversibility: trivial.
+Decision: `GameListPresenter::present($game, $subject, $isSelf, $viewer)` serves every
+games list (dashboard, `/games`, profile, lobby), including the profile page, whose rows
+are framed from the profile owner's point of view whoever looks. Time remaining is shown
+for correspondence and real-time games (read-only; `ClockManager` remains the only writer
+of clock columns).
 
-### T9 — Discovered (not fixed): `DevLoginAuthenticator` never clears the stored `target_path`
-Observation, not a decision requiring action: `onAuthenticationSuccess()` calls `getTargetPath()` but never `removeTargetPath()`, so once Symfony's security system stores an intended-destination URL in the session (e.g. an unauthenticated request to a protected route), every subsequent `/dev/login` redirects back to that stale URL instead of `/dashboard` until the session is cleared. Hit live while testing T9 (a leftover target from earlier T8 testing redirected every fresh dev-login attempt to a dead `/move` URL); worked around by visiting `/logout` first. Pre-existing, unrelated to notification emails, not fixed here - flagging for whoever next touches `DevLoginAuthenticator`.
+## D11 - The public lobby feed filters by query; `GameVoter::VIEW` is unchanged
+2026-10-01 - **Open** (formerly T14)
 
-### T10 — `EngineApi::aiMove()` always uses the leveled endpoint, never falls back to the bare `/engine-move-game`
-Decision: `aiMove(MovesData $movesData, int $level = 1)` always calls `engine-move-game/{$level}`, including when a caller relies on the default (`$level = 1`) rather than passing one explicitly. There is no remaining code path that calls the bare, non-leveled `/engine-move-game`.
-Rationale: The brief's literal suggestion ("when omitted, keep calling `/engine-move-game`") assumed a way to distinguish "omitted" from "explicitly 1", which a plain `int $level = 1` default can't do without `func_get_args()` tricks - and the brief itself says "though after this task there should be none [callers that can't know the level]". `GameEngine::aiMove()` (the only real caller) always resolves `$game->getAiLevel() ?? 1`, so the level is always concretely known; `1` is also the documented "weakest" level, the same value the new-game form defaults to, so defaulting the parameter to it is not a behavior change from the old always-full-power `/engine-move-game` call in any way a player would notice as different from before - it's simply now a level, not "engine's implicit default".
-Reversibility: trivial (the bare-endpoint branch can be restored if a genuinely level-less caller ever needs it).
+Context: the v1.0 brief said finished games are publicly viewable and games in progress
+visible only to their participants. `GameVoter::VIEW` grants any multiplayer game, in
+any status, to anyone with the link, a contract the profile pages rely on
+(`docs/multiplayer/00-overview.md` §4.3).
 
-### T10 — Guest (anonymous, no-account) AI games are out of scope
-Decision: The Difficulty selector and its persisted value only apply to the authenticated path (`GameFactory::createAiOrHotseatGame()` -> `Game.aiLevel`). Anonymous visitors are redirected to `PlayGuestAction`/`play_guest.html.twig`, whose AI moves are relayed browser-side through `GuestEngineMoveAction` (`POST /api/engine-move-game`, no level suffix, no `Game` row at all) - untouched.
-Rationale: The brief's own wording scopes this to "persist the chosen level when creating the Game entity" - guest games have no `Game` entity to persist it on. Threading a level through the guest form/redirect/relay action would mean inventing a query-param/no-DB level channel for a code path the brief never named, for a feature (guest play) this task doesn't otherwise touch. `LocalGameType`'s `aiLevel` field is simply ignored on the anonymous branch, same as every other form field already is there.
-Reversibility: easy to extend later (add a `?level=` query param to the guest redirect + `GuestEngineMoveAction`, matching this task's URL-suffix pattern) if guest difficulty selection is ever wanted.
+Decision: the anonymous `/lobby` feed only *selects* finished games
+(`GameRepository::findRecentPubliclyFinishedGames()`); the voter is not tightened.
+There is no hero panel on the signed-in lobby (account creation is meaningless there).
 
-### T10 — Difficulty selector always visible, not JS-hidden for Hot-seat
-Decision: `templates/actions/new_local_game.html.twig` renders the Difficulty dropdown unconditionally, with help text clarifying it "only applies against the AI" - it is not hidden via JavaScript when "Hot-seat" is selected in the Opponent dropdown.
-Rationale: This form has zero existing custom JS (no Vite entry, unlike the lobby's `LobbyController.ts`); adding a small JS asset purely to toggle one field's visibility on this otherwise fully server-rendered page felt like disproportionate new surface area for the payoff. The help text makes the field's scope unambiguous, and a harmless, ignored `aiLevel` value on a Hot-seat submission is already how this form treats every option that doesn't apply to the current choice (e.g. `playerSide` still applies to both).
-Reversibility: trivial (cosmetic; could mirror `LobbyController.ts`'s `data-field`/`hidden` pattern later with a small new JS entry if wanted).
+Consequences: anyone holding the link can watch a live multiplayer game. If the brief's
+sentence was meant as a product rule, the voter must change (it would also 404 the
+"Watch" links on profiles). Needs an operator go/no-go: `QUESTIONS.md`.
 
-### T10 — Observed (not a bug, resolved): stale cached `backend:latest` image was missing `/engine-move-game/:level`
-Observation: live-testing an AI move at level 5 initially failed with a real `404` from the Rust engine (`docker compose logs` + `messenger:failed:show`), even though `../keres/src/api.rs` (the checked-out sibling, read-only reference) clearly registers the `/engine-move-game/:level` route. The locally cached `ghcr.io/vincentchalnot/keres/backend:latest` image (pulled 3 days prior, per `docker ps`) predated that route landing upstream under the same floating tag. `docker compose pull backend` fetched a newer image under the identical tag name; recreating the container and retrying the failed Messenger message (`messenger:failed:retry`) then succeeded immediately with no code change. Recorded so a future session hitting the same 404 doesn't waste time suspecting the platform-side URL construction first.
-Reversibility: n/a (environment refresh, not a decision).
+## D12 - Conditional AGPL-3.0 grant in `LICENSE`
+2026-09-28 (committed with the trust page; wording approved by the operator after the v1.0 run) - Accepted (formerly T4)
 
-### T12 — Scope: descoped to Bulma-override styling only, confined to `assets/app.scss`
-Decision: Did not migrate away from Bulma, add a CSS framework, or touch any `templates/**/*.twig` file. All changes live in `assets/app.scss`'s existing Bulma SASS override block.
-Rationale: Explicit mid-run scope reduction from the orchestrator (originally a shared stylesheet between this repo and `../keres-website`) to "keep Bulma, bring the platform's visual style closer to the marketing site's via `assets/app.scss` alone." A separate T11 session was concurrently editing templates/PHP in the same checkout/branch; staying out of `templates/**` and `src/**` avoided any collision risk on top of matching the reduced scope.
-Reversibility: n/a (scope statement, not a technical choice).
+Decision: the platform stays proprietary, but `LICENSE` grants every person an
+AGPL-3.0 licence, automatically and irrevocably, if (a) the shutdown of playkeres.com is
+announced (effective no later than the shutdown date) or (b) the service is unreachable
+for 90 consecutive days without an announced return. Code only: no trademark rights, no
+user data. The engine is already GPL-3.0 (GPL-3.0 §13 allows combining with AGPL-3.0, and
+AGPL closes the network-service gap a revived hosted fork would exploit). "No commits for
+N months" was rejected as a trigger because a finished product would trip it. The
+marketing site's `/trust` page cites this commitment.
 
-### T12 — `$link: #e19e5b` added to the Bulma override block
-Decision: Added `$link: #e19e5b` (same value as `$primary`) to the `@use 'bulma/sass' with (...)` block in `assets/app.scss`, alongside the pre-existing `$primary`/`$dark`/`$light`/`$family-primary`/`$radius-rounded` overrides.
-Rationale: Investigated first and found the platform's palette/typography/navbar are already a near-exact match for `../keres-website`'s Tailwind theme (`tailwind.config.js`'s `keres.*` colors were already copied into this file's `$keres-*` variables and Bulma's `$primary`/`$dark`/`$light` back in earlier tasks, per T2's DECISIONS.md entry) - there was no broad "make it look like the marketing site" gap left to close. The one real, live-verified gap: `$link` was never overridden, so it stayed Bulma's default blue, and Bulma derives `$input-focus-border-color`/`$input-focus-box-shadow-color` from `$link` by default - every text input/select across the app (settings, login, lobby, feedback forms) showed a blue focus ring clashing with the gold/dark brand palette everywhere else, confirmed via a before/after Playwright screenshot of a focused field on `/settings/profile`. `$link` itself (`.button.is-link`/`.tag.is-link`) is unused anywhere in the templates (grepped), so this override's only visible effect is the form-focus-state color - exactly the kind of "approximate parity" fix the task scoped for. Reused `$primary`'s value rather than inventing a second accent, matching the marketing site which also defines only one `keres.primary` color, no separate link color.
-Reversibility: trivial (one SASS variable value).
+Consequences: practically irreversible once published; the clause should have a lawyer's
+review (`QUESTIONS.md`). Keep `LICENSE` and the trust page consistent.
 
-### T11 — Invite's token is the `Seek`'s own UUID, not a separate hashed token
-Decision: No new token/hash column for the invite link. `/invite/{uuid}` addresses the invite-only `Seek` by its own primary `uuid` directly.
-Rationale: `Seek.uuid` is already a v4 UUID, already unguessable, and already the identifier every other seek-related endpoint (`AcceptSeekAction`, heartbeat, cancel) addresses a seek by. A separate token adds a second unguessable identifier for the same row with no security benefit, and (unlike T7's `WaitlistSignup`, which stores a *hashed* token because the plaintext must never be recoverable from the DB after the fact) there's no equivalent requirement here - re-reading a `Seek` row to regenerate its own shareable URL is fine.
-Reversibility: moderate (would need a new column + backfill to switch later; low likelihood given the above reasoning holds structurally, not just for now).
+## D13 - Legal and trust pages live on the marketing site
+2026-09-28 - Accepted (formerly T3, T4)
 
-### T11 — Invite-only seeks excluded from the public pool and from mutual dedupe
-Decision: `SeekRepository`'s public-listing query and the anonymous-pairing pool scan both gained `AND NOT invite_only` (or equivalent). `Seek::matchesTuple()`-style equality also now compares `inviteOnly`, so an invite and a public seek with an otherwise-identical tuple never dedupe/adopt into each other.
-Rationale: An invite is a commitment to one specific person; silently merging it with an unrelated public seek (or letting the public pool match it to a stranger) would defeat the entire feature. Must be enforced at both the listing query and the matching/dedupe path independently - the same lesson the `keres-multiplayer-testing` skill already documents for block/permission checks (a guard only in one layer produces either a dangling button or wrong-actor pairing).
-Reversibility: trivial (two added predicates).
+Decision: the legal notice, terms of use, privacy policy and `/trust` are content of
+[keres-website](https://github.com/VincentChalnot/keres-website); the platform only links
+to them (`STATIC_SITE_URL`, footer and registration page). The former terms *of sale*
+(a physical-edition store the platform does not have) were replaced by terms *of use*
+(`terms_*` i18n keys renamed `cgu_*`; old URLs now 404). No cookie banner: the only cookie
+is the strictly necessary session one, and no third-party tracker or ad network exists
+(re-check this before asserting the "no tracking, no advertising" commitments again).
 
-### T11 — Verified live via direct HTTP calls, not Playwright
-Decision: Used `curl` with separate cookie jars per identity against `https://app.local.playkeres.com/` instead of a browser tool.
-Rationale: No Playwright/browser tool was available in this execution context (the earlier `vibe`-mode worker sessions had MCP browser access; this task ran after that mode was disabled). The feature's real risk surface is backend state-machine correctness (token validity, expiry, single-use, auth-redirect preservation), all independently exercisable over real HTTP against the actual running dev stack with real sessions - not a mock. The small frontend slice (button wiring, clipboard copy, modal fallback) was instead verified by direct code review of the diff plus a clean `npm run type-check`.
-Reversibility: n/a (verification method, not a product decision).
+## D14 - Production logging: quiet by default, no extra audit volume
+2026-10-02 - Accepted; part of the plan still open (see `TODO.md`)
 
-### T11 — Observed (not a bug, testing-methodology note): Postgres container's `now()` does not agree with the PHP app's clock
-Observation: Backdating `expires_at` via `now() - interval '1 hour'` executed in `psql` produced a timestamp roughly a full day earlier than intended relative to the app's own notion of "now" (the invite was accepted successfully instead of hitting the expiry branch - confirmed by the redirect succeeding and `status_value` flipping to `MATCHED`). Re-deriving the backdated value from the row's own `created_at` (written moments earlier by the PHP app's `ClockInterface`) instead of Postgres's `now()` fixed it immediately and reproducibly. Likely a clock-source mismatch between the `database` and `php`/`node` containers in this dev stack, not a code defect - every other timestamp-backdating recipe in this repo's testing conventions (T8's deadline sweep, T9's rate-limit window) already derives the backdated value from an existing app-written row, never from `now()` computed by a different service. Recorded so a future session doesn't lose time to the same false signal.
-Reversibility: n/a (environment observation, not a decision).
+Decision: `docker compose logs` in production should only hold user-traffic access lines
+and real warnings/errors; everything else is dropped, routed to Sentry or kept as
+breadcrumbs. No rotating file or additional volume for an info-level audit trail (the
+analytics events in the database and Sentry breadcrumbs cover it). Docker logs are
+size-capped (`x-logging` in `deploy/compose.yaml`). The messenger workers keep
+`--time-limit=60` (a documented reliability choice, `docs/multiplayer/03-time-control.md`
+§10.1) and are silenced with `--quiet` instead. Caddy keeps client IPs in the access log
+until the GDPR position on IP retention is settled.
 
-### T13 — `GameListRow`/`GameListPresenter` is told from a `$subject`, not always the logged-in viewer
-Decision: `GameListPresenter::present(Game $game, User $subject, bool $isSelf)` takes an explicit subject rather than always reading the current viewer from `Security`.
-Rationale: a profile page's game list is framed from the *profile owner's* point of view regardless of who is looking at it (opponent naming, "whose turn" wording) - the pre-existing profile template already did this correctly for its one case (`$subjectColors`); folding that into a viewer-only presenter would have either broken the profile page's spectator wording or required a second presenter, recreating the exact duplication T13 exists to remove. The dashboard and `/games` simply always call it with `subject = app.user, isSelf = true`.
-Reversibility: trivial (one extra constructor parameter; no persisted state).
+## D15 - The UI is styled by the Keres design system, not Bulma
+2026-10-11 - Accepted
 
-### T13 — Scope: exactly three existing templates unified, `profile.html.twig` included
-Decision: Treated the dashboard widget, `/games`, and a profile's game history as the "three divergent implementations" the task names, and unified all three - not just the two "my games" surfaces.
-Rationale: the brief's wording ("recent games", "games in progress", "your games") maps loosely to all three existing templates' headings/intent, and leaving the profile page out would have kept a fourth near-duplicate of the same opponent/turn/result logic alive, defeating the point of "a single component". The profile page's genuinely distinct need - a spectator framing when the viewer isn't the subject - became the reason the presenter takes `$subject`/`$isSelf` instead of only reading the current user.
-Reversibility: moderate (would need to extract a viewer-only path if a future task wants the profile page to diverge again, but nothing here forces them to stay unified).
+Context: Bulma 1.0 plus a 2,500-line `assets/app.scss`, with the palette duplicated from
+the marketing site.
 
-### T13 — "Time remaining" added for both time-control kinds, not deferred
-Decision: Implemented live time-remaining for both correspondence (`moveDeadlineAt`) and realtime (clock-ms-remaining minus elapsed-since-anchor) games in the presenter, rather than only the simpler correspondence case.
-Rationale: the task's acceptance criteria explicitly lists "time remaining" as one of the four things every row must show; shipping it for only one time-control kind would have left every realtime game's row silently missing a required field. The realtime computation reuses `ClockManager::chargeAndSwap()`'s own microsecond-timestamp technique read-only, so no new clock-writing code path was introduced (03-time-control.md sec 2.4's "nothing outside `ClockManager` writes a clock column" invariant is unaffected - this only reads).
-Reversibility: trivial (a display label, not persisted).
+Decision: `@keres/design-system` (own repo, Tailwind 3 preset + CSS entry) consumed as a git
+dependency pinned to a tag (the lockfile pins the commit) and compiled by the platform's
+own Tailwind through Vite/PostCSS, so utilities come from the platform's templates. A git
+dependency (rather than a sibling checkout, a tarball URL or a prebuilt `dist`) works
+unchanged in the dev container, the production `node_builder` stage and CI; it only needs
+`git` in the Alpine images. Tailwind scans templates, TS, PHP and the DS CSS, so DS
+component variants are generated even for dynamically built class names. Font Awesome
+stays for icons; `assets/board.css` is untouched; the Symfony form theme is
+`form/ds_layout.html.twig`. `bulma` and `sass` are removed. Stylesheet went from ≈ 930 kB
+to ≈ 220 kB (44 kB gzipped).
 
-### T14 — Public "recently finished games" feed scoped by a new query, not a `GameVoter` change
-Decision: The brief's "finished games are publicly viewable; games in progress stay visible only to their participants" is implemented as a *selection* rule on the new anonymous-lobby feed (`GameRepository::findRecentPubliclyFinishedGames()` only selects finished games) rather than a change to `GameVoter::VIEW` or `GameRepository::queryProfileGamesForUser()`.
-Rationale: `GameVoter::VIEW` already grants any multiplayer game (any status) to anyone, and `ProfilePageAction`'s own docblock cites this as an existing, deliberate contract (sec 4.3) - profile links are meant to work pasted anywhere, including mid-game. Tightening that platform-wide would be a materially bigger, less reversible change than "redesign `/lobby`" calls for, and would 404 the exact "Watch" links T13 already verified working for a spectator viewing an in-progress multiplayer game from someone's profile. The narrower reading - this specific new feed never advertises a game before it's over - satisfies the brief's literal sentence for the surface actually being built without touching unrelated, already-working, already-contracted behaviour.
-Reversibility: moderate (widening the feed to include in-progress games later is a one-line query change; retroactively tightening `GameVoter` is the bigger, separate decision this one deliberately avoided making).
-
-### T14 — No hero panel on the signed-in lobby
-Decision: The "hero panel encouraging account creation and starting a game" was built only for the anonymous branch of `/lobby`; the signed-in branch keeps its existing seek-posting panel as the page's primary content, now with an inline T13 games list added.
-Rationale: "account creation" is meaningless to an already-authenticated visitor, and "starting a game" for that audience already *is* the New Seek panel plus the "Play AI or hot-seat" button - duplicating a marketing hero above functionality the visitor is actively using would push the real controls below the fold for no benefit.
-Reversibility: trivial (purely additive if a future task wants a signed-in hero too).
-
-### T4 — Fifth trust commitment: AGPL-3.0, objective trigger, self-executing grant (operator-approved)
-Decision: The platform code is to be released under AGPL-3.0 if Keres is abandoned, defined as either (a) an announced shutdown (grant effective no later than the shutdown date) or (b) playkeres.com unreachable for 90 consecutive days with no announced return. The grant is written into `LICENSE` now as a conditional clause, so it takes effect without any action from the copyright holder. Covers code only: no trademark rights (name, logo), no user data.
-Rationale: the engine is already GPL-3.0, so the pledge only needs to cover the platform; GPL-3.0 §13 permits combining with AGPL-3.0, and AGPL closes the network-service gap a revived hosted fork would otherwise exploit. Both triggers are checkable by anyone; "no commits for N months" was rejected because a finished, stable product would trip it. A self-executing clause covers the case a bare promise cannot (the author unable, not just unwilling, to act). Proposed by the agent, approved by the operator after the run; the operator was advised to have the conditional-grant wording reviewed by a lawyer.
-Reversibility: hard (an irrevocable conditional licence grant on public code; changing it after publication would undermine the pledge itself).
-
-### T11 — Invite analytics wired after the fact
-Decision: `AnalyticsRecorder::inviteSent()` / `inviteAccepted()` are called from `CreateInviteAction` (after the invite-only Seek is written) and `InviteAcceptAction` (only after a successful pairing, so replays/expired/self-invites record nothing). Payload carries the Seek uuid; `inviteAccepted` also carries the resulting game.
-Rationale: T6 reserved both event types for this feature and T11 originally shipped without dispatching them; caught while writing the final report and folded back into the T11 commit.
-Reversibility: trivial.
-
-### Front-end — Bulma/`app.scss` replaced by the Keres design system (Tailwind 3)
-Decision: The whole UI moved from Bulma 1.0 + a 2,500-line `assets/app.scss` to `@keres/design-system` (own repo, Tailwind 3 preset + CSS entry), consumed as a git dependency pinned to a tag (`github:VincentChalnot/keres-design-system#vX.Y.Z`; the lockfile pins the commit) and compiled by the platform's own Tailwind through Vite/PostCSS so utilities come from the platform's templates. Font Awesome stays for icons; `assets/board.css` is untouched; the Symfony form theme is `form/ds_layout.html.twig`. `bulma` and `sass` were removed; `assets/design-system.css` is the only stylesheet.
-Rationale: one source of truth for tokens and components shared with the marketing site, no duplicated palette, a ~4x smaller stylesheet (≈ 930 kB with both frameworks, ≈ 220 kB / 44 kB gzipped now, Font Awesome included). A git dependency (rather than a sibling checkout, a tarball URL or a prebuilt `dist`) works unchanged in the dev container, the production `node_builder` stage and CI; it only needs `git` in the Alpine images (added). Tailwind scans templates, TS, PHP and the DS CSS, so DS component variants are always generated even when a class name is built dynamically.
-Reversibility: hard (every template changed class vocabulary). Gotchas are collected in `docs/design-system.md` ("Things that bite").
+Consequences: hard to reverse (every template changed vocabulary). Gotchas are in
+[`docs/design-system.md`](docs/design-system.md) ("Things that bite").
