@@ -110,13 +110,9 @@
     {{- parent() -}}
 {%- endblock button_widget -%}
 
-{# A translated label can be longer than a phone is wide: submit buttons may wrap (`btn--wrap`). #}
 {%- block submit_widget -%}
     {%- if 'btn--' not in attr.class|default('') -%}
         {%- set attr = attr|merge({class: (attr.class|default('') ~ ' btn--primary')|trim}) -%}
-    {%- endif -%}
-    {%- if 'btn--wrap' not in attr.class|default('') -%}
-        {%- set attr = attr|merge({class: (attr.class|default('') ~ ' btn--wrap')|trim}) -%}
     {%- endif -%}
     {{- parent() -}}
 {%- endblock submit_widget -%}
