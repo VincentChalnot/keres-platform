@@ -321,6 +321,17 @@ what it has and updates when `evaluation` events arrive - it never polls.
 
 `src/Engine/` is in scope but is stable and low-churn. Be conservative here.
 
+## Documentation map
+
+| File | What it holds |
+|---|---|
+| [`docs/features.md`](docs/features.md) | How the platform features beyond the game loop work (mail, notification emails, deadline sweep, analytics log, invites, AI levels, game lists, GDPR intake, waitlist) and their invariants |
+| [`docs/design-system.md`](docs/design-system.md) | Front-end styling, see above |
+| [`docs/multiplayer/`](docs/multiplayer/00-overview.md) | The multiplayer design specification, written before the code; where it disagrees with the source, the source wins |
+| [`DECISIONS.md`](DECISIONS.md) | ADR-lite log of the non-obvious design decisions (append new ones at the bottom) |
+| [`TODO.md`](TODO.md) | Open work only; delete an item when done |
+| [`QUESTIONS.md`](QUESTIONS.md) | Questions only the operator can answer; fold the answer into DECISIONS/TODO and delete |
+
 ## Dev Environment
 
 **Everything runs in Docker. Never run PHP or npm commands on the host.**
@@ -351,6 +362,10 @@ docker compose exec node npm run dev         # Vite HMR dev server (https://vite
 docker compose exec node npm run build       # Production build → public/build/
 docker compose exec node npm run type-check  # TypeScript strict check (must pass, no emit)
 ```
+
+**Stale engine image.** `ghcr.io/vincentchalnot/keres/backend:latest` is a floating tag: a cached image older than the
+engine route you need answers `404` (e.g. `/engine-move-game/:level`, symptom: an AI move stuck in `messenger:failed:show`).
+Fix: `docker compose pull backend`, recreate the container, `messenger:failed:retry`. No code change.
 
 ### Code style — PHP (run locally, no container needed)
 
