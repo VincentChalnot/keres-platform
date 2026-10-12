@@ -1,6 +1,9 @@
 # Annonces destinées aux joueurs (src/Service/Announcement/AnnouncementProvider.php).
 # Un bloc par identifiant listé dans AnnouncementProvider::ENTRIES : title + body.
 items:
+    game_over_modal:
+        title: Revanche depuis l’écran de fin de partie
+        body: 'Une fenêtre s’affiche désormais à la fin d’une partie, avec une revanche rapide en inversant les couleurs (contre un joueur, il reçoit une notification et l’accepte), une nouvelle partie et l’envoi d’un avis. Cliquez sur le plateau grisé pour la rouvrir.'
     piece_animation:
         title: Les pièces glissent jusqu’à leur case
         body: 'Les pièces glissent désormais jusqu’à leur case quand un coup est joué. Choisissez Instantané, Rapide ou Lent dans les options du plateau, et enregistrez votre choix par défaut dans Paramètres → Plateau et jeu.'

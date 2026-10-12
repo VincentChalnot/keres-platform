@@ -24,6 +24,7 @@ final readonly class AnnouncementProvider
      * ties keeping the order written here.
      */
     public const array ENTRIES = [
+        'game_over_modal' => '2026-10-12',
         'piece_animation' => '2026-10-11',
         'board_arrows' => '2026-10-11',
         'french_translation' => '2026-10-10',
