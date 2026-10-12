@@ -19,7 +19,7 @@ final class MultiplayerLimits
     public const int CLOCK_EXPIRY_GRACE_MS = 500;
 
     /** F: the "did anyone turn up" abort clamp on each side's first move (03-time-control.md sec 7.1). */
-    public const int FIRST_MOVE_TIMEOUT_SECONDS = 30;
+    public const int FIRST_MOVE_TIMEOUT_SECONDS = 120;
 
     /** Per side; total 4. Game::hasReachedRatedPlyFloor() (03-time-control.md sec 7.2, 06-rating.md sec 6.1). */
     public const int RATED_MIN_PLIES = 2;
