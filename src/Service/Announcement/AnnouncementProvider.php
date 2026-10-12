@@ -24,6 +24,13 @@ final readonly class AnnouncementProvider
      * ties keeping the order written here.
      */
     public const array ENTRIES = [
+        'rated_bot_games' => '2026-10-12',
+        'eval_graph' => '2026-10-12',
+        'beat_the_bots' => '2026-10-12',
+        'lobby_new_game' => '2026-10-12',
+        'correspondence_seeks' => '2026-10-12',
+        'finished_game_review' => '2026-10-12',
+        'black_pieces_outline' => '2026-10-12',
         'game_over_modal' => '2026-10-12',
         'piece_animation' => '2026-10-11',
         'board_arrows' => '2026-10-11',

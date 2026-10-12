@@ -1,6 +1,27 @@
 # Annonces destinées aux joueurs (src/Service/Announcement/AnnouncementProvider.php).
 # Un bloc par identifiant listé dans AnnouncementProvider::ENTRIES : title + body.
 items:
+    rated_bot_games:
+        title: Parties classées contre les bots
+        body: 'Dans « Jouer contre l’ordinateur », cochez « Partie classée » pour jouer une partie chronométrée contre le bot de votre niveau : elle fait évoluer votre classement, et celui du bot.'
+    beat_the_bots:
+        title: Battez le prochain bot
+        body: 'Le salon vous propose désormais le prochain bot à battre, à un clic : gagnez sans reprendre de coup pour débloquer le niveau suivant. Votre progression d’invité vous suit quand vous créez un compte.'
+    eval_graph:
+        title: Voyez où la partie a basculé
+        body: 'Une fois la partie évaluée par le moteur, un graphique sous l’échiquier montre le verdict coup après coup, et chaque coup de la liste indique ce qu’il a coûté : cliquer sur le graphique renvoie à la position correspondante.'
+    lobby_new_game:
+        title: Un salon plus clair
+        body: 'Le formulaire de proposition s’ouvre désormais depuis un bouton « Nouvelle partie », et le jeu à deux sur le même écran a sa propre carte en bas de la page.'
+    correspondence_seeks:
+        title: Les propositions par correspondance restent ouvertes une semaine
+        body: 'Une proposition par correspondance reste désormais sept jours dans le salon, même si vous fermez la page : un adversaire peut la relever quand il passe.'
+    finished_game_review:
+        title: La barre d’évaluation vous suit dans une partie terminée
+        body: 'Quand vous remontez les coups d’une partie terminée, la barre d’évaluation reste affichée et indique le verdict du moteur pour chaque position.'
+    black_pieces_outline:
+        title: Un contour clair sur les pièces noires
+        body: 'Les pièces noires sont désormais dessinées comme les blanches, couleurs inversées, contour compris, ce qui les rend plus lisibles sur les cases sombres.'
     game_over_modal:
         title: Revanche depuis l’écran de fin de partie
         body: 'Une fenêtre s’affiche désormais à la fin d’une partie, avec une revanche rapide en inversant les couleurs (contre un joueur, il reçoit une notification et l’accepte), une nouvelle partie et l’envoi d’un avis. Cliquez sur le plateau grisé pour la rouvrir.'

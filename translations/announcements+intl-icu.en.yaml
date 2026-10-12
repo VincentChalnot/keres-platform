@@ -1,6 +1,27 @@
 # Player-facing announcements (src/Service/Announcement/AnnouncementProvider.php).
 # One block per id listed in AnnouncementProvider::ENTRIES: title + body.
 items:
+    rated_bot_games:
+        title: Rated games against the bots
+        body: 'In Play against the AI, tick “Rated game” to play a clocked game against the bot of your level: it moves your rating, and the bot’s.'
+    beat_the_bots:
+        title: Beat the next bot
+        body: 'The lobby now proposes the next bot to beat, one click away: win without taking a move back to unlock the following level. Your progress as a guest follows you when you create an account.'
+    eval_graph:
+        title: See where a game turned
+        body: 'Once the engine has evaluated a game, a graph under the board shows the verdict move after move, and each move in the list shows what it cost: clicking the graph jumps to that position.'
+    lobby_new_game:
+        title: A tidier lobby
+        body: 'The seek form now opens from a “New game” button, and playing hot-seat has its own card at the bottom of the page.'
+    correspondence_seeks:
+        title: Correspondence seeks stay open for a week
+        body: 'A correspondence seek now stays in the lobby for seven days, even when you close the page, so an opponent can pick it up whenever they come by.'
+    finished_game_review:
+        title: The evaluation bar follows you through a finished game
+        body: 'When you step back through the moves of a finished game, the evaluation bar now stays on screen and shows the engine’s verdict for each position.'
+    black_pieces_outline:
+        title: A light outline on the black pieces
+        body: 'Black pieces are now drawn exactly like the white ones with the colours swapped, including their outline, which makes them easier to read on the dark squares.'
     game_over_modal:
         title: Rematch from the end-of-game screen
         body: 'A window now appears when a game ends, with a quick rematch on the opposite colours (against a player, they get a notification and accept it), a new game, and feedback. Click the greyed-out board to bring it back.'

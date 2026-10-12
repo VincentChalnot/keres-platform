@@ -77,7 +77,9 @@ knowledge (piece names, SVG representations, movement descriptions).
 | `src/views/SVGBoardView.ts`         | **Active renderer** — SVG, inline sprite sheet                                  |
 | `assets/board.css`                  | **The one stylesheet of the board SVG** (tiles, pieces, coordinate labels, piece animation, arrows) |
 | `src/views/boardCss.ts`             | `board.css` as a string (`?inline`): `injectBoardCss()` for the page, the default export for static exports |
-| `src/views/boardExport.ts`          | Admin-only static HTML export of the board SVG: `buildBoardHtml()`, `downloadHtml()` (see Static HTML export) |
+| `src/views/boardExport.ts`          | Admin-only static export of the board SVG: `buildBoardHtml()`, `buildBoardSvg()`, `downloadFile()` (see Static HTML export) |
+| `src/tutorial.ts`                   | The `/tutorial` page: slides, then a guided problem on a live `SVGBoardView` (see Tutorial) |
+| `src/views/EvalGraph.ts`            | Evaluation-over-the-game graph under the board (see Engine API Bridge)         |
 | `src/views/BoardArrows.ts`          | Right-button analysis arrows of the board (state, geometry, mouse handling)    |
 | `src/i18n/`                         | `t()` + ICU-subset formatter over the server-rendered catalogue (see Internationalisation) |
 | `src/views/ThreeJSBoardView.ts`     | Inactive renderer — do not modify unless explicitly asked                       |
@@ -159,9 +161,11 @@ history navigation; not flip or a resignation that leaves the position as it is)
 ### Static HTML export of the board (admin only)
 
 `SVGBoardView.exportStaticHtml(title: string): string` (optional `IBoardView.exportStaticHtml?`) returns a
-complete standalone HTML document of the board as it is displayed right now; `downloadHtml(html, filename)`
-(`views/boardExport.ts`: Blob + temporary `<a download>`) hands it to the browser. Nothing depends on the game
-controller, so the admin board editor uses the same two calls. The game page has a download button next to
+complete standalone HTML document of the board as it is displayed right now; `exportStaticSvg(): string` returns the
+same board as a standalone SVG image (XML prolog, `boardCss` in a `<style>`, no background: it sits in an `<img>`, e.g.
+the tutorial's slides); `downloadFile(content, filename, mimeType)` (`views/boardExport.ts`: Blob + temporary
+`<a download>`) hands either to the browser. Nothing depends on the game controller, so the admin board editor uses the
+same calls. The game page has a download button next to
 "flip the board" (`#export-board-btn` in `_play_board.html.twig`, wired by `handleExportBoard()` in `app.ts`),
 rendered only for `is_granted('ROLE_ADMIN')` - the markup is absent for players, spectators and guests - and
 English only, like the admin screens (no translation keys). The export is entirely client-side (no endpoint), works
@@ -218,9 +222,20 @@ custom board).
   plus a top piece of one colour, never a king (what `encodePiece` can hold): choose "Stack on top of the piece
   there" and click a square holding a same-colour piece (the top of an existing stack is replaced); "Replace what
   is there" puts a lone piece.
-- **Export**: "Export HTML" is `downloadHtml(view.exportStaticHtml('Keres board'), 'keres-board.html')`
+- **Export**: "Export HTML" is `downloadFile(view.exportStaticHtml('Keres board'), 'keres-board.html', 'text/html')`
+  and "Export SVG" `downloadFile(view.exportStaticSvg(), 'keres-board.svg', 'image/svg+xml')`
   (`views/boardExport.ts`); the file is the board exactly as displayed (position, arrows, orientation,
-  coordinates, piece rotation).
+  coordinates, piece rotation). The board code of a position is validated by `parseBoardCode()` (`utils/boardUtils.ts`,
+  shared with the tutorial).
+
+### Tutorial (`/tutorial`)
+
+Public page, authored content: seven static SVG slides exported from the board editor and one guided problem
+(`public/tutorial/`, see [`docs/features.md`](docs/features.md) for the file list and the `puzzle.json` schema). The
+slides are plain `<img>`s; the problem is a live `SVGBoardView` driven by `assets/typescript/src/tutorial.ts` (no
+`GameController`, no engine): each step carries the board code it leads to, so the platform replays what the author
+recorded and holds no game rule. The page, its navbar link and the invitation banner exist only while every file is
+present (`TutorialContent::isAvailable()`).
 
 ## Domain Model
 
@@ -315,6 +330,13 @@ what it has and updates when `evaluation` events arrive - it never polls.
 `bin/console app:moves:evaluate` backfills history (synchronously, in the console).
 `Game::canExposeEvaluation()` gates every place that ships evaluations to a client.
 
+Client side, `app.ts` renders the evaluations in three places, all fed by the same `evaluations[]` (index = ply):
+the bar (`EvalBar.ts`), a per-move delta in the move list (`appendMoveEvaluation()`: the evaluation after the move,
+and `is-loss` / `is-blunder` when it cost the mover at least `MOVE_LOSS` / `MOVE_BLUNDER` points, a decided position
+counting as `DECIDED_SCORE`) and `views/EvalGraph.ts`, a hand-rolled SVG area graph under the board
+(`#eval-graph`, hidden until there is something to show, flipped vertically with the board, a click jumps to the ply
+through `GameController.goToPly`). Their styles are the design system's (`game.css`).
+
 - `EngineApi` — makes raw HTTP calls
 - `GameEngine` — consumes results, updates `Game` entity, handles game-over detection
 - `BoardTreeManager` — deduplicates `BoardPosition` rows using the 81-byte position key
@@ -376,6 +398,20 @@ composer cs:fix     # Applies PHP CS Fixer fixes in place
 
 Run `composer cs:check` before considering any PHP task complete.
 Run `composer cs:fix` to auto-correct style issues.
+
+### PHP tests (PHPUnit)
+
+```bash
+docker compose exec -T php bin/console doctrine:database:create --env=test --if-not-exists   # once
+docker compose exec -T php bin/console doctrine:migrations:migrate --env=test -n             # after each new migration
+docker compose exec -T php vendor/bin/phpunit
+```
+
+Tests that need the real schema extend `App\Tests\Functional\DatabaseTestCase` (`createUser()`, `em()`): they run on
+PostgreSQL `app_test` (the matching SQL needs `FOR UPDATE SKIP LOCKED`, `make_interval`, so no SQLite), each one inside a
+transaction that `dama/doctrine-test-bundle` rolls back. Create games through the services (`GameFactory`), never with
+raw SQL. Mercure needs no double (`GameUpdatePublisher` swallows publish failures). CI runs the same suite in the
+`tests` job (Postgres service container).
 
 ## Testing via the Integrated Browser
 

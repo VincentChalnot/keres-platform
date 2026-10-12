@@ -68,6 +68,58 @@ Overlapping sweeps are safe: the loser of the row lock re-checks and finds nothi
 do. The command prints only when it forfeited or warned something (it runs every
 minute; silence keeps `docker logs` readable).
 
+## Open seeks: lifetime, listing, admin alert
+
+- A **real-time or unlimited** seek lives `SEEK_TTL_SECONDS` (10 min) and is listed only while its author's page keeps
+  heartbeating (`SEEK_STALE_AFTER_SECONDS`); the lobby cancels it on `pagehide`.
+- A **correspondence** seek lives `CHALLENGE_TTL_SECONDS` (7 days) and is listed (and paired) whether or not its author
+  is on the page: `SeekRepository::findOpenForListing()` and `candidateWhereClause()` both exempt it from the heartbeat
+  filter and `LobbyController.cancelMySeekOnUnload()` does not cancel it. Invitations and rematches keep 24 h.
+- Every public seek that stays in the pool (not one that paired at once) alerts the administrators
+  (`AdminSeekAlert`, called from `SeekCreationService::create()`): one in-app `NotificationType::SEEK_POSTED` row per
+  `ROLE_ADMIN` user except the author (no settings toggle, see `NotificationType::userConfigurable()`) and one e-mail to
+  `ADMIN_NOTIFICATION_EMAIL` (`AdminNotificationMailer::sendSeekPosted()`, skipped when the author is an admin or the
+  address is blank). Invitations and rematches never alert.
+
+## Terms of use
+
+The terms live on the marketing site (`/terms-of-use`); the platform stores which version of them an account accepted:
+`User::$termsAcceptedVersion` / `$termsAcceptedAt`, compared with `TermsOfUse::CURRENT_VERSION` (the "Last updated" date of
+the page - **change it whenever the site publishes new terms**).
+
+- E-mail registration requires the checkbox (`TermsCheckboxType`) and records the version.
+- Every other signed-in account that has not accepted the current version (OIDC sign-ups, accounts that predate the
+  terms, a new version) is redirected to `/terms/accept?redirect=<page>` by `TermsAcceptanceListener` and returns to the
+  page after accepting. The listener only touches page navigations (GET, `Accept: text/html`, not XHR) of requests that
+  carry a session; the acceptance page, logout, the language switch and the sign-in routes are exempt.
+- `/dev/login` accepts the terms on every login (scripted browser flows would stop on the page otherwise).
+
+## Onboarding and the tutorial
+
+`/tutorial` (`TutorialAction`) shows seven slides, then a guided problem on the game's board, then the ending (create an
+account / play as a guest, or face the bot / lobby when signed in). It is authored by the operator: drop these files in
+`public/tutorial/` (committed; until all are there the route answers 404 and no banner or link is shown):
+
+- `board.svg`, `like-chess.svg`, `chess-pieces.svg`, `new-pieces.svg`, `chess-only.svg`, `stacking.svg`,
+  `stack-moves.svg`: the slides, in that order. Export them from `/admin/board-editor` ("Export SVG"); captions are the
+  `slides.*` keys of the `tutorial` translation domain.
+- `puzzle.json`:
+  ```json
+  {"start": "<board code>", "flipped": false,
+   "steps": [{"by": "player|opponent", "from": "E2", "to": "E6", "board": "<board code after the move>",
+              "text": "carry|unstack_fork|legal_blunder|capture_king"}]}
+  ```
+  Board codes are the base64 of the editor. A `player` step shows its sentence and a green arrow `from`→`to` and
+  accepts exactly that click pair or drag; anything else answers "try again". An `opponent` step plays itself 900 ms
+  after its sentence. `tutorial.ts` validates the whole file on load (`parseBoardCode`, squares, `text`) and falls back
+  to the ending with an error line when it is wrong.
+
+"Has been through the tutorial" is the `keres_onboarded=1` cookie (set by `POST /onboarding/complete`, called at the end
+of the problem and by the banner's close button; also stored on `User::$onboardedAt` when signed in).
+`NewUserBrowserProgressListener` copies the cookie onto any account created from that browser, so the invitation banner
+(`_onboarding_banner.html.twig`, on the lobby, the anonymous welcome page and the dashboard) disappears for good. The
+banner is an invitation only: nobody is redirected.
+
 ## Analytics event log
 
 `analytics_event` is an append-only table (`AnalyticsEvent`), written
@@ -132,6 +184,35 @@ always calls the leveled endpoint `/engine-move-game/{level}` (`GameEngine` pass
 (see "Stale engine image" in AGENTS.md). Guests (no account, no `Game` row) are
 limited to levels 1-4 (`LocalGameType::GUEST_MAX_AI_LEVEL`, enforced in the form, in
 `NewLocalGameAction` and in `GuestEngineMoveAction`), and get no live evaluation.
+
+### Rated games against a bot
+
+`/play/new` can also start a **rated** game (`rated` + `cadence`, a real-time lobby preset) against the bot of the chosen
+level. It is a *multiplayer* game (`GameFactory::createBotGame()`): the human against the account `bot-level-N@playkeres.com`
+(`BotAccounts`), with `Game::$aiLevel` set (`Game::isBotGame()`), a clock, a Glicko rating on both sides, no undo, no
+evaluation bar and no rematch button. The bot's side is answered by the existing AI path: `SubmitMoveAction` and
+`PlayAction` (participants only) dispatch `ProcessAiMoveMessage` for AI games *and* bot games, `GameEngine::aiMove()` reads
+`getAiLevel()`. Casual AI games (no account, `OpponentType::AI`) are unchanged and coexist. The bots exist for levels 1-10;
+a missing account answers "this bot is not available" (create them with `app:bot-tournament`).
+
+The bots' ratings are the one shared Glicko pool: they move with every game, bots are left out of the leaderboards
+(`BotAccounts::EMAIL_LIKE`) and there is no anti-farming (level 10 is deterministic, a winning line can be replayed -
+revisit if it happens). `bin/console app:bot-tournament --reset` deletes (soft) every game played between bots and every bot
+rating before replaying the round-robin of levels 1-10 (`--dry-run` prints the counters); run it once in production after a
+database backup, when the bots start meeting humans. Portraits: `public/images/bots/level-N.webp` (square, 256 px, N = 1-10),
+looked up when the accounts are (re)created; without the file the lobby shows a robot icon.
+
+### The AI ladder and the lobby's next bot
+
+`User::$highestAiLevelBeaten` is the highest level the player beat: any win against the AI (casual or against a bot account in
+a rated game) counts, unless `Game::$undoUsed` (an undo in an AI game); draws, aborted games and resignations of the player
+count for nothing, and nothing lowers it (`AiLadder`, called from `GameLifecycleManager` as the game is finalised). The
+migration backfilled it from the finished AI games. Guests keep it in the `keres_ai_beaten` cookie (written by
+`utils/cookies.ts` from `LocalGameAPI`, capped at the guest limit 4 when read, copied to the account at sign-up by
+`NewUserBrowserProgressListener`). `NextBot` turns it into the bot the lobby, the anonymous welcome page and the tutorial's
+ending propose: one click posts a ready-made game to `/play/new` (`_quick_game_form`, hidden inputs mirroring
+`LocalGameType`). The hot-seat game is its own card at the bottom of the lobby (same mini-form); `/play/new` is the custom
+game against the AI only.
 
 ## Game lists
 
