@@ -3,7 +3,7 @@ import {AnimationSpeed, BOARD_SIZE, LAST_BOARD_INDEX} from '../models/types';
 import {GameState} from '../models/GameState';
 import {decodePiece} from "../utils/boardUtils";
 import {injectBoardCss} from './boardCss';
-import {buildBoardHtml} from './boardExport';
+import {buildBoardHtml, buildBoardSvg} from './boardExport';
 import BoardArrows, {BoardArrow} from './BoardArrows';
 
 // Constants for the SVG board
@@ -73,6 +73,9 @@ export default class SVGBoardView implements IBoardView {
     } = { active: false, from: -1, startX: 0, startY: 0, ghost: null };
     private preventNextClick: boolean = false;
     private static readonly DRAG_THRESHOLD = 5; // pixels
+    /** Browsers replay a touch as mouse events (mousemove, then click) shortly after it; they must not count as hovering. */
+    private static readonly TOUCH_MOUSE_GRACE_MS = 800;
+    private lastTouchAt: number = -Infinity;
 
     // Long press state — only triggered by sustained mousedown/touchstart, NOT hover
     private longPressTimer: ReturnType<typeof setTimeout> | null = null;
@@ -620,8 +623,9 @@ export default class SVGBoardView implements IBoardView {
             return;
         }
 
-        // Normal hover
+        // Normal hover. A touch is followed by compatibility mouse events: they are not a pointer resting on the board.
         if (!this.hoverHandler) return;
+        if (performance.now() - this.lastTouchAt < SVGBoardView.TOUCH_MOUSE_GRACE_MS) return;
         const pos = this.getPosFromMouseEvent(event);
         if (pos !== null) {
             this.hoverHandler(pos);
@@ -655,6 +659,8 @@ export default class SVGBoardView implements IBoardView {
     }
 
     private handleTouchStart(event: TouchEvent): void {
+        this.lastTouchAt = performance.now();
+        this.hoverHandler?.(null);
         if (event.touches.length !== 1) return;
         const touch = event.touches[0];
         const pos = this.getPosFromTouch(touch);
@@ -684,6 +690,7 @@ export default class SVGBoardView implements IBoardView {
     }
 
     private handleTouchEnd(event: TouchEvent): void {
+        this.lastTouchAt = performance.now();
         this.cancelLongPressTimer();
         if (!this.dragState.active) {
             // A long press only inspects the piece: swallow the synthetic click that would follow
@@ -906,6 +913,11 @@ export default class SVGBoardView implements IBoardView {
      */
     exportStaticHtml(title: string): string {
         return buildBoardHtml(this.svg, {title, prepare: (clone) => this.freezeForExport(clone)});
+    }
+
+    /** Same as `exportStaticHtml`, as a standalone SVG image without background (the tutorial's slides). */
+    exportStaticSvg(): string {
+        return buildBoardSvg(this.svg, {prepare: (clone) => this.freezeForExport(clone)});
     }
 
     /** What is specific to this view in the copy to export: no drag in the air, only the lasting highlights. */

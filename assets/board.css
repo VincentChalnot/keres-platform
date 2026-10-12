@@ -1,3 +1,11 @@
+/* The colours below are fixed on purpose: opt the board and the pieces (also drawn in the material bar and the piece
+   info panel) out of the browsers' forced dark modes (Brave, Samsung Internet...), which would invert them. */
+svg.keres-board,
+.p-w,
+.p-b {
+    color-scheme: only light;
+}
+
 .piece[data-is-top-piece="false"] {
     filter: drop-shadow(3px 3px 4px rgba(0, 0, 0, 0.4));
 }

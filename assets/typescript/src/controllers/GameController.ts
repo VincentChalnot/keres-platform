@@ -383,11 +383,10 @@ export class GameController {
             this.updateOverlays();
             return;
         }
-        const board = this.gameState.getBoard();
-        if (!board) return;
-        const selectedPosition = this.gameState.getSelectedPosition();
-        if (selectedPosition === null) {
-            this.gameState.setHoveredPosition(pos);
+        if (!this.gameState.getBoard()) return;
+        // Always remember where the pointer is: once the selection is cleared the overlays fall back on it.
+        this.gameState.setHoveredPosition(pos);
+        if (this.gameState.getSelectedPosition() === null) {
             this.updateOverlays();
         }
     }
@@ -584,6 +583,13 @@ export class GameController {
 
     isGameOver(): boolean {
         return this.gameState.getBoard()?.isGameOver() ?? false;
+    }
+    /**
+     * Whether the game itself is over, whatever ply is displayed (`isGameOver()` describes the displayed
+     * position, which is not the final one while browsing the history).
+     */
+    isGameFinished(): boolean {
+        return null !== this.resultValue;
     }
     getEndReason(): string {
         return this.endReason;

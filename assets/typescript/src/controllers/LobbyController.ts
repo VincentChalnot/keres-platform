@@ -45,6 +45,7 @@ export class LobbyController {
     init(): void {
         this.hydrateFromBootstrap();
         this.wireSeekForm();
+        this.wireSeekModal();
         this.wireInviteButton();
         this.seekClient.connect(
             (event) => this.handleSeekEvent(event),
@@ -332,6 +333,35 @@ export class LobbyController {
         });
     }
 
+    /** The seek form lives in a modal opened by "New game" (closed by its cross, the backdrop or Escape). */
+    private wireSeekModal(): void {
+        const modal = document.getElementById('lobby-seek-modal');
+        const opener = document.getElementById('lobby-new-seek-btn');
+
+        if (!modal || !opener) {
+            return;
+        }
+
+        opener.addEventListener('click', () => this.setSeekModal(true));
+        modal.addEventListener('click', (event) => {
+            const target = event.target;
+
+            if (target instanceof Element && (target.classList.contains('modal__backdrop') || null !== target.closest('[data-close]'))) {
+                this.setSeekModal(false);
+            }
+        });
+        document.addEventListener('keydown', (event) => {
+            // An alert shown over the form (a failed post) takes the Escape first
+            if ('Escape' === event.key && !document.getElementById('app-confirm-modal')?.classList.contains('is-active')) {
+                this.setSeekModal(false);
+            }
+        });
+    }
+
+    private setSeekModal(active: boolean): void {
+        document.getElementById('lobby-seek-modal')?.classList.toggle('is-active', active);
+    }
+
     private setFormValue(form: HTMLFormElement, name: string, value: string | undefined): void {
         const field = form.elements.namedItem(name);
 
@@ -372,6 +402,7 @@ export class LobbyController {
                 return;
             }
 
+            this.setSeekModal(false);
             this.seeks.set(result.seek.uuid, result.seek);
             this.render(this.seeks.size);
             this.syncHeartbeat();
@@ -488,8 +519,10 @@ export class LobbyController {
     }
 
     private cancelMySeekOnUnload(): void {
-        // A rematch request outlives the lobby page: the opponent may only get to it later.
-        if (null === this.mySeekUuid || this.seeks.get(this.mySeekUuid)?.rematch) {
+        // A rematch request outlives the lobby page: the opponent may only get to it later. So does a
+        // correspondence seek: it stays listed (for days) while its author is away.
+        const seek = null === this.mySeekUuid ? undefined : this.seeks.get(this.mySeekUuid);
+        if (null === this.mySeekUuid || seek?.rematch || 'correspondence' === seek?.timeControl.kind) {
             return;
         }
 
