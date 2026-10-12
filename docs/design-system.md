@@ -135,11 +135,12 @@ The DS needs `@tailwindcss/typography`, `tailwindcss`, `postcss`, `autoprefixer`
   A class that is neither a DS component nor a Tailwind utility silently does nothing.
 - **Grids**: write `grid grid-cols-1 md:grid-cols-N`. A bare `grid` has an implicit auto column that grows with its
   content (long table, canvas, nowrap text) and makes the page scroll sideways on a phone.
-- **Long labels**: `.btn` does not wrap (`whitespace-nowrap`) and is 13 rem wide at least (`--k-btn-min`, never more
-  than 100%). A translated label that can exceed a phone's width needs `btn--wrap` (form submit buttons get it from
-  `ds_layout`); check the French text at 390 px.
+- **Long labels**: `.btn` labels wrap (min-height 44 px, 13 rem minimum width but never wider than its container);
+  add `btn--nowrap` only where a label must stay on one line. Check the French text at 390 px.
 - **Class names built from strings** (`'text-' ~ x`) are invisible to Tailwind (DS component variants are fine).
-- The dev CSS is injected by JavaScript: a screenshot taken right after load can show UA-default link colours.
+- In dev Vite injects CSS with JavaScript; `base.html.twig` also emits a render-blocking `<link>` to the dev server's
+  `design-system.css` (dev only) so the page does not flash unstyled. Dynamic transitions can still make a screenshot
+  taken right after load show intermediate colours: run `document.getAnimations().forEach(a => a.finish())` first.
 - **After a DS release**: bump the tag in `package.json`, `npm install` in the node container, commit both files; if
   `public/fonts` changed in the DS copy the new files.
 
@@ -217,6 +218,7 @@ Utilities are Tailwind classes (generated from your templates), components are D
 | `tabs` (`<ul><li class="is-active"><a>`) | `<div class="tabs"><a class="tab is-active">`; `is-toggle` → `tabs tabs--pill` |
 | `menu`, `menu-label`, `menu-list` | `menu`, `menu__label`, `menu__list` + `<a class="menu__link is-active">` |
 | `pagination`, `-previous` `-next` `-list` `-link` `-ellipsis` | `pagination`, `pagination__prev`, `pagination__next`, `pagination__list`, `pagination__link` (`is-current` same), `pagination__ellipsis`; disabled: `is-disabled` |
+| side menu that collapses on phones | `menu menu--collapsible` + `button.menu__toggle[data-menu-toggle]` (`menu-toggle.ts` flips `.is-open`), see the admin base template |
 | `navbar-*` | done in `base.html.twig`: `navbar`, `navbar__inner|brand|logo|burger|menu|start|end|link|icon|user|avatar`; the language switcher is `lang-switch` |
 | `modal`, `modal-background`, `modal-card[-head|-title|-body|-foot]` | `modal` (`is-active`), `modal__backdrop`, `modal__card`, `modal__head`, `modal__title`, `modal__body`, `modal__foot`; the confirm modal is `#app-confirm-modal` (`confirmModal()` / `alertModal()`) |
 | `breadcrumb`, `dropdown` | none (not used); the bell panel (`bell__panel`) is the dropdown pattern |
@@ -262,6 +264,11 @@ warning info turn turn-text panel popover tile-* piece-*`; fonts `font-sans|body
 - Admin tools (board editor palette `board-editor__*`, opening tree `tree`) live in the DS (`admin.css`, `data.css`).
 
 ## Verifying a page
+
+`npm run check:front` (node, no dependency, runs in the CI `lint` job) fails on Bulma vocabulary, `is-*`/`has-*` classes
+the design system does not define, a `grid` without `grid-cols-*`, and a Font Awesome style that `assets/app.js` does
+not import. Its rules and its (empty) allow-list are at the top of `scripts/check-front.mjs`. A browser overflow check
+(`document.documentElement.scrollWidth > innerWidth` at 390 px, English and French) stays a manual step.
 
 ```bash
 docker compose exec php bin/console lint:twig templates
