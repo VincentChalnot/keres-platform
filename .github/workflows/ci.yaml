@@ -112,6 +112,82 @@ jobs:
         # Bulma/unknown state classes, grid without grid-cols-*, Font Awesome styles not imported
         run: npm run check:front
 
+  tests:
+    name: PHPUnit
+    runs-on: ubuntu-latest
+    # The functional tests need the real PostgreSQL schema (FOR UPDATE SKIP LOCKED, make_interval...).
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_DB: app
+          POSTGRES_USER: app
+          POSTGRES_PASSWORD: app
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U app -d app"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      APP_ENV: test
+      APP_SECRET: '$ecretf0rt3st'
+      DATABASE_URL: postgresql://app:app@127.0.0.1:5432/app?serverVersion=16&charset=utf8
+      # Refused at once: GameUpdatePublisher swallows publish failures.
+      MERCURE_URL: http://127.0.0.1:9/.well-known/mercure
+      MERCURE_PUBLIC_URL: https://localhost/.well-known/mercure
+      MERCURE_JWT_SECRET: 0123456789012345678901234567890123456789
+      MERCURE_PUBLISHER_JWT_KEY: 0123456789012345678901234567890123456789
+      MERCURE_SUBSCRIBER_JWT_KEY: 0123456789012345678901234567890123456789
+      BACKEND_API_URL: http://127.0.0.1:9
+      AI_BACKEND_API_URL: http://127.0.0.1:9
+      MAILER_DSN: 'null://null'
+      MAILER_FROM_ADDRESS: noreply@example.com
+      STATIC_SITE_URL: https://example.com
+      SERVER_NAME: localhost
+      DEFAULT_URI: https://localhost
+      SESSION_COOKIE_DOMAIN: localhost
+      SESSION_COOKIE_NAME: KERESTESTSESSID
+      MESSENGER_TRANSPORT_DSN: 'in-memory://'
+      CORS_ALLOW_ORIGIN: '^https://localhost$'
+      ADMIN_NOTIFICATION_EMAIL: ''
+      OIDC_GOOGLE_CLIENT_ID: ''
+      OIDC_GOOGLE_CLIENT_SECRET: ''
+      OIDC_FACEBOOK_CLIENT_ID: ''
+      OIDC_FACEBOOK_CLIENT_SECRET: ''
+      OIDC_DISCORD_CLIENT_ID: ''
+      OIDC_DISCORD_CLIENT_SECRET: ''
+      TRUSTED_PROXIES: 127.0.0.1
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          persist-credentials: false
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+          extensions: apcu, intl, zip, sodium, pdo_pgsql
+          tools: composer:v2
+
+      - name: Cache composer
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/composer
+          key: composer-${{ hashFiles('composer.lock') }}
+
+      - name: composer install
+        run: composer install --no-interaction --prefer-dist --no-progress --no-scripts
+
+      - name: Create and migrate the test database
+        run: |
+          php bin/console doctrine:database:create --env=test --if-not-exists
+          php bin/console doctrine:migrations:migrate --env=test -n
+
+      - name: PHPUnit
+        run: vendor/bin/phpunit
+
   build:
     name: Build Images
     runs-on: ubuntu-latest
@@ -173,8 +249,8 @@ jobs:
     name: Push Images
     runs-on: ubuntu-latest
     # Only push on commits to main, not on pull requests.
-    if: always() && github.event_name != 'pull_request' && needs.build.result == 'success' && needs.lint.result == 'success'
-    needs: [build, lint]
+    if: always() && github.event_name != 'pull_request' && needs.build.result == 'success' && needs.lint.result == 'success' && needs.tests.result == 'success'
+    needs: [build, lint, tests]
     permissions:
       contents: read
       packages: write
