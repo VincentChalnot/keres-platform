@@ -1,121 +1,95 @@
-# TODO — Production logging cleanup
+# TODO
 
-Source: a 2.9 MB / 13,680-line `docker compose logs` dump from production (6h20).
-Goal: `docker compose logs` in prod is near-empty in steady state (user-traffic
-access lines + real warnings/errors); everything else is dropped, routed to
-Sentry, or kept as Sentry breadcrumbs. Sentry is already in production.
+Only open work. Done items are deleted; the reasoning behind choices is in
+[`DECISIONS.md`](DECISIONS.md), unanswered product questions in
+[`QUESTIONS.md`](QUESTIONS.md).
 
-## What the dump showed
+## Privacy: make the policy true
 
-| Source | Volume | Cause |
-|---|---|---|
-| `php` (Caddy) | 2.08 MB (72%) | 1,494 JSON access-log lines, ~1.1 KB each (full request headers, IPs). 762 are `SentryUptimeBot` probes (`/` + `/lobby` every minute, 0.83 MB); ~0.4 MB is the Mercure SSE endpoint + `/notifications/unread-count` polling; only ~360 are real user traffic. Mercure also logs 250 "New subscriber" / "Subscriber disconnected" info lines. |
-| `php-worker` | 0.8 MB (86% of lines) | `messenger:consume --time-limit=60` restarts every minute x2 processes (762 restarts) -> Symfony banner + blank lines + 3 supervisord INFO lines per restart; the sweep loop printed `Forfeited 0 game(s), warned 0 game(s).` every minute. |
-| `database` | 45 lines | Negligible. One real error, see "Open items". |
-| `backend` | 2 lines | Negligible. |
+The privacy policy (marketing site, `i18n/*.toml`) says account deletion erases personal
+data, keeps played games in permanently anonymised form (account link severed, no
+recoverable mapping) and answers requests within 30 days. Today requests only land in the
+admin queue (`SettingsPrivacyAccountDeletionAction`, `SettingsPrivacyDataExportAction`:
+"no automated export/deletion"; `User` has no `deletedAt` or anonymisation).
 
-Facts that shape the design:
+- [ ] Account deletion with anonymisation: erase the `User` and its `UserAuth`,
+      preferences, friendships, notifications, ratings; sever the `GamePlayer`/`Game` link
+      to the user without any recoverable mapping, keep the games in the shared tree.
+- [ ] Data export: produce the user's data (profile, preferences, games, friends) for the
+      admin to send, or as a download.
 
-- **`monolog/monolog` is not installed.** `LoggerInterface` is Symfony's
-  fallback `HttpKernel\Log\Logger`, which writes to stderr and, with
-  `SHELL_VERBOSITY` unset, only emits `error` and above. That is why no app
-  log line appears in the dump, and why `--quiet` on the worker (Phase 0) does
-  not lose anything today.
-- **`logger->error(...)` calls never reach Sentry.** `sentry-symfony` only
-  captures exceptions (its error listener). `UserMailer`/`WaitlistMailer`/
-  `GameUpdatePublisher`/`SeekMatcher` log errors that go to stderr only.
-- `MultiProviderOidcAuthenticator` logs `email` and `sub` at `info`. Invisible
-  today; becomes PII in a durable sink as soon as Monolog routes info anywhere.
+## Production logging cleanup
 
-## Decisions (agreed)
+Goal: `docker compose logs` in production is near-empty in steady state (user-traffic access
+lines and real warnings/errors); the rest is dropped, sent to Sentry or kept as breadcrumbs.
+Decisions already taken: D14 in `DECISIONS.md`. Already done: Docker log rotation
+(`x-logging`), workers started with `--quiet`, supervisord `loglevel=warn`, the sweep command
+silent when idle.
 
-- No rotating file / extra volume for an info-level audit trail. The analytics
-  events in the DB (`RecordAnalyticsEventMessage`) and Sentry breadcrumbs cover it.
-- Caddy access logs: keep client IPs and headers **for now** (revisit in Phase 1,
-  item "Trim fields", when the GDPR position on IP retention is settled).
-- Keep `--time-limit=60` on the messenger workers. It is a documented reliability
-  choice (`docs/multiplayer/03-time-control.md` section 10.1: leaked memory, stale
-  entity manager, dropped connection), so the noise is silenced instead of
-  lowering the restart frequency.
+Facts behind the plan (from a 2.9 MB production dump covering 6 h 20):
 
-## Phase 0 — Quick wins — DONE
+- Caddy's access log was 72 % of the volume: SentryUptimeBot probes every minute (`/`,
+  `/lobby`), the Mercure SSE endpoint, `/notifications/unread-count` polling, ~1.1 KB per
+  line with full request headers; Mercure also logs every subscriber connect/disconnect.
+- `monolog/monolog` is not installed: `LoggerInterface` is Symfony's fallback logger writing
+  to stderr, which only emits `error` and above without `SHELL_VERBOSITY`.
+- `logger->error()` calls do not reach Sentry (`sentry-symfony` only captures exceptions):
+  `UserMailer`, `WaitlistMailer`, `CorrespondenceMailer`, `NotificationMailer`,
+  `LostPasswordAction`, `GameUpdatePublisher`, `SeekMatcher` log errors to stderr only.
 
-- [x] `deploy/compose.yaml`: `x-logging` anchor (`json-file`, `max-size: 10m`,
-      `max-file: 5`) applied to `php`, `php-worker`, `backend`, `database`.
-      Previously unbounded. Verified with `docker compose config`.
-- [x] `messenger-worker.conf`: `--quiet` (drops the 10-line banner per restart).
-- [x] `supervisord.conf`: `loglevel=warn` (drops spawned / RUNNING / exited lines).
-- [x] `SweepGameDeadlinesCommand` (ex-`SweepCorrespondenceDeadlinesCommand`): print the summary only when
-      something was forfeited or warned.
-- Not done on purpose: the `CRIT Server 'unix_http_server' running without any
-  HTTP authentication` line (once per container start). The socket is `chmod 0700`
-  inside the container; silencing it needs credentials in both `[unix_http_server]`
-  and `[supervisorctl]`. Cosmetic — skip.
+### Phase 1 - Caddy (`frankenphp/Caddyfile`, shared by dev and prod)
 
-## Phase 1 — Caddy (`frankenphp/Caddyfile`)
+Untested; validate each step (`docker compose exec php frankenphp validate --config
+/etc/frankenphp/Caddyfile`), then count `docker compose logs php` lines over a few minutes
+of mixed traffic (browse, SSE, uptime probe) in dev too.
 
-Everything here is untested; validate each step before moving on.
+- [ ] `log_skip` in the site block for the `SentryUptimeBot` user agent,
+      `/.well-known/mercure*` and `/notifications/unread-count` (expected: ~1.2 MB of
+      2.0 MB). The Sentry uptime monitor must keep working (it hits the site, not the logs).
+- [ ] Global option `log { level WARN }` for the default logger (Mercure subscriber
+      chatter, "serving initial configuration", "autosaved config", TLS maintenance); check
+      that the access log (separate `http.log.access.*` logger) is unaffected.
+- [ ] Trim the existing `format filter` (it only redacts Mercure's `authorization` query
+      parameter): drop `request>tls` and `resp_headers`; drop `request>headers` except
+      `User-Agent`/`Referer` once IP retention is decided (`QUESTIONS.md`).
+- [ ] Optional: keep only 4xx/5xx if Caddy can vary the access-log level by status.
 
-- [ ] **Skip noise** in the site block with `log_skip`: User-Agent
-      `*SentryUptimeBot*`, path `/.well-known/mercure*`, path
-      `/notifications/unread-count`. Expected: ~1.2 MB of the 2.0 MB access log.
-      Check that the Sentry uptime monitor still works (it hits the site, not the logs).
-- [ ] **Silence non-access Caddy/Mercure chatter**: global option
-      `log { level WARN }` for the default logger (Mercure "New/Disconnected
-      subscriber", `serving initial configuration`, `autosaved config`,
-      TLS maintenance). Confirm the access log (separate `http.log.access.*`
-      logger configured by the site-level `log {}`) is unaffected.
-- [ ] **Trim fields** in the existing `format filter` (currently only redacts the
-      Mercure `authorization` query param): at minimum delete `request>tls` and
-      `resp_headers`; delete `request>headers` except `User-Agent`/`Referer`
-      once IP retention is decided (see Decisions).
-- [ ] **Optional — errors only**: find out whether Caddy's access-log level varies
-      with status (to keep 4xx/5xx only). If not, leave all user traffic logged.
-- [ ] Validate: `docker compose exec php frankenphp validate --config /etc/frankenphp/Caddyfile`,
-      then count `docker compose logs php` lines over a few minutes of mixed traffic
-      (browse + SSE + uptime probe). Dev and prod share this Caddyfile — check dev too.
+### Phase 2 - Monolog and Sentry routing
 
-## Phase 2 — Monolog + Sentry routing
+- [ ] `composer require symfony/monolog-bundle`; `when@prod` handlers in `monolog.yaml`:
+      `main` = `fingers_crossed` (`action_level: error`, `excluded_http_codes: [403, 404, 405]`)
+      → `nested` (`stream` to `php://stderr`, `monolog.formatter.json`); `warnings` = plain
+      `stream` at `warning`, channels `!event`, `!doctrine`; `deprecation` → `null`; dev/test keep
+      the bundle defaults.
+- [ ] `config/packages/sentry.yaml` (follow the commented template there): keep
+      `register_error_listener` enabled (uncaught exceptions, honours `ignore_exceptions`); add
+      `Sentry\Monolog\Handler` at `error` with `channels: ["!request"]` (confirm that
+      `ErrorListener`'s `request`-channel log really causes the duplicate first) and
+      `Sentry\Monolog\BreadcrumbHandler` at `info`; do **not** enable
+      `Sentry\SentryBundle\Monolog\LogsHandler` (Sentry Logs product).
+- [ ] PII: `MultiProviderOidcAuthenticator` logs the OIDC `sub` and the user's `email` at
+      `info`; drop them from the context (or move to `debug`) before Monolog routes `info`
+      anywhere durable. Skim the other `logger->info/warning` call sites (`ClockManager`,
+      `SeekMatcher`, the mailers).
 
-- [ ] `composer require symfony/monolog-bundle` (recipe creates `config/packages/monolog.yaml`).
-- [ ] `when@prod` handlers in `monolog.yaml`:
-  - `main`: `fingers_crossed`, `action_level: error`,
-    `excluded_http_codes: [403, 404, 405]`, buffer limit, `handler: nested`.
-  - `nested`: `stream` to `php://stderr`, `formatter: monolog.formatter.json`
-    (one JSON line per record -> `docker logs`).
-  - `warnings`: plain `stream` to `php://stderr` at `warning`, channels
-    `!event`, `!doctrine` (what stays visible in steady state).
-  - `deprecation` channel -> `null`.
-  - dev/test keep the bundle defaults.
-- [ ] Sentry (`config/packages/sentry.yaml`, follow the commented template there):
-  - Keep `register_error_listener` **enabled** (reports uncaught exceptions and
-    honours `ignore_exceptions`).
-  - Add `Sentry\Monolog\Handler` at `error` with `channels: ["!request"]`, so
-    logged errors reach Sentry without duplicating the exception the listener
-    already sends. Confirm that `ErrorListener`'s own `request`-channel log of an
-    exception really is what causes the duplicate before relying on this.
-  - Add `Sentry\Monolog\BreadcrumbHandler` at `info` (free context on events,
-    nothing in Docker).
-  - Do **not** enable `Sentry\SentryBundle\Monolog\LogsHandler` (Sentry Logs product).
-- [ ] PII: in `MultiProviderOidcAuthenticator`, drop `email` / `sub` from the log
-      context (or move to `debug`). Skim other `logger->info/warning` call sites
-      (`ClockManager`, `SeekMatcher`, mailers) for PII.
-- [ ] The sweep summary (Phase 0) could become `logger->info` so it lands in
-      breadcrumbs instead of stdout; optional.
+### Phase 3 - Verification
 
-## Phase 3 — Verification
-
-- [ ] Trigger a handled `logger->error(...)` and an uncaught exception in prod mode
-      (`APP_ENV=prod` container or `docker compose exec`): expect one JSON line on
-      stderr each, **one** Sentry event each, breadcrumbs attached, no duplicate.
+- [ ] In prod mode, trigger a handled `logger->error()` and an uncaught exception: one JSON
+      line on stderr each, **one** Sentry event each, breadcrumbs attached, no duplicate.
 - [ ] A 404 produces neither a Sentry event nor a Docker log line.
-- [ ] Watch `docker compose logs -f` in prod for ~10 min: user-traffic access lines
-      and real warnings only.
+- [ ] `docker compose logs -f` in prod for ~10 min: user-traffic access lines and real
+      warnings only.
 - [ ] `composer cs:check` and the PHPUnit suite.
-- [ ] Update `README.md` / ops docs with the log routing table (what goes where).
+- [ ] Document the log routing table (what goes where) in `deploy/README.md`.
 
-## Open items (outside this effort)
+## Smaller items
 
-- `database-1`: `ERROR: relation "games" does not exist` at 14:41 — a one-off at
-  container start, likely a query running before migrations. Worth checking the
-  deploy order (migrate before the worker/sweep start, or `depends_on`).
+- [ ] `DevLoginAuthenticator::onAuthenticationSuccess()` never calls `removeTargetPath()`, so a
+      stale target (an earlier unauthenticated hit on a protected route) hijacks every later
+      `/dev/login` redirect until the session is cleared. Dev only.
+- [ ] Optional: move the Scaleway response-body redaction of `UserMailer::send()` (and the
+      sibling mailers) into `MailerFailureListener`, so that real async transport failures log
+      the diagnostic detail again (D01).
+- [ ] Opponent presence / disconnect indicator and abandonment adjudication are specified
+      (`docs/multiplayer/00-overview.md` §2.1) but not built: `GameEndReason::ABANDONMENT` has no
+      producer. Confirm they are still wanted (`QUESTIONS.md`), else drop them from the spec.
