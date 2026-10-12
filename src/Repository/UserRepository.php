@@ -7,6 +7,7 @@ namespace App\Repository;
 use App\Entity\User;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
+use Symfony\Component\Uid\Uuid;
 
 /**
  * @extends ServiceEntityRepository<User>
@@ -90,5 +91,23 @@ class UserRepository extends ServiceEntityRepository
             ->setMaxResults($limit)
             ->getQuery()
             ->getResult();
+    }
+
+    /**
+     * Every account holding ROLE_ADMIN. `roles` is a JSON column: no DQL for "contains", hence the native query.
+     *
+     * @return list<User>
+     */
+    public function findAdmins(): array
+    {
+        $ids = $this->getEntityManager()->getConnection()->fetchFirstColumn(
+            'SELECT id FROM "user" WHERE roles::jsonb @> \'["ROLE_ADMIN"]\'::jsonb',
+        );
+
+        if ([] === $ids) {
+            return [];
+        }
+
+        return $this->findBy(['id' => array_map(Uuid::fromString(...), $ids)]);
     }
 }

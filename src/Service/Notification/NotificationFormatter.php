@@ -74,6 +74,18 @@ final readonly class NotificationFormatter
                 $gameUrl,
                 'fa-flag-checkered',
             ],
+            NotificationType::SEEK_POSTED => [
+                $this->translator->trans('text.seek_posted', [
+                    'actor' => $actor,
+                    'kind' => \is_string($payload['kind'] ?? null) ? $payload['kind'] : 'unlimited',
+                    'minutes' => (int) ($payload['minutes'] ?? 0),
+                    'increment' => (int) ($payload['increment'] ?? 0),
+                    'hours' => (int) ($payload['hours'] ?? 0),
+                    'rated' => ($payload['rated'] ?? false) ? 'rated' : 'casual',
+                ], 'notifications', $locale),
+                $this->urlGenerator->generate('lobby'),
+                'fa-chess-board',
+            ],
         };
 
         return [

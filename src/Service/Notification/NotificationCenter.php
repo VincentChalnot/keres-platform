@@ -6,6 +6,7 @@ namespace App\Service\Notification;
 
 use App\Entity\Game;
 use App\Entity\Notification;
+use App\Entity\Seek;
 use App\Entity\User;
 use App\Model\Notification\NotificationPreferences;
 use App\Model\Notification\NotificationType;
@@ -98,6 +99,24 @@ final readonly class NotificationCenter
         if (NotificationPreferences::fromUser($seekOwner)->isEmailEnabled(NotificationType::SEEK_MATCHED)) {
             $this->notificationMailer->sendSeekMatched($seekOwner, $game, $opponent);
         }
+    }
+
+    /**
+     * `AdminSeekAlert`, post-commit: `$admin` is told that `$seek` was posted. No subject: one row per seek, they
+     * are an activity feed, not a state to refresh.
+     */
+    public function seekPosted(User $admin, Seek $seek): void
+    {
+        $timeControl = $seek->getTimeControl();
+
+        $this->notify($admin, NotificationType::SEEK_POSTED, [
+            'actor' => self::actorRef($seek->getUser()),
+            'kind' => strtolower($timeControl->getKind()->name),
+            'minutes' => intdiv($timeControl->getInitialSeconds() ?? 0, 60),
+            'increment' => $timeControl->getIncrementSeconds() ?? 0,
+            'hours' => $timeControl->getHoursPerMove() ?? 0,
+            'rated' => $seek->isRated(),
+        ]);
     }
 
     /** `RematchService`, post-commit: the other player of `$parent` is asked for a rematch. The link opens the finished game, where the rematch button accepts it. */

@@ -1,0 +1,16 @@
+{% extends 'email/_layout.html.twig' %}
+
+{% block title %}New seek from {{ seek.user.username }}{% endblock %}
+
+{% block content %}
+    <p style="margin:0 0 16px 0;"><strong>{{ seek.user.username }}</strong> just posted a public seek in the lobby.</p>
+
+    <p style="margin:0 0 24px 0;">
+        <strong>Game:</strong> {{ description }}<br>
+        <strong>Posted:</strong> {{ seek.createdAt|date('Y-m-d H:i') }} UTC
+    </p>
+
+    <p style="margin:0;">
+        <a href="{{ lobbyUrl }}" style="display:inline-block; background-color:#e19e5b; color:#1a1208; padding:12px 28px; border-radius:9999px; text-decoration:none; font-weight:bold;">Open the lobby</a>
+    </p>
+{% endblock %}

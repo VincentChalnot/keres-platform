@@ -17,6 +17,7 @@ text:
     seek_matched: '{actor} accepted your seek. Your game has started.'
     rematch_offered: '{actor} wants a rematch. Open the game to accept.'
     your_turn: '{actor} played a move. It’s your turn.'
+    seek_posted: '{actor} is looking for an opponent: {kind, select, correspondence {correspondence, {hours} h per move} unlimited {no time limit} other {{minutes} min + {increment} s}}{rated, select, rated { (rated)} other { (casual)}}.'
     game_finished:
         win: 'You won against {opponent}{reason, select, resignation { by resignation} timeout { on time} abandonment { by abandonment} draw_agreed { by agreement} other {}}.'
         loss: 'You lost against {opponent}{reason, select, resignation { by resignation} timeout { on time} abandonment { by abandonment} draw_agreed { by agreement} other {}}.'

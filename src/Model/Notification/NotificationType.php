@@ -14,7 +14,7 @@ namespace App\Model\Notification;
  * `notifications` translation domain (en + fr), then one arm in
  * `NotificationFormatter::format()` (with its own `text.*` keys) and one
  * call to `NotificationCenter::notify()` where the event happens. The
- * settings toggle, the inbox and the bell pick it up without further changes.
+ * settings toggle (unless the type is left out of `userConfigurable()`), the inbox and the bell pick it up without further changes.
  */
 enum NotificationType: string
 {
@@ -38,10 +38,22 @@ enum NotificationType: string
         return true;
     }
 
+    /**
+     * The types a user can switch on and off in Settings -> Notifications.
+     *
+     * @return list<self>
+     */
+    public static function userConfigurable(): array
+    {
+        return array_values(array_filter(self::cases(), static fn (self $type): bool => self::SEEK_POSTED !== $type));
+    }
+
     case FRIEND_REQUEST = 'friend_request';
     case FRIEND_ACCEPTED = 'friend_accepted';
     case SEEK_MATCHED = 'seek_matched';
     case REMATCH_OFFERED = 'rematch_offered';
     case YOUR_TURN = 'your_turn';
     case GAME_FINISHED = 'game_finished';
+    /** Admins only (`AdminSeekAlert`): a public seek was posted. Not a user choice, so no settings toggle. */
+    case SEEK_POSTED = 'seek_posted';
 }

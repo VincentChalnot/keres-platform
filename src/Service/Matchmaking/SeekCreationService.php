@@ -43,6 +43,7 @@ final readonly class SeekCreationService
         private RatingUpdater $ratingUpdater,
         private ClockInterface $clock,
         private MessageBusInterface $messageBus,
+        private AdminSeekAlert $adminSeekAlert,
     ) {
     }
 
@@ -68,6 +69,7 @@ final readonly class SeekCreationService
             $poolSize = \count($this->seekRepository->findOpenForListing($now));
             $event = $this->seekPayloadBuilder->buildAddedEvent($result->seek, $poolSize, $now);
             $this->publisher->publishSeekEvent($this->seekPayloadBuilder->encode($event));
+            $this->adminSeekAlert->notify($result->seek);
         }
 
         return new SeekCreateOutcome($result->seek, $matchedGame, false);

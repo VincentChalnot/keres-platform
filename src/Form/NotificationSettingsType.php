@@ -25,7 +25,7 @@ class NotificationSettingsType extends AbstractType
         $inApp = $builder->create('inApp', null, ['compound' => true, 'label' => false]);
         $email = $builder->create('email', null, ['compound' => true, 'label' => false]);
 
-        foreach (NotificationType::cases() as $type) {
+        foreach (NotificationType::userConfigurable() as $type) {
             $inApp->add($type->value, CheckboxType::class, [
                 'label' => $type->labelKey(),
                 'translation_domain' => 'notifications',

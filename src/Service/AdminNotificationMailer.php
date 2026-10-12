@@ -5,7 +5,9 @@ declare(strict_types=1);
 namespace App\Service;
 
 use App\Entity\Feedback;
+use App\Entity\Seek;
 use App\Model\FeedbackCategory;
+use App\Model\TimeControlKind;
 use Psr\Log\LoggerInterface;
 use Symfony\Bridge\Twig\Mime\TemplatedEmail;
 use Symfony\Component\Mailer\MailerInterface;
@@ -63,6 +65,38 @@ final readonly class AdminNotificationMailer
                 'feedback' => $feedback,
                 'requestTypeLabel' => $requestTypeLabel,
                 'reviewUrl' => $reviewUrl,
+            ]);
+
+        $this->mailer->send($email);
+    }
+
+    /** A public seek was just posted (`AdminSeekAlert`): somebody is waiting for an opponent in the lobby. */
+    public function sendSeekPosted(Seek $seek): void
+    {
+        if ('' === $this->adminNotificationEmail) {
+            $this->logger->info('Skipping admin seek notification: ADMIN_NOTIFICATION_EMAIL is not configured.');
+
+            return;
+        }
+
+        $timeControl = $seek->getTimeControl();
+        $description = match ($timeControl->getKind()) {
+            TimeControlKind::UNLIMITED => 'no time limit',
+            TimeControlKind::CORRESPONDENCE => \sprintf('correspondence, %d h per move', $timeControl->getHoursPerMove()),
+            TimeControlKind::REALTIME => \sprintf('%d min + %d s', intdiv($timeControl->getInitialSeconds() ?? 0, 60), $timeControl->getIncrementSeconds() ?? 0),
+        };
+        $description .= $seek->isRated() ? ', rated' : ', casual';
+
+        $email = (new TemplatedEmail())
+            ->from($this->mailerFromAddress)
+            ->to($this->adminNotificationEmail)
+            ->subject(\sprintf('New seek from %s (%s)', $seek->getUser()->getUsername(), $description))
+            ->htmlTemplate('email/admin_seek_posted.html.twig')
+            ->textTemplate('email/admin_seek_posted.txt.twig')
+            ->context([
+                'seek' => $seek,
+                'description' => $description,
+                'lobbyUrl' => $this->urlGenerator->generate('lobby', [], UrlGeneratorInterface::ABSOLUTE_URL),
             ]);
 
         $this->mailer->send($email);

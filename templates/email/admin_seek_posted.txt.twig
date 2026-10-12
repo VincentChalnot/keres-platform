@@ -1,0 +1,10 @@
+{% extends 'email/_layout.txt.twig' %}
+
+{% block content %}
+{{ seek.user.username }} just posted a public seek in the lobby.
+
+Game: {{ description }}
+Posted: {{ seek.createdAt|date('Y-m-d H:i') }} UTC
+
+Open the lobby: {{ lobbyUrl }}
+{% endblock %}
