@@ -67,6 +67,19 @@ export class LocalGameAPI extends GameAPI {
         return record;
     }
 
+    async deleteGame(): Promise<void> {
+        LocalGameAPI.clear();
+    }
+
+    /** Forgets the saved game (an aborted game that never had a move). */
+    static clear(): void {
+        try {
+            window.localStorage.removeItem(STORAGE_KEY);
+        } catch {
+            // Storage unavailable: nothing was saved anyway.
+        }
+    }
+
     private static persist(record: GuestGameRecord): void {
         try {
             window.localStorage.setItem(STORAGE_KEY, JSON.stringify(record));

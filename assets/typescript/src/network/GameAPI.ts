@@ -247,6 +247,18 @@ export class GameAPI {
         return response.text();
     }
 
+    /** Deletes the game (soft delete on the server); only meant for a game without any move. */
+    async deleteGame(): Promise<void> {
+        if (!this.gameUuid) {
+            throw new Error(t('play.error.no_game'));
+        }
+
+        const response = await fetch(`/play/${this.gameUuid}/delete`, {method: 'POST'});
+        if (!response.ok) {
+            throw new Error(t('play.error.delete_game'));
+        }
+    }
+
     /**
      * Resign the current game via AJAX. Returns the finished game state
      * payload (the server publishes the Mercure update for the opponent).

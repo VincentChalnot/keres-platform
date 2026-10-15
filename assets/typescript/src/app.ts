@@ -765,8 +765,30 @@ class KeresGame {
     }
 
     private async handleUndo(): Promise<void> {
+        if (0 === this.controller.getTotalPlies()) {
+            await this.handleAbortEmptyGame();
+            return;
+        }
+
         await this.controller.undoMove();
         this.refreshUI();
+    }
+
+    /** Nothing to take back: undo offers to throw the game away instead. */
+    private async handleAbortEmptyGame(): Promise<void> {
+        const confirmed = await confirmModal(
+            t('play.abort_empty.message'),
+            {title: t('play.abort_empty.title'), confirmLabel: t('play.abort_empty.confirm'), danger: true},
+        );
+
+        if (!confirmed) return;
+
+        try {
+            await this.api.deleteGame();
+            window.location.href = '/lobby';
+        } catch (error) {
+            window.dispatchEvent(new CustomEvent('showError', {detail: {message: (error as Error).message}}));
+        }
     }
 
     // ─── Display settings (this page only, until saved as defaults) ───────────

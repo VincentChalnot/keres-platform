@@ -28,6 +28,10 @@ resign:
     title: Resign
     message: Are you sure you want to resign? The game will be lost.
     confirm: Resign
+abort_empty:
+    title: Abandon game
+    message: No move has been played yet. Do you want to abort and delete this game and go back to the lobby?
+    confirm: Delete game
 players:
     you: You
     ai: 'AI (level {level})'
@@ -61,6 +65,7 @@ error:
     undo_move: Failed to undo move
     resign: Failed to resign
     no_moves_to_undo: No moves to undo
+    delete_game: Failed to delete the game
     ai_failed: 'The AI could not play (server returned {status}). Use Undo, then try again.'
     play_move_failed: 'Failed to play move: {message}'
     decode_moves_failed: 'Failed to decode move stack: {message}'

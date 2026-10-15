@@ -28,6 +28,10 @@ resign:
     title: Abandonner
     message: Voulez-vous vraiment abandonner ? La partie sera perdue.
     confirm: Abandonner
+abort_empty:
+    title: Abandonner la partie
+    message: Aucun coup n’a encore été joué. Voulez-vous annuler et supprimer cette partie, puis retourner au salon ?
+    confirm: Supprimer la partie
 players:
     you: Vous
     ai: 'IA (niveau {level})'
@@ -61,6 +65,7 @@ error:
     undo_move: Impossible d’annuler le coup
     resign: Impossible d’abandonner
     no_moves_to_undo: Aucun coup à annuler
+    delete_game: Impossible de supprimer la partie
     ai_failed: 'L’ordinateur n’a pas pu jouer (réponse du serveur : {status}). Annulez votre coup, puis réessayez.'
     play_move_failed: 'Impossible de jouer ce coup : {message}'
     decode_moves_failed: 'Impossible de lire la liste des coups : {message}'
