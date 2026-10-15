@@ -1,0 +1,52 @@
+{# Big radio selector over an expanded ChoiceType (see `.choice-cards` in assets/design-system.css).
+   Parameters: field (the form view), kind ('level' = AI portraits in a grid, 'side' = ? / white king / black king).
+   Every radio keeps the name/value/checked state Symfony computed, so the submission is the plain ChoiceType one. #}
+{% trans_default_domain 'game' %}
+{% if kind == 'level' %}
+<div class="choice-scroller" data-choice-scroller>
+    <button type="button" class="choice-scroller__arrow choice-scroller__arrow--prev" data-dir="-1" aria-label="{{ 'new_local_game.form.ai_level_prev'|trans }}"><i class="fa-solid fa-chevron-left" aria-hidden="true"></i></button>
+{% endif %}
+<div class="choice-cards choice-cards--{{ kind == 'level' ? 'levels' : 'sides' }}" role="radiogroup">
+    {% for child in field %}
+        {% set locked = child.vars.disabled or field.vars.disabled %}
+        <label class="choice-card"{% if kind == 'level' and locked %} title="{{ child.vars.label|trans(child.vars.label_translation_parameters, 'game') }}"{% endif %}>
+            <input type="radio" class="choice-card__input" name="{{ child.vars.full_name }}" id="{{ child.vars.id }}" value="{{ child.vars.value }}"{% if child.vars.checked %} checked{% endif %}{% if locked %} disabled{% endif %}>
+            {% if kind == 'level' %}
+                <img class="choice-card__avatar" src="/images/bots/level-{{ child.vars.value }}.webp" alt="" width="96" height="96" loading="lazy">
+                <span class="choice-card__label">{{ locked ? '<i class="fa-solid fa-lock" aria-hidden="true"></i> '|raw }}{{ 'new_local_game.form.ai_level_short'|trans({level: child.vars.value}) }}</span>
+            {% elseif child.vars.value == 'white' %}
+                <span class="choice-card__glyph">{% include '_piece_king.html.twig' with {side: 'white'} only %}</span>
+                <span class="choice-card__label">{{ child.vars.label|trans({}, 'game') }}</span>
+            {% elseif child.vars.value == 'black' %}
+                <span class="choice-card__glyph">{% include '_piece_king.html.twig' with {side: 'black'} only %}</span>
+                <span class="choice-card__label">{{ child.vars.label|trans({}, 'game') }}</span>
+            {% else %}
+                <span class="choice-card__glyph"><i class="fa-solid fa-question" aria-hidden="true"></i></span>
+                <span class="choice-card__label">{{ child.vars.label|trans({}, 'game') }}</span>
+            {% endif %}
+        </label>
+    {% endfor %}
+</div>
+{% if kind == 'level' %}
+    <button type="button" class="choice-scroller__arrow choice-scroller__arrow--next" data-dir="1" aria-label="{{ 'new_local_game.form.ai_level_next'|trans }}"><i class="fa-solid fa-chevron-right" aria-hidden="true"></i></button>
+</div>
+<script>
+    document.querySelectorAll('[data-choice-scroller]:not([data-ready])').forEach((box) => {
+        box.dataset.ready = '1';
+        const row = box.querySelector('.choice-cards');
+        const arrows = box.querySelectorAll('.choice-scroller__arrow');
+        const sync = () => {
+            const max = row.scrollWidth - row.clientWidth - 1;
+            arrows[0].disabled = row.scrollLeft <= 0;
+            arrows[1].disabled = row.scrollLeft >= max;
+        };
+        arrows.forEach((a) => a.addEventListener('click', () => {
+            row.scrollBy({left: a.dataset.dir * row.clientWidth * 0.8, behavior: 'smooth'});
+        }));
+        row.addEventListener('scroll', sync, {passive: true});
+        new ResizeObserver(sync).observe(row);
+        row.querySelector('input:checked')?.closest('.choice-card').scrollIntoView({inline: 'center', block: 'nearest'});
+        sync();
+    });
+</script>
+{% endif %}

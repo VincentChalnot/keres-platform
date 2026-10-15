@@ -19,7 +19,8 @@
                 <div class="field-row">
                     {{ form_label(form.playerSide) }}
                     <div>
-                        {{ form_widget(form.playerSide) }}
+                        {% include 'actions/_choice_cards.html.twig' with {field: form.playerSide, kind: 'side'} only %}
+                        {% do form.playerSide.setRendered %}
                         {{ form_help(form.playerSide) }}
                         {{ form_errors(form.playerSide) }}
                     </div>
@@ -28,7 +29,8 @@
                 <div class="field-row">
                     {{ form_label(form.aiLevel) }}
                     <div>
-                        {{ form_widget(form.aiLevel) }}
+                        {% include 'actions/_choice_cards.html.twig' with {field: form.aiLevel, kind: 'level'} only %}
+                        {% do form.aiLevel.setRendered %}
                         {{ form_help(form.aiLevel) }}
                         {{ form_errors(form.aiLevel) }}
                     </div>

@@ -18,3 +18,90 @@
   touch-action: none;
   -webkit-tap-highlight-color: transparent;
 }
+
+/*
+ * Big radio selector ("choice cards", /play/new): the native radio stays in the DOM (keyboard, form submit) but is
+ * visually hidden; the card around it shows the choice. Markup: templates/actions/_choice_cards.html.twig.
+ */
+.choice-cards {
+  @apply grid grid-cols-1 gap-3;
+}
+
+.choice-cards--levels {
+  @apply flex min-w-0 flex-1 gap-3 overflow-x-auto pb-2;
+  scroll-snap-type: x proximity;
+}
+
+.choice-cards--levels .choice-card {
+  @apply shrink-0;
+  scroll-snap-align: center;
+  width: 10.5rem;
+}
+
+.choice-scroller {
+  @apply flex items-center gap-2;
+  width: 0;
+  min-width: 100%;
+}
+
+.choice-scroller__arrow {
+  @apply inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-line bg-surface text-soft transition hover:bg-surface-hover;
+}
+
+.choice-scroller__arrow:disabled {
+  @apply cursor-default opacity-40;
+}
+
+.choice-cards--sides {
+  @apply grid-cols-3;
+}
+
+.choice-card {
+  @apply relative flex cursor-pointer flex-col items-center justify-center gap-2 rounded-md border border-line bg-surface p-3 text-center text-soft transition;
+}
+
+.choice-card:hover {
+  @apply bg-surface-hover;
+}
+
+.choice-card:has(input:checked) {
+  @apply border-primary text-primary shadow-raised;
+  box-shadow: 0 0 0 2px rgb(var(--k-primary) / 0.6);
+}
+
+.choice-card:has(input:focus-visible) {
+  @apply outline outline-2 outline-offset-2 outline-primary;
+}
+
+.choice-card:has(input:disabled) {
+  @apply cursor-not-allowed opacity-50;
+}
+
+.choice-card__input {
+  @apply absolute h-px w-px overflow-hidden opacity-0;
+}
+
+.choice-card__avatar {
+  @apply h-auto w-full rounded-md;
+  max-width: 12rem;
+}
+
+.choice-card__glyph {
+  @apply inline-flex items-center justify-center text-5xl leading-none;
+  min-height: 4.5rem;
+}
+
+.choice-card__glyph .piece-king {
+  @apply h-auto w-24 overflow-visible;
+  --piece-bg: #ddccad;
+  --piece-fg: #1d1610;
+}
+
+.choice-card__glyph .piece-king--black {
+  --piece-bg: #1d1610;
+  --piece-fg: #ddccad;
+}
+
+.choice-card__label {
+  @apply text-sm font-semibold;
+}

@@ -47,6 +47,7 @@ class LocalGameType extends AbstractType
                     'color.black' => 'black',
                     'color.random' => 'random',
                 ],
+                'expanded' => true,
                 'data' => 'random', // Default selection
             ])
             ->add('opponentType', ChoiceType::class, [
@@ -65,6 +66,7 @@ class LocalGameType extends AbstractType
                 'choice_label' => static fn (int $level): string => $guest && $level > self::GUEST_MAX_AI_LEVEL ? 'new_local_game.form.ai_level_locked' : (string) $level,
                 'choice_translation_parameters' => static fn (int $level): array => ['level' => $level],
                 'choice_attr' => static fn (int $level): array => $guest && $level > self::GUEST_MAX_AI_LEVEL ? ['disabled' => 'disabled'] : [],
+                'expanded' => true,
                 'data' => 1, // T10: default is the weakest level.
             ])
             ->add('liveEvaluation', CheckboxType::class, [

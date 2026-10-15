@@ -249,6 +249,9 @@ new_local_game:
         live_evaluation: Barre d’évaluation en direct
         live_evaluation_help: Affiche l’évaluation de la position par le moteur à côté du plateau, comme sur chess.com. Parties amicales uniquement.
         ai_level_locked: '{level} - connectez-vous pour débloquer'
+        ai_level_short: 'Niveau {level}'
+        ai_level_prev: Niveaux précédents
+        ai_level_next: Niveaux suivants
         ai_level_guest_help: 'Ne s’applique que contre l’ordinateur. Les invités jouent les niveaux 1 à 4 ; connectez-vous pour débloquer les niveaux 5 à 10.'
         live_evaluation_guest_help: Connectez-vous pour débloquer la barre d’évaluation en direct.
         rated: Partie classée

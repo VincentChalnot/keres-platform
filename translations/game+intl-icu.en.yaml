@@ -249,6 +249,9 @@ new_local_game:
         live_evaluation: Live evaluation bar
         live_evaluation_help: Shows the engine’s assessment of the position next to the board, like chess.com. Casual games only.
         ai_level_locked: '{level} - sign in to unlock'
+        ai_level_short: 'Level {level}'
+        ai_level_prev: Previous levels
+        ai_level_next: Next levels
         ai_level_guest_help: 'Only applies against the AI. Guests can play levels 1 to 4; sign in to unlock levels 5 to 10.'
         live_evaluation_guest_help: Sign in to unlock the live evaluation bar.
         ai_level_guest_error: Sign in to play against this level.
