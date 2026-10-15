@@ -24,6 +24,12 @@ register:
 accept_terms:
     title: Conditions d’utilisation
     subtitle: Avant de continuer, veuillez accepter nos conditions d’utilisation.
+    summary:
+        title: 'Les points essentiels :'
+        fair_play: 'Pas d’aide extérieure. Recourir à une assistance externe non autorisée pour jouer à votre place peut entraîner la suspension ou la suppression de votre compte.'
+        username: Vous ne pouvez changer votre pseudo public qu’une fois tous les douze mois.
+        as_is: Le service est gratuit et fourni tel quel. Il peut être modifié, suspendu ou arrêté à tout moment, sans contrepartie.
+        history: 'La suppression du compte se demande via le formulaire de contact, et l’historique de vos parties est conservé sous forme anonymisée.'
     logout: Se déconnecter
 reset_password:
     title: Réinitialiser votre mot de passe

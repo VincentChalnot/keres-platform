@@ -10,13 +10,21 @@
                 <h1 class="page-title">{{ 'accept_terms.title'|trans }}</h1>
                 <p class="page-subtitle">{{ 'accept_terms.subtitle'|trans }}</p>
 
-                {{ form_start(form) }}
-                    {{ form_widget(form) }}
-                {{ form_end(form) }}
+                <p class="mb-2 font-semibold">{{ 'accept_terms.summary.title'|trans }}</p>
+                <ul class="mb-6 list-disc space-y-1 pl-5">
+                    {% for key in ['fair_play', 'username', 'as_is', 'history'] %}
+                        <li>{{ ('accept_terms.summary.' ~ key)|trans }}</li>
+                    {% endfor %}
+                </ul>
 
-                <p class="mb-0 mt-4">
-                    <a href="{{ path('logout') }}">{{ 'accept_terms.logout'|trans }}</a>
-                </p>
+                {{ form_start(form) }}
+                    {{ form_row(form.acceptTerms) }}
+                    <div class="flex items-center justify-between gap-3">
+                        {{ form_widget(form.submit) }}
+                        <a href="{{ path('logout') }}" class="btn btn--outline">{{ 'accept_terms.logout'|trans }}</a>
+                    </div>
+                    {{ form_rest(form) }}
+                {{ form_end(form) }}
             </div>
         </div>
     </section>

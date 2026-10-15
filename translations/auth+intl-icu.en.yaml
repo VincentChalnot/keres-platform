@@ -24,6 +24,12 @@ register:
 accept_terms:
     title: Terms of use
     subtitle: Before you continue, please accept our terms of use.
+    summary:
+        title: 'The key points:'
+        fair_play: No outside help. Using unauthorized external assistance to play for you can get your account suspended or deleted.
+        username: You can change your public username only once every twelve months.
+        as_is: The service is free and provided as is. It can be changed, suspended or discontinued at any time, without compensation.
+        history: Deleting your account is done through the contact form, and your game history is kept in anonymized form.
     logout: Log out
 reset_password:
     title: Reset your password
