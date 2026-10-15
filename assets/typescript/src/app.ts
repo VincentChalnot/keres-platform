@@ -682,7 +682,6 @@ class KeresGame {
         const flipped = this.gameState.isBoardFlipped();
         this.gameLayout.classList.toggle('is-flipped', flipped);
         this.evalBar?.setFlipped(flipped);
-        this.evalGraph?.setFlipped(flipped);
     }
 
     private async handleResign(): Promise<void> {

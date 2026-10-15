@@ -334,7 +334,7 @@ Client side, `app.ts` renders the evaluations in three places, all fed by the sa
 the bar (`EvalBar.ts`), a per-move delta in the move list (`appendMoveEvaluation()`: the evaluation after the move,
 and `is-loss` / `is-blunder` when it cost the mover at least `MOVE_LOSS` / `MOVE_BLUNDER` points, a decided position
 counting as `DECIDED_SCORE`) and `views/EvalGraph.ts`, a hand-rolled SVG area graph under the board
-(`#eval-graph`, hidden until there is something to show, flipped vertically with the board, a click jumps to the ply
+(`#eval-graph`, hidden until there is something to show, White always at the bottom whatever the board orientation, a click jumps to the ply
 through `GameController.goToPly`). Their styles are the design system's (`game.css`).
 
 - `EngineApi` — makes raw HTTP calls

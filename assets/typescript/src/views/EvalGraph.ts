@@ -12,7 +12,6 @@ const HEIGHT = 100;
 
 export class EvalGraph {
     private selectHandler: ((ply: number) => void) | null = null;
-    private flipped = false;
     private totalPlies = 0;
 
     constructor(private readonly root: HTMLElement) {
@@ -31,20 +30,8 @@ export class EvalGraph {
         this.root.hidden = !visible;
     }
 
-    /** Turns the graph upside down with the board, like the bar: the viewer's side stays at the bottom (time still runs left to right). */
-    setFlipped(flipped: boolean): void {
-        this.flipped = flipped;
-        this.applyOrientation(this.root.firstElementChild);
-    }
-
     onSelectPly(handler: (ply: number) => void): void {
         this.selectHandler = handler;
-    }
-
-    private applyOrientation(svg: Element | null): void {
-        if (svg instanceof SVGElement) {
-            svg.style.transform = this.flipped ? 'scaleY(-1)' : '';
-        }
     }
 
     /**
@@ -64,7 +51,6 @@ export class EvalGraph {
         svg.setAttribute('viewBox', `0 0 ${totalPlies} ${HEIGHT}`);
         svg.setAttribute('preserveAspectRatio', 'none');
         svg.setAttribute('aria-hidden', 'true');
-        this.applyOrientation(svg);
 
         // Areas under the curve, one per run of plies with a known verdict
         const known = (ply: number): number | null => (0 === ply ? 0 : (scores.get(ply) ?? null));
