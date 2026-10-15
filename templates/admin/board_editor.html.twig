@@ -33,6 +33,33 @@
                 <p class="help help--danger" id="board-editor-status" role="status"></p>
             </div>
 
+            <div class="card" id="board-editor-styles">
+                <h3 class="card__title card__title--sm">Styles</h3>
+                <div class="field">
+                    <p class="label !text-sm" id="board-editor-piece-style-label">Piece style</p>
+                    <div class="btn-group" role="group" aria-labelledby="board-editor-piece-style-label">
+                        <button type="button" class="btn btn--outline btn--sm" data-paint="piece:normal">Normal</button>
+                        <button type="button" class="btn btn--outline btn--sm" data-paint="piece:muted">Muted</button>
+                        <button type="button" class="btn btn--outline btn--sm" data-paint="piece:highlighted">Highlighted</button>
+                    </div>
+                </div>
+                <div class="field">
+                    <p class="label !text-sm" id="board-editor-tile-style-label">Square style</p>
+                    <div class="btn-group" role="group" aria-labelledby="board-editor-tile-style-label">
+                        <button type="button" class="btn btn--outline btn--sm" data-paint="tile:normal">Normal</button>
+                        <button type="button" class="btn btn--outline btn--sm" data-paint="tile:moved">Moved</button>
+                        <button type="button" class="btn btn--outline btn--sm" data-paint="tile:friendly">Hover friendly</button>
+                        <button type="button" class="btn btn--outline btn--sm" data-paint="tile:enemy">Hover enemy</button>
+                        <button type="button" class="btn btn--outline btn--sm" data-paint="tile:selected">Selected</button>
+                        <button type="button" class="btn btn--outline btn--sm" data-paint="tile:potential">Potential movement</button>
+                    </div>
+                </div>
+                <div class="btn-group">
+                    <button type="button" class="btn btn--outline btn--sm" id="board-editor-reset-styles">Reset styles</button>
+                </div>
+                <p class="help">Pick a style, then click squares to paint it (this replaces the piece selected above). Styles are the game's own, are part of the export and are not part of the board code.</p>
+            </div>
+
             <div class="card">
                 <h3 class="card__title card__title--sm">Position</h3>
                 <div class="btn-group mb-4">

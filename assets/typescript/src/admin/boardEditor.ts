@@ -11,6 +11,7 @@ import {
 } from '../utils/boardUtils';
 import {downloadFile} from '../views/boardExport';
 import SVGBoardView from '../views/SVGBoardView';
+import {PieceStyle, TileHighlight} from '../views/IBoardView';
 
 /**
  * Admin board editor: builds a position from scratch on the very `SVGBoardView` the game uses, with arrows, and
@@ -34,7 +35,21 @@ const EXPORT_FILENAME = 'keres-board.html';
 const EXPORT_SVG_FILENAME = 'keres-board.svg';
 const COPIED_LABEL_MS = 1500;
 
-type Tool = {kind: 'eraser'} | {kind: 'piece'; color: boolean; type: string};
+type Tool =
+    | {kind: 'eraser'}
+    | {kind: 'piece'; color: boolean; type: string}
+    | {kind: 'piece-style'; style: PieceStyle | null}
+    | {kind: 'tile-style'; type: TileHighlight['type'] | null};
+
+/** The editor's square styles, all of them the game's own highlights (`HIGHLIGHT_STYLES` of the view). */
+const TILE_STYLES: Record<string, TileHighlight['type']> = {
+    moved: 'last_move',
+    friendly: 'hovered',
+    enemy: 'threat',
+    selected: 'selected',
+    potential: 'potential',
+};
+
 type Placement = 'replace' | 'stack';
 
 /** White to move, no-capture counter 0: the editor only deals with "the board position". */
@@ -93,6 +108,7 @@ export async function initBoardEditor(): Promise<void> {
     const coordinatesBox = requireElement<HTMLInputElement>('board-editor-coordinates');
     const rotateBox = requireElement<HTMLInputElement>('board-editor-rotate');
     const placementButtons = Array.from(root.querySelectorAll<HTMLButtonElement>('[data-placement]'));
+    const paintButtons = Array.from(root.querySelectorAll<HTMLButtonElement>('[data-paint]'));
 
     // The game's own view; the state object only carries the orientation here (no board, no moves, no selection)
     const gameState = new GameState();
@@ -103,6 +119,9 @@ export async function initBoardEditor(): Promise<void> {
     view.setOpponentRotated(rotateBox.checked);
 
     let position = emptyPosition();
+    // What is painted, by logical tile index: independent of the position (like the arrows)
+    const pieceStyles = new Map<number, PieceStyle>();
+    const tileStyles = new Map<number, TileHighlight['type']>();
     const undoStack: Uint8Array[] = [];
     const redoStack: Uint8Array[] = [];
     let tool: Tool = {kind: 'piece', color: true, type: KING};
@@ -168,6 +187,21 @@ export async function initBoardEditor(): Promise<void> {
         show();
     }
 
+    /** Paints (or, with null, un-paints) one square; the painting is not part of the position, undo or code. */
+    function setStyle<T>(styles: Map<number, T>, index: number, style: T | null): void {
+        if (null === style) {
+            styles.delete(index);
+        } else {
+            styles.set(index, style);
+        }
+        applyStyles();
+    }
+
+    function applyStyles(): void {
+        view.setPieceStyles(pieceStyles);
+        view.updateOverlays(Array.from(tileStyles, ([position, type]) => ({position, type, lasting: true})));
+    }
+
     function setSquare(index: number, piece: Piece | null): void {
         const next = position.slice();
         next[index] = piece ? encodePiece(piece) : 0;
@@ -179,6 +213,9 @@ export async function initBoardEditor(): Promise<void> {
         if ('eraser' === tool.kind) {
             setSquare(index, null);
             return;
+        }
+        if ('piece' !== tool.kind) {
+            return; // a style is painted, not placed
         }
         if ('replace' === placement) {
             setSquare(index, {color: tool.color, bottom: tool.type, top: null});
@@ -202,7 +239,14 @@ export async function initBoardEditor(): Promise<void> {
 
     // ── Board interaction (left button; the right one belongs to the arrows, handled by the view) ──
     view.onTileClick((index) => {
-        if (!pointerDown) {
+        if (pointerDown) {
+            return;
+        }
+        if ('piece-style' === tool.kind) {
+            setStyle(pieceStyles, index, tool.style);
+        } else if ('tile-style' === tool.kind) {
+            setStyle(tileStyles, index, tool.type);
+        } else {
             applyTool(index);
         }
     });
@@ -211,6 +255,9 @@ export async function initBoardEditor(): Promise<void> {
         // mousedown target before the browser dispatches the click: no click is sent then, and the view, which
         // swallows "the click that follows a drag", would swallow the next real one instead. Let the click go first.
         window.setTimeout(() => {
+            if ('piece' !== tool.kind && 'eraser' !== tool.kind) {
+                return; // painting a style does not move pieces
+            }
             if (0 === position[from]) {
                 return; // nothing to carry
             }
@@ -236,8 +283,15 @@ export async function initBoardEditor(): Promise<void> {
         for (const entry of toolButtons) {
             const selected = 'eraser' === entry.tool.kind
                 ? 'eraser' === tool.kind
-                : 'piece' === tool.kind && entry.tool.color === tool.color && entry.tool.type === tool.type;
+                : 'piece' === entry.tool.kind && 'piece' === tool.kind && entry.tool.color === tool.color && entry.tool.type === tool.type;
             entry.button.setAttribute('aria-pressed', String(selected));
+        }
+        for (const button of paintButtons) {
+            const [kind, name] = (button.dataset.paint ?? '').split(':');
+            const selected = 'piece' === kind
+                ? 'piece-style' === tool.kind && tool.style === ('normal' === name ? null : name)
+                : 'tile-style' === tool.kind && tool.type === ('normal' === name ? null : TILE_STYLES[name]);
+            button.setAttribute('aria-pressed', String(selected));
         }
     }
 
@@ -318,8 +372,26 @@ export async function initBoardEditor(): Promise<void> {
     requireElement<HTMLButtonElement>('board-editor-flip').addEventListener('click', () => {
         gameState.flipBoard();
         void view.render(position, gameState.isBoardFlipped());
+        applyStyles(); // the highlights are drawn by tile position on screen: they follow the new orientation
     });
     coordinatesBox.addEventListener('change', () => view.setCoordinatesVisible(coordinatesBox.checked));
+    requireElement<HTMLButtonElement>('board-editor-reset-styles').addEventListener('click', () => {
+        pieceStyles.clear();
+        tileStyles.clear();
+        applyStyles();
+    });
+    for (const button of paintButtons) {
+        button.addEventListener('click', () => {
+            const [kind, name] = (button.dataset.paint ?? '').split(':');
+            if ('piece' === kind) {
+                tool = {kind: 'piece-style', style: 'normal' === name ? null : (name as PieceStyle)};
+            } else {
+                tool = {kind: 'tile-style', type: 'normal' === name ? null : TILE_STYLES[name]};
+            }
+            setStatus(null);
+            refreshPalette();
+        });
+    }
     rotateBox.addEventListener('change', () => view.setOpponentRotated(rotateBox.checked));
     undoButton.addEventListener('click', undo);
     redoButton.addEventListener('click', redo);

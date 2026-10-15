@@ -222,6 +222,14 @@ custom board).
   plus a top piece of one colour, never a king (what `encodePiece` can hold): choose "Stack on top of the piece
   there" and click a square holding a same-colour piece (the top of an existing stack is replaced); "Replace what
   is there" puts a lone piece.
+- **Painted styles**: the "Styles" card paints squares and pieces by clicking (a paint tool replaces the piece tool; dragging
+  moves nothing while one is active). Square styles are the game's own highlights, drawn by
+  `view.updateOverlays()` with `lasting: true` (so the static exports keep even `hovered`): Moved = `last_move`,
+  Hover friendly = `hovered`, Hover enemy = `threat`, Selected = `selected`, Potential = `potential`, so changing
+  `HIGHLIGHT_STYLES` in `SVGBoardView` changes the editor too. Piece styles (muted, highlighted) are
+  `view.setPieceStyles(Map<tile, PieceStyle>)`: the `.piece-muted` / `.piece-highlighted` classes of `assets/board.css`,
+  re-applied after every render. Both are keyed by logical tile, independent of the position, undo and board code (like
+  arrows), survive flips and are cleared by "Reset styles".
 - **Export**: "Export HTML" is `downloadFile(view.exportStaticHtml('Keres board'), 'keres-board.html', 'text/html')`
   and "Export SVG" `downloadFile(view.exportStaticSvg(), 'keres-board.svg', 'image/svg+xml')`
   (`views/boardExport.ts`); the file is the board exactly as displayed (position, arrows, orientation,

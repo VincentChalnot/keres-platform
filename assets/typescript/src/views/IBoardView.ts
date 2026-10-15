@@ -98,9 +98,13 @@ export interface IBoardView {
     exportStaticSvg?(): string;
 }
 
+export type PieceStyle = 'muted' | 'highlighted';
+
 export interface TileHighlight {
     position: number;
     type: 'selected' | 'potential' | 'hovered' | 'threat' | 'last_move';
+    /** Part of the picture, not of a mouse hover: kept by the static exports even for `hovered` (the board editor's paint) */
+    lasting?: boolean;
 }
 
 /**

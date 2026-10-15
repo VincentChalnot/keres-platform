@@ -10,6 +10,16 @@ svg.keres-board,
     filter: drop-shadow(3px 3px 4px rgba(0, 0, 0, 0.4));
 }
 
+/* Painted piece styles (SVGBoardView.setPieceStyles, the admin board editor): muted = see-through, highlighted =
+   bright halo. The id raises the specificity above the stacked piece's drop shadow and the animation transition. */
+#pieces-layer .piece-muted {
+    opacity: 0.3;
+}
+
+#pieces-layer .piece-highlighted {
+    filter: drop-shadow(0 0 3px #ffe14d) drop-shadow(0 0 8px #ffd000) drop-shadow(0 0 14px #ffb300);
+}
+
 .p-w {
     --piece-bg: #ddccad;
     --piece-fg: #1d1610;

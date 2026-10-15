@@ -1,4 +1,4 @@
-import {IBoardView, TileHighlight} from './IBoardView';
+import {IBoardView, PieceStyle, TileHighlight} from './IBoardView';
 import {AnimationSpeed, BOARD_SIZE, LAST_BOARD_INDEX} from '../models/types';
 import {GameState} from '../models/GameState';
 import {decodePiece} from "../utils/boardUtils";
@@ -61,7 +61,10 @@ export default class SVGBoardView implements IBoardView {
     private overlayElements: Map<number, SVGRectElement> = new Map();
 
     // What the overlays currently show, in painting order (a later highlight of a tile covers an earlier one)
-    private painted: Array<{visualIndex: number; type: TileHighlight['type']}> = [];
+    private painted: Array<{visualIndex: number; type: TileHighlight['type']; lasting: boolean}> = [];
+
+    // Per-tile piece styles (logical tile index), re-applied after every render (pieces are recreated or moved)
+    private pieceStyles: Map<number, PieceStyle> = new Map();
 
     // Drag & drop state
     private dragState: {
@@ -311,6 +314,7 @@ export default class SVGBoardView implements IBoardView {
             }
             this.currentBoardData = new Uint8Array(boardData);
             this.currentFlipped = flipped;
+            this.applyPieceStyles();
             return;
         }
 
@@ -336,6 +340,7 @@ export default class SVGBoardView implements IBoardView {
 
         // Update cached board state
         this.currentBoardData = new Uint8Array(boardData);
+        this.applyPieceStyles();
     }
 
     /**
@@ -560,7 +565,7 @@ export default class SVGBoardView implements IBoardView {
         for (const highlight of highlights) {
             const tileIndex = highlight.position;
             const visualIndex = flipped ? (LAST_BOARD_INDEX - tileIndex) : tileIndex;
-            this.painted.push({visualIndex, type: highlight.type});
+            this.painted.push({visualIndex, type: highlight.type, lasting: highlight.lasting === true});
             const overlay = this.overlayElements.get(visualIndex);
             if (!overlay) continue;
 
@@ -901,6 +906,23 @@ export default class SVGBoardView implements IBoardView {
         return this.arrows?.get() ?? [];
     }
 
+    /**
+     * Paints pieces by tile (logical index) with the `piece-<style>` classes of board.css; tiles absent from the map
+     * are drawn normally. The styles belong to the tiles, not to the pieces: they stay through renders.
+     */
+    setPieceStyles(styles: Map<number, PieceStyle>): void {
+        this.pieceStyles = new Map(styles);
+        this.applyPieceStyles();
+    }
+
+    private applyPieceStyles(): void {
+        this.piecesGroup.querySelectorAll<SVGElement>('.piece').forEach((el) => {
+            const style = this.pieceStyles.get(Number(el.dataset.tileIndex));
+            el.classList.toggle('piece-muted', style === 'muted');
+            el.classList.toggle('piece-highlighted', style === 'highlighted');
+        });
+    }
+
     /** Replaces the analysis arrows (invalid ones are dropped; one arrow per from/to pair, the last wins). */
     setArrows(arrows: BoardArrow[]): void {
         this.arrows?.set(arrows);
@@ -926,8 +948,8 @@ export default class SVGBoardView implements IBoardView {
 
         // A hover is not part of the position; where it covered another highlight, that one shows again
         const styles = new Map<number, HighlightStyle>();
-        for (const {visualIndex, type} of this.painted) {
-            if ('hovered' !== type) {
+        for (const {visualIndex, type, lasting} of this.painted) {
+            if ('hovered' !== type || lasting) {
                 styles.set(visualIndex, HIGHLIGHT_STYLES[type]);
             }
         }
