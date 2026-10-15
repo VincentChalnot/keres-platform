@@ -36,6 +36,9 @@ const SVG_NS = 'http://www.w3.org/2000/svg';
 const COLORS: readonly ArrowColor[] = ['orange', 'green', 'red'];
 
 // Arrow dimensions in SVG user units (a tile is 100 × 80).
+const TILE_HALF_WIDTH = 50;
+const TILE_HALF_HEIGHT = 40;
+const START_ELLIPSE_RATIO = 0.8; // size of the ellipse (relative to the tile) arrows start from
 const SHAFT_HALF_WIDTH = 9;
 const HEAD_HALF_WIDTH = 24;
 const HEAD_LENGTH = 34;
@@ -98,6 +101,13 @@ function arrowPath(from: Point, to: Point, bend: 'none' | 'vertical-first' | 'ho
         first = {x: (corner.x - from.x) / firstLength, y: (corner.y - from.y) / firstLength};
         second = {x: (to.x - corner.x) / secondLength, y: (to.y - corner.y) / secondLength};
     }
+
+    // Start on an ellipse concentric with the origin tile, covering START_ELLIPSE_RATIO of it (1 = tangent to the edges).
+    const radiusX = TILE_HALF_WIDTH * START_ELLIPSE_RATIO;
+    const radiusY = TILE_HALF_HEIGHT * START_ELLIPSE_RATIO;
+    const offset = 1 / Math.hypot(first.x / radiusX, first.y / radiusY);
+    from = {x: from.x + offset * first.x, y: from.y + offset * first.y};
+    firstLength -= offset;
 
     const at = (t: number, s: number): string => {
         const x = from.x + t * first.x + s * second.x;

@@ -122,7 +122,7 @@ svg[data-anim-speed="slow"] {
    is a <g class="arrow arrow-<colour>"> holding ONE closed outline (shaft +
    head), so the opacity lives on the group and is uniform over the whole
    arrow. `.arrow-preview` is the one still being dragged. The colours read on
-   both tile colours (#513a27 dark, #ddbd90 light) thanks to the darker rim. */
+   both tile colours (#513a27 dark, #ddbd90 light). */
 #arrows-layer {
     pointer-events: none;
 }
@@ -133,9 +133,7 @@ svg[data-anim-speed="slow"] {
 
 .arrow path {
     fill: var(--arrow-fill);
-    stroke: var(--arrow-rim);
-    stroke-width: 3px;
-    stroke-linejoin: round;
+    stroke: none;
 }
 
 .arrow-preview {
@@ -144,15 +142,12 @@ svg[data-anim-speed="slow"] {
 
 .arrow-orange {
     --arrow-fill: #f59a1b;
-    --arrow-rim: #8a4b00;
 }
 
 .arrow-green {
     --arrow-fill: #3fb04a;
-    --arrow-rim: #16591d;
 }
 
 .arrow-red {
     --arrow-fill: #e8453a;
-    --arrow-rim: #7d1612;
 }
