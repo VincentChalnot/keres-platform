@@ -1,19 +1,25 @@
 {% trans_default_domain 'game' %}
-{# The bot to beat next (NextBot): its portrait (or a robot while the file is missing), its level, one click to play it.
-   Parameters: nextBot, quickGame. #}
-<div class="flex flex-wrap items-center gap-4">
-    {% if nextBot.avatarUrl %}
-        <img class="avatar avatar--lg" src="{{ nextBot.avatarUrl }}" alt="" width="64" height="64">
-    {% else %}
-        <span class="avatar avatar--lg inline-flex items-center justify-center bg-surface-hover text-primary" aria-hidden="true"><i class="fa-solid fa-robot"></i></span>
-    {% endif %}
-    <div class="min-w-0 flex-1">
-        <p class="mb-1 font-title text-xl">{{ 'lobby.next_bot.name'|trans({level: nextBot.level}) }}</p>
+{# The bot to beat next (NextBot): a big portrait column (or a robot while the file is missing) beside a column holding
+   the card title, the level, one click to play it and the link to the custom game form.
+   Parameters: nextBot, quickGame, titleClass (optional modifier of .card__title). #}
+<div class="bot-card">
+    <button type="submit" form="next-bot-form" class="bot-card__avatar" aria-label="{{ 'lobby.next_bot.play'|trans }}">
+        {% if nextBot.avatarUrl %}
+            <img src="{{ nextBot.avatarUrl }}" alt="" width="160" height="160">
+        {% else %}
+            <span aria-hidden="true"><i class="fa-solid fa-robot"></i></span>
+        {% endif %}
+    </button>
+    <div class="bot-card__body">
+        <h2 class="card__title {{ titleClass|default('') }}">{{ 'lobby.next_bot.title'|trans }}</h2>
+        <div class="bot-card__head">
+            <p class="bot-card__name">{{ 'lobby.next_bot.name'|trans({level: nextBot.level}) }}</p>
+            {% include 'actions/_quick_game_form.html.twig' with {quickGame: quickGame, opponent: 'ai', level: nextBot.level, label: 'lobby.next_bot.play'|trans, id: 'next-bot-form'} only %}
+        </div>
         <p class="help mb-0">{{ 'lobby.next_bot.help'|trans }}</p>
+        {% if nextBot.capped %}
+            <p class="help mt-3 mb-0">{{ 'lobby.next_bot.capped'|trans }}</p>
+        {% endif %}
+        <p class="mb-0 mt-3"><a href="{{ path('new_local_game') }}">{{ 'lobby.next_bot.custom'|trans }}</a></p>
     </div>
-    {% include 'actions/_quick_game_form.html.twig' with {quickGame: quickGame, opponent: 'ai', level: nextBot.level, label: 'lobby.next_bot.play'|trans} only %}
 </div>
-{% if nextBot.capped %}
-    <p class="help mt-3 mb-0">{{ 'lobby.next_bot.capped'|trans }}</p>
-{% endif %}
-<p class="mb-0 mt-3"><a href="{{ path('new_local_game') }}">{{ 'lobby.next_bot.custom'|trans }}</a></p>

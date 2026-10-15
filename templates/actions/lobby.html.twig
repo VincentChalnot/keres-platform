@@ -16,7 +16,6 @@
             <p class="page-subtitle">{{ 'lobby.subtitle'|trans }}</p>
 
             <div class="card">
-                <h2 class="card__title">{{ 'lobby.next_bot.title'|trans }}</h2>
                 {% include 'actions/_next_bot.html.twig' with {nextBot: nextBot, quickGame: quickGame} only %}
             </div>
 

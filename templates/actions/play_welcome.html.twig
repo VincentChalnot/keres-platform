@@ -31,8 +31,7 @@
 
                     <p class="mb-3 text-muted">{{ 'welcome.try_it'|trans }}</p>
                     <div class="card">
-                        <h2 class="card__title card__title--sm">{{ 'lobby.next_bot.title'|trans }}</h2>
-                        {% include 'actions/_next_bot.html.twig' with {nextBot: nextBot, quickGame: quickGame} only %}
+                        {% include 'actions/_next_bot.html.twig' with {nextBot: nextBot, quickGame: quickGame, titleClass: 'card__title--sm'} only %}
                     </div>
                     <p class="help mt-2">{{ 'welcome.guest_help'|trans }}</p>
                 </div>
