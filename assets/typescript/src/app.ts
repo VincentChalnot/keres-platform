@@ -1,7 +1,8 @@
 import {GameState} from './models/GameState';
 import {GameAPI} from './network/GameAPI';
 import {GuestGameRecord, LocalGameAPI} from './network/LocalGameAPI';
-import {request} from './network/LobbyAPI';
+import {apiErrorMessage, request} from './network/LobbyAPI';
+import {Coach, CoachExperience} from './coach/Coach';
 import SVGBoardView from './views/SVGBoardView';
 import {GameController} from './controllers/GameController';
 import {IBoardView} from './views/IBoardView';
@@ -40,6 +41,8 @@ interface BoardDefaults {
     showThreats: boolean;
     rotateOpponentPieces: boolean;
     animationSpeed: AnimationSpeed;
+    /** The coach of casual bot games (hints, warnings, tips) is on. */
+    coach: boolean;
 }
 
 /** One player card (app.scss `.player-card`): which of the two sits on top follows the board orientation. */
@@ -140,6 +143,8 @@ class KeresGame {
     private saveDefaultsBtn: HTMLButtonElement;
     private saveDefaultsStatus: HTMLElement;
     private pieceInfoBody: HTMLElement;
+    private coach: Coach | null = null;
+    private coachOn: boolean = false;
     private cards: Record<Side, PlayerCard>;
     private gameMode: number = 0; // opponent type as int
     private playerWhite: boolean = true; // true if player is white
@@ -301,7 +306,10 @@ class KeresGame {
 
         // Initialize controller
         this.controller = new GameController(this.gameState, this.api, this.view, this.gameMode, this.playerWhite);
-        this.controller.onInspect((position) => this.renderPieceInfo(position));
+        this.controller.onInspect((position) => {
+            this.renderPieceInfo(position);
+            this.coach?.onSelection(position);
+        });
 
         // Seed the authoritative clock/result state from the page's initial
         // bootstrap (PlayAction) so the first render — before any Mercure
@@ -370,6 +378,7 @@ class KeresGame {
         this.setShowThreats(defaults.showThreats);
         this.setOpponentRotated(defaults.rotateOpponentPieces);
         this.setAnimationSpeed(defaults.animationSpeed);
+        this.setupCoach(defaults.coach);
 
         // Setup UI event listeners
         this.setupEventListeners();
@@ -419,6 +428,7 @@ class KeresGame {
             showThreats: this.boardContainer.getAttribute('data-show-threats') !== 'false',
             rotateOpponentPieces: this.boardContainer.getAttribute('data-rotate-opponent') === 'true',
             animationSpeed: this.parseAnimationSpeed(this.boardContainer.getAttribute('data-animation-speed')) ?? 'fast',
+            coach: this.boardContainer.getAttribute('data-coach') === 'true',
         };
         if (this.signedIn) return defaults;
 
@@ -426,7 +436,7 @@ class KeresGame {
             const stored: unknown = JSON.parse(window.localStorage.getItem(BOARD_DEFAULTS_KEY) ?? 'null');
             if (null !== stored && 'object' === typeof stored) {
                 const record = stored as Record<string, unknown>;
-                for (const key of ['showCoordinates', 'showThreats', 'rotateOpponentPieces'] as const) {
+                for (const key of ['showCoordinates', 'showThreats', 'rotateOpponentPieces', 'coach'] as const) {
                     if ('boolean' === typeof record[key]) defaults[key] = record[key];
                 }
                 defaults.animationSpeed = this.parseAnimationSpeed(record.animationSpeed) ?? defaults.animationSpeed;
@@ -532,6 +542,7 @@ class KeresGame {
 
         // Auto-rotate board in hotseat mode after each submitted move
         window.addEventListener('moveSubmitted', async () => {
+            this.coach?.onPlayerMoved();
             if (this.gameMode === OPPONENT_TYPE_HOTSEAT) {
                 // Let the move finish its trip before the board turns around (the flip is drawn at once)
                 await this.view.whenSettled?.();
@@ -718,7 +729,7 @@ class KeresGame {
 
         try {
             await this.api.deleteGame();
-            window.location.href = '/lobby';
+            window.location.href = '/';
         } catch (error) {
             window.dispatchEvent(new CustomEvent('showError', {detail: {message: (error as Error).message}}));
         }
@@ -738,6 +749,42 @@ class KeresGame {
         this.coordsVisible = visible;
         this.coordsSwitch.checked = visible;
         this.view.setCoordinatesVisible?.(visible);
+    }
+
+    /**
+     * The coach exists in casual games against the bot (signed in or guest), never for spectators, hot-seat or rated games;
+     * the switch of the settings menu is only shown where it does something.
+     */
+    private setupCoach(on: boolean): void {
+        const card = document.getElementById('coach-card');
+        const row = document.getElementById('setting-coach-row');
+        const toggle = document.getElementById('setting-coach') as HTMLInputElement | null;
+        this.coachOn = on;
+        if (!card || !row || !toggle || OPPONENT_TYPE_AI !== this.gameMode || this.spectator) return;
+
+        this.coach = new Coach({
+            api: this.api,
+            gameState: this.gameState,
+            controller: this.controller,
+            playerWhite: this.playerWhite,
+            experience: (this.boardContainer.getAttribute('data-chess-experience') ?? '') as CoachExperience,
+            requestHint: async () => {
+                try {
+                    return await this.api.requestHint();
+                } catch (error) {
+                    throw new Error(apiErrorMessage(error));
+                }
+            },
+            takeBack: () => this.handleUndo(),
+            drawHint: (move) => this.view.setArrows?.([{from: move.from, to: move.to, color: 'green'}]),
+        });
+        row.hidden = false;
+        toggle.checked = on;
+        toggle.addEventListener('change', () => {
+            this.coachOn = toggle.checked;
+            this.coach?.setEnabled(toggle.checked);
+        });
+        this.coach.setEnabled(on);
     }
 
     private setShowThreats(show: boolean): void {
@@ -770,6 +817,7 @@ class KeresGame {
             showThreats: this.controller.isShowThreats(),
             rotateOpponentPieces: this.opponentRotated,
             animationSpeed: this.animationSpeed,
+            coach: this.coachOn,
         };
         this.saveDefaultsBtn.disabled = true;
         this.saveDefaultsStatus.textContent = '';
@@ -880,6 +928,7 @@ class KeresGame {
         this.announceGameOver();
         this.renderClocks();
         this.updateEvaluation();
+        this.coach?.onPositionChanged();
     }
 
     /**

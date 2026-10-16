@@ -163,6 +163,26 @@ while the tutorial exists and nothing is answered; `onboarding-experience.ts` in
 start (from `/tutorial` itself it goes home). The answer is changeable in Settings -> Board & gameplay (empty = ask
 again). The coach default (beginner = on) comes with Phase 6.
 
+## Coach
+
+Casual games against the bot only (signed in or guest; never rated bot games, hot-seat or spectators). On by default for
+players who answered "No" to "Do you play chess?"; `UserPreferences::$coach` is nullable (null = follow the answer), the
+Settings page has an auto / on / off choice, the game's gear menu a switch (and "Save as my defaults" an explicit value;
+guests keep it in `keres.boardDefaults`). The card sits above "Piece" (collapsed by default under 768px) and says one
+thing at a time, in this order: hint, take-back offer, capture warning, piece card, tip.
+
+- **Capture warning**: at the start of the player's turn, the most valuable piece the opponent can win (undefended, or
+  attacked by a cheaper piece; the king counts for the game) is marked and named.
+- **Take-back offer**: after the player's move, the same test from the opponent's side; shown once the bot has replied,
+  with "Take it back" (the normal undo) and "Keep it".
+- **Hint**: "Hint" draws the engine's best move as a green arrow (see AGENTS.md for the endpoints and the rate limits);
+  429 `ai_rate_limited` is shown as the usual message.
+- **Assisted games**: a hint or a take-back sets `Game::$assisted` (formerly `undoUsed`); such a win does not count for
+  the AI ladder.
+- **Tips and piece cards** (opening only / first selection of each type): remembered per browser in `keres.coach.seen`;
+  beginners get the soldier / knights-and-paladins tips and a card for every piece type, chess players one "same
+  principles" tip and cards for the ballista, paladin and guard only.
+
 ## Piece diagrams, piece info and the help drawer
 
 `public/help/pieces/<type>-<white|black>.svg` (soldier, bishop, rook, knight, paladin, guard, ballista, king; a White
@@ -293,7 +313,7 @@ looked up when the accounts are (re)created; without the file the lobby shows a 
 ### The AI ladder and the lobby's next bot
 
 `User::$highestAiLevelBeaten` is the highest level the player beat: any win against the AI (casual or against a bot account in
-a rated game) counts, unless `Game::$undoUsed` (an undo in an AI game); draws, aborted games and resignations of the player
+a rated game) counts, unless `Game::$assisted` (an undo or a hint in an AI game); draws, aborted games and resignations of the player
 count for nothing, and nothing lowers it (`AiLadder`, called from `GameLifecycleManager` as the game is finalised). The
 migration backfilled it from the finished AI games. Guests keep it in the `keres_ai_beaten` cookie (written by
 `utils/cookies.ts` from `LocalGameAPI`, capped at the guest limit 4 when read, copied to the account at sign-up by

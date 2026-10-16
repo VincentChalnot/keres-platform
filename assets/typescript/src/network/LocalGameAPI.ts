@@ -3,6 +3,7 @@ import {decodeMove, encodeMove, encodeMoveListToBase64, encodeMoveListToBinary} 
 import {GameAPI, GameStatePayload} from './GameAPI';
 import {GameUpdate} from './MercureClient';
 import {t} from '../i18n';
+import {ApiError} from './LobbyAPI';
 import {recordGuestAiWin} from '../utils/cookies';
 
 const OPPONENT_TYPE_AI = 0;
@@ -15,8 +16,8 @@ export interface GuestGameRecord {
     aiLevel?: number;
     moves: number[];
     resignedColor: 'white' | 'black' | null;
-    /** A move was taken back: the result no longer counts for the AI ladder. Absent in games saved before it existed. */
-    undoUsed?: boolean;
+    /** A move was taken back or a hint was asked: the result no longer counts for the AI ladder (mirrors `Game::$assisted`). */
+    assisted?: boolean;
 }
 
 const STORAGE_KEY = 'keres.guestGame.v1';
@@ -54,7 +55,7 @@ export class LocalGameAPI extends GameAPI {
                 aiLevel: typeof parsed.aiLevel === 'number' ? parsed.aiLevel : 1,
                 moves: parsed.moves.filter((m): m is number => typeof m === 'number'),
                 resignedColor: parsed.resignedColor === 'white' || parsed.resignedColor === 'black' ? parsed.resignedColor : null,
-                undoUsed: parsed.undoUsed === true,
+                assisted: parsed.assisted === true,
             };
         } catch {
             return null;
@@ -108,13 +109,32 @@ export class LocalGameAPI extends GameAPI {
         return payload;
     }
 
+    /** The coach's hint for a guest game: the whole line goes to `POST /api/hint`; asking costs the ladder win, like a take-back. */
+    async requestHint(): Promise<Move> {
+        const response = await fetch('/api/hint', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/octet-stream'},
+            body: encodeMoveListToBinary(this.getMoves()) as BodyInit,
+        });
+        const json = await response.json().catch(() => null) as {data?: {move: number}; error?: {code?: string}} | null;
+
+        if (!response.ok || !json?.data) {
+            throw new ApiError(json?.error?.code ?? 'internal_error', response.status, null);
+        }
+
+        this.record.assisted = true;
+        this.save();
+
+        return decodeMove(json.data.move);
+    }
+
     async undoMove(): Promise<string> {
         if (0 === this.record.moves.length) {
             throw new Error(t('play.error.no_moves_to_undo'));
         }
 
         this.record.moves.pop();
-        this.record.undoUsed = true;
+        this.record.assisted = true;
 
         // Against the AI, take back to the player's own turn (mirrors UndoMoveAction).
         if (OPPONENT_TYPE_AI === this.record.opponentType && this.isAiTurn(this.record.moves.length) && this.record.moves.length > 0) {
@@ -230,7 +250,7 @@ export class LocalGameAPI extends GameAPI {
         const result = !gameOver ? null : (board.draw ? 'draw' : (board.whiteWins ? 'white' : 'black'));
 
         // The AI ladder of a guest lives in a cookie (copied to the account at sign-up): a win without undo counts
-        if (OPPONENT_TYPE_AI === this.record.opponentType && true !== this.record.undoUsed && result === (this.record.playerWhite ? 'white' : 'black')) {
+        if (OPPONENT_TYPE_AI === this.record.opponentType && true !== this.record.assisted && result === (this.record.playerWhite ? 'white' : 'black')) {
             recordGuestAiWin(this.record.aiLevel ?? 1);
         }
 

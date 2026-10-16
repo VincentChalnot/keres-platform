@@ -1,7 +1,8 @@
 import {Board, PotentialMove, Move} from '../models/types';
-import {decodeBoardFromBinary, decodeGameOverReason, encodeBoardToBinary, decodePotentialMove, encodeMove, encodeMoveListToBinary} from '../utils/boardUtils';
+import {decodeMove, decodeBoardFromBinary, decodeGameOverReason, encodeBoardToBinary, decodePotentialMove, encodeMove, encodeMoveListToBinary} from '../utils/boardUtils';
 import {ClockState} from './MercureClient';
 import {t} from '../i18n';
+import {request} from './LobbyAPI';
 
 /**
  * Full authoritative game state returned by the move/finish endpoints.
@@ -245,6 +246,15 @@ export class GameAPI {
         }
 
         return response.text();
+    }
+
+    /** The coach's hint: the engine's best move here (`POST /api/games/{uuid}/hint`; the server marks the game assisted). Throws `ApiError`. */
+    async requestHint(): Promise<Move> {
+        if (!this.gameUuid) {
+            throw new Error(t('play.error.no_game'));
+        }
+
+        return decodeMove((await request<{move: number}>(`/api/games/${this.gameUuid}/hint`, 'POST')).move);
     }
 
     /** Deletes the game (soft delete on the server); only meant for a game without any move. */

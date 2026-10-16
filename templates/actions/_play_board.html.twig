@@ -95,6 +95,8 @@
                          data-show-coordinates="{{ showCoordinates ?? true ? 'true' : 'false' }}"
                          data-show-threats="{{ showThreats ?? true ? 'true' : 'false' }}"
                          data-rotate-opponent="{{ rotateOpponent ?? false ? 'true' : 'false' }}"
+                         data-coach="{{ coach ?? false ? 'true' : 'false' }}"
+                         data-chess-experience="{{ chessExperience ?? '' }}"
                          data-animation-speed="{{ animationSpeed ?? 'fast' }}"
                          data-live-evaluation="{{ liveEvaluation ?? false ? 'true' : 'false' }}"
                          data-can-evaluate="{{ app.user ? 'true' : 'false' }}"
@@ -139,6 +141,10 @@
                                         <span>{{ 'play.board.settings.threats'|trans }}</span>
                                         <input type="checkbox" role="switch" id="setting-threats">
                                     </label>
+                                    <label class="switch-row" id="setting-coach-row" hidden>
+                                        <span>{{ 'play.board.settings.coach'|trans }}</span>
+                                        <input type="checkbox" role="switch" id="setting-coach">
+                                    </label>
                                     <label class="switch-row">
                                         <span>{{ 'play.board.settings.rotate'|trans }}</span>
                                         <input type="checkbox" role="switch" id="setting-rotate">
@@ -179,6 +185,15 @@
                     {% endif %}
 
                     <section class="piece-info" aria-labelledby="piece-info-title">
+                        <details class="coach mb-2.5 rounded-md border border-primary/40 bg-primary/10" id="coach-card" open hidden>
+                            <summary class="cursor-pointer px-3 py-1.5 text-[0.8rem] uppercase tracking-[0.12em] text-primary"><i class="fa-solid fa-graduation-cap" aria-hidden="true"></i> {{ 'coach.title'|trans({}, 'frontend_play') }}</summary>
+                            <div class="px-3 pb-2.5 text-[0.85rem] leading-snug">
+                                <p class="m-0" id="coach-message" aria-live="polite"></p>
+                                <img class="mt-2 h-auto w-full max-w-[12rem]" id="coach-image" src="" alt="" hidden>
+                                <div class="mt-2 flex flex-wrap gap-2" id="coach-actions"></div>
+                                <button type="button" class="game-button is-small mt-2" id="coach-hint-btn"><i class="fa-regular fa-lightbulb" aria-hidden="true"></i> {{ 'coach.hint'|trans({}, 'frontend_play') }}</button>
+                            </div>
+                        </details>
                         <h3 class="piece-info__title" id="piece-info-title">{{ 'play.board.piece_info.title'|trans }}</h3>
                         <div class="piece-info__body" id="piece-info-body" aria-live="polite"></div>
                     </section>

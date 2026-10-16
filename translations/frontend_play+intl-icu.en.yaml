@@ -102,3 +102,27 @@ piece:
     king:
         name: King (K)
         movement: "1 square in any direction\nCannot be stacked"
+coach:
+    title: Coach
+    hint: Hint
+    idle: Your coach is watching. Ask for a hint at any time - but a game won with help does not count for the ladder.
+    hint_shown: 'The engine suggests this move: follow the green arrow.'
+    got_it: Got it
+    take_back: Take it back
+    keep: Keep it
+    stack: 'stack of {top} and {bottom}'
+    threat: 'Your {piece} on {square} can be captured.'
+    blunder: 'That move leaves your {piece} unprotected.'
+    tip:
+        advance: Advance your soldiers to open lines for your other pieces.
+        develop: Bring your knights and paladins out before attacking.
+        principles: 'Same principles as chess: take the centre, develop your pieces, keep your king safe. There is no castling.'
+    piece:
+        soldier: One square diagonally forward. On the last rank it promotes.
+        bishop: Any distance along a diagonal.
+        rook: Any distance in a straight line.
+        knight: An L-shaped jump, over other pieces.
+        paladin: One or two squares in a straight line.
+        guard: One or two squares diagonally.
+        ballista: Any distance straight ahead, never backwards.
+        king: One square in any direction. Lose it and the game is over.

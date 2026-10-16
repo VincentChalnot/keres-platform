@@ -329,6 +329,15 @@ running game and starts the new one in the same request. `bin/console app:bot-ga
 backlog (all but the most recently played game of each user). Level 1 + "random" colour puts the human on White
 (`GameFactory::humanColorAgainstBot()`).
 
+Coach (casual AI games, signed in or guest; `assets/typescript/src/coach/`): the card, warnings, tips and piece cards
+only read positions (`/api/moves`, local backend); the hint is `POST /api/games/{uuid}/hint` (`GameHintAction`: casual
+`OpponentType::AI`, in progress, the participant's turn, else 403; `user_ai` once per call) or `POST /api/hint`
+(`GuestHintAction`: the move list as body, `guest_ai` per IP), both through `Service\Coach\HintProvider` = one
+`EngineApi::evaluateMoves()`, answer `{"data": {"move": <u16>}}` for the first entry and store every returned move as a
+`Move` edge with its evaluation (`BoardTreeManager::recordEvaluatedMoves()`, first write wins, no `GameMove`). A hint or an
+undo sets `Game::$assisted` (guest: `assisted` of the localStorage record) = the game no longer counts for the AI ladder.
+The preference is `UserPreferences::$coach` (nullable: null follows `User::$chessExperience`, beginner = on).
+
 Evaluations are stored on `Move.evaluation` (the move edge, **not** `BoardPosition`:
 a board is shared by many lines but the verdict depends on the line - repetition
 history, no-capture counter) and double as the cache. `Move` is otherwise

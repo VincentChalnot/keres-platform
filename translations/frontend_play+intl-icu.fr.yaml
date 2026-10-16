@@ -102,3 +102,27 @@ piece:
     king:
         name: Roi (R)
         movement: "1 case dans toutes les directions\nNe peut pas être empilé"
+coach:
+    title: Coach
+    hint: Indice
+    idle: Votre coach vous observe. Demandez un indice quand vous voulez - mais une partie gagnée avec de l’aide ne compte pas pour l’échelle.
+    hint_shown: 'Le moteur suggère ce coup : suivez la flèche verte.'
+    got_it: Compris
+    take_back: Reprendre le coup
+    keep: Le garder
+    stack: 'pile de {top} et {bottom}'
+    threat: 'La pièce en {square} ({piece}) peut être capturée.'
+    blunder: 'Ce coup laisse une pièce sans protection : votre {piece}.'
+    tip:
+        advance: Avancez vos soldats pour ouvrir des lignes à vos autres pièces.
+        develop: Sortez vos cavaliers et vos paladins avant d’attaquer.
+        principles: 'Mêmes principes qu’aux échecs : prenez le centre, développez vos pièces, protégez votre roi. Il n’y a pas de roque.'
+    piece:
+        soldier: Une case en diagonale vers l’avant. Sur la dernière rangée, il est promu.
+        bishop: N’importe quelle distance en diagonale.
+        rook: N’importe quelle distance en ligne droite.
+        knight: Un saut en L, par-dessus les autres pièces.
+        paladin: Une ou deux cases en ligne droite.
+        guard: Une ou deux cases en diagonale.
+        ballista: N’importe quelle distance tout droit, jamais en arrière.
+        king: Une case dans toutes les directions. Le perdre met fin à la partie.

@@ -33,6 +33,7 @@ export class GameController {
     private clockServerTimeMs: number = Date.now();
     private clockReceivedAtMs: number = Date.now();
     // Piece shown in the page's piece-info panel when nothing is selected or hovered: set by a long press, cleared by the next click or board change.
+    private extraHighlights: TileHighlight[] = [];
     private pinnedInspection: number | null = null;
     private inspectHandler: ((position: number | null) => void) | null = null;
     // History navigation in progress: each jump replays positions server-side, so they run one after the other.
@@ -422,6 +423,12 @@ export class GameController {
         this.updateOverlays();
     }
 
+    /** Squares the coach marks (a piece it warns about), drawn with the usual highlights until it clears them. */
+    setExtraHighlights(highlights: TileHighlight[]): void {
+        this.extraHighlights = highlights;
+        this.updateOverlays();
+    }
+
     private updateOverlays(): void {
         const highlights: TileHighlight[] = [];
         const selectedPosition = this.gameState.getSelectedPosition();
@@ -435,7 +442,7 @@ export class GameController {
             for (const move of this.gameState.getPotentialMovesForPosition(selectedPosition)) {
                 highlights.push({position: move.to, type: 'potential'});
             }
-            this.view.updateOverlays(highlights);
+            this.view.updateOverlays(highlights.concat(this.extraHighlights));
             this.inspectHandler?.(selectedPosition);
             return;
         }
@@ -455,7 +462,7 @@ export class GameController {
                 }
             }
         }
-        this.view.updateOverlays(highlights);
+        this.view.updateOverlays(highlights.concat(this.extraHighlights));
         this.inspectHandler?.(hoveredPosition ?? this.pinnedInspection);
     }
 
