@@ -1,0 +1,18 @@
+{% trans_default_domain 'game' %}
+{# The stack / unstack / select dialog; driven by assets/typescript/src/utils/unstackModal.ts (game page and tutorial). #}
+<div class="modal" id="unstack-modal" role="dialog" aria-modal="true" aria-labelledby="unstack-modal-title">
+    <div class="modal__backdrop"></div>
+    <div class="modal__card">
+        <header class="modal__head">
+            <p class="modal__title" id="unstack-modal-title">{{ 'play.board.unstack_modal.title'|trans }}</p>
+        </header>
+        <section class="modal__body">
+            <p id="unstack-modal-text">{{ 'play.board.unstack_modal.text'|trans }}</p>
+        </section>
+        <footer class="modal__foot">
+            <button type="button" class="btn btn--primary" id="move-stack">{{ 'play.board.unstack_modal.move_stack'|trans }}</button>
+            <button type="button" class="btn" id="move-unstack">{{ 'play.board.unstack_modal.move_unstack'|trans }}</button>
+            <button type="button" class="btn btn--outline" id="select-instead" hidden>{{ 'play.board.unstack_modal.select_instead'|trans }}</button>
+        </footer>
+    </div>
+</div>

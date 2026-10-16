@@ -2,6 +2,7 @@ import {GameState} from './models/GameState';
 import {t} from './i18n';
 import {algebraicToPos, parseBoardCode} from './utils/boardUtils';
 import SVGBoardView from './views/SVGBoardView';
+import {askUnstack, UnstackModalDetail} from './utils/unstackModal';
 
 /**
  * The /tutorial page (templates/actions/tutorial.html.twig). Static slides first (images exported from the admin board
@@ -12,10 +13,23 @@ import SVGBoardView from './views/SVGBoardView';
 
 type StepText = 'carry' | 'unstack_fork' | 'legal_blunder' | 'capture_king';
 
+/**
+ * The dialogs of the real game, by name: `choose` = full stack or top piece, `select*` = the move lands on one of the
+ * player's own pieces (stack onto it, or select it instead), with the buttons the engine would allow.
+ */
+const PROMPTS = {
+    choose: {full: true, top: true, selectInstead: false},
+    select: {full: true, top: true, selectInstead: true},
+    select_top: {full: false, top: true, selectInstead: true},
+    select_stack: {full: true, top: false, selectInstead: true},
+} satisfies Record<string, UnstackModalDetail>;
+
+type PromptName = keyof typeof PROMPTS;
+
 interface PuzzleFile {
     start: string;
     flipped?: boolean;
-    steps: Array<{by: string; from: string; to: string; board: string; text: string}>;
+    steps: Array<{by: string; from: string; to: string; board: string; text: string; unstack?: boolean; prompt?: string}>;
 }
 
 interface Step {
@@ -23,6 +37,10 @@ interface Step {
     from: number;
     to: number;
     board: Uint8Array;
+    /** The move carries only the top piece of a stack (the engine's "unstack" flag). */
+    unstack: boolean;
+    /** The question asked when the player makes the move, or null for none. */
+    prompt: PromptName | null;
     text: StepText;
 }
 
@@ -81,7 +99,20 @@ function parsePuzzle(raw: unknown): Puzzle | string {
         if ('error' in board) {
             return `${where}: board: ${board.error}`;
         }
-        steps.push({by: step.by, from, to, board: board.bytes, text: step.text as StepText});
+        if (undefined !== step.unstack && 'boolean' !== typeof step.unstack) {
+            return `${where}: "unstack" is true or false`;
+        }
+        let prompt: PromptName | null = null;
+        if (undefined !== step.prompt) {
+            if ('string' !== typeof step.prompt || !Object.prototype.hasOwnProperty.call(PROMPTS, step.prompt)) {
+                return `${where}: unknown "prompt" ${String(step.prompt)} (${Object.keys(PROMPTS).join(', ')})`;
+            }
+            prompt = step.prompt as PromptName;
+            if (true === step.unstack ? !PROMPTS[prompt].top : !PROMPTS[prompt].full) {
+                return `${where}: the "${prompt}" prompt does not offer the answer the step expects`;
+            }
+        }
+        steps.push({by: step.by, from, to, board: board.bytes, unstack: true === step.unstack, prompt, text: step.text as StepText});
     }
 
     return {start: start.bytes, flipped: true === file.flipped, steps};
@@ -204,7 +235,6 @@ class GuidedPuzzle {
         this.selected = null;
         this.say('');
         this.view.updateOverlays([]);
-        this.view.setArrows([]);
 
         const step = this.step;
         if (!step) {
@@ -217,7 +247,6 @@ class GuidedPuzzle {
         this.caption.textContent = STEP_TEXTS[step.text]();
 
         if ('player' === step.by) {
-            this.view.setArrows([{from: step.from, to: step.to, color: 'green'}]);
             this.locked = false;
 
             return;
@@ -231,10 +260,34 @@ class GuidedPuzzle {
     private async play(step: Step): Promise<void> {
         this.locked = true;
         this.view.updateOverlays([]);
-        this.view.setArrows([]);
         await this.view.render(step.board, this.puzzle.flipped);
         await this.view.whenSettled();
         await this.next();
+    }
+
+    /**
+     * The player made the recorded move. A step with a `prompt` first asks the question the real game asks for that move
+     * (same dialog); only the authored answer plays the step, anything else is a wrong answer.
+     */
+    private async answer(step: Step): Promise<void> {
+        if (null === step.prompt) {
+            await this.play(step);
+
+            return;
+        }
+
+        this.locked = true;
+        const choice = await askUnstack(PROMPTS[step.prompt]);
+        if (choice === (step.unstack ? 'unstack' : 'stack')) {
+            await this.play(step);
+
+            return;
+        }
+
+        this.selected = null;
+        this.view.updateOverlays([]);
+        this.say(null === choice ? '' : t('tutorial.puzzle.try_again'));
+        this.locked = false;
     }
 
     private click(index: number): void {
@@ -257,7 +310,7 @@ class GuidedPuzzle {
         }
 
         if (index === step.to) {
-            void this.play(step);
+            void this.answer(step);
 
             return;
         }
@@ -275,7 +328,7 @@ class GuidedPuzzle {
         }
 
         if (from === step.from && to === step.to) {
-            void this.play(step);
+            void this.answer(step);
 
             return;
         }

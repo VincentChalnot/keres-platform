@@ -10,6 +10,7 @@ import {decodeMoveListFromBase64, algebraicToPos, posToAlgebraic} from './utils/
 import {computeMaterialDiff, renderMaterialHTML} from './models/materialDiff';
 import {pieceRule} from './models/pieceRules';
 import {alertModal, confirmModal} from './utils/modal';
+import {askUnstack, UnstackModalDetail} from './utils/unstackModal';
 import {PageFullscreen} from './utils/pageFullscreen';
 import {DECIDED_SCORE, EvalBar, formatEvaluation} from './views/EvalBar';
 import {EvalGraph} from './views/EvalGraph';
@@ -63,13 +64,6 @@ function formatClockMs(ms: number): string {
     return `${minutes}:${pad(seconds)}`;
 }
 
-/** Payload of the `showUnstackModal` event dispatched by GameController: which buttons to offer. */
-interface UnstackModalDetail {
-    full: boolean;
-    top: boolean;
-    selectInstead: boolean;
-}
-
 interface GameStateBootstrap {
     clock: ClockState | null;
     endReason: string;
@@ -121,12 +115,6 @@ class KeresGame {
     private boardContainer: HTMLElement;
     private gameLayout: HTMLElement;
     private gameStatusBanner: HTMLElement;
-    private unstackModal: HTMLDivElement;
-    private moveStackBtn: HTMLButtonElement;
-    private moveUnstackBtn: HTMLButtonElement;
-    private selectInsteadBtn: HTMLButtonElement;
-    private unstackModalTitle: HTMLElement;
-    private unstackModalText: HTMLElement;
     private moveList: HTMLElement;
     private moveHistoryBody: HTMLOListElement;
     private firstMoveBtn: HTMLButtonElement;
@@ -181,12 +169,6 @@ class KeresGame {
         this.boardContainer = document.getElementById('board-container') as HTMLElement;
         this.gameLayout = document.getElementById('game-layout') as HTMLElement;
         this.gameStatusBanner = document.getElementById('game-status-banner') as HTMLElement;
-        this.unstackModal = document.getElementById('unstack-modal') as HTMLDivElement;
-        this.moveStackBtn = document.getElementById('move-stack') as HTMLButtonElement;
-        this.moveUnstackBtn = document.getElementById('move-unstack') as HTMLButtonElement;
-        this.selectInsteadBtn = document.getElementById('select-instead') as HTMLButtonElement;
-        this.unstackModalTitle = document.getElementById('unstack-modal-title') as HTMLElement;
-        this.unstackModalText = document.getElementById('unstack-modal-text') as HTMLElement;
         this.moveList = document.getElementById('move-list') as HTMLElement;
         this.moveHistoryBody = document.getElementById('move-history-body') as HTMLOListElement;
         this.firstMoveBtn = document.getElementById('first-move-btn') as HTMLButtonElement;
@@ -491,17 +473,6 @@ class KeresGame {
     }
 
     private setupEventListeners(): void {
-        // Unstack modal buttons
-        this.moveStackBtn.addEventListener('click', () => void this.handleMoveStack());
-        this.moveUnstackBtn.addEventListener('click', () => this.handleMoveUnstack());
-        this.selectInsteadBtn.addEventListener('click', () => this.handleSelectInstead());
-
-        // Modal background close
-        const modalBackground = this.unstackModal.querySelector('.modal__backdrop');
-        if (modalBackground) {
-            modalBackground.addEventListener('click', () => this.handleModalClose());
-        }
-
         // Game controls
         this.resignBtn?.addEventListener('click', () => void this.handleResign());
         this.undoBtn?.addEventListener('click', () => void this.handleUndo());
@@ -541,7 +512,7 @@ class KeresGame {
 
         // Custom event for unstack / stack-confirmation modal
         window.addEventListener('showUnstackModal', (event) => {
-            this.openUnstackModal((event as CustomEvent<UnstackModalDetail>).detail);
+            void this.handleUnstackChoice((event as CustomEvent<UnstackModalDetail>).detail);
         });
         document.addEventListener('keydown', (event) => this.handleKeydown(event));
 
@@ -576,9 +547,7 @@ class KeresGame {
      */
     private handleKeydown(event: KeyboardEvent): void {
         if ('Escape' === event.key) {
-            if (this.unstackModal.classList.contains('is-active')) {
-                this.handleModalClose();
-            } else if (!this.settingsMenu.hidden) {
+            if (!this.settingsMenu.hidden) {
                 this.setSettingsOpen(false);
                 this.settingsBtn.focus();
             }
@@ -603,59 +572,22 @@ class KeresGame {
         void step();
     }
 
-    private async handleMoveStack(unstack: boolean = false): Promise<void> {
-        this.closeUnstackModal();
+    /** Asks which reading of an ambiguous move is meant, then plays it, selects the piece clicked instead, or backs out. */
+    private async handleUnstackChoice(detail: UnstackModalDetail): Promise<void> {
+        const choice = await askUnstack(detail);
         const selectedPosition = this.gameState.getSelectedPosition();
         const clickedDestination = this.gameState.getClickedDestination();
-        if (selectedPosition !== null && clickedDestination !== null) {
-            await this.controller.playMove(selectedPosition, clickedDestination, unstack);
+
+        if (null === choice) {
+            this.controller.clearSelectedMove();
+        } else if ('select' === choice) {
+            if (clickedDestination !== null) {
+                this.controller.selectPosition(clickedDestination);
+            }
+        } else if (selectedPosition !== null && clickedDestination !== null) {
+            await this.controller.playMove(selectedPosition, clickedDestination, 'unstack' === choice);
             this.refreshUI();
         }
-    }
-
-    private async handleMoveUnstack(): Promise<void> {
-        await this.handleMoveStack(true);
-    }
-
-    private handleSelectInstead(): void {
-        const target = this.gameState.getClickedDestination();
-        this.closeUnstackModal();
-        if (target !== null) {
-            this.controller.selectPosition(target);
-        }
-    }
-
-    private openUnstackModal(detail: UnstackModalDetail): void {
-        const {full, top, selectInstead} = detail;
-        if (selectInstead) {
-            this.unstackModalTitle.textContent = t('play.stack_modal.select_title');
-            this.unstackModalText.textContent = full && top
-                ? t('play.stack_modal.select_text_full_top')
-                : (top
-                    ? t('play.stack_modal.select_text_top')
-                    : t('play.stack_modal.select_text_stack'));
-            this.moveStackBtn.textContent = top ? t('play.stack_modal.move_full_stack') : t('play.stack_modal.stack_here');
-        } else {
-            this.unstackModalTitle.textContent = t('play.stack_modal.choose_title');
-            this.unstackModalText.textContent = t('play.stack_modal.choose_text');
-            this.moveStackBtn.textContent = t('play.stack_modal.move_full_stack');
-        }
-        this.moveStackBtn.hidden = !full;
-        this.moveUnstackBtn.hidden = !top;
-        this.selectInsteadBtn.hidden = !selectInstead;
-        this.moveStackBtn.classList.toggle('btn--primary', full);
-        this.moveUnstackBtn.classList.toggle('btn--primary', !full && top);
-        this.unstackModal.classList.add('is-active');
-        (full ? this.moveStackBtn : this.moveUnstackBtn).focus();
-    }
-
-    private closeUnstackModal(): void {
-        this.unstackModal.classList.remove('is-active');
-    }
-
-    private handleModalClose(): void {
-        this.closeUnstackModal();
-        this.controller.clearSelectedMove();
     }
 
     /** Shows the board from the other side; any game, any viewer (it changes nothing but the view). */

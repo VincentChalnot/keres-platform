@@ -106,10 +106,17 @@ account / play as a guest, or face the bot / lobby when signed in). It is author
 - `puzzle.json`:
   ```json
   {"start": "<board code>", "flipped": false,
-   "steps": [{"by": "player|opponent", "from": "E2", "to": "E6", "board": "<board code after the move>",
+   "steps": [{"by": "player|opponent", "from": "E2", "to": "E6", "unstack": false, "board": "<board code after the move>",
               "text": "carry|unstack_fork|legal_blunder|capture_king"}]}
   ```
-  Board codes are the base64 of the editor. A `player` step shows its sentence and a green arrow `from`→`to` and
+  `unstack` is optional (default `false`): `true` marks a move of the top piece of a stack only, as opposed to the whole stack.
+  `prompt` is optional: when the player makes the step's move, the real game's dialog (`#unstack-modal`, shared with the
+  game page through `utils/unstackModal.ts` and `_unstack_modal.html.twig`) opens first, and only the answer matching
+  `unstack` plays the step (anything else answers "try again", Escape/backdrop just backs out). Values are the buttons the
+  engine would offer: `choose` (full stack / top piece), `select` (+ "select that piece instead", for a move onto one of
+  the player's own pieces), `select_top` (top piece / select), `select_stack` (stack here / select); a prompt must offer the
+  expected answer. Without `prompt` the move plays at once, as when the engine forces the interpretation.
+  Board codes are the base64 of the editor. A `player` step shows its sentence (no arrow: the player has to find the move) and
   accepts exactly that click pair or drag; anything else answers "try again". An `opponent` step plays itself 900 ms
   after its sentence. `tutorial.ts` validates the whole file on load (`parseBoardCode`, squares, `text`) and falls back
   to the ending with an error line when it is wrong.
