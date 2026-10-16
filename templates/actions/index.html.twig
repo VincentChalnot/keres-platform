@@ -9,4 +9,5 @@
     {% else %}
         {% include 'actions/home/_guest.html.twig' %}
     {% endif %}
+    {% include 'actions/_experience_modal.html.twig' with {tutorialUrl: tutorial_available() ? path('tutorial') : ''} only %}
 {% endblock %}

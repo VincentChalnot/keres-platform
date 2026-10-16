@@ -4,6 +4,7 @@
 {% block title %}{{ 'page.title'|trans }}{% endblock %}
 
 {% block body %}
+    {% include 'actions/_experience_modal.html.twig' with {active: true} only %}
     {# Slide captions: literal keys, in the order of TutorialContent::SLIDES. #}
     {% set captions = {
         'board': 'slides.board'|trans,

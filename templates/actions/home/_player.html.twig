@@ -2,7 +2,6 @@
 {# The signed-in home: Continue, Play, Your games, and a sidebar. Variables: see IndexAction. #}
 <main class="section">
     <div class="container-page">
-        {% include '_onboarding_banner.html.twig' %}
         <h1 class="page-title mb-6">{{ (totalFinished > 0 ? 'home.greeting.back' : 'home.greeting.first')|trans({name: greetingName}) }}</h1>
 
         <div class="grid grid-cols-1 items-start gap-4 lg:grid-cols-[1fr_22rem] [&>*>.card]:!mb-0">
@@ -74,7 +73,17 @@
             </div>
 
             <aside class="flex flex-col gap-4" aria-label="{{ 'home.sidebar_label'|trans }}">
-                {% if totalFinished > 0 %}
+                {% if onboarding_pending() %}
+                    {# First visits: the invitation to the tutorial takes the place of the stats. #}
+                    <div class="card" id="onboarding-card">
+                        <h2 class="card__title card__title--sm">{{ 'home.onboarding.title'|trans }}</h2>
+                        <p>{{ 'home.onboarding.text'|trans }}</p>
+                        <div class="btn-group">
+                            <a href="{{ path('tutorial') }}" class="btn btn--primary btn--sm">{{ 'home.onboarding.cta'|trans }}</a>
+                            <button type="button" class="btn btn--text btn--sm" data-onboarding-dismiss>{{ 'home.onboarding.dismiss'|trans }}</button>
+                        </div>
+                    </div>
+                {% elseif totalFinished > 0 %}
                     {% include 'actions/home/_stats.html.twig' %}
                 {% endif %}
                 <div class="card">

@@ -7,6 +7,7 @@ import "@fortawesome/fontawesome-free/css/regular.min.css";
 import {initNotifications} from "./typescript/src/notifications/NotificationBell";
 import {initializeNavbarToggle} from "./typescript/src/navbar-toggle";
 import {initializeMenuToggles} from "./typescript/src/menu-toggle";
+import {initExperienceModal} from "./typescript/src/onboarding-experience";
 
 // ─── Mobile navigation burger (every page) ───────────────────────────────────
 
@@ -22,6 +23,14 @@ if (document.readyState === "loading") {
     document.addEventListener("DOMContentLoaded", initializeMenuToggles);
 } else {
     initializeMenuToggles();
+}
+
+// ─── "Do you play chess?" modal ──────────────────────────────────────────────
+
+if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", initExperienceModal);
+} else {
+    initExperienceModal();
 }
 
 // ─── Notification bell (every signed-in page) ────────────────────────────────
@@ -114,12 +123,12 @@ document.addEventListener("keydown", (event) => {
     }
 });
 
-// ─── Tutorial invitation banner (dismiss: remembered in the browser and, signed in, on the account) ───────────────
+// ─── Home onboarding card (dismiss: remembered in the browser and, signed in, on the account) ───────────────
 
 document.addEventListener("click", (event) => {
     const button = event.target instanceof Element ? event.target.closest("[data-onboarding-dismiss]") : null;
     if (!button) return;
 
-    document.getElementById("onboarding-banner")?.remove();
+    document.getElementById("onboarding-card")?.remove();
     fetch("/onboarding/complete", {method: "POST"}).catch(() => {});
 });

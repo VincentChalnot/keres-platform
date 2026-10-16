@@ -1,4 +1,11 @@
 # La page /tutorial (templates/actions/tutorial.html.twig) : légendes des diapositives et choix de fin.
+experience:
+    title: Jouez-vous aux échecs ?
+    text: Cela nous aide à vous présenter Keres. Vous pourrez changer votre réponse plus tard dans les Paramètres.
+    player: Oui, je joue aux échecs
+    beginner: Non, je débute
+    skipped: Passer, je veux juste jouer
+    close: Fermer
 page:
     title: Apprendre à jouer à Keres
 nav:

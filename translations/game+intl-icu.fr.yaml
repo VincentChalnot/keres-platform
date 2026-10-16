@@ -140,6 +140,11 @@ home:
         email: E-mail
         hotseat: Jouer avec un ami sur cet appareil
         image_alt: Une partie de Keres en cours
+    onboarding:
+        title: Nouveau sur Keres ?
+        text: Apprenez le jeu en deux minutes.
+        cta: Lancer le tutoriel
+        dismiss: Plus tard
     continue:
         title: Continuer
         bot: 'Partie contre le Bot {level}'

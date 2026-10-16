@@ -6,6 +6,7 @@ namespace App\Form;
 
 use App\Entity\UserPreferences;
 use App\Model\AnimationSpeed;
+use App\Model\ChessExperience;
 use Symfony\Component\Form\AbstractType;
 use Symfony\Component\Form\Extension\Core\Type\CheckboxType;
 use Symfony\Component\Form\Extension\Core\Type\EnumType;
@@ -37,6 +38,16 @@ class BoardSettingsType extends AbstractType
                 'help' => 'board_settings.animation_speed_help',
                 'choice_label' => static fn (AnimationSpeed $speed): string => 'board_settings.animation_speed_'.$speed->value,
                 'expanded' => true,
+            ])
+            // Lives on the user, not on the preferences: the action reads and writes it.
+            ->add('chessExperience', EnumType::class, [
+                'class' => ChessExperience::class,
+                'mapped' => false,
+                'required' => false,
+                'placeholder' => 'board_settings.chess_experience_none',
+                'label' => 'board_settings.chess_experience',
+                'help' => 'board_settings.chess_experience_help',
+                'choice_label' => static fn (ChessExperience $answer): string => 'board_settings.chess_experience_'.$answer->value,
             ])
             ->add('submit', SubmitType::class, [
                 'label' => 'common.save_changes',

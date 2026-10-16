@@ -1,0 +1,25 @@
+{% trans_default_domain 'tutorial' %}
+{# "Do you play chess?", asked once (the answer is `ChessExperience`, stored by `POST /onboarding/experience`; see
+   assets/typescript/src/onboarding-experience.ts). Rendered only while there is no answer. Parameters: active (open at
+   once, for /tutorial; otherwise a click on a [data-experience-gate] form opens it), tutorialUrl (where "yes"/"no" lead
+   outside /tutorial; empty on /tutorial itself). #}
+{% if chess_experience() is null %}
+    <div class="modal{{ active|default(false) ? ' is-active' : '' }}" id="experience-modal" role="dialog" aria-modal="true" aria-labelledby="experience-title"
+         data-experience-modal data-dismissible data-url="{{ path('onboarding_experience') }}" data-tutorial-url="{{ tutorialUrl|default('') }}" data-home-url="{{ path('index') }}">
+        <div class="modal__backdrop"></div>
+        <div class="modal__card">
+            <header class="modal__head">
+                <p class="modal__title" id="experience-title">{{ 'experience.title'|trans }}</p>
+                <button type="button" class="btn-close" aria-label="{{ 'experience.close'|trans }}" data-close></button>
+            </header>
+            <section class="modal__body">
+                <p class="m-0">{{ 'experience.text'|trans }}</p>
+            </section>
+            <footer class="modal__foot">
+                <button type="button" class="btn btn--primary" data-experience="player">{{ 'experience.player'|trans }}</button>
+                <button type="button" class="btn btn--primary" data-experience="beginner">{{ 'experience.beginner'|trans }}</button>
+                <button type="button" class="btn btn--text" data-experience="skipped">{{ 'experience.skipped'|trans }}</button>
+            </footer>
+        </div>
+    </div>
+{% endif %}

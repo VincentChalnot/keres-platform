@@ -122,10 +122,22 @@ account / play as a guest, or face the bot / lobby when signed in). It is author
   to the ending with an error line when it is wrong.
 
 "Has been through the tutorial" is the `keres_onboarded=1` cookie (set by `POST /onboarding/complete`, called at the end
-of the problem and by the banner's close button; also stored on `User::$onboardedAt` when signed in).
-`NewUserBrowserProgressListener` copies the cookie onto any account created from that browser, so the invitation banner
-(`_onboarding_banner.html.twig`, on the signed-in home page; Phase 3 of `docs/onboarding-plan.md` replaces it) disappears for good. The
-banner is an invitation only: nobody is redirected.
+of the problem and by the home card's "Not now" button; also stored on `User::$onboardedAt` when signed in).
+`NewUserBrowserProgressListener` copies the cookie onto any account created from that browser. A signed-in user is judged
+by the account alone (`onboarding_pending()` ignores the cookie for them); the cookie only matters to anonymous visitors
+and at sign-up. The invitation is the signed-in home page's onboarding card (it takes the place of the stats until the
+tutorial is done or dismissed) and the anonymous hero's "Learn the game" link; nobody is redirected.
+
+**"Do you play chess?"** (`ChessExperience`: `player`, `beginner`, `skipped`; `User::$chessExperience`, NULL = never
+asked). `POST /onboarding/experience` (`experience=...`, public, no CSRF) stores the answer on the account when signed in
+and always in the `keres_chess_xp` cookie, which `NewUserBrowserProgressListener` copies to the account at sign-up; for a
+signed-in user the account is the authority (`ChessExperienceResolver`), so a cookie never answers for an account that did
+not. The question is `_experience_modal.html.twig`, asked while there is no answer: open at once on `/tutorial`, and on
+any page by a click on a bot-game quick form (`_quick_game_form`, marked `data-experience-gate` for `opponent='ai'`
+while the tutorial exists and nothing is answered; `onboarding-experience.ts` intercepts the submit). "Yes"/"No" lead to
+`/tutorial` (the separate chess/beginner tracks arrive with Phase 5 of `docs/onboarding-plan.md`), "Skip" lets the game
+start (from `/tutorial` itself it goes home). The answer is changeable in Settings -> Board & gameplay (empty = ask
+again). The coach default (beginner = on) comes with Phase 6.
 
 ## Analytics event log
 

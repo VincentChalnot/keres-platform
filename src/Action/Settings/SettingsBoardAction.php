@@ -39,10 +39,12 @@ class SettingsBoardAction extends AbstractController
 
         $preferences = $this->userPreferencesManager->getOrCreate($user);
         $form = $this->createForm(BoardSettingsType::class, $preferences);
+        $form->get('chessExperience')->setData($user->getChessExperience());
         $form->handleRequest($request);
 
         if ($form->isSubmitted() && $form->isValid()) {
             $preferences->touch();
+            $user->setChessExperience($form->get('chessExperience')->getData());
             $this->entityManager->flush();
             $this->addFlash('success', $this->translator->trans('flash.board_saved', [], 'flashes'));
 

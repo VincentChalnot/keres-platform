@@ -22,6 +22,12 @@ board_settings:
     animation_speed_instant: Instantané (sans animation)
     animation_speed_fast: Rapide
     animation_speed_slow: Lent
+    chess_experience: Jouez-vous aux échecs ?
+    chess_experience_help: Détermine le parcours de tutoriel proposé et si le coach démarre activé.
+    chess_experience_none: Pas encore répondu
+    chess_experience_player: Oui, je joue aux échecs
+    chess_experience_beginner: Non, je débute
+    chess_experience_skipped: Je préfère ne pas le dire
 notification_settings:
     newsletter: Je m’abonne à la newsletter
 privacy_settings:

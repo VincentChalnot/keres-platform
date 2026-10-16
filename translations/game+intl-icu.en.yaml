@@ -140,6 +140,11 @@ home:
         email: Email
         hotseat: Play with a friend on this device
         image_alt: A Keres game in progress
+    onboarding:
+        title: New to Keres?
+        text: Learn the game in two minutes.
+        cta: Start the tutorial
+        dismiss: Not now
     continue:
         title: Continue
         bot: 'Game against Bot {level}'

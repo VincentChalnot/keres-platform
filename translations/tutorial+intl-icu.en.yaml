@@ -1,4 +1,11 @@
 # The /tutorial page (templates/actions/tutorial.html.twig): slide captions and the closing choices.
+experience:
+    title: Do you play chess?
+    text: It tells us how to introduce Keres to you. You can change your answer later in Settings.
+    player: Yes, I play chess
+    beginner: No, I’m new to this
+    skipped: Skip, just let me play
+    close: Close
 page:
     title: Learn to play Keres
 nav:

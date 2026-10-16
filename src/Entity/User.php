@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Entity;
 
+use App\Model\ChessExperience;
 use App\Model\MultiplayerLimits;
 use App\Repository\UserRepository;
 use Doctrine\Common\Collections\ArrayCollection;
@@ -83,6 +84,10 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     /** When the user finished (or dismissed) the tutorial, in this browser or an earlier anonymous visit; NULL = not yet. */
     #[ORM\Column(type: Types::DATETIMETZ_IMMUTABLE, nullable: true)]
     private ?\DateTimeImmutable $onboardedAt = null;
+
+    /** The answer to "Do you play chess?"; NULL = never asked (onboarding, `ChessExperience`). */
+    #[ORM\Column(type: Types::STRING, length: 16, nullable: true, enumType: ChessExperience::class)]
+    private ?ChessExperience $chessExperience = null;
 
     /** @var Collection<UserAuth> */
     #[ORM\OneToMany(
@@ -301,6 +306,16 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     public function markOnboarded(\DateTimeImmutable $at): void
     {
         $this->onboardedAt ??= $at;
+    }
+
+    public function getChessExperience(): ?ChessExperience
+    {
+        return $this->chessExperience;
+    }
+
+    public function setChessExperience(?ChessExperience $chessExperience): void
+    {
+        $this->chessExperience = $chessExperience;
     }
 
     public function getUserIdentifier(): string

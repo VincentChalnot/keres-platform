@@ -22,6 +22,12 @@ board_settings:
     animation_speed_instant: Instant (no animation)
     animation_speed_fast: Fast
     animation_speed_slow: Slow
+    chess_experience: Do you play chess?
+    chess_experience_help: Decides which tutorial track is offered and whether the coach starts on.
+    chess_experience_none: Not answered yet
+    chess_experience_player: Yes, I play chess
+    chess_experience_beginner: No, I’m new to this
+    chess_experience_skipped: I’d rather not say
 notification_settings:
     newsletter: Subscribe to the newsletter
 privacy_settings:
