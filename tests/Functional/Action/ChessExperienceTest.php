@@ -13,7 +13,7 @@ use App\Tests\Functional\DatabaseTestCase;
 use Symfony\Component\BrowserKit\Cookie;
 
 /**
- * Phase 3 of `docs/onboarding-plan.md`: "Do you play chess?", stored on the account and in a cookie, copied at sign-up,
+ * D16 of `DECISIONS.md`: "Do you play chess?", stored on the account and in a cookie, copied at sign-up,
  * asked until answered; the account wins over the cookie for a signed-in user.
  */
 final class ChessExperienceTest extends DatabaseTestCase

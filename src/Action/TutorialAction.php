@@ -16,7 +16,7 @@ use Symfony\Component\HttpKernel\Attribute\AsController;
 use Symfony\Component\Routing\Attribute\Route;
 
 /**
- * `GET /tutorial`: the hybrid tutorial (D4 of `docs/onboarding-plan.md`), played by `assets/typescript/src/tutorial.ts` from
+ * `GET /tutorial`: the hybrid tutorial (D16 point 4 of `DECISIONS.md`), played by `assets/typescript/src/tutorial.ts` from
  * `public/tutorial/lessons.json`: a short track for chess players, interactive lessons for beginners, then "play the bot".
  * The track opens on the visitor's answer to "Do you play chess?" (chess players: the first; anyone else: the beginner
  * lessons) and can be switched on the page. Public; the page does not exist until the lessons file does

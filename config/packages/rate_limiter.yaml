@@ -50,7 +50,7 @@ framework:
             limit: 120
             interval: '1 minute'
         # Every call to the AI backend (GCP Cloud Run, billed) is limited: per IP for guests, per user when signed in.
-        # Hints (Phase 6 of docs/onboarding-plan.md) draw from the same buckets as the AI's replies.
+        # Hints (D16 of `DECISIONS.md`) draw from the same buckets as the AI's replies.
         guest_ai:                    # $guestAiLimiter, keyed on client IP - anonymous AI games and hints (casual, unlimited games only)
             policy: 'token_bucket'
             limit: 15

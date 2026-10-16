@@ -11,7 +11,7 @@ use Doctrine\DBAL\LockMode;
 use Doctrine\ORM\EntityManagerInterface;
 
 /**
- * "One bot game at a time" (D5 of `docs/onboarding-plan.md`): a bot game is a `Game` with a non-null `aiLevel`, whether
+ * "One bot game at a time" (D16 point 5 of `DECISIONS.md`): a bot game is a `Game` with a non-null `aiLevel`, whether
  * it is a casual `OpponentType::AI` game or a rated, clocked game against a bot account. The AI backend is billed per
  * call, so a player keeps a single running bot game; hot-seat and human multiplayer games are not concerned.
  *

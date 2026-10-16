@@ -15,7 +15,7 @@ use App\Tests\Functional\DatabaseTestCase;
 use Symfony\Component\RateLimiter\RateLimiterFactory;
 
 /**
- * Phase 1 of `docs/onboarding-plan.md`: guests play level 1 only, a player has one bot game at a time, and the AI's
+ * D16 of `DECISIONS.md`: guests play level 1 only, a player has one bot game at a time, and the AI's
  * replies are rate-limited per user without touching the game when refused.
  */
 final class BotGameLimitsTest extends DatabaseTestCase

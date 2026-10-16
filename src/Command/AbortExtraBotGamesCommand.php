@@ -15,7 +15,7 @@ use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Style\SymfonyStyle;
 
 /**
- * One-off clean-up for "one bot game at a time" (D5/D6 of `docs/onboarding-plan.md`): a player who piled up several
+ * One-off clean-up for "one bot game at a time" (D16 points 5 and 6 of `DECISIONS.md`): a player who piled up several
  * running bot games (casual or rated) keeps the one played most recently (last move, else creation date) and the
  * others are aborted - no result, no rating, no ladder effect. Idempotent; run `--dry-run` first.
  */

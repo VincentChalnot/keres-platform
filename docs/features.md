@@ -94,9 +94,23 @@ the page - **change it whenever the site publishes new terms**).
   carry a session; the acceptance page, logout, the language switch and the sign-in routes are exempt.
 - `/dev/login` accepts the terms on every login (scripted browser flows would stop on the page otherwise).
 
+## Home page, navbar and lobby
+
+`/` is the home page (`IndexAction`; `actions/index.html.twig` with `home/_guest`, `home/_player`, `home/_stats`).
+Visitors see one hero: "Play now, no account needed" (a guest with a stored game gets "Resume your game"), a sign-in row
+(Google, Discord, e-mail), "Learn the game in 2 minutes" and a discreet hot-seat link. Signed-in players see, top to bottom:
+Continue (multiplayer games where it is their move, the running bot game as "Resume vs Bot N" with Resign), Play (the
+next bot, online, a friend; "More ways to play": hot-seat, custom game), Your games, then the sidebar (stats once a game
+is finished, or the onboarding card until "Do you play chess?" is answered; "What's new"). The navbar has the logo (home),
+"Play online", "Learn", "Friends", a primary "Play" button, the bell and an avatar menu; the rules live in the help
+drawer. `/lobby` is online play only (`ROLE_USER`): quick-pairing presets, the list of players looking for a game and
+"Create a game". `/dashboard` and `/play` redirect to `/`. Leaving the page of a *timed* game asks for confirmation (the
+clock keeps running); untimed games never ask. A guest's game-over modal after a bot game offers Google / Discord / e-mail
+sign-up, which lands on `/` and keeps the ladder progress, the tutorial flag and the chess answer of the browser.
+
 ## Onboarding and the tutorial
 
-`/tutorial` (`TutorialAction`) is the hybrid tutorial (D4 of `docs/onboarding-plan.md`), played by `tutorial.ts` from
+`/tutorial` (`TutorialAction`) is the hybrid tutorial (D16 point 4 of `DECISIONS.md`), played by `tutorial.ts` from
 `public/tutorial/lessons.json`: the **chess** track (two screens for chess players: what is new, stacking and what does not
 exist) or the **beginner** track (twelve short interactive lessons), then the ending (create an account / play as a guest,
 or face the bot / lobby when signed in). The track opens on the answer to "Do you play chess?" (player: chess; anyone else,
@@ -159,7 +173,7 @@ signed-in user the account is the authority (`ChessExperienceResolver`), so a co
 not. The question is `_experience_modal.html.twig`, asked while there is no answer: open at once on `/tutorial`, and on
 any page by a click on a bot-game quick form (`_quick_game_form`, marked `data-experience-gate` for `opponent='ai'`
 while the tutorial exists and nothing is answered; `onboarding-experience.ts` intercepts the submit). "Yes"/"No" lead to
-`/tutorial` (the separate chess/beginner tracks arrive with Phase 5 of `docs/onboarding-plan.md`), "Skip" lets the game
+`/tutorial` (the chess or beginner track), "Skip" lets the game
 start (from `/tutorial` itself it goes home). The answer is changeable in Settings -> Board & gameplay (empty = ask
 again). The coach default (beginner = on) comes with Phase 6.
 
@@ -282,7 +296,7 @@ bucket 15, +10/min) for guests' `/api/engine-move-game`, `user_ai` (per user id,
 player's bot games. `SubmitMoveAction` consumes `user_ai` before applying a move in a bot game (refused: 429, code
 `ai_rate_limited`, nothing applied, text `api_error.ai_rate_limited` of the `frontend` domain), `PlayAction` before it
 dispatches the AI's first move (refused: nothing dispatched, error flash, a reload asks again). The hint endpoint of the
-coach (Phase 6 of `docs/onboarding-plan.md`) draws from the same buckets.
+coach (see Coach) draws from the same buckets.
 
 A player has **one bot game at a time**, casual or rated (`Game::$aiLevel` set; hot-seat and human multiplayer are not
 concerned). `NewLocalGameAction` refuses a second one and re-renders `/play/new` offering to resume the running game or to

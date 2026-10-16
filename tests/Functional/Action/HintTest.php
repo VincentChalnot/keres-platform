@@ -20,7 +20,7 @@ use App\Tests\Functional\DatabaseTestCase;
 use Symfony\Component\RateLimiter\RateLimiterFactory;
 
 /**
- * The coach's hint (Phase 6 of `docs/onboarding-plan.md`): `POST /api/games/{uuid}/hint` and `POST /api/hint` ask the
+ * The coach's hint (D16 of `DECISIONS.md`): `POST /api/games/{uuid}/hint` and `POST /api/hint` ask the
  * engine's `/evaluate-moves` once (stubbed here: CI has no engine), answer the best entry, store every returned move on
  * the shared tree with its evaluation, consume the AI budget once and, for a persisted game, mark it assisted.
  */

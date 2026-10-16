@@ -85,6 +85,18 @@ back the image tag does not roll back the schema. A failed migration leaves
 
 `IMAGES_TAG` and `BACKEND_IMAGE_TAG` both default to `latest` if unset.
 
+### After deploying the onboarding release (once)
+
+The "one bot game at a time" rule only applies to new games; clean the backlog once, dry run first:
+
+```sh
+docker compose exec php bin/console app:bot-games:abort-extra --dry-run
+docker compose exec php bin/console app:bot-games:abort-extra
+```
+
+Then check that guest games still feed the tree: `Move` rows without a `GameMove` keep appearing after guests play
+(`/api/guest-moves`, `/api/hint`). Rate limiters (`guest_ai`, `user_ai`) store their state in the app cache.
+
 ## Backups
 
 `db-backup.sh` produces a `pg_dump` of the running Postgres container,

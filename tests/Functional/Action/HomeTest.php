@@ -12,7 +12,7 @@ use App\Service\GameFactory;
 use App\Tests\Functional\DatabaseTestCase;
 
 /**
- * Phase 2 of `docs/onboarding-plan.md`: `/` is the home page, the dashboard and `/play` redirect to it, `/lobby` is
+ * D16 of `DECISIONS.md`: `/` is the home page, the dashboard and `/play` redirect to it, `/lobby` is
  * online play for signed-in players only.
  */
 final class HomeTest extends DatabaseTestCase

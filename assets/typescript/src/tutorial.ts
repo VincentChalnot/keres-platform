@@ -7,7 +7,7 @@ import {PieceStyle, TileHighlight} from './views/IBoardView';
 import {askUnstack, UnstackModalDetail} from './utils/unstackModal';
 
 /**
- * The /tutorial page (templates/actions/tutorial.html.twig): the hybrid tutorial (D4 of docs/onboarding-plan.md) played
+ * The /tutorial page (templates/actions/tutorial.html.twig): the hybrid tutorial (D16 point 4 of `DECISIONS.md`) played
  * from `public/tutorial/lessons.json`. Two tracks - `chess` (short screens for chess players) and `beginner` (interactive
  * lessons on a live `SVGBoardView`) - made of lessons of four kinds:
  * - `read`: a sentence with static images and/or a board to look at;

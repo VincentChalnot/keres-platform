@@ -78,7 +78,9 @@ knowledge (piece names, SVG representations, movement descriptions).
 | `assets/board.css`                  | **The one stylesheet of the board SVG** (tiles, pieces, coordinate labels, piece animation, arrows) |
 | `src/views/boardCss.ts`             | `board.css` as a string (`?inline`): `injectBoardCss()` for the page, the default export for static exports |
 | `src/views/boardExport.ts`          | Admin-only static export of the board SVG: `buildBoardHtml()`, `buildBoardSvg()`, `downloadFile()` (see Static HTML export) |
-| `src/tutorial.ts`                   | The `/tutorial` page: slides, then a guided problem on a live `SVGBoardView` (see Tutorial) |
+| `src/tutorial.ts`                   | The `/tutorial` page: hybrid lessons from `public/tutorial/lessons.json` on a live `SVGBoardView` (see Tutorial) |
+| `src/coach/`                        | The coach of casual bot games: card, capture warnings (`hanging.ts`), tips, piece cards (see Coach) |
+| `src/help.ts`                       | The help drawer and diagram modal (see features.md, "Piece diagrams, piece info and the help drawer") |
 | `src/views/EvalGraph.ts`            | Evaluation-over-the-game graph under the board (see Engine API Bridge)         |
 | `src/views/BoardArrows.ts`          | Right-button analysis arrows of the board (state, geometry, mouse handling)    |
 | `src/i18n/`                         | `t()` + ICU-subset formatter over the server-rendered catalogue (see Internationalisation) |
@@ -244,6 +246,16 @@ Public page, authored content: the hybrid tutorial (`public/tutorial/lessons.jso
 and unstack, a scripted tactic). The legal squares of the free-move lessons come from the engine (`/api/moves`), the
 boards of scripted lessons are recorded by the author: the platform holds no game rule. The page, its navbar link and
 the home onboarding card exist only while the lessons file does (`TutorialContent::isAvailable()`).
+
+### Home, lobby and onboarding
+
+`/` (`IndexAction`, template `actions/index.html.twig` + `home/_guest|_player|_stats`) is the home page: a hero for
+visitors, Continue / Play / Your games for players. `/lobby` is online play only (`ROLE_USER`); the dashboard is gone
+(`/dashboard` and `/play` redirect to `/`). The answer to "Do you play chess?" (`ChessExperience`, cookie
+`keres_chess_xp`, `ChessExperienceResolver`) picks the tutorial track and the coach default; a visitor's cookies
+(tutorial flag, answer, AI level beaten) follow them into a new account (`NewUserBrowserProgressListener`). A guest's
+game-over modal after a bot game invites them to sign up. One bot game at a time: `Service\Game\BotGameManager`, the
+shared conflict modal. Decisions: `DECISIONS.md` D16, D17. Behaviour: `docs/features.md`.
 
 ## Domain Model
 

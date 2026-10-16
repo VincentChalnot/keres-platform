@@ -265,3 +265,32 @@ Decision: `MultiplayerLimits::CHALLENGE_TTL_SECONDS` is 7 days, correspondence s
 
 ### Terms of use are accepted per version, by every account
 Decision: `User::$termsAcceptedVersion/At` against `TermsOfUse::CURRENT_VERSION` (the "Last updated" date of the site's page); registration has a checkbox, any other signed-in account without the current version is sent to `/terms/accept` (page navigations only), `/dev/login` accepts automatically. Rationale: OIDC sign-ups never see a form, and a new version must be accepted again by everybody.
+
+---
+
+## D16 - Onboarding, cost guards and the coach (ten decisions)
+2026-10-16 - Accepted
+
+Context: new visitors landed on a dashboard with no explanation, the AI backend (GCP Cloud Run, `AI_BACKEND_API_URL`) is billed per call and unguarded, and players piled up unfinished bot games. The operator settled these ten points before the work started (code comments cite them as "D16 point N").
+
+1. **Marketing site.** Its "Play for free" lands on the app home `/`. The app links back to the marketing site only from the footer (legal pages, "About"). Otherwise the site is left alone: no shared nav, no cookie trick.
+2. **No sign-in wall.** Anonymous visitors play as guests; the sign-up prompt comes after their first game (the guest game-over modal). Guests play **bot level 1 only** (`LocalGameType::GUEST_MAX_AI_LEVEL`).
+3. **AI calls are rate-limited**, per IP for guests (`guest_ai`) and per user when signed in (`user_ai`); hints draw from the same bucket, one token per call.
+4. **Tutorial: hybrid.** One question, "Do you play chess?" (`ChessExperience`: player / beginner / skipped, cookie `keres_chess_xp` for visitors), then a short chess-player track or interactive beginner lessons (`public/tutorial/lessons.json`), then a real game against bot level 1. Everything is skippable; `/tutorial` stays as a replayable reference. (Delivered: 12 beginner lessons instead of the 4-6 first planned.)
+5. **One bot game at a time**, casual and rated against bots together; hot-seat and multiplayer are not concerned. Leaving the page leaves the game running; the player resumes or resigns it from the home page, or "resigns and starts a new one" in one click. Leaving a *timed* game page asks for confirmation.
+6. **Existing backlogs** are cleaned once by `app:bot-games:abort-extra` (aborts all but the most recently played bot game of each user: no result, no rating, no ladder effect).
+7. **Piece diagrams** are static SVGs, engine-derived and committed (`public/help/`), not drawn at runtime.
+8. **Coach mode.** Hint, capture warnings and a take-back offer in casual bot games (opt-in for everyone, on by default for beginners). Hints are unlimited but rate-limited (point 3). A hint or a take-back marks the game **assisted** (`Game::$assisted`, formerly `undoUsed`): such a win no longer unlocks the next ladder bot.
+9. **Level-1 bot games put the human on White** when the colour preference is "random" (the one-click bot card); an explicit Black choice is respected.
+10. **Guest games keep feeding the shared tree** through `/api/guest-moves` (`BoardTreeManager::recordLastMove()`): no `Game` row and no import at sign-up. (To verify in prod: `Move` edges without `GameMove` keep appearing.)
+
+Consequences: the home page, a navbar without the dashboard, an online-only `/lobby`, the help drawer and the coach are built on these; `docs/features.md` describes each. Changing a point means touching those places on purpose.
+
+## D17 - A hint is one `/evaluate-moves` call, and every move it returns goes on the shared tree
+2026-10-16 - Accepted
+
+Context: the coach's hint needs the engine's best move; the engine's `/evaluate-moves` (`EngineApi::evaluateMoves()`) returns every legal move with its exact level-10 White-POV score, best first for the side to move, at the cost of one `/evaluate-game`.
+
+Decision: the hint is the first entry of that list (`Service\Coach\HintProvider`; there is no separate hint level); the limiter token is consumed once per call whatever the number of moves returned. Every returned move is stored through `BoardTreeManager::recordEvaluatedMoves()` as a `Move` edge (the target position found by replaying history + move on the local backend, no AI cost) with `Move.evaluation` set, **including moves nobody played**, because those evaluations will be mined to find interesting positions for puzzles. `Move.evaluation` keeps its definition (the verdict of the position after the edge, in the line that led there), which an `/evaluate-moves` score is for the line "history + this move". Rules: **first write wins** (a non-NULL evaluation is never overwritten, as for `MoveEvaluator`'s cache; an evaluation computed for another transposition of the edge may stay); such edges have **no `GameMove`**, like guest edges; they are **never shipped to a client** (`evaluations[]`, the eval bar and the graph read through `GameMove`, `Game::canExposeEvaluation()` is unaffected: the hint returns a move, not scores); the depth differs by one ply from what `/evaluate-game` gives for the child position, so an edge evaluated both ways keeps whichever came first. Rejected: a new column or table for sibling scores.
+
+Consequences: the engine version/depth is not recorded on these scores (the protocol advises tagging them): to do when puzzle mining needs it. The existing `EvaluateMoveHandler` (one `/evaluate-game` per played move) could be migrated to `evaluateMoves()` so the played move and its siblings come from one search; until then `MoveEvaluator` and `EvaluationScheduler` stay on `evaluateGame()`.
