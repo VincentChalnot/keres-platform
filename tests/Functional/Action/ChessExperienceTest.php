@@ -6,7 +6,9 @@ namespace App\Tests\Functional\Action;
 
 use App\Model\ChessExperience;
 use App\Repository\UserRepository;
+use App\Service\Ladder\GuestAiProgress;
 use App\Service\Onboarding\ChessExperienceCookie;
+use App\Service\Onboarding\OnboardingCookie;
 use App\Tests\Functional\DatabaseTestCase;
 use Symfony\Component\BrowserKit\Cookie;
 
@@ -86,6 +88,26 @@ final class ChessExperienceTest extends DatabaseTestCase
         ]], [], $this->sameOrigin());
 
         self::assertSame(ChessExperience::PLAYER, static::getContainer()->get(UserRepository::class)->findByEmail('new@example.com')?->getChessExperience());
+    }
+
+    public function testSigningUpAfterAGuestGameCarriesTheWholeBrowserProgress(): void
+    {
+        $client = static::createClient();
+        $client->getCookieJar()->set(new Cookie(ChessExperienceCookie::NAME, 'beginner'));
+        $client->getCookieJar()->set(new Cookie(OnboardingCookie::NAME, '1'));
+        $client->getCookieJar()->set(new Cookie(GuestAiProgress::COOKIE, '1'));
+
+        $client->request('POST', '/register', ['register' => [
+            'email' => 'guest-turned-player@example.com',
+            'password' => ['first' => 'a-long-password', 'second' => 'a-long-password'],
+            'acceptTerms' => '1',
+            '_token' => 'csrf-token',
+        ]], [], $this->sameOrigin());
+
+        $user = static::getContainer()->get(UserRepository::class)->findByEmail('guest-turned-player@example.com');
+        self::assertSame(ChessExperience::BEGINNER, $user?->getChessExperience());
+        self::assertNotNull($user->getOnboardedAt());
+        self::assertSame(1, $user->getHighestAiLevelBeaten());
     }
 
     public function testTheTutorialOpensWithTheQuestionUntilAnswered(): void

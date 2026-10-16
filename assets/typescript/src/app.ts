@@ -1107,6 +1107,12 @@ class KeresGame {
             rematch.href = `/play/guest?${params.toString()}`;
         }
 
+        // A guest who just played the bot is invited to keep the progress in an account.
+        const signup = this.gameOverModal.querySelector<HTMLElement>('#gameover-modal-signup');
+        if (signup) {
+            signup.hidden = OPPONENT_TYPE_AI !== this.guestRecord?.opponentType;
+        }
+
         this.gameOverModal.classList.add('is-active');
     }
 

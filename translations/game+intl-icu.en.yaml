@@ -240,6 +240,8 @@ play:
             preorder: Pre-order physical version
             new_game: Play new game
             review: Review the game
+            signup: 'Create an account to save your progress and face Bot level {level}'
+            signup_email: Email
             feedback: Leave feedback
 
 play_guest:

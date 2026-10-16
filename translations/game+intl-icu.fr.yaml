@@ -240,6 +240,8 @@ play:
             preorder: Précommander la version physique
             new_game: Nouvelle partie
             review: Revoir la partie
+            signup: 'Créez un compte pour garder votre progression et affronter le Bot niveau {level}'
+            signup_email: E-mail
             feedback: Donner son avis
 
 play_guest:
