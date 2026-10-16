@@ -12,6 +12,17 @@
 
                 {{ form_start(form) }}
 
+                {% if conflict %}
+                    <div class="alert alert--warning" role="alert">
+                        <p class="m-0"><strong>{{ 'new_local_game.conflict.title'|trans({level: conflict.aiLevel}) }}</strong></p>
+                        <p class="mt-2 mb-0">{{ 'new_local_game.conflict.text'|trans }}</p>
+                        <div class="btn-group mt-3">
+                            <a href="{{ path('play', {uuid: conflict.uuid}) }}" class="btn btn--primary">{{ 'new_local_game.conflict.resume'|trans }}</a>
+                            {{ form_widget(form.replaceCurrent, {attr: {class: 'btn btn--outline'}}) }}
+                        </div>
+                    </div>
+                {% endif %}
+
                 {# This page is the custom game against the AI; the hot-seat game is a card of the lobby (_hotseat_card). #}
                 <input type="hidden" name="{{ form.opponentType.vars.full_name }}" value="{{ (form.opponentType.vars.choices|filter(c => c.data == enum('App\\Model\\OpponentType').AI)|first).value }}">
                 {% do form.opponentType.setRendered %}
@@ -66,8 +77,9 @@
                 <div class="btn-group btn-group--end">
                     <a href="{{ path('lobby') }}" class="btn btn--outline">{{ 'new_local_game.back'|trans }}</a>
                     {{ form_widget(form.submit) }}
-                </div>
+                                    </div>
 
+                {% if not conflict %}{% do form.replaceCurrent.setRendered %}{% endif %}
                 {{ form_end(form) }}
 
                 {# A rated game has a clock and no evaluation bar. #}

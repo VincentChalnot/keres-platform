@@ -39,6 +39,7 @@ final readonly class RematchService
         private SeekCreationService $seekCreationService,
         private SeekMatcher $seekMatcher,
         private GameFactory $gameFactory,
+        private BotGameManager $botGameManager,
         private NotificationCenter $notificationCenter,
         private AnalyticsRecorder $analyticsRecorder,
         private ClockInterface $clock,
@@ -70,6 +71,11 @@ final readonly class RematchService
 
             if (null !== $existing) {
                 return $existing;
+            }
+
+            // One bot game at a time (D5): a casual AI rematch never opens a second one, the running game is resumed.
+            if (OpponentType::AI === $parent->getOpponentType() && null !== ($running = $this->botGameManager->findCurrent($user))) {
+                return $running;
             }
 
             $game = $this->gameFactory->createAiOrHotseatGame(

@@ -261,6 +261,11 @@ new_local_game:
         cadence: Time control
         bot_unavailable: This bot is not available right now.
         submit: Start Game
+        replace_current: Resign and start this one
+    conflict:
+        title: 'You already have a game against Bot {level}'
+        text: You can only play one game against a bot at a time. Resume it, or end it and start this new one.
+        resume: Resume my game
 
 invite:
     page_title: Game invite

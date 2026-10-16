@@ -120,6 +120,42 @@ class GameRepository extends ServiceEntityRepository
     }
 
     /**
+     * The running bot game of `$user` (casual AI game or rated game against a bot account: `aiLevel` is set), most
+     * recent first if a backlog left several. Hot-seat and human multiplayer games are not bot games.
+     */
+    public function findInProgressBotGameForUser(User $user): ?Game
+    {
+        return $this->createQueryBuilder('g')
+            ->join('g.players', 'p')
+            ->andWhere('p.user = :user')
+            ->andWhere('g.aiLevel IS NOT NULL')
+            ->andWhere('g.deletedAt IS NULL')
+            ->andWhere('g.gameOverAt IS NULL')
+            ->setParameter('user', $user)
+            ->orderBy('g.createdAt', 'DESC')
+            ->addOrderBy('g.id', 'DESC')
+            ->setMaxResults(1)
+            ->getQuery()
+            ->getOneOrNullResult();
+    }
+
+    /**
+     * Every running bot game; the caller groups them by the human who plays them (`Game::getCreatedBy()`).
+     *
+     * @return Game[]
+     */
+    public function findInProgressBotGames(): array
+    {
+        return $this->createQueryBuilder('g')
+            ->andWhere('g.aiLevel IS NOT NULL')
+            ->andWhere('g.deletedAt IS NULL')
+            ->andWhere('g.gameOverAt IS NULL')
+            ->orderBy('g.id', 'ASC')
+            ->getQuery()
+            ->getResult();
+    }
+
+    /**
      * @return Game[]
      */
     public function findFinishedForUser(User $user): array

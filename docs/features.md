@@ -189,8 +189,26 @@ the same parameters and the colours swapped; whoever asks first wins, the other 
 always calls the leveled endpoint `/engine-move-game/{level}` (`GameEngine` passes
 `$game->getAiLevel() ?? 1`); the engine image must be recent enough to serve it
 (see "Stale engine image" in AGENTS.md). Guests (no account, no `Game` row) are
-limited to levels 1-4 (`LocalGameType::GUEST_MAX_AI_LEVEL`, enforced in the form, in
+limited to level 1 (`LocalGameType::GUEST_MAX_AI_LEVEL`, enforced in the form, in
 `NewLocalGameAction` and in `GuestEngineMoveAction`), and get no live evaluation.
+
+### AI cost guards and one bot game at a time
+
+Every call to the AI backend is billed, so it is limited (`config/packages/rate_limiter.yaml`): `guest_ai` (per IP, token
+bucket 15, +10/min) for guests' `/api/engine-move-game`, `user_ai` (per user id, token bucket 40, +30/min) for a signed-in
+player's bot games. `SubmitMoveAction` consumes `user_ai` before applying a move in a bot game (refused: 429, code
+`ai_rate_limited`, nothing applied, text `api_error.ai_rate_limited` of the `frontend` domain), `PlayAction` before it
+dispatches the AI's first move (refused: nothing dispatched, error flash, a reload asks again). The hint endpoint of the
+coach (Phase 6 of `docs/onboarding-plan.md`) draws from the same buckets.
+
+A player has **one bot game at a time**, casual or rated (`Game::$aiLevel` set; hot-seat and human multiplayer are not
+concerned). `NewLocalGameAction` refuses a second one and re-renders `/play/new` offering to resume the running game or to
+resign it and start the new one (the form's `replaceCurrent` submit button; `BotGameManager::retire()` aborts a game that
+would not count anyway, resigns otherwise). A casual rematch of a finished AI game resumes the running bot game instead
+of opening another. `bin/console app:bot-games:abort-extra [--dry-run]` aborts, for every user with several running bot
+games, all but the most recently played one (last move, else creation date): no result, no rating, no ladder effect. Run
+it once in production after the deploy that introduces the rule (dry run first). A level-1 game with the "random" colour
+preference puts the human on White (`GameFactory::humanColorAgainstBot()`); an explicit Black is respected.
 
 ### Rated games against a bot
 

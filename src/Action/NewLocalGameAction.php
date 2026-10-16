@@ -14,6 +14,7 @@ use App\Repository\GameRepository;
 use App\Repository\UserRepository;
 use App\Service\Analytics\AnalyticsRecorder;
 use App\Service\BotTournament\BotAccounts;
+use App\Service\Game\BotGameManager;
 use App\Service\GameFactory;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -38,6 +39,7 @@ class NewLocalGameAction extends AbstractController
         private readonly GameFactory $gameFactory,
         private readonly GameRepository $gameRepository,
         private readonly UserRepository $userRepository,
+        private readonly BotGameManager $botGameManager,
         private readonly BotAccounts $botAccounts,
         private readonly AnalyticsRecorder $analyticsRecorder,
         private readonly TranslatorInterface $translator,
@@ -90,6 +92,16 @@ class NewLocalGameAction extends AbstractController
 
             $aiLevel = OpponentType::AI === $data['opponentType'] ? $data['aiLevel'] : null;
 
+            // One bot game at a time (D5), casual or rated. The server is the source of truth: the page only mirrors
+            // it by offering to resume the running game or to end it and start this one in the same request.
+            if (null !== $aiLevel && null !== ($current = $this->botGameManager->findCurrent($user))) {
+                if (!$form->get('replaceCurrent')->isClicked()) {
+                    return ['form' => $form->createView(), 'conflict' => $current];
+                }
+
+                $this->botGameManager->retire($current, $user);
+            }
+
             $isFirstGame = 0 === $this->gameRepository->countForUser($user);
 
             if (null !== $bot) {
@@ -111,6 +123,6 @@ class NewLocalGameAction extends AbstractController
             return $this->redirectToRoute('play', ['uuid' => $game->getUuid()]);
         }
 
-        return ['form' => $form->createView()];
+        return ['form' => $form->createView(), 'conflict' => null];
     }
 }

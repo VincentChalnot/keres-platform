@@ -94,6 +94,10 @@ class LocalGameType extends AbstractType
             ])
             ->add('submit', SubmitType::class, [
                 'label' => 'new_local_game.form.submit',
+            ])
+            // Only rendered when the player already has a running bot game: "end it and start this one".
+            ->add('replaceCurrent', SubmitType::class, [
+                'label' => 'new_local_game.form.replace_current',
             ]);
     }
 

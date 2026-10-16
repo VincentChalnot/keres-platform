@@ -261,6 +261,11 @@ new_local_game:
         bot_unavailable: Ce bot n’est pas disponible pour le moment.
         ai_level_guest_error: Connectez-vous pour jouer contre ce niveau.
         submit: Commencer la partie
+        replace_current: Abandonner et commencer celle-ci
+    conflict:
+        title: 'Vous avez déjà une partie contre le Bot {level}'
+        text: Vous ne pouvez jouer qu’une partie à la fois contre un bot. Reprenez-la, ou terminez-la et lancez cette nouvelle partie.
+        resume: Reprendre ma partie
 
 invite:
     page_title: Invitation à une partie
