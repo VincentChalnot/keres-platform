@@ -1,45 +1,50 @@
 {% trans_default_domain 'game' %}
-{# The bot to beat next (NextBot): a big portrait column (or a robot while the file is missing) beside a column holding
-   the card title, the level, one click to play it and the link to the custom game form.
+{# The bot to beat next (NextBot): a big portrait column (or a robot while the file is missing) beside the card title,
+   the level and the help text, with the actions in a column of their own on the right (below the text on narrow screens).
    While a bot game runs (`running`: level, avatarUrl, plies, yourTurn, rated, url - see IndexAction) the same card
-   describes that game instead, with Resume and Resign (opens #bot-resign-modal).
+   describes that game instead, with Resume and Resign (opens #bot-resign-modal) stacked in that column.
    Parameters: nextBot, quickGame, titleClass (optional modifier of .card__title), running (optional). #}
 {% set avatarUrl = running ? running.avatarUrl : nextBot.avatarUrl %}
-<div class="bot-card">
-    {% if running %}
-        <a href="{{ running.url }}" class="bot-card__avatar" aria-label="{{ 'game_row.action.resume'|trans }}">
-    {% else %}
-        <button type="submit" form="next-bot-form" class="bot-card__avatar" aria-label="{{ 'lobby.next_bot.play'|trans }}">
-    {% endif %}
-        {% if avatarUrl %}
-            <img src="{{ avatarUrl }}" alt="" width="160" height="160">
-        {% else %}
-            <span aria-hidden="true"><i class="fa-solid fa-robot"></i></span>
-        {% endif %}
-    {% if running %}</a>{% else %}</button>{% endif %}
-    <div class="bot-card__body">
+<div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:gap-6">
+    <div class="bot-card min-w-0 flex-1">
         {% if running %}
-            <h2 class="card__title {{ titleClass|default('') }}">{{ 'lobby.next_bot.running_title'|trans }}</h2>
-            <div class="bot-card__head">
-                <p class="bot-card__name">{{ 'lobby.next_bot.name'|trans({level: running.level}) }}</p>
-                <div class="btn-group">
-                    <a href="{{ running.url }}" class="btn btn--primary">{{ 'game_row.action.resume'|trans }}</a>
-                    <button type="button" class="btn btn--outline" data-modal-open="#bot-resign-modal">{{ 'home.continue.resign'|trans }}</button>
-                </div>
-            </div>
-            <p class="help mb-0">{{ 'lobby.next_bot.running_text'|trans({level: running.level}) }}</p>
-            <p class="help mt-3 mb-0">{{ 'lobby.next_bot.running_state'|trans({kind: running.rated ? 'rated' : 'casual', plies: running.plies, turn: running.yourTurn ? 'you' : 'bot'}) }}</p>
+            <a href="{{ running.url }}" class="bot-card__avatar" aria-label="{{ 'game_row.action.resume'|trans }}">
         {% else %}
-            <h2 class="card__title {{ titleClass|default('') }}">{{ 'lobby.next_bot.title'|trans }}</h2>
-            <div class="bot-card__head">
-                <p class="bot-card__name">{{ 'lobby.next_bot.name'|trans({level: nextBot.level}) }}</p>
-                {% include 'actions/_quick_game_form.html.twig' with {quickGame: quickGame, opponent: 'ai', level: nextBot.level, label: 'lobby.next_bot.play'|trans, id: 'next-bot-form'} only %}
-            </div>
-            <p class="help mb-0">{{ 'lobby.next_bot.help'|trans }}</p>
-            {% if nextBot.capped %}
-                <p class="help mt-3 mb-0">{{ 'lobby.next_bot.capped'|trans }}</p>
+            <button type="submit" form="next-bot-form" class="bot-card__avatar" aria-label="{{ 'lobby.next_bot.play'|trans }}">
+        {% endif %}
+            {% if avatarUrl %}
+                <img src="{{ avatarUrl }}" alt="" width="160" height="160">
+            {% else %}
+                <span aria-hidden="true"><i class="fa-solid fa-robot"></i></span>
             {% endif %}
-            <p class="mb-0 mt-3"><a href="{{ path('new_local_game') }}">{{ 'lobby.next_bot.custom'|trans }}</a></p>
+        {% if running %}</a>{% else %}</button>{% endif %}
+        <div class="bot-card__body">
+            {% if running %}
+                <h2 class="card__title {{ titleClass|default('') }}">{{ 'lobby.next_bot.running_title'|trans }}</h2>
+                <div class="bot-card__head">
+                    <p class="bot-card__name">{{ 'lobby.next_bot.name'|trans({level: running.level}) }}</p>
+                </div>
+                <p class="help mb-0">{{ 'lobby.next_bot.running_text'|trans({level: running.level}) }}</p>
+                <p class="help mt-3 mb-0">{{ 'lobby.next_bot.running_state'|trans({kind: running.rated ? 'rated' : 'casual', plies: running.plies, turn: running.yourTurn ? 'you' : 'bot'}) }}</p>
+            {% else %}
+                <h2 class="card__title {{ titleClass|default('') }}">{{ 'lobby.next_bot.title'|trans }}</h2>
+                <div class="bot-card__head">
+                    <p class="bot-card__name">{{ 'lobby.next_bot.name'|trans({level: nextBot.level}) }}</p>
+                </div>
+                <p class="help mb-0">{{ 'lobby.next_bot.help'|trans }}</p>
+                {% if nextBot.capped %}
+                    <p class="help mt-3 mb-0">{{ 'lobby.next_bot.capped'|trans }}</p>
+                {% endif %}
+                <p class="mb-0 mt-3"><a href="{{ path('new_local_game') }}">{{ 'lobby.next_bot.custom'|trans }}</a></p>
+            {% endif %}
+        </div>
+    </div>
+    <div class="flex w-full shrink-0 flex-col gap-2 sm:w-44">
+        {% if running %}
+            <a href="{{ running.url }}" class="btn btn--primary btn--block">{{ 'game_row.action.resume'|trans }}</a>
+            <button type="button" class="btn btn--outline btn--block" data-modal-open="#bot-resign-modal">{{ 'home.continue.resign'|trans }}</button>
+        {% else %}
+            {% include 'actions/_quick_game_form.html.twig' with {quickGame: quickGame, opponent: 'ai', level: nextBot.level, label: 'lobby.next_bot.play'|trans, id: 'next-bot-form', class: 'btn btn--primary btn--block'} only %}
         {% endif %}
     </div>
 </div>
