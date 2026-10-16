@@ -290,7 +290,7 @@ Do **not** introduce JSON serialization on this path.
 
 ## Engine API Bridge (`src/Engine/`)
 
-Four endpoints, all `POST`, binary in/out, base URL injected via `$backendApiUrl`
+Five endpoints, all `POST`, binary in/out, base URL injected via `$backendApiUrl`
 (env var `BACKEND_API_URL`):
 
 | Endpoint            | Request                       | Response               |
@@ -298,6 +298,7 @@ Four endpoints, all `POST`, binary in/out, base URL injected via `$backendApiUrl
 | `/replay-moves`     | `MovesData` binary (2N bytes) | 83 bytes → `BoardData` |
 | `/engine-move-game` | `MovesData` binary (2N bytes) | 2 bytes → `MoveData`   |
 | `/evaluate-game`    | `MovesData` binary (2N bytes) | 4 bytes → int32 LE, level-10 score, White's point of view (`EngineApi::evaluateGame()`) |
+| `/evaluate-moves`   | `MovesData` binary (2N bytes) | `M × 6` bytes → per legal move a `MoveData` + int32 LE score (level 10, White's point of view, exact, best move first for the side to move; empty when the game is over), same cost as `/evaluate-game` (`EngineApi::evaluateMoves()` → `list<EvaluatedMove>`) |
 | `/game-over-reason` | `MovesData` binary (2N bytes) | 1 byte → the engine's code for why the game is over, 0 = in progress (`EngineApi::gameOverReason()`) |
 
 The game-over code is stored once, when the engine ends a game (`GameEngine::applyMove()`
@@ -313,10 +314,20 @@ Guest games have no `Game` row but still feed the shared tree: after each ply th
 the whole move list to `POST /api/guest-moves` (rate-limited per IP), and
 `BoardTreeManager::recordLastMove()` replays it through the engine (an illegal list records
 nothing) and stores the last move as a `Move` edge between deduped `BoardPosition`s - no
-`GameMove`, no evaluation job. Guests are limited to AI levels 1-4
+`GameMove`, no evaluation job. Guests are limited to AI level 1
 (`LocalGameType::GUEST_MAX_AI_LEVEL`; `/api/engine-move-game?level=N` answers 403 above it unless
 signed in) and never get the live evaluation bar (form field disabled, `/api/games/**` is
 `ROLE_USER`, anonymous spectators get no evaluations in the page bootstrap and no eval bar).
+
+AI-backend calls (GCP Cloud Run, billed) are rate-limited (`config/packages/rate_limiter.yaml`): `guest_ai` per IP
+(`GuestEngineMoveAction`) and `user_ai` per user id (`SubmitMoveAction` before a move is applied in a bot game, refusal =
+429 `ai_rate_limited`, game untouched; `PlayAction` before it dispatches the AI's first move, refusal = nothing
+dispatched and an error flash). A player has one bot game (casual `OpponentType::AI` or rated against a bot account:
+`Game::$aiLevel` set) at a time, enforced by `NewLocalGameAction` through `Service\Game\BotGameManager`
+(`findCurrent()`, `retire()` = abort while abortable else resign, `abort()`); the form's `replaceCurrent` button ends the
+running game and starts the new one in the same request. `bin/console app:bot-games:abort-extra [--dry-run]` aborts the
+backlog (all but the most recently played game of each user). Level 1 + "random" colour puts the human on White
+(`GameFactory::humanColorAgainstBot()`).
 
 Evaluations are stored on `Move.evaluation` (the move edge, **not** `BoardPosition`:
 a board is shared by many lines but the verdict depends on the line - repetition
