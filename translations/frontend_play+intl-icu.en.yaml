@@ -57,6 +57,11 @@ feedback:
     thanks_text: We review every submission.
     load_failed: Failed to load the feedback form. Please try again later.
     submit_failed: Failed to submit feedback. Please try again later.
+leave:
+    title: Leave this game?
+    message: Your clock keeps running while you are away; you may lose on time.
+    confirm: Leave anyway
+    stay: Stay in the game
 error:
     no_game: No game is available.
     evaluation_unavailable: 'Evaluation unavailable (HTTP {status})'

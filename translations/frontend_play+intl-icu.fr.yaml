@@ -57,6 +57,11 @@ feedback:
     thanks_text: Nous lisons chaque message.
     load_failed: Impossible de charger le formulaire d’avis. Veuillez réessayer plus tard.
     submit_failed: Impossible d’envoyer votre avis. Veuillez réessayer plus tard.
+leave:
+    title: Quitter cette partie ?
+    message: Votre pendule continue de tourner pendant votre absence ; vous risquez de perdre au temps.
+    confirm: Quitter quand même
+    stay: Rester dans la partie
 error:
     no_game: Aucune partie disponible.
     evaluation_unavailable: 'Évaluation indisponible (HTTP {status})'

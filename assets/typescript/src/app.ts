@@ -374,6 +374,7 @@ class KeresGame {
         // Setup UI event listeners
         this.setupEventListeners();
         this.setupGameOverModal();
+        this.setupLeaveGuard();
 
         // Update UI
         this.gameOverAnnounced = this.controller.isGameOver();
@@ -1038,6 +1039,43 @@ class KeresGame {
         }
 
         this.gameOverModal.classList.add('is-active');
+    }
+
+    /**
+     * Leaving a timed game in progress (D5: the clock keeps running, the player may lose on time): a click on an in-app
+     * link asks first, closing or reloading the tab gets the browser's own prompt. Untimed games, spectators, guest games
+     * and finished games are never asked.
+     */
+    private setupLeaveGuard(): void {
+        if ('true' !== this.boardContainer.dataset.timedGame) return;
+
+        let leaving = false;
+        const active = (): boolean => !leaving && !this.controller.isGameOver();
+
+        window.addEventListener('beforeunload', (event) => {
+            if (active()) {
+                event.preventDefault();
+                event.returnValue = '';
+            }
+        });
+
+        document.addEventListener('click', (event) => {
+            if (!active() || event.defaultPrevented || event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+
+            const link = event.target instanceof Element ? event.target.closest('a[href]') : null;
+            if (!(link instanceof HTMLAnchorElement) || link.target === '_blank' || link.hasAttribute('download')) return;
+
+            const url = new URL(link.href, window.location.href);
+            if (url.origin !== window.location.origin || (url.pathname === window.location.pathname && url.search === window.location.search)) return;
+
+            event.preventDefault();
+            void confirmModal(t('play.leave.message'), {title: t('play.leave.title'), confirmLabel: t('play.leave.confirm'), cancelLabel: t('play.leave.stay'), danger: true}).then((leave) => {
+                if (leave) {
+                    leaving = true;
+                    window.location.href = url.href;
+                }
+            });
+        });
     }
 
     private setupGameOverModal(): void {

@@ -16,6 +16,7 @@
         guest: false,
         botGame: game.botGame,
         gameOver: game.gameOver,
+        timedGame: game.isParticipant(app.user) and game.timeControl.kind == enum('App\\Model\\TimeControlKind').REALTIME,
         gameHeader: game_board_header(game, app.user),
         liveEvaluation: game.liveEvaluationEnabled,
     } %}
