@@ -46,9 +46,11 @@ export function initExperienceModal(): void {
         document.querySelectorAll('[data-experience-gate]').forEach((form) => form.removeAttribute('data-experience-gate'));
 
         if (null === pending) {
-            // /tutorial itself: stay on it, unless the player wants to skip straight to the game.
+            // /tutorial itself: stay on it (the page switches to the matching track), unless the player wants to skip to the game.
             if ('skipped' === experience) {
                 window.location.href = homeUrl;
+            } else {
+                window.dispatchEvent(new CustomEvent('keres:experience', {detail: experience}));
             }
         } else if ('skipped' !== experience && '' !== tutorialUrl) {
             window.location.href = tutorialUrl;

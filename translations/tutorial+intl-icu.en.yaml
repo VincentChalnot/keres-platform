@@ -1,4 +1,5 @@
-# The /tutorial page (templates/actions/tutorial.html.twig): slide captions and the closing choices.
+# The /tutorial page (templates/actions/tutorial.html.twig): the question, the page chrome and the closing choices.
+# The lessons themselves are in frontend_tutorial (read by tutorial.ts).
 experience:
     title: Do you play chess?
     text: It tells us how to introduce Keres to you. You can change your answer later in Settings.
@@ -13,14 +14,10 @@ reference:
 nav:
     previous: Previous
     next: Next
-slides:
-    board: This is Keres
-    like_chess: It’s a little bit like chess
-    chess_pieces: You might recognize those pieces
-    new_pieces: And some new ones
-    chess_only: The important thing about Keres is…
-    stacking: You can stack your pieces
-    stack_moves: A stack has the potential to move with either piece’s movement
+    skip_to_game: Skip to the game
+track:
+    chess: I play chess - show the chess-player version
+    beginner: I’m new - show the beginner lessons
 end:
     title: What now?
     create_account: Create an account

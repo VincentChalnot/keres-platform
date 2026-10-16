@@ -5,41 +5,29 @@
 
 {% block body %}
     {% include 'actions/_experience_modal.html.twig' with {active: true} only %}
-    {# Slide captions: literal keys, in the order of TutorialContent::SLIDES. #}
-    {% set captions = {
-        'board': 'slides.board'|trans,
-        'like-chess': 'slides.like_chess'|trans,
-        'chess-pieces': 'slides.chess_pieces'|trans,
-        'new-pieces': 'slides.new_pieces'|trans,
-        'chess-only': 'slides.chess_only'|trans,
-        'stacking': 'slides.stacking'|trans,
-        'stack-moves': 'slides.stack_moves'|trans,
-    } %}
-
     <section class="section">
-        <div class="container-page container-page--narrow" id="tutorial" data-puzzle-url="{{ asset('tutorial/puzzle.json') }}">
+        <div class="container-page container-page--narrow" id="tutorial" data-lessons-url="{{ asset('tutorial/lessons.json') }}" data-track="{{ track }}">
             <h1 class="page-title">{{ 'page.title'|trans }}</h1>
 
-            <div class="card" id="tutorial-slides">
-                <p class="tutorial-progress" id="tutorial-progress" aria-live="polite"></p>
-
-                {% for slide in slides %}
-                    <figure class="tutorial-slide" data-slide{% if not loop.first %} hidden{% endif %}>
-                        <img class="tutorial-slide__figure" src="{{ asset('tutorial/' ~ slide ~ '.svg') }}" alt="">
-                        <figcaption class="tutorial-caption !mb-0">{{ captions[slide] }}</figcaption>
-                    </figure>
-                {% endfor %}
+            {# The lessons of public/tutorial/lessons.json, played by tutorial.ts: progress dots, a title and a sentence, then
+               static images and/or the live board, then the buttons. #}
+            <div class="card" id="tutorial-lessons">
+                <ol class="mb-3 flex list-none flex-wrap gap-2 p-0" id="tutorial-dots" aria-label="{{ 'page.title'|trans }}"></ol>
+                <h2 class="card__title" id="tutorial-title"></h2>
+                <p class="tutorial-caption" id="tutorial-caption" aria-live="polite"></p>
+                <div class="mb-3 flex flex-col gap-3" id="tutorial-images"></div>
+                <div class="tutorial-board" id="tutorial-board" hidden></div>
+                <ul class="my-3 list-none p-0 text-sm" id="tutorial-notes"></ul>
+                <p class="tutorial-message" id="tutorial-message" role="status"></p>
 
                 <div class="btn-group btn-group--end mt-4">
                     <button type="button" class="btn btn--outline" id="tutorial-prev" disabled>{{ 'nav.previous'|trans }}</button>
                     <button type="button" class="btn btn--primary" id="tutorial-next">{{ 'nav.next'|trans }}</button>
                 </div>
-            </div>
-
-            <div class="card" id="tutorial-puzzle" hidden>
-                <p class="tutorial-caption" id="tutorial-caption" aria-live="polite"></p>
-                <div class="tutorial-board" id="tutorial-board"></div>
-                <p class="tutorial-message" id="tutorial-message" role="status"></p>
+                <div class="mt-3 flex flex-wrap items-center justify-between gap-2">
+                    <button type="button" class="btn btn--text btn--sm" id="tutorial-skip">{{ 'nav.skip_to_game'|trans }}</button>
+                    <button type="button" class="btn btn--text btn--sm" id="tutorial-switch" data-label-chess="{{ 'track.chess'|trans }}" data-label-beginner="{{ 'track.beginner'|trans }}"></button>
+                </div>
             </div>
 
             <div class="card" id="tutorial-end" hidden>
@@ -47,7 +35,7 @@
 
                 {% if app.user %}
                     <div class="btn-group">
-                        {% include 'actions/_quick_game_form.html.twig' with {quickGame: quickGame, opponent: 'ai', level: nextBot.level, label: 'end.play_bot'|trans({level: nextBot.level})} only %}
+                        {% include 'actions/_quick_game_form.html.twig' with {quickGame: quickGame, opponent: 'ai', level: nextBot.level, id: 'tutorial-play-form', label: 'end.play_bot'|trans({level: nextBot.level})} only %}
                         <a href="{{ path('lobby') }}" class="btn btn--outline">{{ 'end.lobby'|trans }}</a>
                     </div>
                 {% else %}
@@ -63,7 +51,7 @@
                     </div>
                     <div class="btn-group">
                         <a href="{{ path('register') }}" class="btn btn--outline">{{ 'end.create_account'|trans }}</a>
-                        {% include 'actions/_quick_game_form.html.twig' with {quickGame: quickGame, opponent: 'ai', level: nextBot.level, label: 'end.play_guest'|trans({level: nextBot.level}), class: 'btn btn--outline'} only %}
+                        {% include 'actions/_quick_game_form.html.twig' with {quickGame: quickGame, opponent: 'ai', level: nextBot.level, id: 'tutorial-play-form', label: 'end.play_guest'|trans({level: nextBot.level}), class: 'btn btn--outline'} only %}
                     </div>
                 {% endif %}
             </div>

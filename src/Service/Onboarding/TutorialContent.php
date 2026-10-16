@@ -7,16 +7,15 @@ namespace App\Service\Onboarding;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
 
 /**
- * The tutorial's authored material: one static SVG per slide plus the guided puzzle, dropped by the operator into
- * `public/tutorial/` (see `docs/features.md`). The tutorial page, its permanent link and the onboarding banner exist
- * only while every file is present.
+ * The tutorial's authored material: `public/tutorial/lessons.json` (the lessons of both tracks, see `docs/features.md` for
+ * the format) and the static images the lessons point to, dropped by the operator into `public/`. The tutorial page, its
+ * permanent link and the home page's onboarding card exist only while the file is there and holds lessons.
  */
 final readonly class TutorialContent
 {
-    /** Slide ids, in order: `public/tutorial/<id>.svg`, texts `slides.<id>` in the `tutorial` domain. */
-    public const array SLIDES = ['board', 'like-chess', 'chess-pieces', 'new-pieces', 'chess-only', 'stacking', 'stack-moves'];
+    public const string LESSONS_FILE = 'lessons.json';
 
-    public const string PUZZLE_FILE = 'puzzle.json';
+    public const array TRACKS = ['chess', 'beginner'];
 
     public function __construct(
         #[Autowire('%kernel.project_dir%/public/tutorial')]
@@ -26,12 +25,31 @@ final readonly class TutorialContent
 
     public function isAvailable(): bool
     {
-        foreach ([...array_map(static fn (string $id): string => $id.'.svg', self::SLIDES), self::PUZZLE_FILE] as $file) {
-            if (!is_file($this->directory.'/'.$file)) {
-                return false;
-            }
+        return [] !== $this->lessons();
+    }
+
+    /**
+     * The raw lesson list of the file (empty when it is missing or not a `{"lessons": [...]}` document). The client
+     * checks every lesson on load (`tutorial.ts`), the PHPUnit suite checks the committed file (`TutorialLessonsTest`).
+     *
+     * @return list<array<string, mixed>>
+     */
+    public function lessons(): array
+    {
+        $path = $this->directory.'/'.self::LESSONS_FILE;
+
+        if (!is_file($path)) {
+            return [];
         }
 
-        return true;
+        try {
+            $document = json_decode((string) file_get_contents($path), true, 512, \JSON_THROW_ON_ERROR);
+        } catch (\JsonException) {
+            return [];
+        }
+
+        $lessons = \is_array($document) ? ($document['lessons'] ?? null) : null;
+
+        return \is_array($lessons) ? array_values(array_filter($lessons, 'is_array')) : [];
     }
 }

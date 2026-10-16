@@ -1,0 +1,263 @@
+{
+    "lessons": [
+        {
+            "id": "chess-new",
+            "track": "chess",
+            "title": "tutorial.lessons.chess-new.title",
+            "text": "tutorial.lessons.chess-new.text",
+            "images": [
+                "tutorial/new-pieces.svg"
+            ],
+            "goal": {
+                "type": "read"
+            }
+        },
+        {
+            "id": "chess-stack",
+            "track": "chess",
+            "title": "tutorial.lessons.chess-stack.title",
+            "text": "tutorial.lessons.chess-stack.text",
+            "images": [
+                "tutorial/stack-moves.svg"
+            ],
+            "notes": [
+                "help.rules.missing"
+            ],
+            "goal": {
+                "type": "read"
+            }
+        },
+        {
+            "id": "goal",
+            "track": "beginner",
+            "title": "tutorial.lessons.goal.title",
+            "text": "tutorial.lessons.goal.text",
+            "board": "BwYEBTgFBAYHAAADAAAAAgAAAQEBAQEBAQEBAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAQUFBQUFBQUFBAABCAAAAQwAAR0ZERXhFREZHgAA=",
+            "flipped": false,
+            "goal": {
+                "type": "read"
+            }
+        },
+        {
+            "id": "soldier",
+            "track": "beginner",
+            "title": "tutorial.lessons.soldier.title",
+            "text": "tutorial.lessons.soldier.text",
+            "board": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAEEAAAAAgAA=",
+            "flipped": false,
+            "goal": {
+                "type": "reach",
+                "stars": [
+                    "F2",
+                    "E3",
+                    "F4",
+                    "E5"
+                ],
+                "strict": true
+            }
+        },
+        {
+            "id": "knight",
+            "track": "beginner",
+            "title": "tutorial.lessons.knight.title",
+            "text": "tutorial.lessons.knight.text",
+            "board": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAEYAAAAAgAA=",
+            "flipped": false,
+            "goal": {
+                "type": "reach",
+                "stars": [
+                    "D3",
+                    "C1",
+                    "E2"
+                ]
+            }
+        },
+        {
+            "id": "bishop",
+            "track": "beginner",
+            "title": "tutorial.lessons.bishop.title",
+            "text": "tutorial.lessons.bishop.text",
+            "board": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAQgAAAAAAAAAAgAA=",
+            "flipped": false,
+            "goal": {
+                "type": "reach",
+                "stars": [
+                    "I9",
+                    "D4",
+                    "H8"
+                ]
+            }
+        },
+        {
+            "id": "rook",
+            "track": "beginner",
+            "title": "tutorial.lessons.rook.title",
+            "text": "tutorial.lessons.rook.text",
+            "board": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAEMAAAAAgAA=",
+            "flipped": false,
+            "goal": {
+                "type": "reach",
+                "stars": [
+                    "H1",
+                    "H6",
+                    "H9"
+                ]
+            }
+        },
+        {
+            "id": "paladin",
+            "track": "beginner",
+            "title": "tutorial.lessons.paladin.title",
+            "text": "tutorial.lessons.paladin.text",
+            "board": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAEQAAAAAgAA=",
+            "flipped": false,
+            "goal": {
+                "type": "reach",
+                "stars": [
+                    "E3",
+                    "C3",
+                    "A3"
+                ]
+            }
+        },
+        {
+            "id": "guard",
+            "track": "beginner",
+            "title": "tutorial.lessons.guard.title",
+            "text": "tutorial.lessons.guard.text",
+            "board": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAEUAAAAAgAA=",
+            "flipped": false,
+            "goal": {
+                "type": "reach",
+                "stars": [
+                    "C3",
+                    "A5",
+                    "C7"
+                ]
+            }
+        },
+        {
+            "id": "ballista",
+            "track": "beginner",
+            "title": "tutorial.lessons.ballista.title",
+            "text": "tutorial.lessons.ballista.text",
+            "board": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAEcAAAAAgAA=",
+            "flipped": false,
+            "goal": {
+                "type": "reach",
+                "stars": [
+                    "E3",
+                    "E5",
+                    "E7"
+                ],
+                "strict": true
+            }
+        },
+        {
+            "id": "king",
+            "track": "beginner",
+            "title": "tutorial.lessons.king.title",
+            "text": "tutorial.lessons.king.text",
+            "board": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAHgAAAAAgAA=",
+            "flipped": false,
+            "goal": {
+                "type": "reach",
+                "stars": [
+                    "E2",
+                    "D1",
+                    "C1"
+                ]
+            }
+        },
+        {
+            "id": "capture",
+            "track": "beginner",
+            "title": "tutorial.lessons.capture.title",
+            "text": "tutorial.lessons.capture.text",
+            "board": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAEMAAAEAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAEAAAAAAAAAAAAAgAA=",
+            "flipped": false,
+            "goal": {
+                "type": "capture",
+                "targets": [
+                    "H5",
+                    "H2"
+                ]
+            }
+        },
+        {
+            "id": "stack",
+            "track": "beginner",
+            "title": "tutorial.lessons.stack.title",
+            "board": "OAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAEAAAAAAABBAAAAAAAAAAAAAAAAAAAAAEYAAAAAAAAAAAAAAAAAAAAAAAAAAAB4gAA=",
+            "flipped": false,
+            "goal": {
+                "type": "script",
+                "steps": [
+                    {
+                        "by": "player",
+                        "from": "E3",
+                        "to": "F5",
+                        "unstack": false,
+                        "prompt": "select_stack",
+                        "board": "OAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAEAAAAAAABxAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAB4AAE=",
+                        "text": "tutorial.lessons.stack.stack_onto"
+                    },
+                    {
+                        "by": "opponent",
+                        "from": "A9",
+                        "to": "B9",
+                        "unstack": false,
+                        "board": "ADgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAEAAAAAAABxAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAB4gAI=",
+                        "text": "tutorial.lessons.stack.reply"
+                    },
+                    {
+                        "by": "player",
+                        "from": "F5",
+                        "to": "H6",
+                        "unstack": true,
+                        "prompt": "choose",
+                        "board": "ADgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAEYAAAAAAABBAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAB4YAA=",
+                        "text": "tutorial.lessons.stack.unstack"
+                    }
+                ]
+            }
+        },
+        {
+            "id": "fork",
+            "track": "beginner",
+            "title": "tutorial.lessons.fork.title",
+            "board": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAwA4AAAAAAAAAAAGAAAAAAAAAABaAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAgAA=",
+            "flipped": false,
+            "goal": {
+                "type": "script",
+                "steps": [
+                    {
+                        "by": "player",
+                        "from": "F5",
+                        "to": "F6",
+                        "unstack": true,
+                        "prompt": "choose",
+                        "board": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAwA4AAAAAAAAAABDAAAAAAAAAABCAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAgAA=",
+                        "text": "tutorial.lessons.fork.unstack_fork"
+                    },
+                    {
+                        "by": "opponent",
+                        "from": "F7",
+                        "to": "F6",
+                        "unstack": false,
+                        "board": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAwAAAAAAAAAAAAA4AAAAAAAAAABCAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAgAA=",
+                        "text": "tutorial.lessons.fork.carry"
+                    },
+                    {
+                        "by": "player",
+                        "from": "F5",
+                        "to": "D7",
+                        "unstack": false,
+                        "board": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAQgAAAAAAAAAAAAA4AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAgAA=",
+                        "text": "tutorial.lessons.fork.carry"
+                    }
+                ]
+            }
+        }
+    ]
+}

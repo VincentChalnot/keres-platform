@@ -1,11 +1,59 @@
-# Tutorial (assets/typescript/src/tutorial.ts): slide navigation and the guided problem.
-slide:
-    progress: '{current} / {total}'
-    to_puzzle: Try it yourself
-puzzle:
-    carry: So it can carry a slow piece across the board
-    unstack_fork: And then you can unstack the top piece to carry out a devastating attack
-    legal_blunder: Putting your own king in check or letting it hang is a legal move
-    capture_king: Capture the king to win the game.
+# Tutorial (assets/typescript/src/tutorial.ts): the lessons of public/tutorial/lessons.json, whose texts are keys of this file
+# (`tutorial.lessons.<id>.title|text`, script steps `tutorial.lessons.<id>.<step>`).
+progress: 'Lesson {current} of {total}'
+nav:
+    skip_lesson: Skip this lesson
+    finish: Finish
+lesson:
     try_again: Not that one, try again.
-    invalid: The problem could not be loaded.
+    start_over: That way there is no going back. Let’s start again.
+    done: Well done!
+    invalid: The lessons could not be loaded.
+lessons:
+    chess-new:
+        title: Everything you know, except…
+        text: 'Bishop, rook, knight and king move as in chess. Three pieces are new: the ballista, which only goes forward; the paladin, one or two squares in a straight line; and the guard, one or two squares diagonally. The soldier is not a pawn: it steps one square diagonally forward.'
+    chess-stack:
+        title: Stacking changes everything
+        text: A piece can move onto a friendly piece. The two then form a stack that moves with the movements of both. Moving only the top piece separates the stack again.
+    goal:
+        title: The goal
+        text: 'Two armies face each other. Capture the opponent’s king and you win: the game ends the moment a king is captured.'
+    soldier:
+        title: The soldier
+        text: The soldier steps one square diagonally forward. Walk it to each yellow square in turn.
+    knight:
+        title: The knight
+        text: The knight jumps in an L and can leap over other pieces. Reach each yellow square in turn.
+    bishop:
+        title: The bishop
+        text: The bishop slides any distance along a diagonal. Reach each yellow square in turn.
+    rook:
+        title: The rook
+        text: The rook slides any distance in a straight line. Reach each yellow square in turn.
+    paladin:
+        title: The paladin
+        text: The paladin moves one or two squares in a straight line. Reach each yellow square in turn.
+    guard:
+        title: The guard
+        text: The guard moves one or two squares diagonally. Reach each yellow square in turn.
+    ballista:
+        title: The ballista
+        text: The ballista only goes forward, as far as it likes, and never back. Reach each yellow square in turn.
+    king:
+        title: The king
+        text: The king moves one square in any direction. Lose yours and the game is over. Reach each yellow square in turn.
+    capture:
+        title: Capturing
+        text: A piece captures by moving onto an enemy piece. Take the two marked soldiers with your rook.
+    stack:
+        title: Stacking
+        stack_onto: 'Move your knight onto your own soldier and choose to stack: from now on they move as one.'
+        reply: Your opponent plays.
+        unstack: 'Now move only the top piece to capture the black soldier. Choose to move the top piece alone: the soldier stays behind.'
+    fork:
+        title: A tactic
+        carry: It can thus carry a slow piece across the board
+        unstack_fork: Then you can unstack the top piece to carry out a devastating attack
+        legal_blunder: Putting your own king in check or letting it hang is a legal move
+        capture_king: Capture the king to win the game.

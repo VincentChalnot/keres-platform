@@ -96,30 +96,54 @@ the page - **change it whenever the site publishes new terms**).
 
 ## Onboarding and the tutorial
 
-`/tutorial` (`TutorialAction`) shows seven slides, then a guided problem on the game's board, then the ending (create an
-account / play as a guest, or face the bot / lobby when signed in). It is authored by the operator: drop these files in
-`public/tutorial/` (committed; until all are there the route answers 404 and no banner or link is shown):
+`/tutorial` (`TutorialAction`) is the hybrid tutorial (D4 of `docs/onboarding-plan.md`), played by `tutorial.ts` from
+`public/tutorial/lessons.json`: the **chess** track (two screens for chess players: what is new, stacking and what does not
+exist) or the **beginner** track (twelve short interactive lessons), then the ending (create an account / play as a guest,
+or face the bot / lobby when signed in). The track opens on the answer to "Do you play chess?" (player: chess; anyone else,
+including no answer: beginner), changes live when the question is answered on the page, and can be switched with the link
+under the lessons. Every lesson is skippable ("Skip this lesson" on the Next button until it is solved) and every screen has
+"Skip to the game" (marks the tutorial done and starts the ending's bot game); finishing the last lesson also calls
+`/onboarding/complete`. The "Pieces & rules" reference (help diagrams) sits below, always visible. Until `lessons.json`
+exists (and holds lessons) the route answers 404 and no card or link is shown (`TutorialContent::isAvailable()`).
 
-- `board.svg`, `like-chess.svg`, `chess-pieces.svg`, `new-pieces.svg`, `chess-only.svg`, `stacking.svg`,
-  `stack-moves.svg`: the slides, in that order. Export them from `/admin/board-editor` ("Export SVG"); captions are the
-  `slides.*` keys of the `tutorial` translation domain.
-- `puzzle.json`:
-  ```json
-  {"start": "<board code>", "flipped": false,
-   "steps": [{"by": "player|opponent", "from": "E2", "to": "E6", "unstack": false, "board": "<board code after the move>",
-              "text": "carry|unstack_fork|legal_blunder|capture_king"}]}
-  ```
-  `unstack` is optional (default `false`): `true` marks a move of the top piece of a stack only, as opposed to the whole stack.
-  `prompt` is optional: when the player makes the step's move, the real game's dialog (`#unstack-modal`, shared with the
-  game page through `utils/unstackModal.ts` and `_unstack_modal.html.twig`) opens first, and only the answer matching
-  `unstack` plays the step (anything else answers "try again", Escape/backdrop just backs out). Values are the buttons the
-  engine would offer: `choose` (full stack / top piece), `select` (+ "select that piece instead", for a move onto one of
-  the player's own pieces), `select_top` (top piece / select), `select_stack` (stack here / select); a prompt must offer the
-  expected answer. Without `prompt` the move plays at once, as when the engine forces the interpretation.
-  Board codes are the base64 of the editor. A `player` step shows its sentence (no arrow: the player has to find the move) and
-  accepts exactly that click pair or drag; anything else answers "try again". An `opponent` step plays itself 900 ms
-  after its sentence. `tutorial.ts` validates the whole file on load (`parseBoardCode`, squares, `text`) and falls back
-  to the ending with an error line when it is wrong.
+`lessons.json` is authored by the operator (committed in `public/tutorial/`):
+
+```json
+{"lessons": [
+  {"id": "soldier", "track": "beginner|chess", "title": "tutorial.lessons.soldier.title", "text": "tutorial.lessons.soldier.text",
+   "board": "<board code>", "flipped": false, "images": ["tutorial/new-pieces.svg"], "notes": ["help.rules.missing"],
+   "goal": {"type": "read | reach | capture | script", "...": "..."}}
+]}
+```
+
+- Every text (`title`, `text`, a script step's `text`, `notes`) is a **catalogue key** (`tutorial.lessons.<id>.title|text`
+  of `frontend_tutorial`, or any other `frontend*` key such as `help.rules.missing`), so both locales are covered; `images`
+  are paths under `public/` (the board-editor exports of `public/tutorial/`, or `public/help/`). `board` is a board code of the
+  editor (base64 of 83 bytes); it is optional for `read` lessons (a lesson with images only) and required otherwise.
+  `text` is optional for `script` lessons (the steps' sentences replace it).
+- `read`: the sentence, the images and/or the board, then "Next".
+- `reach` (`"stars": ["F2", "E3"]`, optional `"strict": true`): a lone white piece; the next star is lit (yellow) and the
+  player moves the piece anywhere the engine allows (`/api/moves`, green squares on select) until the last star is
+  visited. The client only moves the piece on the board bytes and hands the turn back (the side-to-move flag). `strict` is
+  for forward-only pieces (soldier, ballista): when the next star is no longer a legal destination the lesson starts over.
+  Author each next star so that it is one legal move from the previous one (check with the engine).
+- `capture` (`"targets": ["H5", "H2"]`): the marked enemy pieces (highlighted) are taken one after the other with the
+  lone white piece; same move mechanics as `reach`. Place them so that each is reachable after the previous capture.
+- `script` (`"steps": [...]`): `{"by": "player|opponent", "from": "E2", "to": "E6", "unstack": false, "prompt": "choose",
+  "board": "<board code after the move>", "text": "<key>"}` per step, played on the recorded boards (get each board from
+  the engine's `/play`). `unstack` is optional (default `false`): `true` marks a move of the top piece of a stack only.
+  `prompt` is optional: when the player makes the step's move, the real game's dialog (`#unstack-modal`, shared with the game
+  page through `utils/unstackModal.ts` and `_unstack_modal.html.twig`) opens first, and only the answer matching `unstack`
+  plays the step (anything else answers "try again", Escape/backdrop just backs out). Values are the buttons the engine
+  would offer: `choose` (full stack / top piece), `select` (+ "select that piece instead", for a move onto one of the
+  player's own pieces), `select_top` (top piece / select), `select_stack` (stack here / select); a prompt must offer the
+  expected answer. A `player` step shows its sentence (no arrow: the player has to find the move) and accepts exactly that
+  click pair or drag; an `opponent` step plays itself 900 ms after its sentence.
+
+`tutorial.ts` validates the whole file on load and falls back to the ending with an error line when it is wrong;
+`TutorialLessonsTest` validates the committed file in CI (board codes, squares, every key in both locales, images exist).
+The former seven-slide deck and `puzzle.json` are gone: `puzzle.json` is the `fork` lesson, `new-pieces.svg` and
+`stack-moves.svg` illustrate the chess track.
 
 "Has been through the tutorial" is the `keres_onboarded=1` cookie (set by `POST /onboarding/complete`, called at the end
 of the problem and by the home card's "Not now" button; also stored on `User::$onboardedAt` when signed in).

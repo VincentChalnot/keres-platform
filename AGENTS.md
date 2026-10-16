@@ -238,12 +238,12 @@ custom board).
 
 ### Tutorial (`/tutorial`)
 
-Public page, authored content: seven static SVG slides exported from the board editor and one guided problem
-(`public/tutorial/`, see [`docs/features.md`](docs/features.md) for the file list and the `puzzle.json` schema). The
-slides are plain `<img>`s; the problem is a live `SVGBoardView` driven by `assets/typescript/src/tutorial.ts` (no
-`GameController`, no engine): each step carries the board code it leads to, so the platform replays what the author
-recorded and holds no game rule. The page, its navbar link and the invitation banner exist only while every file is
-present (`TutorialContent::isAvailable()`).
+Public page, authored content: the hybrid tutorial (`public/tutorial/lessons.json`, format in
+[`docs/features.md`](docs/features.md)) played by `assets/typescript/src/tutorial.ts` on a live `SVGBoardView` (no
+`GameController`): a short chess-player track and interactive beginner lessons (reach the yellow squares, capture, stack
+and unstack, a scripted tactic). The legal squares of the free-move lessons come from the engine (`/api/moves`), the
+boards of scripted lessons are recorded by the author: the platform holds no game rule. The page, its navbar link and
+the home onboarding card exist only while the lessons file does (`TutorialContent::isAvailable()`).
 
 ## Domain Model
 
