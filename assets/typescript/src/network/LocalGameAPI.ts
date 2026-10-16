@@ -176,7 +176,8 @@ export class LocalGameAPI extends GameAPI {
         });
 
         if (!response.ok) {
-            window.dispatchEvent(new CustomEvent('showError', {detail: {message: t('play.error.ai_failed', {status: response.status})}}));
+            const message = 429 === response.status ? t('api_error.ai_rate_limited') : t('play.error.ai_failed', {status: response.status});
+            window.dispatchEvent(new CustomEvent('showError', {detail: {message}}));
             return;
         }
 

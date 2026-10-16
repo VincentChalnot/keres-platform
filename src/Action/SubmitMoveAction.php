@@ -29,6 +29,7 @@ use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\Attribute\AsController;
 use Symfony\Component\HttpKernel\EventListener\AbstractSessionListener;
 use Symfony\Component\Messenger\MessageBusInterface;
+use Symfony\Component\RateLimiter\RateLimiterFactory;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Uid\Uuid;
 use Symfony\Contracts\Translation\TranslatorInterface;
@@ -46,6 +47,7 @@ readonly class SubmitMoveAction
         private ClockAdjudicator $clockAdjudicator,
         private NotificationCenter $notificationCenter,
         private TranslatorInterface $translator,
+        private RateLimiterFactory $userAiLimiter,
     ) {
     }
 
@@ -108,6 +110,22 @@ readonly class SubmitMoveAction
             return new JsonResponse(
                 ['error' => $this->translator->trans('api_error.invalid_move_data', [], 'game')],
                 Response::HTTP_BAD_REQUEST
+            );
+        }
+
+        // A move in a bot game makes the AI backend answer (billed): consume the user's `user_ai` budget before
+        // anything is applied, so a refusal leaves the game untouched and the client can simply play the move again.
+        if (
+            $user instanceof User
+            && (OpponentType::AI === $game->getOpponentType() || $game->isBotGame())
+            && !$this->userAiLimiter->create($user->getId()->toRfc4122())->consume(1)->isAccepted()
+        ) {
+            return new JsonResponse(
+                [
+                    'error' => $this->translator->trans('api_error.ai_rate_limited', [], 'frontend'),
+                    'code' => 'ai_rate_limited',
+                ],
+                Response::HTTP_TOO_MANY_REQUESTS
             );
         }
 

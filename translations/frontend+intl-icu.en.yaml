@@ -19,6 +19,7 @@ api_error:
     validation_failed: Some of the information you entered is not valid.
     malformed_json: The request could not be understood. Please try again.
     rate_limited: Too many requests. Please wait a moment and try again.
+    ai_rate_limited: The bot needs a breather. Wait a few seconds, then try again.
     internal_error: Something went wrong on our side. Please try again.
     network_error: Network error. Check your connection and try again.
     unrated_time_control: A game without a clock cannot be rated.

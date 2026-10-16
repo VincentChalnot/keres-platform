@@ -23,7 +23,8 @@ final class GuestEngineMoveActionTest extends TestCase
      */
     public static function levels(): iterable
     {
-        yield 'guest level 4' => [4, false, Response::HTTP_OK];
+        yield 'guest level 1' => [1, false, Response::HTTP_OK];
+        yield 'guest level 2 is locked' => [2, false, Response::HTTP_FORBIDDEN];
         yield 'guest level 5 is locked' => [5, false, Response::HTTP_FORBIDDEN];
         yield 'guest level 10 is locked' => [10, false, Response::HTTP_FORBIDDEN];
         yield 'signed-in level 10' => [10, true, Response::HTTP_OK];

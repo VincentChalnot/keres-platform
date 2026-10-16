@@ -22,7 +22,7 @@ use Symfony\Component\Routing\Attribute\Route;
  * row for `ProcessAiMoveHandler` to work on. Same binary contract as the
  * engine endpoint (N moves in, one 2-byte move out), relayed through
  * `EngineApi` so it gets the AI backend and its fallback. Rate-limited per
- * client IP: this is the one anonymous route that costs engine CPU. The
+ * client IP (`guest_ai`): this is the one anonymous route that costs engine CPU. The
  * difficulty comes as `?level=` (1-10, default 1); levels above
  * `LocalGameType::GUEST_MAX_AI_LEVEL` are refused (403) unless signed in.
  */
@@ -34,7 +34,7 @@ readonly class GuestEngineMoveAction
 
     public function __construct(
         private EngineApi $engineApi,
-        private RateLimiterFactory $guestEngineMoveLimiter,
+        private RateLimiterFactory $guestAiLimiter,
         private Security $security,
     ) {
     }
@@ -42,7 +42,7 @@ readonly class GuestEngineMoveAction
     #[Route(path: '/api/engine-move-game', name: 'api_guest_engine_move', methods: ['POST'])]
     public function __invoke(Request $request): Response
     {
-        if (!$this->guestEngineMoveLimiter->create($request->getClientIp() ?? 'unknown')->consume(1)->isAccepted()) {
+        if (!$this->guestAiLimiter->create($request->getClientIp() ?? 'unknown')->consume(1)->isAccepted()) {
             return new Response('Too many requests', Response::HTTP_TOO_MANY_REQUESTS);
         }
 

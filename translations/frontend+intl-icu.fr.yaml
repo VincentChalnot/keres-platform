@@ -19,6 +19,7 @@ api_error:
     validation_failed: Certaines des informations saisies ne sont pas valides.
     malformed_json: La requête n’a pas pu être comprise. Veuillez réessayer.
     rate_limited: Trop de requêtes. Patientez un instant, puis réessayez.
+    ai_rate_limited: Le bot a besoin de souffler. Patientez quelques secondes, puis réessayez.
     internal_error: Un problème est survenu de notre côté. Veuillez réessayer.
     network_error: Erreur réseau. Vérifiez votre connexion, puis réessayez.
     unrated_time_control: Une partie sans pendule ne peut pas être classée.

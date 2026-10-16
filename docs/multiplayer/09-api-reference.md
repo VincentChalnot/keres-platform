@@ -407,7 +407,7 @@ R3: the lobby's format presets only fill the "New seek" form, which posts to
 | Route name | Method | Path | Controller | Authorization | Limiter | Request | Response |
 |---|---|---|---|---|---|---|---|
 | `play_guest` | GET | `/play/guest` | `PlayGuestAction` | `PUBLIC_ACCESS` (signed-in users are redirected to `/play/new`) | -- | -- | HTML |
-| `api_guest_engine_move` | POST | `/api/engine-move-game` | `Api\GuestEngineMoveAction` | `PUBLIC_ACCESS` | `guest_engine_move` (per IP, token bucket 20 / +30 per min) | `application/octet-stream`, 2N bytes, N <= 1000 | 2 bytes (`MoveData`); 400 on a malformed body, 429 when limited, 502 when the engine fails |
+| `api_guest_engine_move` | POST | `/api/engine-move-game` | `Api\GuestEngineMoveAction` | `PUBLIC_ACCESS` | `guest_ai` (per IP, token bucket 15 / +10 per min) | `application/octet-stream`, 2N bytes, N <= 1000 | 2 bytes (`MoveData`); 400 on a malformed body, 429 when limited, 502 when the engine fails |
 
 `new_local_game` (`/play/new`) is `PUBLIC_ACCESS` as well: an anonymous submit
 redirects to `play_guest` instead of persisting a game.

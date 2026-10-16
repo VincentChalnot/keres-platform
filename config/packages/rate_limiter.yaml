@@ -49,9 +49,15 @@ framework:
             policy: 'fixed_window'
             limit: 120
             interval: '1 minute'
-        guest_engine_move:           # $guestEngineMoveLimiter, keyed on client IP - anonymous AI games
+        # Every call to the AI backend (GCP Cloud Run, billed) is limited: per IP for guests, per user when signed in.
+        # Hints (Phase 6 of docs/onboarding-plan.md) draw from the same buckets as the AI's replies.
+        guest_ai:                    # $guestAiLimiter, keyed on client IP - anonymous AI games and hints (casual, unlimited games only)
             policy: 'token_bucket'
-            limit: 20
+            limit: 15
+            rate: { interval: '1 minute', amount: 10 }
+        user_ai:                     # $userAiLimiter, keyed on user id - AI replies in bot games (casual and rated) and hints; generous so a rated bullet game vs a bot stays playable
+            policy: 'token_bucket'
+            limit: 40
             rate: { interval: '1 minute', amount: 30 }
         guest_move_record:           # $guestMoveRecordLimiter, keyed on client IP - guest moves recorded into the analytics tree
             policy: 'token_bucket'

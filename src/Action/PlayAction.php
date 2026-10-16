@@ -22,9 +22,11 @@ use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\Clock\ClockInterface;
 use Symfony\Component\HttpKernel\Attribute\AsController;
 use Symfony\Component\Messenger\MessageBusInterface;
+use Symfony\Component\RateLimiter\RateLimiterFactory;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Routing\Requirement\Requirement;
 use Symfony\Component\Uid\Uuid;
+use Symfony\Contracts\Translation\TranslatorInterface;
 
 #[AsController]
 class PlayAction extends AbstractController
@@ -39,6 +41,8 @@ class PlayAction extends AbstractController
         private readonly UserPreferencesRepository $userPreferencesRepository,
         private readonly SeekRepository $seekRepository,
         private readonly ClockInterface $clock,
+        private readonly RateLimiterFactory $userAiLimiter,
+        private readonly TranslatorInterface $translator,
     ) {
     }
 
@@ -83,12 +87,18 @@ class PlayAction extends AbstractController
             && !$game->isGameOver()
             && $game->isWhiteTurn() !== (PieceColor::WHITE === $playerColor)
         ) {
-            $this->messageBus->dispatch(
-                new ProcessAiMoveMessage(
-                    $uuid,
-                    $game->getGameMoves()->count(),
-                )
-            );
+            // The AI backend is billed: the AI's move is only requested within the user's `user_ai` budget. A refusal
+            // dispatches nothing, the page says so, and reloading it asks again.
+            if ($this->userAiLimiter->create($user->getId()->toRfc4122())->consume(1)->isAccepted()) {
+                $this->messageBus->dispatch(
+                    new ProcessAiMoveMessage(
+                        $uuid,
+                        $game->getGameMoves()->count(),
+                    )
+                );
+            } else {
+                $this->addFlash('error', $this->translator->trans('api_error.ai_rate_limited', [], 'frontend'));
+            }
         }
 
         $movesData = $game->getMovesData();
