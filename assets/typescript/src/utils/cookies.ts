@@ -20,7 +20,7 @@ export function writeCookie(name: string, value: string): void {
     document.cookie = `${name}=${encodeURIComponent(value)}; Path=/; Max-Age=${ONE_YEAR_SECONDS}; SameSite=Lax${secure}`;
 }
 
-/** A guest beat the AI at `level`: keeps the highest one in the cookie. */
+/** A guest beat the AI at `level` without help (no undo, no hint): keeps the highest one in the cookie. */
 export function recordGuestAiWin(level: number): void {
     const known = Number.parseInt(readCookie(AI_BEATEN_COOKIE) ?? '', 10);
     if (!Number.isFinite(known) || level > known) {

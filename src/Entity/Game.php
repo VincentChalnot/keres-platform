@@ -109,9 +109,9 @@ class Game
     #[ORM\Column(type: Types::BOOLEAN)]
     private bool $draw = false;
 
-    /** An AI game where the player took a move back: its result no longer counts for the AI ladder (`AiLadder`). */
+    /** An AI game where the player got help (took a move back, asked for a hint): its result no longer counts for the AI ladder (`AiLadder`). */
     #[ORM\Column(type: Types::BOOLEAN, options: ['default' => false])]
-    private bool $undoUsed = false;
+    private bool $assisted = false;
 
     #[ORM\Version]
     #[ORM\Column(type: Types::INTEGER)]
@@ -380,14 +380,14 @@ class Game
         return $this->draw;
     }
 
-    public function isUndoUsed(): bool
+    public function isAssisted(): bool
     {
-        return $this->undoUsed;
+        return $this->assisted;
     }
 
-    public function markUndoUsed(): void
+    public function markAssisted(): void
     {
-        $this->undoUsed = true;
+        $this->assisted = true;
     }
 
     public function getVersion(): int

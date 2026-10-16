@@ -32,7 +32,7 @@ final class AiLadderTest extends DatabaseTestCase
         $this->finishAiGameWonByThePlayer($player, level: 3);
         self::assertSame(3, $player->getHighestAiLevelBeaten());
 
-        $this->finishAiGameWonByThePlayer($player, level: 5, undoUsed: true);
+        $this->finishAiGameWonByThePlayer($player, level: 5, assisted: true);
         self::assertSame(3, $player->getHighestAiLevelBeaten(), 'a game with an undo does not count');
 
         $this->finishAiGameWonByThePlayer($player, level: 2);
@@ -89,12 +89,12 @@ final class AiLadderTest extends DatabaseTestCase
         self::assertSame(LocalGameType::GUEST_MAX_AI_LEVEL, $user->getHighestAiLevelBeaten());
     }
 
-    private function startAiGame(User $player, int $level, bool $undoUsed = false): Game
+    private function startAiGame(User $player, int $level, bool $assisted = false): Game
     {
         $game = static::getContainer()->get(GameFactory::class)->createAiOrHotseatGame($player, OpponentType::AI, ColorPreference::WHITE, $level);
 
-        if ($undoUsed) {
-            $game->markUndoUsed();
+        if ($assisted) {
+            $game->markAssisted();
         }
         $this->em()->persist($game);
         $this->em()->flush();
@@ -102,9 +102,9 @@ final class AiLadderTest extends DatabaseTestCase
         return $game;
     }
 
-    private function finishAiGameWonByThePlayer(User $player, int $level, bool $undoUsed = false): void
+    private function finishAiGameWonByThePlayer(User $player, int $level, bool $assisted = false): void
     {
-        $game = $this->startAiGame($player, $level, $undoUsed);
+        $game = $this->startAiGame($player, $level, $assisted);
 
         // The engine side (black) resigns: the player, white, won
         $this->finish(static fn (GameLifecycleManager $manager) => $manager->resign($game, PieceColor::BLACK));
