@@ -6,10 +6,10 @@ brand:
 nav:
     main_label: Main navigation
     toggle_menu: Toggle navigation menu
-    dashboard: Dashboard
+    play_online: Play online
+    learn: Learn
+    profile: Profile
     friends: Friends
-    rules: Rules
-    tutorial: Tutorial
     play: Play
     settings: Settings
     login: Login
@@ -30,6 +30,8 @@ confirm_modal:
     confirm: Confirm
     cancel: Cancel
 footer:
+    about: About Keres
+    rules: Rules
     legal_notice: Legal notice
     terms: Terms of use
     privacy: Privacy policy

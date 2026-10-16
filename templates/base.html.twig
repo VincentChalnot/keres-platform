@@ -33,7 +33,7 @@
     <nav class="navbar" role="navigation" aria-label="{{ 'nav.main_label'|trans }}">
         <div class="container-page navbar__inner">
             <div class="navbar__brand">
-                <a class="navbar__logo" href="{{ static_site_url }}/" aria-label="{{ 'brand.home_label'|trans }}">
+                <a class="navbar__logo" href="{{ path('index') }}" aria-label="{{ 'brand.home_label'|trans }}">
                     <img src="{{ asset('logo.svg') }}" alt="" width="32" height="32" aria-hidden="true">
                     <span class="navbar__logo-text">Keres</span>
                 </a>
@@ -48,29 +48,27 @@
                 <div class="navbar__start">
                     {% block nav_extra %}
                         {% if app.user %}
-                            <a href="{{ path('dashboard') }}" class="navbar__link">
-                                <span class="navbar__icon is-mobile-only"><i class="fa-solid fa-chart-line" aria-hidden="true"></i></span>
-                                <span>{{ 'nav.dashboard'|trans }}</span>
-                            </a>
-                            <a href="{{ path('friends') }}" class="navbar__link">
-                                <span class="navbar__icon is-mobile-only"><i class="fa-solid fa-users" aria-hidden="true"></i></span>
-                                <span>{{ 'nav.friends'|trans }}</span>
+                            <a href="{{ path('lobby') }}" class="navbar__link">
+                                <span class="navbar__icon is-mobile-only"><i class="fa-solid fa-globe" aria-hidden="true"></i></span>
+                                <span>{{ 'nav.play_online'|trans }}</span>
                             </a>
                         {% endif %}
                     {% endblock %}
-                    <a href="{{ static_site_url }}/rules" class="navbar__link">
-                        <span class="navbar__icon is-mobile-only"><i class="fa-solid fa-list-check" aria-hidden="true"></i></span>
-                        <span>{{ 'nav.rules'|trans }}</span>
-                    </a>
                     {% if tutorial_available() %}
                         <a href="{{ path('tutorial') }}" class="navbar__link">
                             <span class="navbar__icon is-mobile-only"><i class="fa-solid fa-graduation-cap" aria-hidden="true"></i></span>
-                            <span>{{ 'nav.tutorial'|trans }}</span>
+                            <span>{{ 'nav.learn'|trans }}</span>
+                        </a>
+                    {% endif %}
+                    {% if app.user %}
+                        <a href="{{ path('friends') }}" class="navbar__link">
+                            <span class="navbar__icon is-mobile-only"><i class="fa-solid fa-users" aria-hidden="true"></i></span>
+                            <span>{{ 'nav.friends'|trans }}</span>
                         </a>
                     {% endif %}
                 </div>
                 <div class="navbar__end">
-                    <a href="{{ path('lobby') }}" class="btn btn--primary btn--sm navbar__link navbar__play">
+                    <a href="{{ path('index') }}" class="btn btn--primary btn--sm navbar__link navbar__play">
                         <span class="navbar__icon is-mobile-only">{{ include('_icon_king.html.twig') }}</span>
                         <span>{{ 'nav.play'|trans }}</span>
                     </a>
@@ -99,22 +97,46 @@
                                 <a href="{{ path('notifications') }}" class="bell__footer">{{ 'notifications.see_all'|trans }}</a>
                             </div>
                         </div>
-                        <a href="{{ path('settings') }}" class="navbar__link" aria-label="{{ 'nav.settings'|trans }}" title="{{ 'nav.settings'|trans }}">
+                        {# A display name copied from the email address is not shown: the username is. #}
+                        {% set account_name = app.user.displayName and '@' not in app.user.displayName ? app.user.displayName : app.user.username %}
+                        {# Below lg the account entries are plain rows of the open menu; from lg up they hide in a dropdown. #}
+                        <a href="{{ path('profile', {username: app.user.username}) }}" class="navbar__link lg:hidden">
+                            <span class="navbar__icon"><i class="fa-solid fa-circle-user" aria-hidden="true"></i></span>
+                            <span>{{ 'nav.profile'|trans }}</span>
+                        </a>
+                        <a href="{{ path('settings') }}" class="navbar__link lg:hidden">
                             <span class="navbar__icon"><i class="fa-solid fa-gear" aria-hidden="true"></i></span>
-                            <span class="is-mobile-only" aria-hidden="true">{{ 'nav.settings'|trans }}</span>
+                            <span>{{ 'nav.settings'|trans }}</span>
                         </a>
-                        <a href="{{ path('profile', {username: app.user.username}) }}" class="navbar__link navbar__user">
-                            {% if app.user.avatarUrl %}
-                                <img src="{{ app.user.avatarUrl }}" alt="" class="navbar__avatar">
-                            {% else %}
-                                <span class="navbar__icon"><i class="fa-solid fa-circle-user" aria-hidden="true"></i></span>
-                            {% endif %}
-                            <span>{{ app.user.displayName ?? app.user.username }}</span>
-                        </a>
-                        <a href="{{ path('logout') }}" class="btn btn--outline btn--sm navbar__link navbar__ghost">
+                        <a href="{{ path('logout') }}" class="navbar__link lg:hidden">
                             <span class="navbar__icon"><i class="fa-solid fa-right-from-bracket" aria-hidden="true"></i></span>
                             <span>{{ 'nav.logout'|trans }}</span>
                         </a>
+                        <details class="relative max-lg:hidden" id="navbar-account">
+                            <summary class="navbar__link navbar__user list-none">
+                                {% if app.user.avatarUrl %}
+                                    <img src="{{ app.user.avatarUrl }}" alt="" class="navbar__avatar">
+                                {% else %}
+                                    <span class="navbar__icon"><i class="fa-solid fa-circle-user" aria-hidden="true"></i></span>
+                                {% endif %}
+                                <span class="max-w-[10rem] truncate">{{ account_name }}</span>
+                                <span class="navbar__icon"><i class="fa-solid fa-chevron-down text-xs" aria-hidden="true"></i></span>
+                            </summary>
+                            <div class="absolute right-0 top-[calc(100%+0.9rem)] z-dropdown flex w-56 flex-col rounded-md border bg-sunken py-1 shadow-raised bevel edged">
+                                <a href="{{ path('profile', {username: app.user.username}) }}" class="navbar__link !w-full">
+                                    <span class="navbar__icon"><i class="fa-solid fa-circle-user" aria-hidden="true"></i></span>
+                                    <span>{{ 'nav.profile'|trans }}</span>
+                                </a>
+                                <a href="{{ path('settings') }}" class="navbar__link !w-full">
+                                    <span class="navbar__icon"><i class="fa-solid fa-gear" aria-hidden="true"></i></span>
+                                    <span>{{ 'nav.settings'|trans }}</span>
+                                </a>
+                                <a href="{{ path('logout') }}" class="navbar__link !w-full">
+                                    <span class="navbar__icon"><i class="fa-solid fa-right-from-bracket" aria-hidden="true"></i></span>
+                                    <span>{{ 'nav.logout'|trans }}</span>
+                                </a>
+                            </div>
+                        </details>
                     {% else %}
                         {{ include('_language_switcher.html.twig', {variant: 'navbar'}) }}
                         <a href="{{ path('login') }}" class="btn btn--outline btn--sm navbar__link navbar__ghost">
@@ -162,6 +184,8 @@
     <p class="mb-2">&copy; Keres 2025-2026 <span class="footer__meta">{{ app_version }}</span></p>
     {{ include('_language_switcher.html.twig', {variant: 'footer'}) }}
     <nav>
+        <a href="{{ static_site_url }}/">{{ 'footer.about'|trans }}</a>
+        <a href="{{ static_site_url }}/rules">{{ 'footer.rules'|trans }}</a>
         <a href="{{ static_site_url }}/legal-notice">{{ 'footer.legal_notice'|trans }}</a>
         <a href="{{ static_site_url }}/terms-of-use">{{ 'footer.terms'|trans }}</a>
         <a href="{{ static_site_url }}/privacy-policy">{{ 'footer.privacy'|trans }}</a>

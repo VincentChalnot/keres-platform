@@ -6,10 +6,10 @@ brand:
 nav:
     main_label: Navigation principale
     toggle_menu: Afficher ou masquer le menu de navigation
-    dashboard: Tableau de bord
+    play_online: Jouer en ligne
+    learn: Apprendre
+    profile: Profil
     friends: Amis
-    rules: Règles
-    tutorial: Tutoriel
     play: Jouer
     settings: Paramètres
     login: Connexion
@@ -30,6 +30,8 @@ confirm_modal:
     confirm: Confirmer
     cancel: Annuler
 footer:
+    about: À propos de Keres
+    rules: Règles
     legal_notice: Mentions légales
     terms: Conditions générales d’utilisation
     privacy: Politique de confidentialité

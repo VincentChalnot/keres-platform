@@ -23,4 +23,19 @@ export function initializeNavbarToggle(): void {
     link.addEventListener('click', () => setOpen(false));
   });
   window.addEventListener('pageshow', () => setOpen(false));
+
+  // The desktop account dropdown (a <details>) closes on an outside click and on Escape.
+  const account = document.getElementById('navbar-account');
+  if (account instanceof HTMLDetailsElement) {
+    document.addEventListener('click', (event) => {
+      if (event.target instanceof Node && !account.contains(event.target)) {
+        account.open = false;
+      }
+    });
+    document.addEventListener('keydown', (event) => {
+      if ('Escape' === event.key) {
+        account.open = false;
+      }
+    });
+  }
 }
