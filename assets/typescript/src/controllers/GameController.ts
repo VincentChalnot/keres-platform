@@ -336,6 +336,11 @@ export class GameController {
             if (moves.length > 0) {
                 this.gameState.setSelectedPosition(pos);
                 this.updateOverlays();
+            } else if (board.getPieceAt(pos)?.color === board.whiteToMove) {
+                // One of the mover's own pieces with no move at all (a blocked ballista): nothing to select, but the
+                // piece-info panel explains it, like after a long press (cleared by the next click).
+                this.pinnedInspection = pos;
+                this.updateOverlays();
             }
             return;
         }

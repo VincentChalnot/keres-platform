@@ -70,6 +70,14 @@
         </div>
     </section>
 
+    <section class="section">
+        <div class="container-page" id="pieces-and-rules">
+            <h2 class="page-title !text-3xl">{{ 'reference.title'|trans }}</h2>
+            {% include 'actions/_help_content.html.twig' with {mode: 'page', side: 'white'} only %}
+        </div>
+    </section>
+
+    {% include 'actions/_diagram_modal.html.twig' only %}
     {% include 'actions/_unstack_modal.html.twig' only %}
 {% endblock %}
 

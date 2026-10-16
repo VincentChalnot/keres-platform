@@ -794,7 +794,12 @@ class KeresGame {
     /** Describes the piece or stack on `position` (selected, hovered or long-pressed), or explains how to get there. */
     private renderPieceInfo(position: number | null): void {
         const piece = null === position ? null : this.gameState.getBoard()?.getPieceAt(position) ?? null;
-        const key = piece ? `${position}:${piece.color}:${piece.top}:${piece.bottom}` : '';
+        // "Blocked right now": one of the mover's own pieces, on a live board, that has no legal move (e.g. a ballista with its king in front).
+        const board = this.gameState.getBoard();
+        const blocked = null !== position && null !== piece && null !== board
+            && piece.color === board.whiteToMove && !board.isGameOver() && !this.controller.isBoardLocked()
+            && 0 === this.gameState.getPotentialMovesForPosition(position).length;
+        const key = piece ? `${position}:${piece.color}:${piece.top}:${piece.bottom}:${blocked}` : '';
         if (key === this.pieceInfoKey) return;
         this.pieceInfoKey = key;
 
@@ -818,10 +823,17 @@ class KeresGame {
             + '</svg>';
 
         const details = document.createElement('div');
-        details.className = 'piece-info__details';
+        // The diagram makes the card taller than the panel in some layouts: it scrolls instead of being cut off.
+        details.className = 'piece-info__details max-h-64 overflow-y-auto';
         const layers: Array<[string, string | null]> = piece.top
             ? [[piece.top, t('play.piece_info.on_top')], [piece.bottom, t('play.piece_info.underneath')]]
             : [[piece.bottom, null]];
+        if (blocked) {
+            const note = document.createElement('p');
+            note.className = 'piece-info__layer m-0 font-semibold';
+            note.textContent = t('help.blocked');
+            details.appendChild(note);
+        }
         for (const [type, layer] of layers) {
             const rule = pieceRule(type);
             if (!rule) continue;
@@ -841,7 +853,15 @@ class KeresGame {
                 item.textContent = line;
                 movement.appendChild(item);
             }
-            details.append(name, movement);
+            // The authored diagram of this piece type and colour (public/help/pieces); a click enlarges it.
+            const diagram = document.createElement('img');
+            diagram.src = `/help/pieces/${type}-${piece.color ? 'white' : 'black'}.svg`;
+            diagram.alt = t('help.pieces.diagram_alt', {piece: rule.name});
+            diagram.title = t('help.pieces.enlarge');
+            diagram.loading = 'lazy';
+            diagram.className = 'mt-1.5 w-full max-w-[9rem] cursor-zoom-in rounded-md';
+            diagram.dataset.enlarge = '';
+            details.append(name, movement, diagram);
         }
 
         this.pieceInfoBody.replaceChildren(figure, details);

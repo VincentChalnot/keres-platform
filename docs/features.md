@@ -139,6 +139,33 @@ while the tutorial exists and nothing is answered; `onboarding-experience.ts` in
 start (from `/tutorial` itself it goes home). The answer is changeable in Settings -> Board & gameplay (empty = ask
 again). The coach default (beginner = on) comes with Phase 6.
 
+## Piece diagrams, piece info and the help drawer
+
+`public/help/pieces/<type>-<white|black>.svg` (soldier, bishop, rook, knight, paladin, guard, ballista, king; a White
+piece seen from White, a Black piece on the flipped board) and `public/help/{blocked-ballista,stack,unstack}.svg` are the
+static movement diagrams (~12-19 kB each, `HelpDiagramsTest` checks they exist and stay small). They are **authored, not
+drawn from memory**: for each one the piece is put alone on the centre square, the engine is asked for its legal moves
+(`POST /moves` on the 83-byte board; no kings are needed), the answer paints the "Potential movement" squares in
+`/admin/board-editor` and one right-drag arrow per direction goes to the farthest reachable square (a knight gets its
+elbow arrows), then "Export SVG". Black ones: "Flip board" first (the editor's tiles are indexed by what is displayed, so a
+flipped board is addressed as `80 - i`). `stack` is a guard under a paladin (the union of both move sets), `unstack` the
+same stack with only the top piece's squares (the engine flags them `unstackable`) in green arrows, `blocked-ballista`
+a ballista with its own king in front (the engine answers no move; so it does for an own stack in front, whereas a lone
+own piece in front can be stacked on). Re-do the lot after an engine rule change; the piece sprites are never touched.
+
+`templates/actions/_help_content.html.twig` is the one source of the help text: the pieces (diagram + the
+`frontend_play` `piece.<type>.*` description), "Keres vs chess" and the three topics, texts in the `frontend_help` domain
+(wording from https://playkeres.com/rules and the engine's `docs/PROTOCOL.md`: goal, capture, blocking, promotions,
+stacking, the draw rules; "no checkmate / castling / en passant / stalemate" are read off the same sources). It is
+rendered `mode: 'drawer'` (a piece grid, one panel at a time) in the game page's help drawer (`#help-drawer`, the "?"
+button of the Moves panel, a side drawer from md up and a full-screen sheet below; the diagrams are those of the viewer's
+colour) and `mode: 'page'` (everything shown) in the "Pieces & rules" section of `/tutorial`. `assets/typescript/src/help.ts`
+(loaded by `app.js`) opens any `img[data-enlarge]` in `#piece-diagram-modal` and switches the drawer's piece panels.
+
+The piece-info panel of the game page shows, under the name and movement of each layer of the hovered / selected piece
+(a stack: top and bottom), that piece's diagram (click to enlarge). Clicking one of the mover's own pieces that has no
+legal move (nothing to select) pins it in the panel with "Blocked right now" above its diagram, until the next click.
+
 ## Analytics event log
 
 `analytics_event` is an append-only table (`AnalyticsEvent`), written

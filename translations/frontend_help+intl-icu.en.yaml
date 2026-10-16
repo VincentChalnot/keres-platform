@@ -1,0 +1,33 @@
+# In-game help drawer and the "Pieces & rules" section of /tutorial (templates/actions/_help_content.html.twig);
+# the wording follows https://playkeres.com/rules and docs/PROTOCOL.md of the engine repo. Exported to TypeScript as `help.<key>`.
+drawer:
+    open: Help
+    title: Help
+    close: Close
+    full_tutorial: Open the full tutorial
+pieces:
+    title: Pieces
+    hint: Choose a piece to see how it moves.
+    diagram_alt: 'How the {piece} moves'
+    enlarge: Click the diagram to enlarge it
+rules:
+    title: Keres vs chess
+    goal: The game ends immediately when a player captures the opponent’s king. There is no checkmate.
+    capture: A piece captures an enemy piece by moving onto its square, as in chess. Capturing a stack removes the entire stack.
+    blocking: Pieces cannot pass through other pieces, except the knight.
+    promotion: 'When a piece reaches the opposite last rank, a mandatory promotion takes effect: the soldier becomes a paladin, the ballista a rook.'
+    stacking: 'Pieces can be stacked to merge their movement: a stack moves by combining all the movements of the pieces that compose it. The target piece must be reachable by the moving piece, must not already be stacked, and the king can never be stacked. A stack separates when only its top piece moves, according to its own movement.'
+    draws: A game is drawn after 40 moves without a capture, or when neither side has enough material left to win.
+    missing: 'No castling, no en passant and no stalemate: the king moves one square, the soldier one square diagonally forward, and a game only ends by a captured king, 40 moves without a capture or insufficient material.'
+topics:
+    title: Good to know
+    blocked:
+        title: A piece that cannot move
+        text: A ballista only moves forward. With your own king, or a stack, right in front of it, it has no move at all and is blocked until that square changes.
+    stack:
+        title: A stack
+        text: A guard with a paladin on top moves like a guard and like a paladin.
+    unstack:
+        title: Unstacking
+        text: Moving only the top piece, here the paladin, separates the stack. The piece underneath stays where it is.
+blocked: Blocked right now

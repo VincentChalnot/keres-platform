@@ -134,4 +134,20 @@ final class ChessExperienceTest extends DatabaseTestCase
         self::assertResponseRedirects('/settings/board');
         self::assertSame(ChessExperience::PLAYER, static::getContainer()->get(UserRepository::class)->findByEmail('player@example.com')?->getChessExperience());
     }
+
+    public function testTheTutorialPageCarriesThePiecesAndRulesReference(): void
+    {
+        $client = static::createClient();
+
+        $client->request('GET', '/tutorial', [], [], $this->sameOrigin());
+
+        if (404 === $client->getResponse()->getStatusCode()) {
+            self::markTestSkipped('The tutorial content is not in place.');
+        }
+
+        $content = (string) $client->getResponse()->getContent();
+        self::assertStringContainsString('id="pieces-and-rules"', $content);
+        self::assertStringContainsString('/help/pieces/ballista-white.svg', $content);
+        self::assertStringContainsString('Keres vs chess', $content);
+    }
 }

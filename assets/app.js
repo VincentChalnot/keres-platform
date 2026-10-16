@@ -7,6 +7,7 @@ import "@fortawesome/fontawesome-free/css/regular.min.css";
 import {initNotifications} from "./typescript/src/notifications/NotificationBell";
 import {initializeNavbarToggle} from "./typescript/src/navbar-toggle";
 import {initializeMenuToggles} from "./typescript/src/menu-toggle";
+import {initHelp} from "./typescript/src/help";
 import {initExperienceModal} from "./typescript/src/onboarding-experience";
 
 // ─── Mobile navigation burger (every page) ───────────────────────────────────
@@ -32,6 +33,8 @@ if (document.readyState === "loading") {
 } else {
     initExperienceModal();
 }
+
+initHelp();
 
 // ─── Notification bell (every signed-in page) ────────────────────────────────
 

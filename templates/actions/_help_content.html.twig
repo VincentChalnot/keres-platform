@@ -1,0 +1,59 @@
+{% trans_default_domain 'frontend_help' %}
+{# One source for the in-game help drawer and the "Pieces & rules" section of /tutorial: the pieces (diagram + description), Keres
+   vs chess, and the three topics. Parameters: mode ('drawer': pick a piece in a grid, one panel shows; 'page': every piece
+   shown), side ('white' | 'black': which of the two authored diagrams of each piece). Texts: `frontend_help` (also exported to
+   TypeScript), names and movements: `frontend_play` (`piece.<type>.*`). The diagrams are public/help/ (docs/features.md). #}
+{% set types = ['soldier', 'bishop', 'rook', 'knight', 'paladin', 'guard', 'ballista', 'king'] %}
+{% set side = side|default('white') %}
+{% set drawer = mode|default('page') == 'drawer' %}
+
+<section class="mb-6" aria-labelledby="help-pieces-title">
+    <h3 class="card__title card__title--sm" id="help-pieces-title">{{ 'pieces.title'|trans }}</h3>
+    {% if drawer %}
+        <p class="help">{{ 'pieces.hint'|trans }}</p>
+        <div class="mb-3 grid grid-cols-2 gap-2" role="group" aria-labelledby="help-pieces-title">
+            {% for type in types %}
+                <button type="button" class="btn btn--outline btn--sm" data-help-piece="{{ type }}" aria-pressed="false">{{ ('piece.' ~ type ~ '.name')|trans({}, 'frontend_play') }}</button>
+            {% endfor %}
+        </div>
+    {% endif %}
+    <div class="{{ drawer ? '' : 'grid grid-cols-1 gap-4 md:grid-cols-2' }}">
+        {% for type in types %}
+            {% set name = ('piece.' ~ type ~ '.name')|trans({}, 'frontend_play') %}
+            <article class="{{ drawer ? '' : 'card !mb-0' }}"{% if drawer %} data-help-piece-panel="{{ type }}" hidden{% endif %}>
+                <h4 class="m-0 font-semibold">{{ name }}</h4>
+                <ul class="my-2 list-none p-0 text-sm">
+                    {% for line in ('piece.' ~ type ~ '.movement')|trans({}, 'frontend_play')|split("\n") %}
+                        <li>{{ line }}</li>
+                    {% endfor %}
+                </ul>
+                <img src="{{ asset('help/pieces/' ~ type ~ '-' ~ side ~ '.svg') }}" alt="{{ 'pieces.diagram_alt'|trans({piece: name}) }}" width="450" height="365" loading="lazy"
+                     class="w-full max-w-sm cursor-zoom-in rounded-md" data-enlarge title="{{ 'pieces.enlarge'|trans }}">
+            </article>
+        {% endfor %}
+    </div>
+</section>
+
+<section class="mb-6" aria-labelledby="help-rules-title">
+    <h3 class="card__title card__title--sm" id="help-rules-title">{{ 'rules.title'|trans }}</h3>
+    <ul class="m-0 flex list-none flex-col gap-2 p-0 text-sm">
+        {% for key in ['goal', 'capture', 'blocking', 'promotion', 'stacking', 'draws', 'missing'] %}
+            <li>{{ ('rules.' ~ key)|trans }}</li>
+        {% endfor %}
+    </ul>
+</section>
+
+<section aria-labelledby="help-topics-title">
+    <h3 class="card__title card__title--sm" id="help-topics-title">{{ 'topics.title'|trans }}</h3>
+    <div class="{{ drawer ? 'flex flex-col gap-4' : 'grid grid-cols-1 gap-4 md:grid-cols-3' }}">
+        {% for topic in ['blocked', 'stack', 'unstack'] %}
+            {% set title = ('topics.' ~ topic ~ '.title')|trans %}
+            <article class="{{ drawer ? '' : 'card !mb-0' }}">
+                <h4 class="m-0 font-semibold">{{ title }}</h4>
+                <p class="my-2 text-sm">{{ ('topics.' ~ topic ~ '.text')|trans }}</p>
+                <img src="{{ asset('help/' ~ (topic == 'blocked' ? 'blocked-ballista' : topic) ~ '.svg') }}" alt="{{ title }}" width="450" height="365" loading="lazy"
+                     class="w-full max-w-sm cursor-zoom-in rounded-md" data-enlarge title="{{ 'pieces.enlarge'|trans }}">
+            </article>
+        {% endfor %}
+    </div>
+</section>

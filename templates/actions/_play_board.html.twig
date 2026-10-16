@@ -119,6 +119,9 @@
                                     <i class="fa-solid fa-download" aria-hidden="true"></i>
                                 </button>
                             {% endif %}
+                            <button type="button" class="icon-button" id="help-btn" title="{{ 'drawer.open'|trans({}, 'frontend_help') }}" aria-label="{{ 'drawer.open'|trans({}, 'frontend_help') }}" aria-controls="help-drawer" data-modal-open="#help-drawer">
+                                <i class="fa-solid fa-circle-question" aria-hidden="true"></i>
+                            </button>
                             <button type="button" class="icon-button" id="toggle-fullscreen-btn" title="{{ 'play.board.fullscreen'|trans }}" aria-label="{{ 'play.board.fullscreen'|trans }}">
                                 <i class="fa-solid fa-expand" aria-hidden="true"></i>
                             </button>
@@ -199,6 +202,22 @@
             </button>
         {% endif %}
     </div>
+
+    {# Help: a side drawer from md up, a full-screen sheet below (the game stays underneath); every diagram opens enlarged in the second modal. #}
+    <div class="modal !p-0" id="help-drawer" role="dialog" aria-modal="true" aria-labelledby="help-drawer-title" data-dismissible>
+        <div class="modal__backdrop"></div>
+        <aside class="absolute inset-y-0 right-0 flex w-full flex-col overflow-y-auto bg-sunken p-4 shadow-raised md:max-w-md">
+            <header class="mb-4 flex items-center justify-between gap-3">
+                <h2 class="m-0 font-title text-2xl" id="help-drawer-title">{{ 'drawer.title'|trans({}, 'frontend_help') }}</h2>
+                <button type="button" class="btn-close" aria-label="{{ 'drawer.close'|trans({}, 'frontend_help') }}" data-close></button>
+            </header>
+            {% include 'actions/_help_content.html.twig' with {mode: 'drawer', side: (playerWhite ?? true) ? 'white' : 'black'} only %}
+            {% if tutorial_available() %}
+                <a href="{{ path('tutorial') }}" class="btn btn--outline btn--block mt-4">{{ 'drawer.full_tutorial'|trans({}, 'frontend_help') }}</a>
+            {% endif %}
+        </aside>
+    </div>
+    {% include 'actions/_diagram_modal.html.twig' only %}
 
     <div class="modal" id="gameover-modal" role="dialog" aria-modal="true" aria-labelledby="gameover-modal-title">
         <div class="modal__backdrop" data-close></div>

@@ -1,0 +1,33 @@
+# Tiroir d’aide en jeu et section « Pièces et règles » de /tutorial (templates/actions/_help_content.html.twig) ;
+# le texte suit https://playkeres.com/rules et docs/PROTOCOL.md du dépôt du moteur. Exporté vers TypeScript sous `help.<clé>`.
+drawer:
+    open: Aide
+    title: Aide
+    close: Fermer
+    full_tutorial: Ouvrir le tutoriel complet
+pieces:
+    title: Pièces
+    hint: Choisissez une pièce pour voir comment elle se déplace.
+    diagram_alt: 'Déplacements : {piece}'
+    enlarge: Cliquez sur le schéma pour l’agrandir
+rules:
+    title: Keres et les échecs
+    goal: La partie se termine immédiatement quand un joueur capture le roi adverse. Il n’y a pas d’échec et mat.
+    capture: Une pièce capture une pièce adverse en se déplaçant sur sa case, comme aux échecs. Capturer une pile retire toute la pile.
+    blocking: Les pièces ne peuvent pas passer à travers d’autres pièces, sauf le cavalier.
+    promotion: 'Quand une pièce atteint la dernière rangée adverse, une promotion obligatoire a lieu : le soldat devient paladin, la baliste devient tour.'
+    stacking: 'Les pièces peuvent s’empiler pour fusionner leurs déplacements : une pile se déplace en combinant tous les mouvements des pièces qui la composent. La pièce visée doit être atteignable par la pièce qui bouge, ne pas être déjà empilée, et le roi ne peut jamais être empilé. Une pile se sépare quand seule sa pièce du dessus bouge, selon son propre déplacement.'
+    draws: La partie est nulle après 40 coups sans capture, ou quand aucun camp n’a assez de matériel pour gagner.
+    missing: 'Ni roque, ni prise en passant, ni pat : le roi avance d’une case, le soldat d’une case en diagonale vers l’avant, et une partie ne se termine que par la capture d’un roi, 40 coups sans capture ou un matériel insuffisant.'
+topics:
+    title: À savoir
+    blocked:
+        title: Une pièce qui ne peut pas bouger
+        text: La baliste n’avance que tout droit. Avec votre propre roi, ou une pile, juste devant elle, elle n’a aucun coup et reste bloquée tant que cette case ne change pas.
+    stack:
+        title: Une pile
+        text: Un garde portant un paladin se déplace comme un garde et comme un paladin.
+    unstack:
+        title: Séparer une pile
+        text: Ne déplacer que la pièce du dessus, ici le paladin, sépare la pile. La pièce du dessous reste en place.
+blocked: Bloquée pour l’instant

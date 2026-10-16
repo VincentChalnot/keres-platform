@@ -1,0 +1,9 @@
+{% trans_default_domain 'frontend_help' %}
+{# Every [data-enlarge] image (help diagrams, the piece-info panel) opens enlarged here; see assets/typescript/src/help.ts. #}
+<div class="modal" id="piece-diagram-modal" role="dialog" aria-modal="true" aria-label="{{ 'drawer.title'|trans }}" data-dismissible>
+    <div class="modal__backdrop"></div>
+    <div class="modal__card" style="max-width:min(56rem,100%)">
+        <button type="button" class="btn-close absolute right-4 top-4" aria-label="{{ 'drawer.close'|trans }}" data-close></button>
+        <img src="" alt="" id="piece-diagram-modal-img" class="block w-full rounded-md">
+    </div>
+</div>
