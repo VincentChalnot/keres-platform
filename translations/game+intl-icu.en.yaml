@@ -104,6 +104,9 @@ lobby:
         help: A casual game, no clock. Win without help (no move taken back, no hint) to unlock the next level.
         play: Play
         custom: Choose the level, your side, or play a rated game
+        running_title: Game in progress
+        running_text: 'Your game against Bot {level} is in progress. Finish it, or resign, before starting another.'
+        running_state: '{kind, select, rated {Rated game} other {Casual game, no clock}} · {plies, plural, =0 {no move played yet} one {# move played} other {# moves played}} · {turn, select, you {your turn} other {the bot is thinking}}'
         capped: Create an account to face level 2 and beyond.
 
 game_list:
@@ -147,17 +150,13 @@ home:
         dismiss: Not now
     continue:
         title: Continue
-        bot: 'Game against Bot {level}'
-        bot_casual: Casual game, no clock
-        bot_rated: Rated game
         resign: Resign
     resign:
         title: 'Resign against Bot {level}?'
         text: The game ends now and counts as a loss.
         text_abort: 'The game has barely started: it is simply cancelled and counts for nothing.'
     play:
-        title: Play
-        bot_running: You have a game in progress against this bot. Finish it, or resign above, before starting another.
+        label: Play
         online:
             title: Play online
             text: Rated or casual games against other players.

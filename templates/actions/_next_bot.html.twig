@@ -1,25 +1,45 @@
 {% trans_default_domain 'game' %}
 {# The bot to beat next (NextBot): a big portrait column (or a robot while the file is missing) beside a column holding
    the card title, the level, one click to play it and the link to the custom game form.
-   Parameters: nextBot, quickGame, titleClass (optional modifier of .card__title). #}
+   While a bot game runs (`running`: level, avatarUrl, plies, yourTurn, rated, url - see IndexAction) the same card
+   describes that game instead, with Resume and Resign (opens #bot-resign-modal).
+   Parameters: nextBot, quickGame, titleClass (optional modifier of .card__title), running (optional). #}
+{% set avatarUrl = running ? running.avatarUrl : nextBot.avatarUrl %}
 <div class="bot-card">
-    <button type="submit" form="next-bot-form" class="bot-card__avatar" aria-label="{{ 'lobby.next_bot.play'|trans }}">
-        {% if nextBot.avatarUrl %}
-            <img src="{{ nextBot.avatarUrl }}" alt="" width="160" height="160">
+    {% if running %}
+        <a href="{{ running.url }}" class="bot-card__avatar" aria-label="{{ 'game_row.action.resume'|trans }}">
+    {% else %}
+        <button type="submit" form="next-bot-form" class="bot-card__avatar" aria-label="{{ 'lobby.next_bot.play'|trans }}">
+    {% endif %}
+        {% if avatarUrl %}
+            <img src="{{ avatarUrl }}" alt="" width="160" height="160">
         {% else %}
             <span aria-hidden="true"><i class="fa-solid fa-robot"></i></span>
         {% endif %}
-    </button>
+    {% if running %}</a>{% else %}</button>{% endif %}
     <div class="bot-card__body">
-        <h2 class="card__title {{ titleClass|default('') }}">{{ 'lobby.next_bot.title'|trans }}</h2>
-        <div class="bot-card__head">
-            <p class="bot-card__name">{{ 'lobby.next_bot.name'|trans({level: nextBot.level}) }}</p>
-            {% include 'actions/_quick_game_form.html.twig' with {quickGame: quickGame, opponent: 'ai', level: nextBot.level, label: 'lobby.next_bot.play'|trans, id: 'next-bot-form'} only %}
-        </div>
-        <p class="help mb-0">{{ 'lobby.next_bot.help'|trans }}</p>
-        {% if nextBot.capped %}
-            <p class="help mt-3 mb-0">{{ 'lobby.next_bot.capped'|trans }}</p>
+        {% if running %}
+            <h2 class="card__title {{ titleClass|default('') }}">{{ 'lobby.next_bot.running_title'|trans }}</h2>
+            <div class="bot-card__head">
+                <p class="bot-card__name">{{ 'lobby.next_bot.name'|trans({level: running.level}) }}</p>
+                <div class="btn-group">
+                    <a href="{{ running.url }}" class="btn btn--primary">{{ 'game_row.action.resume'|trans }}</a>
+                    <button type="button" class="btn btn--outline" data-modal-open="#bot-resign-modal">{{ 'home.continue.resign'|trans }}</button>
+                </div>
+            </div>
+            <p class="help mb-0">{{ 'lobby.next_bot.running_text'|trans({level: running.level}) }}</p>
+            <p class="help mt-3 mb-0">{{ 'lobby.next_bot.running_state'|trans({kind: running.rated ? 'rated' : 'casual', plies: running.plies, turn: running.yourTurn ? 'you' : 'bot'}) }}</p>
+        {% else %}
+            <h2 class="card__title {{ titleClass|default('') }}">{{ 'lobby.next_bot.title'|trans }}</h2>
+            <div class="bot-card__head">
+                <p class="bot-card__name">{{ 'lobby.next_bot.name'|trans({level: nextBot.level}) }}</p>
+                {% include 'actions/_quick_game_form.html.twig' with {quickGame: quickGame, opponent: 'ai', level: nextBot.level, label: 'lobby.next_bot.play'|trans, id: 'next-bot-form'} only %}
+            </div>
+            <p class="help mb-0">{{ 'lobby.next_bot.help'|trans }}</p>
+            {% if nextBot.capped %}
+                <p class="help mt-3 mb-0">{{ 'lobby.next_bot.capped'|trans }}</p>
+            {% endif %}
+            <p class="mb-0 mt-3"><a href="{{ path('new_local_game') }}">{{ 'lobby.next_bot.custom'|trans }}</a></p>
         {% endif %}
-        <p class="mb-0 mt-3"><a href="{{ path('new_local_game') }}">{{ 'lobby.next_bot.custom'|trans }}</a></p>
     </div>
 </div>

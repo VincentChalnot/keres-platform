@@ -104,6 +104,9 @@ lobby:
         help: Une partie amicale, sans pendule. Gagnez sans aide (ni coup repris, ni indice) pour débloquer le niveau suivant.
         play: Jouer
         custom: Choisir le niveau, votre camp, ou jouer une partie classée
+        running_title: Partie en cours
+        running_text: 'Votre partie contre le Bot niveau {level} est en cours. Terminez-la, ou abandonnez, avant d’en commencer une autre.'
+        running_state: '{kind, select, rated {Partie classée} other {Partie amicale, sans pendule}} · {plies, plural, =0 {aucun coup joué} one {# coup joué} other {# coups joués}} · {turn, select, you {à vous de jouer} other {le bot réfléchit}}'
         capped: Créez un compte pour affronter le niveau 2 et au-delà.
 
 game_list:
@@ -147,17 +150,13 @@ home:
         dismiss: Plus tard
     continue:
         title: Continuer
-        bot: 'Partie contre le Bot {level}'
-        bot_casual: Partie amicale, sans pendule
-        bot_rated: Partie classée
         resign: Abandonner
     resign:
         title: 'Abandonner contre le Bot {level} ?'
         text: La partie se termine maintenant et compte comme une défaite.
         text_abort: 'La partie vient à peine de commencer : elle est simplement annulée et ne compte pas.'
     play:
-        title: Jouer
-        bot_running: Vous avez une partie en cours contre ce bot. Terminez-la, ou abandonnez-la ci-dessus, avant d’en commencer une autre.
+        label: Jouer
         online:
             title: Jouer en ligne
             text: Des parties classées ou amicales contre d’autres joueurs.

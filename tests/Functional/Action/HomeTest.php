@@ -59,8 +59,13 @@ final class HomeTest extends DatabaseTestCase
 
         $client->request('GET', '/', [], [], $this->sameOrigin());
         $content = (string) $client->getResponse()->getContent();
-        self::assertStringContainsString('Game against Bot 2', $content);
+        self::assertStringContainsString('Your game against Bot 2 is in progress', $content);
         self::assertStringContainsString('/play/bot-game/resign', $content);
+        self::assertStringContainsString('/play/'.$game->getUuid()->toRfc4122(), $content, 'Resume');
+        self::assertStringNotContainsString('Beat the next bot', $content);
+        self::assertStringNotContainsString('Continue', $content, 'the bot game is not a "Continue" entry');
+        self::assertSame(1, substr_count($content, 'bot-card__avatar'), 'the running bot game is shown once');
+        self::assertSame(1, substr_count($content, 'data-modal-open="#bot-resign-modal"'));
 
         $client->request('POST', '/play/bot-game/resign', ['_token' => 'csrf-token'], [], $this->sameOrigin());
         self::assertResponseRedirects('/');

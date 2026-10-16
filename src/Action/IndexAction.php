@@ -10,6 +10,7 @@ use App\Form\LocalGameType;
 use App\Model\OpponentType;
 use App\Repository\GameRepository;
 use App\Service\Announcement\AnnouncementProvider;
+use App\Service\BotTournament\BotAccounts;
 use App\Service\Game\BotGameManager;
 use App\Service\Ladder\NextBot;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -39,6 +40,7 @@ class IndexAction extends AbstractController
         private readonly AnnouncementProvider $announcementProvider,
         private readonly NextBot $nextBot,
         private readonly BotGameManager $botGameManager,
+        private readonly BotAccounts $botAccounts,
     ) {
     }
 
@@ -72,6 +74,14 @@ class IndexAction extends AbstractController
             'greetingName' => self::greetingName($user),
             'nextBot' => $this->nextBot->forRequest($user, $request),
             'botGame' => $botGame,
+            'runningBot' => null === $botGame ? null : [
+                'level' => $botGame->getAiLevel(),
+                'avatarUrl' => null === $botGame->getAiLevel() ? null : $this->botAccounts->avatarUrl($botGame->getAiLevel()),
+                'plies' => \count($botGame->getMovesData()->getMoves()),
+                'yourTurn' => $botGame->isTurnOf($user),
+                'rated' => $botGame->isRated(),
+                'url' => $this->generateUrl('play', ['uuid' => $botGame->getUuid()->toRfc4122()]),
+            ],
             'yourTurnGames' => $yourTurn,
             'yourGames' => $shownOthers,
             'yourGamesCount' => \count($others),

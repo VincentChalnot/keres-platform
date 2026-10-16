@@ -6,39 +6,20 @@
 
         <div class="grid grid-cols-1 items-start gap-4 lg:grid-cols-[1fr_22rem] [&>*>.card]:!mb-0">
             <div class="flex flex-col gap-4">
-                {% if botGame or yourTurnGames %}
+                {% if yourTurnGames %}
                     <section aria-labelledby="home-continue">
                         <h2 class="card__title" id="home-continue">{{ 'home.continue.title'|trans }}</h2>
                         {% for game in yourTurnGames %}
                             {# @var game \App\Entity\Game #}
                             {% include 'actions/_game_row.html.twig' with {row: game_list_row(game, app.user, true), isSelf: true} %}
                         {% endfor %}
-                        {% if botGame %}
-                            <div class="card list-row">
-                                <div class="list-row__body">
-                                    <p class="m-0 font-medium">{{ 'home.continue.bot'|trans({level: botGame.aiLevel}) }}</p>
-                                    <p class="list-row__meta">{{ (botGame.rated ? 'home.continue.bot_rated' : 'home.continue.bot_casual')|trans }}</p>
-                                </div>
-                                <div class="btn-group list-row__action">
-                                    <a href="{{ path('play', {uuid: botGame.uuid}) }}" class="btn btn--primary btn--sm">{{ 'game_row.action.resume'|trans }}</a>
-                                    <button type="button" class="btn btn--outline btn--sm" data-modal-open="#bot-resign-modal">{{ 'home.continue.resign'|trans }}</button>
-                                </div>
-                            </div>
-                        {% endif %}
                     </section>
                 {% endif %}
 
-                <section aria-labelledby="home-play">
-                    <h2 class="card__title" id="home-play">{{ 'home.play.title'|trans }}</h2>
+                <section aria-label="{{ 'home.play.label'|trans }}">
                     <div class="grid grid-cols-1 gap-4 md:grid-cols-2 [&>.card]:!mb-0">
                         <div class="card md:col-span-2">
-                            {% if botGame %}
-                                <h3 class="card__title card__title--sm">{{ 'home.continue.bot'|trans({level: botGame.aiLevel}) }}</h3>
-                                <p>{{ 'home.play.bot_running'|trans }}</p>
-                                <a href="{{ path('play', {uuid: botGame.uuid}) }}" class="btn btn--primary">{{ 'game_row.action.resume'|trans }}</a>
-                            {% else %}
-                                {% include 'actions/_next_bot.html.twig' with {nextBot: nextBot, quickGame: quickGame, titleClass: 'card__title--sm'} only %}
-                            {% endif %}
+                            {% include 'actions/_next_bot.html.twig' with {nextBot: nextBot, quickGame: quickGame, titleClass: 'card__title--sm', running: runningBot} only %}
                         </div>
                         <div class="card">
                             <h3 class="card__title card__title--sm">{{ 'home.play.online.title'|trans }}</h3>
