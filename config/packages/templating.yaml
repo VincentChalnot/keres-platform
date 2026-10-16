@@ -1,5 +1,7 @@
 sidus_template:
     routes:
+        index:
+            template: 'actions/index.html.twig'
         lobby:
             template: 'actions/lobby.html.twig'
         new_local_game:
@@ -32,8 +34,6 @@ sidus_template:
             template: 'security/lost_password.html.twig'
         reset_password:
             template: 'security/reset_password.html.twig'
-        dashboard:
-            template: 'actions/dashboard.html.twig'
         profile:
             template: 'actions/profile.html.twig'
         settings_profile:

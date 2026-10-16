@@ -124,7 +124,7 @@ account / play as a guest, or face the bot / lobby when signed in). It is author
 "Has been through the tutorial" is the `keres_onboarded=1` cookie (set by `POST /onboarding/complete`, called at the end
 of the problem and by the banner's close button; also stored on `User::$onboardedAt` when signed in).
 `NewUserBrowserProgressListener` copies the cookie onto any account created from that browser, so the invitation banner
-(`_onboarding_banner.html.twig`, on the lobby, the anonymous welcome page and the dashboard) disappears for good. The
+(`_onboarding_banner.html.twig`, on the signed-in home page; Phase 3 of `docs/onboarding-plan.md` replaces it) disappears for good. The
 banner is an invitation only: nobody is redirected.
 
 ## Analytics event log
@@ -234,15 +234,14 @@ a rated game) counts, unless `Game::$undoUsed` (an undo in an AI game); draws, a
 count for nothing, and nothing lowers it (`AiLadder`, called from `GameLifecycleManager` as the game is finalised). The
 migration backfilled it from the finished AI games. Guests keep it in the `keres_ai_beaten` cookie (written by
 `utils/cookies.ts` from `LocalGameAPI`, capped at the guest limit 4 when read, copied to the account at sign-up by
-`NewUserBrowserProgressListener`). `NextBot` turns it into the bot the lobby, the anonymous welcome page and the tutorial's
+`NewUserBrowserProgressListener`). `NextBot` turns it into the bot the home page and the tutorial's
 ending propose: one click posts a ready-made game to `/play/new` (`_quick_game_form`, hidden inputs mirroring
-`LocalGameType`). The hot-seat game is its own card at the bottom of the lobby (same mini-form); `/play/new` is the custom
+`LocalGameType`). The hot-seat game is a link of the home page ("More ways to play"; same mini-form); `/play/new` is the custom
 game against the AI only.
 
 ## Game lists
 
-Every list of games (dashboard, `/games`, a profile's history, the signed-in lobby,
-the anonymous "recently finished" feed) renders one `GameListRow`, built by
+Every list of games (the home page, `/games`, a profile's history) renders one `GameListRow`, built by
 `GameListPresenter::present($game, $subject, $isSelf, $viewer)` and displayed by the
 `game_list_row()` Twig function / `_game_row.html.twig`. The row is told from the
 **subject's** point of view (a profile is framed from the profile owner's side
@@ -251,10 +250,9 @@ carries the time remaining (correspondence: `moveDeadlineAt`; real time: clock m
 elapsed since the anchor, read-only - only `ClockManager` writes clock columns).
 Labels are translated when the row is built; never cache one.
 
-The anonymous `/lobby` shows a "Recently finished games" feed
-(`GameRepository::findRecentPubliclyFinishedGames()`): the *query* selects finished
-games only. `GameVoter::VIEW` is unchanged and lets anyone with the link watch **any**
-multiplayer game, in progress or not (see the open question in `DECISIONS.md`).
+There is no public "recently finished games" feed any more (it lived on the anonymous lobby, replaced by the home
+hero). `GameVoter::VIEW` lets anyone with the link watch **any** multiplayer game, in progress or not (see the open
+question in `DECISIONS.md`).
 
 ## Privacy requests, waitlist, contact
 

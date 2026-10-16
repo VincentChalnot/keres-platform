@@ -1,0 +1,107 @@
+{% trans_default_domain 'game' %}
+{# The signed-in home: Continue, Play, Your games, and a sidebar. Variables: see IndexAction. #}
+<main class="section">
+    <div class="container-page">
+        {% include '_onboarding_banner.html.twig' %}
+        <h1 class="page-title mb-6">{{ (totalFinished > 0 ? 'home.greeting.back' : 'home.greeting.first')|trans({name: greetingName}) }}</h1>
+
+        <div class="grid grid-cols-1 items-start gap-4 lg:grid-cols-[1fr_22rem] [&>*>.card]:!mb-0">
+            <div class="flex flex-col gap-4">
+                {% if botGame or yourTurnGames %}
+                    <section aria-labelledby="home-continue">
+                        <h2 class="card__title" id="home-continue">{{ 'home.continue.title'|trans }}</h2>
+                        {% for game in yourTurnGames %}
+                            {# @var game \App\Entity\Game #}
+                            {% include 'actions/_game_row.html.twig' with {row: game_list_row(game, app.user, true), isSelf: true} %}
+                        {% endfor %}
+                        {% if botGame %}
+                            <div class="card list-row">
+                                <div class="list-row__body">
+                                    <p class="m-0 font-medium">{{ 'home.continue.bot'|trans({level: botGame.aiLevel}) }}</p>
+                                    <p class="list-row__meta">{{ (botGame.rated ? 'home.continue.bot_rated' : 'home.continue.bot_casual')|trans }}</p>
+                                </div>
+                                <div class="btn-group list-row__action">
+                                    <a href="{{ path('play', {uuid: botGame.uuid}) }}" class="btn btn--primary btn--sm">{{ 'game_row.action.resume'|trans }}</a>
+                                    <button type="button" class="btn btn--outline btn--sm" data-modal-open="#bot-resign-modal">{{ 'home.continue.resign'|trans }}</button>
+                                </div>
+                            </div>
+                        {% endif %}
+                    </section>
+                {% endif %}
+
+                <section aria-labelledby="home-play">
+                    <h2 class="card__title" id="home-play">{{ 'home.play.title'|trans }}</h2>
+                    <div class="grid grid-cols-1 gap-4 md:grid-cols-2 [&>.card]:!mb-0">
+                        <div class="card md:col-span-2">
+                            {% if botGame %}
+                                <h3 class="card__title card__title--sm">{{ 'home.continue.bot'|trans({level: botGame.aiLevel}) }}</h3>
+                                <p>{{ 'home.play.bot_running'|trans }}</p>
+                                <a href="{{ path('play', {uuid: botGame.uuid}) }}" class="btn btn--primary">{{ 'game_row.action.resume'|trans }}</a>
+                            {% else %}
+                                {% include 'actions/_next_bot.html.twig' with {nextBot: nextBot, quickGame: quickGame, titleClass: 'card__title--sm'} only %}
+                            {% endif %}
+                        </div>
+                        <div class="card">
+                            <h3 class="card__title card__title--sm">{{ 'home.play.online.title'|trans }}</h3>
+                            <p>{{ 'home.play.online.text'|trans }}</p>
+                            <a href="{{ path('lobby') }}" class="btn btn--outline">{{ 'home.play.online.button'|trans }}</a>
+                        </div>
+                        <div class="card">
+                            <h3 class="card__title card__title--sm">{{ 'home.play.friend.title'|trans }}</h3>
+                            <p>{{ 'home.play.friend.text'|trans }}</p>
+                            <a href="{{ path('lobby') }}#new-game" class="btn btn--outline">{{ 'home.play.friend.button'|trans }}</a>
+                        </div>
+                    </div>
+                    <details class="mt-3">
+                        <summary class="cursor-pointer text-sm">{{ 'home.play.more'|trans }}</summary>
+                        <div class="mt-3 flex flex-wrap items-center gap-3">
+                            {% include 'actions/_quick_game_form.html.twig' with {quickGame: quickGame, opponent: 'hotseat', label: 'home.play.hotseat'|trans, class: 'btn btn--outline btn--sm'} only %}
+                            <a href="{{ path('new_local_game') }}" class="btn btn--outline btn--sm">{{ 'home.play.custom'|trans }}</a>
+                        </div>
+                    </details>
+                </section>
+
+                {% if yourGames %}
+                    <section aria-labelledby="home-games">
+                        <h2 class="card__title" id="home-games">{{ 'home.your_games.title'|trans }}</h2>
+                        {% for game in yourGames %}
+                            {# @var game \App\Entity\Game #}
+                            {% include 'actions/_game_row.html.twig' with {row: game_list_row(game, app.user, true), isSelf: true} %}
+                        {% endfor %}
+                        <p><a href="{{ path('game_list') }}">{{ 'home.your_games.view_all'|trans }}</a></p>
+                    </section>
+                {% endif %}
+            </div>
+
+            <aside class="flex flex-col gap-4" aria-label="{{ 'home.sidebar_label'|trans }}">
+                {% if totalFinished > 0 %}
+                    {% include 'actions/home/_stats.html.twig' %}
+                {% endif %}
+                <div class="card">
+                    <h2 class="card__title card__title--sm">{{ 'home.whats_new'|trans }}</h2>
+                    {% include 'actions/_announcements.html.twig' with {announcements: announcements, visible: 3} only %}
+                </div>
+            </aside>
+        </div>
+    </div>
+</main>
+
+{% if botGame %}
+    <div class="modal" id="bot-resign-modal" role="dialog" aria-modal="true" aria-labelledby="bot-resign-title" data-dismissible>
+        <div class="modal__backdrop"></div>
+        <form class="modal__card" method="post" action="{{ path('resign_bot_game') }}">
+            <input type="hidden" name="_token" value="{{ csrf_token('submit') }}">
+            <header class="modal__head">
+                <p class="modal__title" id="bot-resign-title">{{ 'home.resign.title'|trans({level: botGame.aiLevel}) }}</p>
+                <button type="button" class="btn-close" aria-label="{{ 'new_local_game.conflict.cancel'|trans }}" data-close></button>
+            </header>
+            <section class="modal__body">
+                <p class="m-0">{{ (botGame.abortable ? 'home.resign.text_abort' : 'home.resign.text')|trans }}</p>
+            </section>
+            <footer class="modal__foot">
+                <button type="submit" class="btn btn--primary">{{ 'home.continue.resign'|trans }}</button>
+                <button type="button" class="btn btn--outline" data-close>{{ 'new_local_game.conflict.cancel'|trans }}</button>
+            </footer>
+        </form>
+    </div>
+{% endif %}

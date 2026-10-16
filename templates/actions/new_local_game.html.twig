@@ -13,14 +13,7 @@
                 {{ form_start(form) }}
 
                 {% if conflict %}
-                    <div class="alert alert--warning" role="alert">
-                        <p class="m-0"><strong>{{ 'new_local_game.conflict.title'|trans({level: conflict.aiLevel}) }}</strong></p>
-                        <p class="mt-2 mb-0">{{ 'new_local_game.conflict.text'|trans }}</p>
-                        <div class="btn-group mt-3">
-                            <a href="{{ path('play', {uuid: conflict.uuid}) }}" class="btn btn--primary">{{ 'new_local_game.conflict.resume'|trans }}</a>
-                            {{ form_widget(form.replaceCurrent, {attr: {class: 'btn btn--outline'}}) }}
-                        </div>
-                    </div>
+                    {% include 'actions/_bot_conflict_modal.html.twig' with {conflict: conflict, form: form} only %}
                 {% endif %}
 
                 {# This page is the custom game against the AI; the hot-seat game is a card of the lobby (_hotseat_card). #}

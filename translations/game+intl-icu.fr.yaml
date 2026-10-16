@@ -69,12 +69,15 @@ game_row:
         watch: Observer
 
 lobby:
-    page_title: Salon - Keres
-    heading: Salon
-    subtitle: Publiez une proposition de partie ou rejoignez celle d’un autre joueur.
+    page_title: Jouer en ligne - Keres
+    heading: Jouer en ligne
+    subtitle: Jouez une partie classée ou amicale contre un autre joueur.
+    quick:
+        title: Appariement rapide
+        help: Un clic propose une partie classée avec une couleur aléatoire et vous apparie au premier joueur qui accepte.
     new_seek:
         title: Nouvelle proposition
-        open: Nouvelle partie
+        open: Créer une partie
         close: Fermer
         format: Format
         format_help: Un format remplit le formulaire ci-dessous. Ajustez ce que vous voulez, puis publiez votre proposition.
@@ -89,7 +92,8 @@ lobby:
         invite: Inviter un ami
         invite_help: '« Inviter un ami » reprend les réglages ci-dessus pour créer un lien privé à usage unique ; il n’apparaît jamais parmi les propositions publiques.'
     open_seeks:
-        title: Propositions ouvertes
+        title: Joueurs en recherche de partie
+        empty: Personne ne cherche de partie pour l’instant. Utilisez un appariement rapide ci-dessus, ou créez une partie et attendez un adversaire.
         player: Joueur
         time_control: Cadence
         rated: Type
@@ -101,12 +105,6 @@ lobby:
         play: Jouer
         custom: Choisir le niveau, votre camp, ou jouer une partie classée
         capped: Créez un compte pour affronter le niveau 2 et au-delà.
-    hotseat:
-        title: À deux sur le même écran
-        text: Jouez les deux camps sur cet appareil, sans compte.
-        button: Jouer à deux
-    your_games:
-        title: Vos parties
 
 game_list:
     page_title: Vos parties - Keres
@@ -124,43 +122,59 @@ game_list:
         next: Suivant
         page: 'Page {current} sur {total}'
 
-dashboard:
-    page_title: Tableau de bord
-    welcome: Bon retour parmi nous
-    welcome_named: 'Bon retour parmi nous, {name}'
-    recent_games:
-        title: Parties en cours
-        new_game: Nouvelle partie
+home:
+    page_title: Jouez à Keres en ligne
+    sidebar_label: Statistiques et nouveautés
+    whats_new: Nouveautés
+    greeting:
+        first: 'Bienvenue, {name}'
+        back: 'Content de vous revoir, {name}'
+    guest:
+        heading: Jouez à Keres en ligne
+        pitch: Un jeu de stratégie à deux. Apprenez-le en deux minutes, jouez dès maintenant.
+        play_now: Jouer maintenant, sans compte
+        resume: Reprendre votre partie
+        learn: Apprendre le jeu en 2 minutes
+        help: 'Les parties d’invité restent dans ce navigateur : elles ne sont ni classées ni enregistrées sur un compte.'
+        sign_in_title: 'Ou connectez-vous pour jouer en ligne et garder votre historique :'
+        email: E-mail
+        hotseat: Jouer avec un ami sur cet appareil
+        image_alt: Une partie de Keres en cours
+    continue:
+        title: Continuer
+        bot: 'Partie contre le Bot {level}'
+        bot_casual: Partie amicale, sans pendule
+        bot_rated: Partie classée
+        resign: Abandonner
+    resign:
+        title: 'Abandonner contre le Bot {level} ?'
+        text: La partie se termine maintenant et compte comme une défaite.
+        text_abort: 'La partie vient à peine de commencer : elle est simplement annulée et ne compte pas.'
+    play:
+        title: Jouer
+        bot_running: Vous avez une partie en cours contre ce bot. Terminez-la, ou abandonnez-la ci-dessus, avant d’en commencer une autre.
+        online:
+            title: Jouer en ligne
+            text: Des parties classées ou amicales contre d’autres joueurs.
+            button: Trouver un adversaire
+        friend:
+            title: Jouer contre un ami
+            text: Envoyez un lien d’invitation à quelqu’un que vous connaissez.
+            button: Inviter un ami
+        more: Autres façons de jouer
+        hotseat: À deux sur cet appareil
+        custom: Partie personnalisée contre l’IA
+    your_games:
+        title: Vos parties
+        view_all: Voir toutes vos parties →
     stats:
         title: Vos statistiques
         wins: Victoires
         losses: Défaites
         draws: Nulles
-        win_rate_label: 'Taux de victoire :'
-        win_rate_value: '{rate, number} %'
+        win_rate_label: 'Taux de victoire :'
+        win_rate_value: '{rate, number} %'
         win_rate_basis: 'sur {count, plural, one {# partie terminée} other {# parties terminées}}'
-        empty: Aucune partie terminée pour l’instant.
-
-welcome:
-    page_title: Jouez à Keres en ligne
-    heading: Jouez à Keres en ligne
-    subtitle: Connectez-vous pour trouver des adversaires, jouer des parties classées et conserver votre historique.
-    continue_google: Continuer avec Google
-    continue_discord: Continuer avec Discord
-    create_account: Créer un compte
-    sign_in: Connexion
-    try_it: Vous voulez simplement essayer ?
-    guest_help: 'Les parties d’invité n’existent que dans ce navigateur : elles ne sont ni classées ni enregistrées sur un compte.'
-    image_alt: Une partie de Keres en cours
-    announcements:
-        title: Annonces
-        no_account:
-            title: Jouez sans compte
-            body: Essayez l’ordinateur ou une partie à deux sur le même écran, tout de suite et sans inscription.
-    recent_games:
-        title: Parties terminées récemment
-        empty: Aucune partie terminée à afficher pour l’instant.
-
 play:
     page_title: Partie - Keres
     board:
@@ -266,6 +280,7 @@ new_local_game:
         title: 'Vous avez déjà une partie contre le Bot {level}'
         text: Vous ne pouvez jouer qu’une partie à la fois contre un bot. Reprenez-la, ou terminez-la et lancez cette nouvelle partie.
         resume: Reprendre ma partie
+        cancel: Annuler
 
 invite:
     page_title: Invitation à une partie

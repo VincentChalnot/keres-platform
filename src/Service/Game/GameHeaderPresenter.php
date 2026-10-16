@@ -31,8 +31,7 @@ use Symfony\Contracts\Translation\TranslatorInterface;
  * Also the identity half of every games-list card (`GameListPresenter`).
  *
  * Usernames are only shown to a signed-in viewer, like everywhere else an
- * anonymous visitor could otherwise learn who played whom (`/lobby` feed,
- * `GameListPresenter::presentPublic()`); engine and tournament-bot seats are
+ * anonymous visitor could otherwise learn who played whom; engine and tournament-bot seats are
  * not people, so they are always named. `$subject` is the one exception: the
  * owner of the profile page the card is listed on is named in the URL already.
  *

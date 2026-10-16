@@ -1,0 +1,12 @@
+{% extends 'base.html.twig' %}
+{% trans_default_domain 'game' %}
+
+{% block title %}{{ 'home.page_title'|trans }}{% endblock %}
+
+{% block body %}
+    {% if app.user %}
+        {% include 'actions/home/_player.html.twig' %}
+    {% else %}
+        {% include 'actions/home/_guest.html.twig' %}
+    {% endif %}
+{% endblock %}

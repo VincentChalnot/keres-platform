@@ -525,7 +525,7 @@ Translation, **ICU MessageFormat in YAML**, one file per domain and locale:
 | Domain                         | Used by                                                                 |
 |--------------------------------|-------------------------------------------------------------------------|
 | `navigation`                   | navbar, footer, notification bell, confirm modal, language switcher     |
-| `game`                         | lobby, play pages, game lists, dashboard, game header/badges            |
+| `game`                         | home, lobby, play pages, game lists, game header/badges            |
 | `auth`, `settings`, `pages`    | login/register/reset, settings pages, feedback/waitlist/error pages     |
 | `social`, `notifications`      | friends, profile, inbox page and the notification texts                 |
 | `forms`, `validators`, `flashes` | form labels/help/choices, our constraint messages, flash messages     |
@@ -612,9 +612,8 @@ docker compose exec -T php vendor/bin/phpunit                            # Trans
 
 ## Announcements
 
-The news list ("Announcements") is shown at the bottom of the "Your stats" card
-on the dashboard and on the anonymous `/lobby` page (latest 3, "Show more"
-beyond that; the dashboard shows 5). It is the typed source
+The news list ("What's new") is shown in the signed-in home page's sidebar (latest 3, "Show more"
+beyond that). It is the typed source
 `App\Service\Announcement\AnnouncementProvider::ENTRIES` (`id => 'Y-m-d'`),
 rendered by `templates/actions/_announcements.html.twig`, dates per locale.
 To add one, user-visible changes only (no refactors/tests/docs/CI), related

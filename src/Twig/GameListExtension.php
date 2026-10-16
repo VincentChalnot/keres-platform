@@ -10,8 +10,7 @@ use Twig\TwigFunction;
 
 /**
  * `game_list_row(game, subject, isSelf[, viewer])` - the one entry point every games
- * listing template uses to get a `GameListRow` (T13), plus
- * `public_game_list_row(game)` for the anonymous lobby feed. Mirrors
+ * listing template uses to get a `GameListRow` (T13). Mirrors
  * `NotificationExtension`'s shape.
  */
 final class GameListExtension extends AbstractExtension
@@ -25,7 +24,6 @@ final class GameListExtension extends AbstractExtension
     {
         return [
             new TwigFunction('game_list_row', $this->gameListPresenter->present(...)),
-            new TwigFunction('public_game_list_row', $this->gameListPresenter->presentPublic(...)),
         ];
     }
 }

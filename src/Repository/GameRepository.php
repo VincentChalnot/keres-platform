@@ -12,7 +12,6 @@ use App\Model\OpponentType;
 use App\Model\TimeControlKind;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\ORM\QueryBuilder;
-use Doctrine\ORM\Tools\Pagination\Paginator;
 use Doctrine\Persistence\ManagerRegistry;
 use Symfony\Component\Uid\Uuid;
 
@@ -368,45 +367,5 @@ class GameRepository extends ServiceEntityRepository
             ->setParameter('warningHorizon', $warningHorizon)
             ->getQuery()
             ->getResult();
-    }
-
-    /**
-     * T14: the anonymous/public `/lobby` entry point's games feed.
-     * Finished only, never in-progress - a game in progress stays visible
-     * only to its own participants (`GameVoter::VIEW` is unaffected by
-     * this task: a multiplayer game is still viewable mid-game by anyone
-     * holding its URL, per the existing contract cited on
-     * `ProfilePageAction`; this query only decides what this one public
-     * feed advertises, not what `/play/{uuid}` itself allows).
-     *
-     * `players` is a to-many fetch-join, so `$limit` must go through the
-     * `Paginator`: a bare `setMaxResults()` would cap the joined rows and
-     * leave the last game with a missing player.
-     *
-     * A game any of whose participants hid it from their own lists
-     * (`GamePlayer::$hiddenAt`) is left out: that is a request to stop
-     * advertising it, and it must not stay on a public feed. The check is a
-     * subquery so it neither filters the fetch-joined `players` rows nor
-     * disturbs the paginator's limit-by-games behaviour.
-     *
-     * @return Game[]
-     */
-    public function findRecentPubliclyFinishedGames(int $limit): array
-    {
-        $query = $this->createQueryBuilder('g')
-            ->addSelect('p', 'pu')
-            ->leftJoin('g.players', 'p')
-            ->leftJoin('p.user', 'pu')
-            ->andWhere('g.opponentTypeValue = :opponentType')
-            ->andWhere('g.deletedAt IS NULL')
-            ->andWhere('g.gameOverAt IS NOT NULL')
-            ->andWhere('NOT EXISTS (SELECT 1 FROM '.GamePlayer::class.' hp WHERE hp.game = g AND hp.hiddenAt IS NOT NULL)')
-            ->setParameter('opponentType', OpponentType::MULTIPLAYER->value)
-            ->orderBy('g.gameOverAt', 'DESC')
-            ->addOrderBy('g.id', 'DESC')
-            ->setMaxResults($limit)
-            ->getQuery();
-
-        return iterator_to_array(new Paginator($query, fetchJoinCollection: true), false);
     }
 }

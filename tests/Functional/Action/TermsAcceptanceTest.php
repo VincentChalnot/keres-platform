@@ -65,7 +65,7 @@ final class TermsAcceptanceTest extends DatabaseTestCase
 
         $client->request('POST', '/terms/accept?redirect=//evil.example', ['accept_terms' => ['acceptTerms' => '1', '_token' => 'csrf-token']], [], $this->sameOrigin());
 
-        self::assertResponseRedirects('/dashboard');
+        self::assertResponseRedirects('/');
     }
 
     public function testBackgroundRequestsOfAnUnacceptedAccountAreNotRedirected(): void

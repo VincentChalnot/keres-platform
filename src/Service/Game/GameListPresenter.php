@@ -62,24 +62,6 @@ final readonly class GameListPresenter
         );
     }
 
-    /**
-     * The row for the anonymous `/lobby` feed: told from no one's
-     * perspective and naming no participant (an anonymous visitor has no
-     * business learning who played whom) - engine and bot seats excepted.
-     */
-    public function presentPublic(Game $game): GameListRow
-    {
-        return new GameListRow(
-            uuid: (string) $game->getUuid(),
-            header: $this->gameHeaderPresenter->present($game, null),
-            turnLabel: null,
-            resultLabel: $this->resultLabel($game),
-            timeRemainingLabel: null,
-            lastActivityAt: $game->getLastMoveAt() ?? $game->getCreatedAt(),
-            isGameOver: true,
-        );
-    }
-
     private function turnLabel(Game $game, User $subject, bool $isSelf): string
     {
         if (OpponentType::HOTSEAT === $game->getOpponentType()) {

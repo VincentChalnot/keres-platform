@@ -1,0 +1,21 @@
+{% trans_default_domain 'game' %}
+{# "You already have a game against Bot N": the one modal every way of starting a bot game ends up on when the server
+   refuses a second one (`NewLocalGameAction`). Rendered inside the new-game <form>, so that "Resign and start the new
+   one" is that form's `replaceCurrent` submit button. Parameters: conflict (the running Game), form. #}
+<div class="modal is-active" id="bot-conflict-modal" role="dialog" aria-modal="true" aria-labelledby="bot-conflict-title" data-dismissible>
+    <div class="modal__backdrop"></div>
+    <div class="modal__card">
+        <header class="modal__head">
+            <p class="modal__title" id="bot-conflict-title">{{ 'new_local_game.conflict.title'|trans({level: conflict.aiLevel}) }}</p>
+            <button type="button" class="btn-close" aria-label="{{ 'new_local_game.conflict.cancel'|trans }}" data-close></button>
+        </header>
+        <section class="modal__body">
+            <p class="m-0">{{ 'new_local_game.conflict.text'|trans }}</p>
+        </section>
+        <footer class="modal__foot">
+            <a href="{{ path('play', {uuid: conflict.uuid}) }}" class="btn btn--primary">{{ 'new_local_game.conflict.resume'|trans }}</a>
+            {{ form_widget(form.replaceCurrent, {attr: {class: 'btn btn--outline'}}) }}
+            <button type="button" class="btn btn--text" data-close>{{ 'new_local_game.conflict.cancel'|trans }}</button>
+        </footer>
+    </div>
+</div>

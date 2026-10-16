@@ -74,6 +74,46 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 
 
+// ─── Home page, anonymous: a guest game stored in this browser (see LocalGameAPI) turns "Play now" into "Resume" ───
+
+document.addEventListener("DOMContentLoaded", () => {
+    const resume = document.querySelector("[data-guest-resume]");
+    if (!resume) return;
+
+    try {
+        const saved = JSON.parse(window.localStorage.getItem("keres.guestGame.v1") || "null");
+        if (!saved || !Array.isArray(saved.moves) || saved.moves.length === 0 || saved.resignedColor) return;
+    } catch {
+        return;
+    }
+
+    resume.hidden = false;
+    const fresh = document.querySelector("[data-guest-new]");
+    if (fresh) fresh.hidden = true;
+});
+
+// ─── Server-rendered modals: [data-modal-open="#id"] opens .modal#id; [data-close], the backdrop and Escape close it ───
+
+document.addEventListener("click", (event) => {
+    if (!(event.target instanceof Element)) return;
+
+    const opener = event.target.closest("[data-modal-open]");
+    if (opener) {
+        document.querySelector(opener.dataset.modalOpen)?.classList.add("is-active");
+        return;
+    }
+
+    if (event.target.closest("[data-close]") || event.target.classList.contains("modal__backdrop")) {
+        event.target.closest(".modal[data-dismissible]")?.classList.remove("is-active");
+    }
+});
+
+document.addEventListener("keydown", (event) => {
+    if (event.key === "Escape") {
+        document.querySelectorAll(".modal.is-active[data-dismissible]").forEach((modal) => modal.classList.remove("is-active"));
+    }
+});
+
 // ─── Tutorial invitation banner (dismiss: remembered in the browser and, signed in, on the account) ───────────────
 
 document.addEventListener("click", (event) => {

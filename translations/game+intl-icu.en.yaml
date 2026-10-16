@@ -69,12 +69,15 @@ game_row:
         watch: Watch
 
 lobby:
-    page_title: Lobby - Keres
-    heading: Lobby
-    subtitle: Post a seek, or join someone else’s.
+    page_title: Play online - Keres
+    heading: Play online
+    subtitle: Play a rated or casual game against another player.
+    quick:
+        title: Quick pairing
+        help: One click posts a rated game with a random colour and pairs you with the first player who accepts.
     new_seek:
         title: New seek
-        open: New game
+        open: Create a game
         close: Close
         format: Format
         format_help: A format fills in the form below. Adjust anything, then post your seek.
@@ -89,7 +92,8 @@ lobby:
         invite: Invite a friend
         invite_help: '“Invite a friend” uses the same settings above to create a private, one-time link - it never appears in the public pool.'
     open_seeks:
-        title: Open seeks
+        title: Players looking for a game
+        empty: Nobody is looking for a game right now. Use a quick pairing above, or create a game and wait for an opponent.
         player: Player
         time_control: Time control
         rated: Rated
@@ -101,12 +105,6 @@ lobby:
         play: Play
         custom: Choose the level, your side, or play a rated game
         capped: Create an account to face level 2 and beyond.
-    hotseat:
-        title: Two players, one screen
-        text: Play both sides on this device, no account needed.
-        button: Play hot-seat
-    your_games:
-        title: Your games
 
 game_list:
     page_title: Your Games - Keres
@@ -124,13 +122,51 @@ game_list:
         next: Next
         page: 'Page {current} of {total}'
 
-dashboard:
-    page_title: Dashboard
-    welcome: Welcome back
-    welcome_named: 'Welcome back, {name}'
-    recent_games:
-        title: Games in progress
-        new_game: New game
+home:
+    page_title: Play Keres online
+    sidebar_label: Statistics and news
+    whats_new: What’s new
+    greeting:
+        first: 'Welcome, {name}'
+        back: 'Welcome back, {name}'
+    guest:
+        heading: Play Keres online
+        pitch: A strategy game for two. Learn it in two minutes, play it right now.
+        play_now: Play now, no account needed
+        resume: Resume your game
+        learn: Learn the game in 2 minutes
+        help: 'Guest games live in this browser only: they aren’t rated or saved to an account.'
+        sign_in_title: 'Or sign in to play online and keep your history:'
+        email: Email
+        hotseat: Play with a friend on this device
+        image_alt: A Keres game in progress
+    continue:
+        title: Continue
+        bot: 'Game against Bot {level}'
+        bot_casual: Casual game, no clock
+        bot_rated: Rated game
+        resign: Resign
+    resign:
+        title: 'Resign against Bot {level}?'
+        text: The game ends now and counts as a loss.
+        text_abort: 'The game has barely started: it is simply cancelled and counts for nothing.'
+    play:
+        title: Play
+        bot_running: You have a game in progress against this bot. Finish it, or resign above, before starting another.
+        online:
+            title: Play online
+            text: Rated or casual games against other players.
+            button: Find an opponent
+        friend:
+            title: Play a friend
+            text: Send an invitation link to someone you know.
+            button: Invite a friend
+        more: More ways to play
+        hotseat: Hot-seat on this device
+        custom: Custom game against the AI
+    your_games:
+        title: Your games
+        view_all: View all your games →
     stats:
         title: Your stats
         wins: Wins
@@ -139,28 +175,6 @@ dashboard:
         win_rate_label: 'Win rate:'
         win_rate_value: '{rate, number}%'
         win_rate_basis: 'over {count, plural, one {# finished game} other {# finished games}}'
-        empty: No finished games yet.
-
-welcome:
-    page_title: Play Keres online
-    heading: Play Keres online
-    subtitle: Sign in to find opponents, play rated games, and keep your history.
-    continue_google: Continue with Google
-    continue_discord: Continue with Discord
-    create_account: Create an account
-    sign_in: Sign in
-    try_it: Just want to try it?
-    guest_help: 'Guest games live in this browser only: they aren’t rated or saved to an account.'
-    image_alt: A Keres game in progress
-    announcements:
-        title: Announcements
-        no_account:
-            title: Play without an account
-            body: Try the AI or a local hot-seat game instantly - no sign-up required.
-    recent_games:
-        title: Recently finished games
-        empty: No finished games to show yet.
-
 play:
     page_title: Play Game - Keres
     board:
@@ -266,6 +280,7 @@ new_local_game:
         title: 'You already have a game against Bot {level}'
         text: You can only play one game against a bot at a time. Resume it, or end it and start this new one.
         resume: Resume my game
+        cancel: Cancel
 
 invite:
     page_title: Game invite

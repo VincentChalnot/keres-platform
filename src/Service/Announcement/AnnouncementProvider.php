@@ -8,7 +8,7 @@ use App\Model\Announcement;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
 /**
- * The announcements shown on the player dashboard and the anonymous lobby
+ * The announcements shown on the home page's "What's new"
  * page: dated entries whose texts live in the `announcements` translation
  * domain under `items.<id>.title` / `items.<id>.body` (both locales).
  *

@@ -1,0 +1,20 @@
+{% trans_default_domain 'game' %}
+{# The player's finished-game stats; only rendered once there is a finished game. Parameters: stats, winRate, totalFinished. #}
+<div class="card">
+    <h2 class="card__title">{{ 'home.stats.title'|trans }}</h2>
+    <div class="stat-row">
+        <div class="stat">
+            <p class="stat__label">{{ 'home.stats.wins'|trans }}</p>
+            <p class="stat__value">{{ stats.wins }}</p>
+        </div>
+        <div class="stat">
+            <p class="stat__label">{{ 'home.stats.losses'|trans }}</p>
+            <p class="stat__value">{{ stats.losses }}</p>
+        </div>
+        <div class="stat">
+            <p class="stat__label">{{ 'home.stats.draws'|trans }}</p>
+            <p class="stat__value">{{ stats.draws }}</p>
+        </div>
+    </div>
+    <p class="mb-0 mt-3 text-center">{{ 'home.stats.win_rate_label'|trans }} <strong>{{ 'home.stats.win_rate_value'|trans({rate: winRate}) }}</strong> {{ 'home.stats.win_rate_basis'|trans({count: totalFinished}) }}</p>
+</div>

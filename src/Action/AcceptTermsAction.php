@@ -43,7 +43,7 @@ class AcceptTermsAction extends AbstractController
             $user->acceptTerms(TermsOfUse::CURRENT_VERSION, new \DateTimeImmutable());
             $this->entityManager->flush();
 
-            return null !== $redirect ? new RedirectResponse($redirect) : $this->redirectToRoute('dashboard');
+            return null !== $redirect ? new RedirectResponse($redirect) : $this->redirectToRoute('index');
         }
 
         return [

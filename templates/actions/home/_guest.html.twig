@@ -1,0 +1,44 @@
+{% trans_default_domain 'game' %}
+{# Anonymous visitors: one hero, nothing else above the fold. #}
+<section class="section">
+    <div class="container-page">
+        <div class="grid grid-cols-1 items-center gap-8 md:grid-cols-12">
+            <div class="md:col-span-7">
+                <h1 class="page-title !text-5xl">{{ 'home.guest.heading'|trans }}</h1>
+                <p class="page-subtitle">{{ 'home.guest.pitch'|trans }}</p>
+
+                <div class="mb-2 flex flex-wrap items-center gap-3">
+                    {# The stored guest game (localStorage, see assets/app.js) swaps "Play now" for "Resume". #}
+                    <span data-guest-new>
+                        {% include 'actions/_quick_game_form.html.twig' with {quickGame: quickGame, opponent: 'ai', level: 1, label: 'home.guest.play_now'|trans, class: 'btn btn--primary btn--lg'} only %}
+                    </span>
+                    <a href="{{ path('play_guest') }}" class="btn btn--primary btn--lg" data-guest-resume hidden>{{ 'home.guest.resume'|trans }}</a>
+                    {% if tutorial_available() %}
+                        <a href="{{ path('tutorial') }}" class="btn btn--text">{{ 'home.guest.learn'|trans }}</a>
+                    {% endif %}
+                </div>
+                <p class="help mb-6">{{ 'home.guest.help'|trans }}</p>
+
+                <p class="mb-2 text-sm text-muted">{{ 'home.guest.sign_in_title'|trans }}</p>
+                <div class="btn-group mb-6">
+                    <a href="{{ path('oidc_login', {provider: 'google'}) }}" class="btn btn--outline btn--sm">
+                        <span class="icon"><i class="fa-brands fa-google" aria-hidden="true"></i></span><span>Google</span>
+                    </a>
+                    <a href="{{ path('oidc_login', {provider: 'discord'}) }}" class="btn btn--outline btn--sm">
+                        <span class="icon"><i class="fa-brands fa-discord" aria-hidden="true"></i></span><span>Discord</span>
+                    </a>
+                    <a href="{{ path('login') }}" class="btn btn--outline btn--sm">
+                        <span class="icon"><i class="fa-solid fa-envelope" aria-hidden="true"></i></span><span>{{ 'home.guest.email'|trans }}</span>
+                    </a>
+                </div>
+
+                <div>
+                    {% include 'actions/_quick_game_form.html.twig' with {quickGame: quickGame, opponent: 'hotseat', label: 'home.guest.hotseat'|trans, class: 'btn btn--text btn--sm'} only %}
+                </div>
+            </div>
+            <div class="text-center md:col-span-5">
+                <img src="{{ asset('images/gameplay-preview.webp') }}" alt="{{ 'home.guest.image_alt'|trans }}" class="mx-auto max-w-full rounded-md">
+            </div>
+        </div>
+    </div>
+</section>

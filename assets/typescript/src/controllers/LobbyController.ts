@@ -46,6 +46,7 @@ export class LobbyController {
         this.hydrateFromBootstrap();
         this.wireSeekForm();
         this.wireSeekModal();
+        this.wireQuickPairing();
         this.wireInviteButton();
         this.seekClient.connect(
             (event) => this.handleSeekEvent(event),
@@ -159,6 +160,12 @@ export class LobbyController {
         for (const seek of rows) {
             this.tableBody.appendChild(this.buildRow(seek));
         }
+
+        const empty = document.getElementById('lobby-seek-empty');
+
+        if (empty) {
+            empty.hidden = rows.length > 0;
+        }
     }
 
     private buildRow(seek: SeekSummary): HTMLTableRowElement {
@@ -167,6 +174,7 @@ export class LobbyController {
 
         const player = document.createElement('td');
         player.textContent = seek.rematch ? t('lobby.seek.rematch') : seek.user.username;
+        player.className = 'break-all';
         row.appendChild(player);
 
         const timeControl = document.createElement('td');
@@ -175,9 +183,15 @@ export class LobbyController {
 
         const rated = document.createElement('td');
         rated.textContent = seek.rated ? t('lobby.seek.rated') : t('lobby.seek.casual');
+        // On a narrow screen the colour column is hidden and folded under the rating (the table must not scroll sideways).
+        const colorHint = document.createElement('span');
+        colorHint.className = 'block text-muted sm:hidden';
+        colorHint.textContent = t(`lobby.color.${seek.color}`);
+        rated.appendChild(colorHint);
         row.appendChild(rated);
 
         const color = document.createElement('td');
+        color.className = 'max-sm:hidden';
         color.textContent = t(`lobby.color.${seek.color}`);
         row.appendChild(color);
 
@@ -390,8 +404,37 @@ export class LobbyController {
             return;
         }
 
-        const input = this.buildSeekInputFromForm(form);
+        await this.postSeek(this.buildSeekInputFromForm(form));
+    }
 
+    /**
+     * The quick-pairing row (`[data-quick-pair]`, one button per `LobbyAction::PRESETS` format): one click posts a rated
+     * seek of that format with a random colour, the same call as the form's "Post seek". `#new-game` in the URL opens
+     * the seek form (the home page's "Play a friend" lands there, where "Invite a friend" is).
+     */
+    private wireQuickPairing(): void {
+        for (const button of Array.from(document.querySelectorAll<HTMLButtonElement>('[data-quick-pair]'))) {
+            button.addEventListener('click', () => {
+                const {kind, initialMinutes, incrementSeconds, hoursPerMove} = button.dataset;
+                const seekKind = (kind ?? 'realtime') as CustomSeekInput['kind'];
+
+                void this.postSeek({
+                    kind: seekKind,
+                    initialSeconds: 'realtime' === seekKind ? Math.round(Number(initialMinutes) * 60) : null,
+                    incrementSeconds: 'realtime' === seekKind ? Number(incrementSeconds) : null,
+                    hoursPerMove: 'correspondence' === seekKind ? Number(hoursPerMove) : null,
+                    rated: true,
+                    colorPreference: 'random',
+                });
+            });
+        }
+
+        if ('#new-game' === window.location.hash) {
+            this.setSeekModal(true);
+        }
+    }
+
+    private async postSeek(input: CustomSeekInput): Promise<void> {
         try {
             const result = await this.api.createSeek(input);
             this.mySeekUuid = result.seek.uuid;

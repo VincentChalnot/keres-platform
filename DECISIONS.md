@@ -182,6 +182,7 @@ any status, to anyone with the link, a contract the profile pages rely on
 Decision: the anonymous `/lobby` feed only *selects* finished games
 (`GameRepository::findRecentPubliclyFinishedGames()`); the voter is not tightened.
 There is no hero panel on the signed-in lobby (account creation is meaningless there).
+*Update (onboarding plan, Phase 2): the anonymous lobby and its feed are gone (the home page `/` has a hero instead, `findRecentPubliclyFinishedGames()` was deleted); the voter question stays open.*
 
 Consequences: anyone holding the link can watch a live multiplayer game. If the brief's
 sentence was meant as a product rule, the voter must change (it would also 404 the

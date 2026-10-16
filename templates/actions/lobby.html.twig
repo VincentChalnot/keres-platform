@@ -11,12 +11,28 @@
 {% block body %}
     <section class="section">
         <div class="container-page">
-            {% include '_onboarding_banner.html.twig' %}
             <h1 class="page-title">{{ 'lobby.heading'|trans }}</h1>
             <p class="page-subtitle">{{ 'lobby.subtitle'|trans }}</p>
 
             <div class="card">
-                {% include 'actions/_next_bot.html.twig' with {nextBot: nextBot, quickGame: quickGame} only %}
+                <h2 class="card__title">{{ 'lobby.quick.title'|trans }}</h2>
+                <p class="help">{{ 'lobby.quick.help'|trans }}</p>
+                <div class="grid grid-cols-2 gap-3 md:grid-cols-5" id="lobby-quick-pair">
+                    {% for key, preset in presets %}
+                        <button type="button" class="btn btn--outline btn--stack btn--block" data-quick-pair
+                                data-kind="{{ preset.kind }}"
+                                {% if preset.kind == 'realtime' %}data-initial-minutes="{{ preset.initialMinutes }}" data-increment-seconds="{{ preset.incrementSeconds }}"{% else %}data-hours-per-move="{{ preset.hoursPerMove }}"{% endif %}>
+                            <span>{{ preset.label|trans }}</span>
+                            <span class="btn__value">
+                                {%- if preset.kind == 'realtime' -%}
+                                    {{ 'time_control.realtime'|trans({initial: preset.initialMinutes, increment: preset.incrementSeconds}) }}
+                                {%- else -%}
+                                    {{ 'time_control.correspondence'|trans({hours: preset.hoursPerMove}) }}
+                                {%- endif -%}
+                            </span>
+                        </button>
+                    {% endfor %}
+                </div>
             </div>
 
             <div id="lobby-root" data-user-uuid="{{ app.user.id }}">
@@ -127,29 +143,15 @@
                                 <th>{{ 'lobby.open_seeks.player'|trans }}</th>
                                 <th>{{ 'lobby.open_seeks.time_control'|trans }}</th>
                                 <th>{{ 'lobby.open_seeks.rated'|trans }}</th>
-                                <th>{{ 'lobby.open_seeks.colour'|trans }}</th>
+                                <th class="max-sm:hidden">{{ 'lobby.open_seeks.colour'|trans }}</th>
                                 <th></th>
                             </tr>
                             </thead>
                             <tbody id="lobby-seek-table-body"></tbody>
                         </table>
                     </div>
+                    <p class="text-muted mb-0 mt-3" id="lobby-seek-empty" hidden>{{ 'lobby.open_seeks.empty'|trans }}</p>
                 </div>
-
-                <div class="card">
-                    <h2 class="card__title">{{ 'lobby.your_games.title'|trans }}</h2>
-                    {% for game in ongoingGames %}
-                        {# @var game \App\Entity\Game #}
-                        {% include 'actions/_game_row.html.twig' with {row: game_list_row(game, app.user, true), isSelf: true} %}
-                    {% else %}
-                        <p class="text-muted">{{ 'game_list.empty.in_progress'|trans }}</p>
-                    {% endfor %}
-                    {% if ongoingGamesCount > ongoingGames|length %}
-                        <p><a href="{{ path('game_list') }}">{{ 'game_list.view_all'|trans({count: ongoingGamesCount}) }}</a></p>
-                    {% endif %}
-                </div>
-
-                {% include 'actions/_hotseat_card.html.twig' with {quickGame: quickGame} only %}
             </div>
         </div>
     </section>
