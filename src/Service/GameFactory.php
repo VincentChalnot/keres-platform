@@ -28,7 +28,7 @@ final class GameFactory
      */
     public function createAiOrHotseatGame(User $creator, OpponentType $opponentType, ColorPreference $colorPreference, ?int $aiLevel = null, bool $liveEvaluation = false, ?Game $parentGame = null): Game
     {
-        $creatorColor = $this->resolveColor($colorPreference, ColorPreference::RANDOM);
+        $creatorColor = $this->humanColorAgainstBot($colorPreference, OpponentType::AI === $opponentType ? $aiLevel : null);
         $game = new Game($creator, $opponentType, TimeControl::unlimited(), false, OpponentType::AI === $opponentType ? $aiLevel : null, $liveEvaluation);
 
         if (null !== $parentGame) {
@@ -87,7 +87,7 @@ final class GameFactory
      */
     public function createBotGame(User $human, User $bot, int $level, ColorPreference $colorPreference, TimeControl $timeControl): Game
     {
-        $humanColor = $this->resolveColor($colorPreference, ColorPreference::RANDOM);
+        $humanColor = $this->humanColorAgainstBot($colorPreference, $level);
 
         return $this->createMultiplayerGame($human, $bot, $humanColor, $timeControl, true, true, $level);
     }
@@ -134,6 +134,19 @@ final class GameFactory
      * concrete `$a` is honoured outright, a concrete `$c` flips to its
      * complement, and two RANDOMs decide by chance.
      */
+    /**
+     * The human's colour against a bot (D9): a "random" preference puts the human on White at level 1, so that a first
+     * game never starts with the AI's move already played; an explicit choice is always respected.
+     */
+    private function humanColorAgainstBot(ColorPreference $colorPreference, ?int $level): PieceColor
+    {
+        if (ColorPreference::RANDOM === $colorPreference && 1 === $level) {
+            return PieceColor::WHITE;
+        }
+
+        return $this->resolveColor($colorPreference, ColorPreference::RANDOM);
+    }
+
     private function resolveColor(ColorPreference $a, ColorPreference $c): PieceColor
     {
         return match (true) {
