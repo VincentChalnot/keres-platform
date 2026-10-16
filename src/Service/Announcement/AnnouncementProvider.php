@@ -24,6 +24,7 @@ final readonly class AnnouncementProvider
      * ties keeping the order written here.
      */
     public const array ENTRIES = [
+        'onboarding_coach' => '2026-10-16',
         'rated_bot_games' => '2026-10-12',
         'eval_graph' => '2026-10-12',
         'beat_the_bots' => '2026-10-12',

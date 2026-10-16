@@ -1,6 +1,9 @@
 # Annonces destinées aux joueurs (src/Service/Announcement/AnnouncementProvider.php).
 # Un bloc par identifiant listé dans AnnouncementProvider::ENTRIES : title + body.
 items:
+    onboarding_coach:
+        title: Un nouvel accueil, un tutoriel et un coach
+        body: 'La page d’accueil met désormais la prochaine étape en avant : reprendre votre partie, jouer le bot suivant ou jouer en ligne. Nouveau sur Keres ? Répondez à « Jouez-vous aux échecs ? » pour un court tutoriel adapté, et activez le coach dans une partie contre un bot : indices, alertes quand une pièce peut être capturée, et possibilité de reprendre un coup. Pour débloquer le bot suivant, il faut maintenant gagner sans aide : ni coup repris, ni indice. Les invités jouent le bot niveau 1 ; créez un compte pour garder votre progression et affronter le niveau 2. Vous ne pouvez avoir qu’une partie contre un bot à la fois.'
     rated_bot_games:
         title: Parties classées contre les bots
         body: 'Dans « Jouer contre l’ordinateur », cochez « Partie classée » pour jouer une partie chronométrée contre le bot de votre niveau : elle fait évoluer votre classement, et celui du bot.'

@@ -1,6 +1,9 @@
 # Player-facing announcements (src/Service/Announcement/AnnouncementProvider.php).
 # One block per id listed in AnnouncementProvider::ENTRIES: title + body.
 items:
+    onboarding_coach:
+        title: A new home, a tutorial and a coach
+        body: 'The home page now puts the next step first: resume your game, play the next bot, or play online. New to Keres? Answer “Do you play chess?” for a short tutorial made for you, and switch on the coach in a bot game for hints, warnings when a piece can be captured, and a chance to take a move back. To unlock the next bot you must now win without help: no move taken back and no hint. Guests play bot level 1; create an account to keep your progress and face level 2. You can also have one bot game at a time.'
     rated_bot_games:
         title: Rated games against the bots
         body: 'In Play against the AI, tick “Rated game” to play a clocked game against the bot of your level: it moves your rating, and the bot’s.'
