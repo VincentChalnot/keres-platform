@@ -10,6 +10,7 @@ use App\Entity\GameMove;
 use App\Entity\Move;
 use App\Model\BoardData;
 use App\Model\BoardMovesData;
+use App\Model\EvaluatedMove;
 use App\Model\MoveData;
 use App\Model\MovesData;
 use Doctrine\ORM\EntityManagerInterface;
@@ -70,6 +71,42 @@ readonly class BoardTreeManager
         $toBoardPosition = $this->getBoardPosition($this->engineApi->replayMoves($line));
 
         return $this->getMove($lastMoveData, $fromBoardPosition, $toBoardPosition);
+    }
+
+    /**
+     * Stores every legal move of the position reached by `$history` as an edge of the shared tree, with the engine's
+     * score on it (`/evaluate-moves`, `EngineApi::evaluateMoves()`), the moves nobody played included: those evaluations
+     * are mined later to find interesting positions. The score is the verdict of the position after the edge in the line
+     * `$history` + move, which is what `Move::$evaluation` means (the edge is not the board); an edge that already has an
+     * evaluation keeps it (first write wins, like the cache of `MoveEvaluator`). The boards the edges lead to come from the
+     * engine (local backend, no AI cost), never from a client. Edges created here have no `GameMove`.
+     *
+     * @param list<EvaluatedMove> $evaluated
+     */
+    public function recordEvaluatedMoves(MovesData $history, array $evaluated): void
+    {
+        if ([] === $evaluated) {
+            return;
+        }
+
+        $fromBoardPosition = $this->getBoardPosition($this->engineApi->replayMoves($history));
+
+        foreach ($evaluated as $entry) {
+            $line = new MovesData();
+
+            foreach ($history->getMoves() as $moveData) {
+                $line->addMove($moveData);
+            }
+
+            $line->addMove($entry->move);
+            $move = $this->getMove($entry->move, $fromBoardPosition, $this->getBoardPosition($this->engineApi->replayMoves($line)));
+
+            if (null === $move->getEvaluation()) {
+                $move->setEvaluation($entry->score);
+            }
+        }
+
+        $this->getEntityManager()->flush();
     }
 
     public function getMove(MoveData $moveData, BoardPosition $fromBoardPosition, BoardPosition $toBoardPosition): Move

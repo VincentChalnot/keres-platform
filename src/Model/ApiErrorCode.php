@@ -22,7 +22,7 @@ enum ApiErrorCode: string
             self::VALIDATION_FAILED, self::UNRATED_TIME_CONTROL, self::INVALID_TIME_CONTROL,
             self::CANNOT_REQUEST_SELF, self::CANNOT_BLOCK_SELF, self::SEARCH_PREFIX_TOO_SHORT => 422,
             self::MALFORMED_JSON => 400,
-            self::RATE_LIMITED => 429,
+            self::RATE_LIMITED, self::AI_RATE_LIMITED => 429,
             self::SEEK_UNAVAILABLE, self::SEEK_ALREADY_MATCHED, self::RATING_OUT_OF_RANGE, self::CANNOT_ACCEPT_OWN_SEEK,
             self::FRIENDSHIP_EXISTS, self::USERNAME_ALREADY_CHANGED, self::USERNAME_TAKEN, self::USERNAME_RESERVED => 409,
             self::SEEK_EXPIRED => 410,
@@ -35,6 +35,8 @@ enum ApiErrorCode: string
     case VALIDATION_FAILED = 'validation_failed';
     case MALFORMED_JSON = 'malformed_json';
     case RATE_LIMITED = 'rate_limited';
+    /** The per-user / per-IP budget of AI-backend calls (`user_ai` / `guest_ai`) is spent. */
+    case AI_RATE_LIMITED = 'ai_rate_limited';
     case INTERNAL_ERROR = 'internal_error';
 
     case UNRATED_TIME_CONTROL = 'unrated_time_control';
