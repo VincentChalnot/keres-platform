@@ -25,7 +25,7 @@ use Symfony\Contracts\Translation\TranslatorInterface;
 class LocalGameType extends AbstractType
 {
     /** Highest AI level an anonymous visitor may play (levels above need an account). */
-    public const int GUEST_MAX_AI_LEVEL = 4;
+    public const int GUEST_MAX_AI_LEVEL = 1;
 
     /** The real-time presets of the lobby a rated game against a bot can be played at. */
     public const array BOT_CADENCES = ['bullet', 'blitz', 'rapid', 'classical'];

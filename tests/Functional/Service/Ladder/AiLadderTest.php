@@ -6,6 +6,7 @@ namespace App\Tests\Functional\Service\Ladder;
 
 use App\Entity\Game;
 use App\Entity\User;
+use App\Form\LocalGameType;
 use App\Model\ColorPreference;
 use App\Model\OpponentType;
 use App\Model\PieceColor;
@@ -85,7 +86,7 @@ final class AiLadderTest extends DatabaseTestCase
 
         $user = static::getContainer()->get(UserRepository::class)->findByEmail('new@example.com');
         self::assertNotNull($user);
-        self::assertSame(4, $user->getHighestAiLevelBeaten());
+        self::assertSame(LocalGameType::GUEST_MAX_AI_LEVEL, $user->getHighestAiLevelBeaten());
     }
 
     private function startAiGame(User $player, int $level, bool $undoUsed = false): Game

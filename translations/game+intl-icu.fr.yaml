@@ -100,7 +100,7 @@ lobby:
         help: Une partie amicale, sans pendule. Gagnez sans reprendre de coup pour débloquer le niveau suivant.
         play: Jouer
         custom: Choisir le niveau, votre camp, ou jouer une partie classée
-        capped: Créez un compte pour affronter les niveaux 5 à 10.
+        capped: Créez un compte pour affronter le niveau 2 et au-delà.
     hotseat:
         title: À deux sur le même écran
         text: Jouez les deux camps sur cet appareil, sans compte.
@@ -252,7 +252,7 @@ new_local_game:
         ai_level_short: 'Niveau {level}'
         ai_level_prev: Niveaux précédents
         ai_level_next: Niveaux suivants
-        ai_level_guest_help: 'Ne s’applique que contre l’ordinateur. Les invités jouent les niveaux 1 à 4 ; connectez-vous pour débloquer les niveaux 5 à 10.'
+        ai_level_guest_help: 'Ne s’applique que contre l’ordinateur. Les invités jouent le niveau 1 ; connectez-vous pour débloquer les niveaux 2 à 10.'
         live_evaluation_guest_help: Connectez-vous pour débloquer la barre d’évaluation en direct.
         rated: Partie classée
         rated_help: Une partie chronométrée contre le bot de ce niveau. Elle fait évoluer votre classement et celui du bot ; pas de retour en arrière, pas de barre d’évaluation.

@@ -100,7 +100,7 @@ lobby:
         help: A casual game, no clock. Win without taking a move back to unlock the next level.
         play: Play
         custom: Choose the level, your side, or play a rated game
-        capped: Create an account to face levels 5 to 10.
+        capped: Create an account to face level 2 and beyond.
     hotseat:
         title: Two players, one screen
         text: Play both sides on this device, no account needed.
@@ -252,7 +252,7 @@ new_local_game:
         ai_level_short: 'Level {level}'
         ai_level_prev: Previous levels
         ai_level_next: Next levels
-        ai_level_guest_help: 'Only applies against the AI. Guests can play levels 1 to 4; sign in to unlock levels 5 to 10.'
+        ai_level_guest_help: 'Only applies against the AI. Guests can play level 1; sign in to unlock levels 2 to 10.'
         live_evaluation_guest_help: Sign in to unlock the live evaluation bar.
         ai_level_guest_error: Sign in to play against this level.
         rated: Rated game
