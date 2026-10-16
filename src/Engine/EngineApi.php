@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Engine;
 
 use App\Model\BoardData;
+use App\Model\EvaluatedMove;
 use App\Model\MoveData;
 use App\Model\MovesData;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
@@ -62,11 +63,45 @@ readonly class EngineApi
             throw new \RuntimeException('evaluate-game returned '.\strlen($raw).' bytes, expected 4');
         }
 
-        /** @var int $value */
-        $value = unpack('V', $raw)[1];
+        return self::decodeInt32($raw);
+    }
 
-        // Unsigned little-endian -> signed 32-bit.
-        return $value >= 0x80000000 ? $value - 0x100000000 : $value;
+    /**
+     * Level-10 evaluation of every legal move of the position reached by
+     * `$movesData` (`/evaluate-moves`, `docs/PROTOCOL.md` in the engine repo):
+     * `M x 6` bytes, each a `Move` (LE u16, client layout: the stacked and
+     * unstacked variants of an unstackable move are separate entries) and an
+     * int32 LE score, White's point of view, exact (not a bound). Best move
+     * first for the side to move; an empty list when the game is over or no
+     * move exists. Same cost as `evaluateGame()` (one search), so it is an
+     * AI-backend call like it, with the same fallback to the local backend.
+     *
+     * @return list<EvaluatedMove>
+     */
+    public function evaluateMoves(MovesData $movesData): array
+    {
+        try {
+            $raw = $this->callApi('evaluate-moves', $movesData->toBinary(), $this->aiBackendApiUrl);
+        } catch (\RuntimeException) {
+            $raw = $this->callApi('evaluate-moves', $movesData->toBinary());
+        }
+
+        $length = \strlen($raw);
+
+        if (0 !== $length % 6) {
+            throw new \RuntimeException('evaluate-moves returned '.$length.' bytes, expected a multiple of 6');
+        }
+
+        $moves = [];
+
+        for ($offset = 0; $offset < $length; $offset += 6) {
+            $moves[] = new EvaluatedMove(
+                new MoveData(substr($raw, $offset, 2)),
+                self::decodeInt32(substr($raw, $offset + 2, 4)),
+            );
+        }
+
+        return $moves;
     }
 
     /**
@@ -106,5 +141,16 @@ readonly class EngineApi
         }
 
         return $apiResponse->getContent();
+    }
+
+    /**
+     * Unsigned little-endian -> signed 32-bit.
+     */
+    private static function decodeInt32(string $raw): int
+    {
+        /** @var int $value */
+        $value = unpack('V', $raw)[1];
+
+        return $value >= 0x80000000 ? $value - 0x100000000 : $value;
     }
 }
