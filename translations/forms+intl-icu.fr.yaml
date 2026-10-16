@@ -22,6 +22,11 @@ board_settings:
     animation_speed_instant: Instantané (sans animation)
     animation_speed_fast: Rapide
     animation_speed_slow: Lent
+    coach: Coach
+    coach_help: Indices, avertissements sur les pièces qui peuvent être prises et possibilité de reprendre une gaffe, dans les parties amicales contre le bot. Jamais dans les parties classées.
+    coach_auto: Selon ma réponse ci-dessous (activé pour les débutants)
+    coach_on: Toujours activé
+    coach_off: Désactivé
     chess_experience: Jouez-vous aux échecs ?
     chess_experience_help: Détermine le parcours de tutoriel proposé et si le coach démarre activé.
     chess_experience_none: Pas encore répondu

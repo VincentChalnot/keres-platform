@@ -22,6 +22,11 @@ board_settings:
     animation_speed_instant: Instant (no animation)
     animation_speed_fast: Fast
     animation_speed_slow: Slow
+    coach: Coach
+    coach_help: Hints, warnings about pieces that can be captured and a chance to take back a blunder, in casual games against the bot. Never in rated games.
+    coach_auto: Follow my answer below (on for beginners)
+    coach_on: Always on
+    coach_off: Off
     chess_experience: Do you play chess?
     chess_experience_help: Decides which tutorial track is offered and whether the coach starts on.
     chess_experience_none: Not answered yet

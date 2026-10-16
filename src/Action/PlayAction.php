@@ -9,6 +9,7 @@ use App\Entity\Game;
 use App\Entity\User;
 use App\Message\ProcessAiMoveMessage;
 use App\Model\AnimationSpeed;
+use App\Model\ChessExperience;
 use App\Model\OpponentType;
 use App\Model\PieceColor;
 use App\Repository\GameRepository;
@@ -123,6 +124,9 @@ class PlayAction extends AbstractController
             'showCoordinates' => $preferences?->isShowBoardCoordinates() ?? true,
             'showThreats' => $preferences?->isShowOpponentThreatsOnHover() ?? true,
             'rotateOpponent' => $preferences?->isRotateOpponentPieces() ?? false,
+            // Coach mode: the saved choice, else on for someone who said they are new to chess.
+            'chessExperience' => $user instanceof User ? $user->getChessExperience()?->value : null,
+            'coach' => $preferences?->getCoach() ?? ($user instanceof User && ChessExperience::BEGINNER === $user->getChessExperience()),
             'animationSpeed' => ($preferences?->getPieceAnimationSpeed() ?? AnimationSpeed::FAST)->value,
             'game' => $game,
             'moves' => $movesBase64,

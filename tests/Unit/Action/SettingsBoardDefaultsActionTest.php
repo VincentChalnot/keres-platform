@@ -63,7 +63,7 @@ final class SettingsBoardDefaultsActionTest extends TestCase
      */
     private function payload(mixed $speed): array
     {
-        $payload = ['showCoordinates' => true, 'showThreats' => true, 'rotateOpponentPieces' => false];
+        $payload = ['showCoordinates' => true, 'showThreats' => true, 'rotateOpponentPieces' => false, 'coach' => true];
 
         if (null !== $speed) {
             $payload['animationSpeed'] = $speed;

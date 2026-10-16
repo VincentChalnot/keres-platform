@@ -101,7 +101,7 @@ lobby:
     next_bot:
         title: Beat the next bot!
         name: 'Bot level {level}'
-        help: A casual game, no clock. Win without taking a move back to unlock the next level.
+        help: A casual game, no clock. Win without help (no move taken back, no hint) to unlock the next level.
         play: Play
         custom: Choose the level, your side, or play a rated game
         capped: Create an account to face level 2 and beyond.
@@ -201,6 +201,7 @@ play:
             title: Display (this game only)
             coordinates: Coordinates
             threats: Threats on hover
+            coach: Coach (hints and warnings)
             rotate: Upside-down opponent pieces
             animation: Piece movement
             animation_instant: Instant

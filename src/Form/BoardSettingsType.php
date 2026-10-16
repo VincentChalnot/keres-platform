@@ -9,6 +9,7 @@ use App\Model\AnimationSpeed;
 use App\Model\ChessExperience;
 use Symfony\Component\Form\AbstractType;
 use Symfony\Component\Form\Extension\Core\Type\CheckboxType;
+use Symfony\Component\Form\Extension\Core\Type\ChoiceType;
 use Symfony\Component\Form\Extension\Core\Type\EnumType;
 use Symfony\Component\Form\Extension\Core\Type\SubmitType;
 use Symfony\Component\Form\FormBuilderInterface;
@@ -38,6 +39,14 @@ class BoardSettingsType extends AbstractType
                 'help' => 'board_settings.animation_speed_help',
                 'choice_label' => static fn (AnimationSpeed $speed): string => 'board_settings.animation_speed_'.$speed->value,
                 'expanded' => true,
+            ])
+            // Coach mode: "auto" (null) follows the answer to "Do you play chess?"; the action maps it to the preference.
+            ->add('coach', ChoiceType::class, [
+                'mapped' => false,
+                'choices' => ['board_settings.coach_auto' => 'auto', 'board_settings.coach_on' => 'on', 'board_settings.coach_off' => 'off'],
+                'expanded' => true,
+                'label' => 'board_settings.coach',
+                'help' => 'board_settings.coach_help',
             ])
             // Lives on the user, not on the preferences: the action reads and writes it.
             ->add('chessExperience', EnumType::class, [

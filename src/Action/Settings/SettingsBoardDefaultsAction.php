@@ -23,7 +23,7 @@ use Symfony\Component\Routing\Attribute\Route;
 #[AsController]
 readonly class SettingsBoardDefaultsAction
 {
-    private const array FIELDS = ['showCoordinates', 'showThreats', 'rotateOpponentPieces'];
+    private const array FIELDS = ['showCoordinates', 'showThreats', 'rotateOpponentPieces', 'coach'];
 
     public function __construct(
         private Security $security,
@@ -69,6 +69,7 @@ readonly class SettingsBoardDefaultsAction
         $preferences->setShowBoardCoordinates($data['showCoordinates']);
         $preferences->setShowOpponentThreatsOnHover($data['showThreats']);
         $preferences->setRotateOpponentPieces($data['rotateOpponentPieces']);
+        $preferences->setCoach($data['coach']);
         $preferences->setPieceAnimationSpeed($animationSpeed);
         $preferences->touch();
         $this->entityManager->flush();
@@ -77,6 +78,7 @@ readonly class SettingsBoardDefaultsAction
             'showCoordinates' => $data['showCoordinates'],
             'showThreats' => $data['showThreats'],
             'rotateOpponentPieces' => $data['rotateOpponentPieces'],
+            'coach' => $data['coach'],
             'animationSpeed' => $animationSpeed->value,
         ]);
     }

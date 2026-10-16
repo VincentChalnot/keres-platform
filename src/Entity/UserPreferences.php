@@ -47,6 +47,10 @@ class UserPreferences
     #[ORM\Column(type: Types::BOOLEAN, options: ['default' => false])]
     private bool $rotateOpponentPieces = false;
 
+    /** Coach mode in casual bot games; NULL = follow the answer to "Do you play chess?" (on for beginners, off otherwise). */
+    #[ORM\Column(type: Types::BOOLEAN, nullable: true)]
+    private ?bool $coach = null;
+
     #[ORM\Column(type: Types::STRING, length: 16, enumType: AnimationSpeed::class, options: ['default' => 'fast'])]
     private AnimationSpeed $pieceAnimationSpeed = AnimationSpeed::FAST;
 
@@ -148,6 +152,16 @@ class UserPreferences
     public function setRotateOpponentPieces(bool $rotateOpponentPieces): void
     {
         $this->rotateOpponentPieces = $rotateOpponentPieces;
+    }
+
+    public function getCoach(): ?bool
+    {
+        return $this->coach;
+    }
+
+    public function setCoach(?bool $coach): void
+    {
+        $this->coach = $coach;
     }
 
     public function getPieceAnimationSpeed(): AnimationSpeed

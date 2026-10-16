@@ -101,7 +101,7 @@ lobby:
     next_bot:
         title: Battez le prochain bot !
         name: 'Bot niveau {level}'
-        help: Une partie amicale, sans pendule. Gagnez sans reprendre de coup pour débloquer le niveau suivant.
+        help: Une partie amicale, sans pendule. Gagnez sans aide (ni coup repris, ni indice) pour débloquer le niveau suivant.
         play: Jouer
         custom: Choisir le niveau, votre camp, ou jouer une partie classée
         capped: Créez un compte pour affronter le niveau 2 et au-delà.
@@ -201,6 +201,7 @@ play:
             title: Affichage (cette partie seulement)
             coordinates: Coordonnées
             threats: Menaces au survol
+            coach: Coach (indices et alertes)
             rotate: Pièces adverses à l’envers
             animation: Déplacement des pièces
             animation_instant: Instantané
