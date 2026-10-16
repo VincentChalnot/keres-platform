@@ -240,7 +240,7 @@ play:
             new_game: Nouvelle partie
             review: Revoir la partie
             signup: 'Créez un compte pour garder votre progression et affronter le Bot niveau {level}'
-            signup_email: E-mail
+            create_account: Créer un compte
             feedback: Donner son avis
 
 play_guest:

@@ -1096,17 +1096,6 @@ class KeresGame {
         const reason = this.gameOverModal.querySelector('#gameover-modal-reason');
         if (reason) reason.textContent = this.describeGameOver();
 
-        // Guest game: the rematch restarts the same kind of game on the other colour (see resolveGuestRecord()).
-        const rematch = this.gameOverModal.querySelector('#gameover-modal-rematch');
-        if (rematch instanceof HTMLAnchorElement && this.guestRecord) {
-            const params = new URLSearchParams({
-                new: this.guestRecord.opponentType === OPPONENT_TYPE_HOTSEAT ? 'hotseat' : 'ai',
-                side: this.guestRecord.playerWhite ? 'black' : 'white',
-                level: String(this.guestRecord.aiLevel ?? 1),
-            });
-            rematch.href = `/play/guest?${params.toString()}`;
-        }
-
         // A guest who just played the bot is invited to keep the progress in an account.
         const signup = this.gameOverModal.querySelector<HTMLElement>('#gameover-modal-signup');
         if (signup) {

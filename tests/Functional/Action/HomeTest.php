@@ -73,6 +73,21 @@ final class HomeTest extends DatabaseTestCase
         self::assertNull(static::getContainer()->get(GameRepository::class)->findInProgressBotGameForUser($user));
     }
 
+    public function testAGuestGameOverModalOffersAnAccountInsteadOfARematch(): void
+    {
+        $client = static::createClient();
+
+        $client->request('GET', '/play/guest', [], [], $this->sameOrigin());
+
+        $modal = (string) $client->getCrawler()->filterXPath('//*[@id="gameover-modal"]')->html();
+        self::assertStringContainsString('Create an account to save your progress and face Bot level 2', $modal);
+        self::assertStringContainsString('href="/login"', $modal);
+        self::assertStringNotContainsString('Quick rematch', $modal);
+        self::assertStringNotContainsString('Play new game', $modal);
+        self::assertStringNotContainsString('Review the game', $modal);
+        self::assertStringNotContainsString('/login/google', $modal);
+    }
+
     public function testOldEntryPointsRedirectHome(): void
     {
         $client = static::createClient();

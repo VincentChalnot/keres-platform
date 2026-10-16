@@ -243,20 +243,11 @@
             <section class="modal__body text-center">
                 <h3 class="!text-h2 !mb-1" id="gameover-modal-title">{{ 'play.board.game_over'|trans }}</h3>
                 <p class="eyebrow !text-primary !tracking-[0.3em]" id="gameover-modal-reason"></p>
-                {% if not spectator and guest %}
-                    {# After a guest's game against the bot (shown by app.ts): the account keeps the ladder progress, the tutorial flag and the chess answer of this browser (NewUserBrowserProgressListener). Signing in lands on `/`. #}
-                    <div class="mt-5 flex flex-col gap-2 rounded-md border border-primary/40 bg-primary/10 p-3 text-left" id="gameover-modal-signup" hidden>
-                        <p class="m-0 text-[0.9rem]">{{ 'play.board.gameover_modal.signup'|trans({level: constant('App\\Form\\LocalGameType::GUEST_MAX_AI_LEVEL') + 1}) }}</p>
-                        <div class="flex flex-wrap gap-2">
-                            <a href="{{ path('oidc_login', {provider: 'google'}) }}" class="btn btn--outline btn--sm"><span class="icon"><i class="fa-brands fa-google" aria-hidden="true"></i></span><span>Google</span></a>
-                            <a href="{{ path('oidc_login', {provider: 'discord'}) }}" class="btn btn--outline btn--sm"><span class="icon"><i class="fa-brands fa-discord" aria-hidden="true"></i></span><span>Discord</span></a>
-                            <a href="{{ path('register') }}" class="btn btn--outline btn--sm"><span class="icon"><i class="fa-solid fa-envelope" aria-hidden="true"></i></span><span>{{ 'play.board.gameover_modal.signup_email'|trans }}</span></a>
-                        </div>
-                    </div>
-                {% endif %}
                 <div class="flex flex-col items-center gap-3 mt-6">
                     {% if not spectator and guest %}
-                        <a class="btn btn--primary btn--block" id="gameover-modal-rematch" href="{{ path('new_local_game') }}"><i class="fa-solid fa-rotate" aria-hidden="true"></i>{{ 'play.board.gameover_modal.rematch'|trans }}</a>
+                        {# A guest's game lives in this browser: the way on is an account, which keeps the ladder progress, the tutorial flag and the chess answer of this browser (NewUserBrowserProgressListener). The sentence is for games against the bot (shown by app.ts). #}
+                        <p class="m-0 text-[0.95rem]" id="gameover-modal-signup" hidden>{{ 'play.board.gameover_modal.signup'|trans({level: constant('App\\Form\\LocalGameType::GUEST_MAX_AI_LEVEL') + 1}) }}</p>
+                        <a class="btn btn--primary btn--block" href="{{ path('login') }}"><i class="fa-solid fa-user-plus" aria-hidden="true"></i>{{ 'play.board.gameover_modal.create_account'|trans }}</a>
                     {% elseif not spectator and gameUuid and not botGame|default(false) %}
                         {# No rematch against a bot: the request would sit unanswered for a day. #}
                         {% set rematchState = rematch.state|default('none') %}
@@ -276,8 +267,10 @@
                             </form>
                         {% endif %}
                     {% endif %}
-                    <a class="btn btn--block" href="{{ path(guest ? 'index' : 'lobby') }}"><i class="fa-solid fa-chess-king" aria-hidden="true"></i>{{ 'play.board.gameover_modal.new_game'|trans }}</a>
-                    <button type="button" class="btn btn--block" data-close><i class="fa-solid fa-clock-rotate-left" aria-hidden="true"></i>{{ 'play.board.gameover_modal.review'|trans }}</button>
+                    {% if not guest %}
+                        <a class="btn btn--block" href="{{ path('lobby') }}"><i class="fa-solid fa-chess-king" aria-hidden="true"></i>{{ 'play.board.gameover_modal.new_game'|trans }}</a>
+                        <button type="button" class="btn btn--block" data-close><i class="fa-solid fa-clock-rotate-left" aria-hidden="true"></i>{{ 'play.board.gameover_modal.review'|trans }}</button>
+                    {% endif %}
                     <button type="button" class="btn btn--block" id="gameover-modal-feedback"><i class="fa-solid fa-pen" aria-hidden="true"></i>{{ 'play.board.gameover_modal.feedback'|trans }}</button>
                     <a class="btn btn--secondary btn--block" href="{{ static_site_url }}/physical-edition/"><i class="fa-solid fa-chess-board" aria-hidden="true"></i>{{ 'play.board.gameover_modal.preorder'|trans }}</a>
                 </div>
