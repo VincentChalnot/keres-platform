@@ -4,15 +4,12 @@ declare(strict_types=1);
 
 namespace App\Tests\Functional\Action;
 
-use App\Engine\EngineApi;
 use App\Entity\Game;
 use App\Entity\Move;
 use App\Entity\User;
-use App\Model\BoardData;
 use App\Model\ColorPreference;
 use App\Model\EvaluatedMove;
 use App\Model\MoveData;
-use App\Model\MovesData;
 use App\Model\OpponentType;
 use App\Model\TimeControl;
 use App\Service\GameFactory;
@@ -30,7 +27,7 @@ final class HintTest extends DatabaseTestCase
     {
         $client = static::createClient();
         $client->disableReboot(); // keeps the stubbed engine and the entity manager across requests
-        $this->stubEngine();
+        $this->stubEngine($this->evaluated());
         $user = $this->createUser('player@example.com');
         $client->loginUser($user);
         $game = $this->casualGame($user, ColorPreference::WHITE);
@@ -56,7 +53,7 @@ final class HintTest extends DatabaseTestCase
     {
         $client = static::createClient();
         $client->disableReboot(); // keeps the stubbed engine and the entity manager across requests
-        $this->stubEngine();
+        $this->stubEngine($this->evaluated());
         $user = $this->createUser('player@example.com');
         $client->loginUser($user);
         $game = $this->casualGame($user, ColorPreference::WHITE);
@@ -76,7 +73,7 @@ final class HintTest extends DatabaseTestCase
     {
         $client = static::createClient();
         $client->disableReboot();
-        $this->stubEngine();
+        $this->stubEngine($this->evaluated());
         $user = $this->createUser('player@example.com');
         $other = $this->createUser('other@example.com');
         $bot = $this->createUser('bot@example.com');
@@ -111,7 +108,7 @@ final class HintTest extends DatabaseTestCase
     {
         $client = static::createClient();
         $client->disableReboot(); // keeps the stubbed engine and the entity manager across requests
-        $this->stubEngine();
+        $this->stubEngine($this->evaluated());
         $before = $this->edgeCount();
         // A fresh address each run: the budget of an IP lives in the (persistent) rate-limiter cache.
         $ip = '10.'.random_int(0, 255).'.'.random_int(0, 255).'.'.random_int(1, 254);
@@ -136,17 +133,14 @@ final class HintTest extends DatabaseTestCase
         self::assertResponseStatusCodeSame(429);
     }
 
-    private function stubEngine(): void
+    /** @return list<EvaluatedMove> */
+    private function evaluated(): array
     {
-        $engine = $this->createMock(EngineApi::class);
-        $engine->method('evaluateMoves')->willReturn([
+        return [
             new EvaluatedMove(new MoveData(pack('v', 0x0A0B)), 40),
             new EvaluatedMove(new MoveData(pack('v', 0x0A0C)), -10),
             new EvaluatedMove(new MoveData(pack('v', 0x0A0D)), -250),
-        ]);
-        // A distinct, deterministic board per line, standing in for the engine's replay.
-        $engine->method('replayMoves')->willReturnCallback(static fn (MovesData $line): BoardData => new BoardData(str_pad(md5($line->toBinary(), true), 81, "\0")."\x80\x00"));
-        static::getContainer()->set(EngineApi::class, $engine);
+        ];
     }
 
     private function casualGame(User $user, ColorPreference $color): Game

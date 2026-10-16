@@ -104,6 +104,8 @@ final class BotGameLimitsTest extends DatabaseTestCase
     public function testOpeningAGameWhereTheAiMovesFirstConsumesTheBudgetAndRefusalDispatchesNothing(): void
     {
         $client = static::createClient();
+        $client->disableReboot();
+        $this->stubEngine();
         $user = $this->createUser('player@example.com');
         $client->loginUser($user);
         $game = static::getContainer()->get(GameFactory::class)->createAiOrHotseatGame($user, OpponentType::AI, ColorPreference::BLACK, 2);

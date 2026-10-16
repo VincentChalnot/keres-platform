@@ -14,6 +14,8 @@ final class HelpDrawerTest extends DatabaseTestCase
     public function testTheGamePageHasTheHelpDrawerInThePlayersOrientation(): void
     {
         $client = static::createClient();
+        $client->disableReboot();
+        $this->stubEngine();
         $user = $this->createUser('player@example.com');
         $game = static::getContainer()->get(GameFactory::class)->createAiOrHotseatGame($user, OpponentType::AI, ColorPreference::BLACK, 2);
         $this->em()->persist($game);

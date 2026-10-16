@@ -4,13 +4,16 @@ declare(strict_types=1);
 
 namespace App\Tests\Functional;
 
+use App\Engine\EngineApi;
 use App\Entity\BoardPosition;
 use App\Entity\Game;
 use App\Entity\GameMove;
 use App\Entity\Move;
 use App\Entity\User;
 use App\Model\BoardData;
+use App\Model\EvaluatedMove;
 use App\Model\MoveData;
+use App\Model\MovesData;
 use App\Service\UsernameGenerator;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
@@ -37,6 +40,23 @@ abstract class DatabaseTestCase extends WebTestCase
         $host = (string) parse_url((string) ($_SERVER['MERCURE_PUBLIC_URL'] ?? 'https://localhost'), \PHP_URL_HOST);
 
         return ['HTTP_HOST' => $host, 'HTTP_ORIGIN' => 'http://'.$host];
+    }
+
+    /**
+     * Replaces the engine bridge by a stub: CI has no engine (BACKEND_API_URL points at a closed port), and a test must not
+     * pass or fail with the engine image of whoever runs it. `replayMoves()` answers a distinct, deterministic board per
+     * line (White to move) standing in for the engine's replay; `evaluateMoves()` answers `$evaluated`. Call it after
+     * `createClient()` and, because the client reboots the kernel between requests, together with
+     * `$client->disableReboot()`.
+     *
+     * @param list<EvaluatedMove> $evaluated
+     */
+    protected function stubEngine(array $evaluated = []): void
+    {
+        $engine = $this->createMock(EngineApi::class);
+        $engine->method('evaluateMoves')->willReturn($evaluated);
+        $engine->method('replayMoves')->willReturnCallback(static fn (MovesData $line): BoardData => new BoardData(str_pad(md5($line->toBinary(), true), 81, "\0")."\x80\x00"));
+        static::getContainer()->set(EngineApi::class, $engine);
     }
 
     protected function em(): EntityManagerInterface
